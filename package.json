@@ -1,0 +1,38 @@
+{
+  "name": "study-knowledge-base",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Personal Knowledge & Learning OS: Markdown knowledge base, source library, concept graph and spaced-repetition learning with an AI agent.",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "concurrently --kill-others-on-fail --names server,web --prefix-colors cyan,magenta \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:server": "npm run dev --workspace @skb/server",
+    "dev:web": "npm run dev --workspace @skb/web",
+    "build": "npm run build --workspace @skb/web && npm run build --workspace @skb/server",
+    "start": "node --enable-source-maps apps/server/dist/server.mjs",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p e2e/tsconfig.json",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "npm run build && playwright test",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run build && npm run test:smoke",
+    "test:smoke": "node scripts/smoke-server.mjs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.19.1",
+    "concurrently": "10.0.5",
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2",
+    "vitest": "5.0.3"
+  }
+}
