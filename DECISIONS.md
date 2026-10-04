@@ -29,6 +29,7 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 | [0021](#adr-0021--transparent-heuristic-mastery-never-asserted-by-ai) | Transparent heuristic mastery, never asserted by AI | Accepted | 2026-10-04 |
 | [0022](#adr-0022--provisional-name-study-knowledge-base-scope-skb) | Provisional name "Study Knowledge Base", scope `@skb` | Accepted | 2026-10-04 |
 | [0023](#adr-0023--git-workflow-phase-branches-merged-at-gates-no-ai-trailers) | Git workflow: phase branches merged at gates; no AI trailers | Accepted | 2026-10-04 |
+| [0024](#adr-0024--shared-zod-api-contracts-instead-of-hono-rpc) | Shared Zod API contracts instead of Hono RPC | Accepted | 2026-10-04 |
 
 ---
 
@@ -108,6 +109,13 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 - **Consequences.** Emits an `ExperimentalWarning` on Node 24 (suppressed deliberately); API changes are
   absorbed by the adapter; a Phase 1 spike must confirm `node:sqlite` + FTS5 inside an Electron 44
   `utilityProcess`.
+- **Spike result (4 October 2026, Phase 1 task 1.29) — confirmed.** Electron **44.5.1** (Node 24.21.0,
+  Chromium 152) running a `utilityProcess`: `node:sqlite` reports SQLite **3.53.4** with FTS5 and JSON1
+  working. The unmodified production server bundle (`apps/server/dist/server.mjs`) also ran in a
+  `utilityProcess`, posted its `skb:ready` message through `process.parentPort`, answered `/api/ping`
+  and authenticated `/api/health`, served the SPA, and printed no experimental warning. Note: the
+  Claude Code/VS Code environment sets `ELECTRON_RUN_AS_NODE=1`, which makes `electron` behave as plain
+  Node; desktop scripts must unset it (Phase 18).
 
 ## ADR-0007 — Plain SQL, typed repositories, Zod, prefixed ULIDs
 
@@ -286,3 +294,19 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   its gate it is merged into `main` with `--no-ff`. `main` therefore only contains gate-passed work.
   Commit messages never contain `Co-authored-by` lines for AI tools or other AI attribution.
 - **Consequences.** `STATE.md` records the active branch; pushing to the remote is done by the user.
+
+## ADR-0024 — Shared Zod API contracts instead of Hono RPC
+
+- **Context.** The PRD (architecture §4) proposed Hono's RPC client (`hc<AppType>`) for a typed API.
+  That makes the web package type-check the server's source (Node-only modules such as `node:sqlite`)
+  and gives compile-time types only — responses are not validated at runtime.
+- **Options.** (a) Hono RPC; (b) shared endpoint contracts in `@skb/core` (method, path, Zod schemas
+  for params/query/body/response) used by both sides; (c) OpenAPI generation.
+- **Decision.** (b). `defineEndpoint()` in `@skb/core` declares each endpoint; the server registers routes
+  from the contract and validates input (and, outside production, output); the web client builds
+  requests from the same contract and validates every response with the same schema.
+- **Reason.** No cross-environment type leakage; runtime validation on both sides; contracts double as
+  documentation and can feed agent-tool schemas later; small (~100 lines) and dependency-free.
+- **Consequences.** Paths are declared once in the contract rather than inferred from routes. An
+  endpoint's status codes other than 200 will need a small extension when the first one is required.
+

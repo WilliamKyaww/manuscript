@@ -6,19 +6,19 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 4 October 2026 (Phase 0)._
+_Last updated: 4 October 2026 (end of Phase 1)._
 
 ## Platform and architecture
 
 | ID | Feature | Status | Phase |
 |---|---|---|---|
-| F-PL-01 | npm workspaces monorepo with TypeScript 7, Biome, Vitest, Playwright | Planned | 1 |
-| F-PL-02 | Local Hono server bound to loopback with token, Host and Origin protection | Planned | 1 |
-| F-PL-03 | SQLite via `node:sqlite` with migrations and transactions | Planned | 1 |
-| F-PL-04 | Vault folder with `.skb/` metadata, lock and atomic writes | Planned | 1 |
-| F-PL-05 | React SPA with typed API client | Planned | 1 |
-| F-PL-06 | `npm run dev`, `npm run build`, `npm start`, `npm run verify` | Planned | 1 |
-| F-PL-07 | `run-web.bat` one-click Windows launcher | Planned | 1 |
+| F-PL-01 | npm workspaces monorepo with TypeScript 7, Biome, Vitest, Playwright | Complete | 1 |
+| F-PL-02 | Local Hono server bound to loopback with token, Host and Origin protection | Complete | 1 |
+| F-PL-03 | SQLite via `node:sqlite` with migrations and transactions | Complete | 1 |
+| F-PL-04 | Vault folder with `.skb/` metadata, lock and atomic writes | Complete | 1 |
+| F-PL-05 | React SPA with typed API client (shared contracts, ADR-0024) | Complete | 1 |
+| F-PL-06 | `npm run dev`, `npm run build`, `npm start`, `npm run verify` (incl. bundle smoke test) | Complete | 1 |
+| F-PL-07 | `run-web.bat` one-click Windows launcher | Complete | 1 |
 | F-PL-08 | Persistent job queue with progress events | Planned | 5 |
 | F-PL-09 | Automatic database backups and crash recovery | Planned | 17 |
 | F-PL-10 | Diagnostics page and log viewer | Planned | 17 |

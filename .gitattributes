@@ -1,0 +1,22 @@
+# Normalise text files to LF in the repository and in working copies.
+* text=auto eol=lf
+
+# Windows scripts must keep CRLF to run correctly in cmd.exe.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.pptx binary
+*.docx binary
+*.zip binary
+*.woff binary
+*.woff2 binary
+*.sqlite binary
+*.db binary

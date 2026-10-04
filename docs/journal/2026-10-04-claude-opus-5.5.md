@@ -90,3 +90,84 @@ All files are new (repository was empty): see list in §5 above.
 
 1. Consistency/British English pass (0.18), present the plan (0.19), commit and merge Phase 0.
 2. Begin Phase 1 on `phase/01-foundation`.
+
+## Session 2 — Phase 1: foundation
+
+- **Date:** 4 October 2026
+- **Time:** approx. 14:50–15:25 BST
+- **Agent model:** Claude Opus 5.5 (`claude-opus-5-5`)
+- **Phase:** 1 — Foundation (repository, tooling, server and web skeletons)
+- **Work performed:** built and verified the monorepo, shared core, secure local server, storage layer,
+  web skeleton, launcher and test harnesses; ran the Electron spike.
+
+### What was done
+
+- **Workspace:** npm workspaces (`packages/core`, `apps/server`, `apps/web`), TypeScript 7.0.2
+  (type-check only), Biome 2.5.15 (config migrated to the new `preset` syntax), Vitest 5.0.3 projects,
+  Playwright 1.63, esbuild 0.28; exact version pins.
+- **`@skb/core`:** prefixed ULID IDs (`note_01…`), typed `AppError` hierarchy + RFC 9457 schema,
+  shared endpoint contracts (`defineEndpoint`, `EndpointInput/Output`, `buildPath/buildQuery`),
+  ping/health schemas.
+- **Server:** config resolution; redacting logger; `node:sqlite` adapter with savepoint transactions and
+  a precise experimental-warning filter; checksummed migrations; vault with lock + strict path
+  containment; atomic writes; localhost security (token, Host, Origin, Fetch Metadata, `/auth`);
+  problem details; contract-based routes; static SPA serving with CSP; `startServer()` + `main.ts` with
+  IPC ready/shutdown messages.
+- **Web:** Vite 8 + React 19 + Tailwind 4 + TanStack Router/Query; typed client with response validation;
+  status page.
+- **Scripts:** `scripts/build-server.mjs` (self-contained `apps/server/dist`), `scripts/smoke-server.mjs`
+  (bundle check incl. graceful shutdown over IPC), `scripts/run-web.mjs` + `run-web.bat`.
+- **E2E:** Playwright against the production bundle and a throwaway vault.
+- **Electron spike** (scratchpad, not committed): Electron 44.5.1 (Node 24.21.0) — `node:sqlite`
+  (SQLite 3.53.4) with FTS5/JSON1 in a `utilityProcess`; the unmodified server bundle ran in a
+  `utilityProcess` and served ping/health/SPA.
+
+### Important decisions
+
+- **ADR-0024:** shared Zod endpoint contracts in `@skb/core` instead of Hono RPC (no server types in the
+  web build; runtime validation on both sides).
+- Dev web port **5317** (another local project already uses Vite's 5173).
+- Session cookie name includes the port (`skb_session_4317`) so dev, test and production instances do
+  not overwrite each other's cookies.
+- `/api/ping` is the only unauthenticated API route and reveals nothing but the app identity.
+
+### Files changed
+
+New: root configs (`package.json`, `package-lock.json`, `tsconfig.base.json`, `biome.json`,
+`vitest.config.ts`, `playwright.config.ts`, `.gitignore`, `.gitattributes`, `.editorconfig`, `.nvmrc`),
+`packages/core/**`, `apps/server/**`, `apps/web/**`, `scripts/**`, `e2e/**`, `run-web.bat`.
+Updated: `README.md`, `AGENTS.md`, `STATE.md`, `FEATURES.md`, `DECISIONS.md` (ADR-0006 spike, ADR-0024),
+`docs/prd/architecture.md`, `docs/prd/tech-stack.md`, `docs/checklist/*`, `docs/backlog/technical-debt.md`.
+
+### Tests run
+
+| Command | Result |
+|---|---|
+| `npm run verify` | **Pass** — typecheck (5 projects), Biome (80 files), 136 Vitest tests, build, smoke test |
+| `npm run test:e2e` | **Pass** — 5/5 Playwright tests (Chromium 153) |
+| Manual: dev server via proxy | 401 → sign-in → `skb_session_4317` (HttpOnly) → health 200 |
+| Manual: crash recovery | Force-killed server; restart recovered the stale lock, same vault ID, DB intact |
+| Manual: second instance | Refused with "This vault is already open in another … process (PID …)" |
+| Manual: `run-web.bat` | Fresh build + start on a temporary vault; second launch detected the running app (exit 0) |
+| Electron spike | Pass (see above) |
+
+### Problems encountered
+
+- Biome 2.5 deprecated `"recommended": true` → migrated with `biome migrate`.
+- A temporal-dead-zone bug in the first warning-filter implementation → moved to its own module.
+- `@types/node` overloads rejected spreading mixed positional/named SQL parameters → explicit dispatch.
+- `cmd.exe` could not run `run-web.bat` by relative name in this sandbox (`NoDefaultCurrentDirectoryInExePath=1`)
+  and `electron` ran as Node (`ELECTRON_RUN_AS_NODE=1` inherited from VS Code) — both are environment
+  artefacts, documented in `AGENTS.md` §5.
+- `run-web.bat` was written with LF endings and printed mojibake for `…` → CRLF, ASCII messages,
+  `chcp 65001`.
+- Node 24 `DEP0190` for `spawn` with `shell: true` and an argument array → single command string.
+
+### Unresolved issues
+
+- TD-01…TD-03 (`docs/backlog/technical-debt.md`).
+- Research questions RQ-01…RQ-12 remain open for the user.
+
+### Next steps
+
+Phase 2 — application shell and layout system (`docs/checklist/phase-02-app-shell.md`).

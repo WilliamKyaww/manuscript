@@ -9,7 +9,7 @@
 | Language | **TypeScript 7.0** (type-check only) | Fast native compiler; strict by default | 0017 |
 | Monorepo | **npm workspaces** | Already installed; hoisted layout suits Electron | 0017 |
 | Lint/format | **Biome 2.5** | One tool; no dependency on the TS 7 JS API | 0017 |
-| Server | **Hono 4.13** + `@hono/node-server` | Web-standard Request/Response, typed RPC client, tiny | 0003 |
+| Server | **Hono 4.13** + `@hono/node-server` | Web-standard Request/Response, tiny; typed API via shared contracts | 0003, 0024 |
 | Validation | **Zod 4** | One schema language for HTTP, persistence and AI outputs | 0007 |
 | Database | **SQLite via `node:sqlite`** (FTS5) | Zero native modules; FTS5 verified; open file format | 0006 |
 | Data access | **Plain SQL migrations + typed repositories** | Explicit, FTS/CTE-friendly, driver-agnostic | 0007 |

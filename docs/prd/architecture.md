@@ -44,7 +44,7 @@ flowchart LR
 
 | Mode | Processes | How it starts |
 |---|---|---|
-| **Development** | `tsx watch` server on `127.0.0.1:4317`; Vite dev server on `127.0.0.1:5173` proxying `/api` | `npm run dev` |
+| **Development** | `tsx watch` server on `127.0.0.1:4317`; Vite dev server on `127.0.0.1:5317` proxying `/api` (5317 avoids clashing with other Vite projects on 5173) | `npm run dev` |
 | **Local web (daily use)** | Built server serving the built SPA and API on one port | `run-web.bat` or `npm start` |
 | **Desktop** | Electron main process → server in an Electron `utilityProcess` → `BrowserWindow` loads the server URL | `npm run desktop:dev`; packaged installer |
 
@@ -122,7 +122,7 @@ apps/web/src/
 ```
 
 - Server state via TanStack Query (one query-key factory per feature); UI state via small Zustand stores.
-- Typed API: Hono RPC client generated from the server's route types — no hand-written fetch wrappers.
+- Typed API: shared endpoint contracts in `@skb/core` (`defineEndpoint`, Zod schemas) used by the server to register and validate routes and by the web client to build requests and validate responses (ADR-0024).
 - Every route renders inside `<Page>` whose `<PageHeader>` is outside the scroll container
   (sticky-header rule, `docs/prd/ui.md` §2).
 

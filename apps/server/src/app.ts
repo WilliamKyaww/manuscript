@@ -1,0 +1,59 @@
+import { NotFoundError } from '@skb/core';
+import { Hono } from 'hono';
+import type { AppContext } from './context';
+import type { ApiRegistry } from './http/endpoint';
+import { securityHeaders } from './http/headers';
+import { errorHandler, problemResponse, toProblem } from './http/problem';
+import { staticSite } from './http/static';
+import { registerSystemRoutes } from './modules/system/routes';
+import { apiGuard, authBootstrapHandler, hostGuard, type SecurityContext } from './security/guards';
+
+export interface AuthOptions {
+  token: string;
+  /** The bound port; read lazily because it is only known after listening. */
+  getPort(): number;
+}
+
+export interface CreatedApp {
+  app: Hono;
+  security: SecurityContext;
+}
+
+/** Composes middleware and module routes. Order matters: see comments. */
+export function createApp(ctx: AppContext, auth: AuthOptions): CreatedApp {
+  const app = new Hono();
+  const publicApiRoutes = new Set<string>();
+  const security: SecurityContext = {
+    token: auth.token,
+    getPort: auth.getPort,
+    devWebOrigin: ctx.config.devWebOrigin,
+    publicApiRoutes,
+  };
+
+  app.onError(errorHandler(ctx.logger));
+  // 1. Headers wrap everything, including error responses.
+  app.use('*', securityHeaders());
+  // 2. Host allowlist before anything else is processed (DNS rebinding).
+  app.use('*', hostGuard(security));
+  // 3. Bootstrap sign-in is reachable without a session.
+  app.get('/auth', authBootstrapHandler(security));
+  // 4. Every API route is authenticated unless registered as public.
+  app.use('/api/*', apiGuard(security));
+
+  const registry: ApiRegistry = {
+    app,
+    publicApiRoutes,
+    validateResponses: ctx.config.mode !== 'production',
+  };
+  registerSystemRoutes(registry, ctx);
+
+  // Unknown API routes are problem-details 404s, never the SPA.
+  app.all('/api/*', () => {
+    throw new NotFoundError('No such API endpoint.');
+  });
+
+  if (ctx.config.webDir) app.use('*', staticSite(ctx.config.webDir));
+
+  app.notFound((c) => problemResponse(toProblem(new NotFoundError('Not found.'), c.req.path)));
+  return { app, security };
+}

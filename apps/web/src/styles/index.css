@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+/* Phase 1 baseline only. Design tokens and themes arrive in Phase 2 (tokens.css). */
+:root {
+  font-family:
+    "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}

@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Local data — never commit vaults or app data
+.dev-vault/
+.dev-data/
+.e2e/
+
+# Test and coverage output
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# Logs and environment
+*.log
+npm-debug.log*
+.env
+.env.*
+
+# Editors and OS
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
