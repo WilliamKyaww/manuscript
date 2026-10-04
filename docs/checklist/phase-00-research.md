@@ -1,6 +1,6 @@
 # Phase 0 — Research and product discovery
 
-**Status:** In progress · **Branch:** `phase/00-research`
+**Status:** Complete (4 October 2026) · **Branch:** `phase/00-research`
 
 ## Objective
 Understand the problem space and the local Graphify reference implementation, decide what is worth
@@ -56,9 +56,9 @@ across PRD/checklist/backlog, ADR references exist, British spelling.
 This phase *is* documentation. The journal entry records the research performed and decisions taken.
 
 ## Gate
-- [ ] All tasks above `[x]`
-- [ ] Documents committed on `phase/00-research` and merged into `main` (`--no-ff`)
-- [ ] `STATE.md` shows Phase 1 as next
+- [x] All tasks above `[x]`
+- [x] Documents committed on `phase/00-research` and merged into `main` (`--no-ff`)
+- [x] `STATE.md` shows Phase 1 as next
 
 ## Recommended commit messages
 ```text
