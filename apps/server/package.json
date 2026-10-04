@@ -1,0 +1,21 @@
+{
+  "name": "@skb/server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local Hono server for Study Knowledge Base: API, vault, database and (later) agent.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/main.ts --dev --vault ../../.dev-vault --data-dir ../../.dev-data",
+    "build": "node ../../scripts/build-server.mjs",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.3",
+    "@skb/core": "0.1.0",
+    "hono": "4.13.13",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15"
+  }
+}
