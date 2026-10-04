@@ -6,7 +6,7 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 4 October 2026 (end of Phase 1)._
+_Last updated: 4 October 2026 (end of Phase 2)._
 
 ## Platform and architecture
 
@@ -163,10 +163,10 @@ _Last updated: 4 October 2026 (end of Phase 1)._
 
 | ID | Feature | Status | Phase |
 |---|---|---|---|
-| F-UI-01 | App shell with sticky-header page architecture | Planned | 2 |
-| F-UI-02 | Light/dark/system themes on design tokens | Planned | 2 |
-| F-UI-03 | Command palette and keyboard shortcut registry | Planned | 2 |
-| F-UI-04 | Accessible primitives and state components | Planned | 2 |
+| F-UI-01 | App shell with sticky-header page architecture (E2E-enforced on every route) | Complete | 2 |
+| F-UI-02 | Light/dark/system themes on design tokens (no flash on load) | Complete | 2 |
+| F-UI-03 | Command palette and keyboard shortcut registry with cheat sheet | Complete | 2 |
+| F-UI-04 | Accessible primitives and state components (axe-clean in both themes) | Complete | 2 |
 | F-UI-05 | Final visual polish across all screens | Planned | 20 |
 
 ## Deferred

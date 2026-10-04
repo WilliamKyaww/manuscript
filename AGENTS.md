@@ -73,6 +73,9 @@ All verified on 4 October 2026 (Phase 1):
 - `NoDefaultCurrentDirectoryInExePath=1` stops `cmd.exe` finding `run-web.bat` by a relative name; call
   batch files by their full path in automation (double-clicking in Explorer is unaffected).
 - Another local project may already use Vite's default port 5173 — this project's dev server uses 5317.
+- axe (`@axe-core/playwright`) only checks colour contrast for elements inside the viewport, and page
+  bodies scroll internally: grow the viewport to the page height first (see `fitViewportToContent` in
+  `e2e/shell.spec.ts`), otherwise below-the-fold content is silently skipped.
 - Never test against the user's real vault (`Documents\Study Knowledge Base`) or data directory
   (`%APPDATA%\StudyKnowledgeBase`): set `SKB_VAULT` and `SKB_DATA_DIR` to temporary folders.
 
