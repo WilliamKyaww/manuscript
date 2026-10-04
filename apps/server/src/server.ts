@@ -1,0 +1,138 @@
+import type { Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
+import { serve } from '@hono/node-server';
+import { APP_NAME, createIdFactory, type IdFactory } from '@skb/core';
+import { createApp } from './app';
+import type { ServerConfig } from './config/config';
+import type { AppContext } from './context';
+import { loadMigrations, migrate } from './db/migrate';
+import { openDatabase, type SqlDatabase } from './db/sqlite';
+import { loadOrCreateToken } from './security/token';
+import { type Clock, systemClock } from './shared/clock';
+import type { Logger } from './shared/logger';
+import { openVault, type Vault } from './vault/vault';
+import { VERSION } from './version';
+
+export interface RunningServer {
+  readonly config: ServerConfig;
+  readonly port: number;
+  /** Origin the server listens on, e.g. `http://127.0.0.1:4317`. */
+  readonly origin: string;
+  /** One-time sign-in URL for the browser (uses the Vite origin in development). */
+  readonly bootstrapUrl: string;
+  readonly context: AppContext;
+  close(): Promise<void>;
+}
+
+export interface StartServerOptions {
+  logger: Logger;
+  clock?: Clock;
+  ids?: IdFactory;
+  migrationsDir?: string;
+}
+
+export class StartupError extends Error {
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = 'StartupError';
+  }
+}
+
+/** Opens the vault and database, applies migrations and starts listening on loopback. */
+export async function startServer(
+  config: ServerConfig,
+  options: StartServerOptions,
+): Promise<RunningServer> {
+  const { logger } = options;
+  const clock = options.clock ?? systemClock;
+  const ids = options.ids ?? createIdFactory({ now: () => clock.now().getTime() });
+
+  const vault: Vault = openVault(config.vaultPath, {
+    create: true,
+    clock,
+    ids,
+    appVersion: VERSION,
+  });
+  let db: SqlDatabase | undefined;
+  try {
+    db = openDatabase(vault.paths.database);
+    const result = migrate(db, loadMigrations(options.migrationsDir), clock);
+    if (result.applied.length > 0)
+      logger.info('Applied database migrations', { applied: result.applied });
+
+    const token = loadOrCreateToken(config.dataDir, config.authTokenOverride);
+    const context: AppContext = {
+      config,
+      logger,
+      clock,
+      ids,
+      vault,
+      db,
+      version: VERSION,
+      startedAt: clock.now(),
+    };
+    let boundPort = config.port;
+    const { app } = createApp(context, { token, getPort: () => boundPort });
+
+    const server = await listen(app.fetch, config, logger);
+    boundPort = (server.address() as AddressInfo).port;
+    const origin = `http://${config.host}:${boundPort}`;
+    const signInOrigin =
+      config.mode === 'development' && config.devWebOrigin ? config.devWebOrigin : origin;
+    const openedDb = db;
+
+    let closing: Promise<void> | undefined;
+    return {
+      config,
+      port: boundPort,
+      origin,
+      bootstrapUrl: `${signInOrigin}/auth?token=${encodeURIComponent(token)}`,
+      context,
+      close() {
+        closing ??= new Promise<void>((resolve) => {
+          server.close(() => resolve());
+          server.closeAllConnections?.();
+        }).finally(() => {
+          openedDb.close();
+          vault.close();
+          logger.info(`${APP_NAME} stopped`);
+        });
+        return closing;
+      },
+    };
+  } catch (error) {
+    db?.close();
+    vault.close();
+    throw error;
+  }
+}
+
+function listen(
+  fetch: (request: Request) => Response | Promise<Response>,
+  config: ServerConfig,
+  logger: Logger,
+): Promise<Server> {
+  return new Promise((resolve, reject) => {
+    const server = serve({ fetch, hostname: config.host, port: config.port }) as Server;
+    const onError = (error: NodeJS.ErrnoException) => {
+      server.close();
+      if (error.code === 'EADDRINUSE') {
+        reject(
+          new StartupError(
+            `Port ${config.port} is already in use. Is ${APP_NAME} already running? ` +
+              'Close it, or set SKB_PORT to use a different port.',
+            { cause: error },
+          ),
+        );
+      } else {
+        reject(new StartupError(`Could not start the server: ${error.message}`, { cause: error }));
+      }
+    };
+    server.once('error', onError);
+    server.once('listening', () => {
+      server.off('error', onError);
+      server.on('error', (error) => logger.error('Server error', { error }));
+      resolve(server);
+    });
+  });
+}
