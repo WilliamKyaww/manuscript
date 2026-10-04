@@ -4,8 +4,9 @@ A personal **Knowledge & Learning OS**: a Markdown knowledge base, a lecture/sou
 graph and a spaced-repetition learning system that share one data model — with an AI agent that can
 search, explain, generate study material and act on the knowledge base through permissioned tools.
 
-> **Status: Phases 0–1 complete** (research, planning, foundation: secure local server, database, vault,
-> web skeleton, launcher). Product features start in Phase 2. See [`STATE.md`](./STATE.md) and
+> **Status: Phases 0–2 complete** (research and planning; secure local server, database, vault and
+> launcher; application shell with themes, command palette and sticky-header layout). Notes arrive in
+> Phase 3. See [`STATE.md`](./STATE.md) and
 > [`docs/checklist/`](./docs/checklist/README.md) for the roadmap.
 
 ## Why it exists

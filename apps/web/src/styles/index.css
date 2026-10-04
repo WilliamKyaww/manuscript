@@ -1,10 +1,90 @@
 @import "tailwindcss";
+@import "./tokens.css";
 
-/* Phase 1 baseline only. Design tokens and themes arrive in Phase 2 (tokens.css). */
-:root {
-  font-family:
-    "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
-  line-height: 1.5;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+/* Dark-mode utilities follow our data-theme attribute rather than the OS setting directly. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Map design tokens to Tailwind utilities; `inline` keeps them live when data-theme changes. */
+@theme inline {
+  --color-bg: var(--skb-bg);
+  --color-surface: var(--skb-surface);
+  --color-surface-raised: var(--skb-surface-raised);
+  --color-surface-sunken: var(--skb-surface-sunken);
+  --color-surface-hover: var(--skb-surface-hover);
+  --color-border: var(--skb-border);
+  --color-border-strong: var(--skb-border-strong);
+  --color-text: var(--skb-text);
+  --color-muted: var(--skb-text-muted);
+  --color-subtle: var(--skb-text-subtle);
+  --color-accent: var(--skb-accent);
+  --color-accent-hover: var(--skb-accent-hover);
+  --color-accent-subtle: var(--skb-accent-subtle);
+  --color-accent-contrast: var(--skb-accent-contrast);
+  --color-focus: var(--skb-focus);
+  --color-success: var(--skb-success);
+  --color-success-subtle: var(--skb-success-subtle);
+  --color-warning: var(--skb-warning);
+  --color-warning-subtle: var(--skb-warning-subtle);
+  --color-danger: var(--skb-danger);
+  --color-danger-subtle: var(--skb-danger-subtle);
+  --color-info: var(--skb-info);
+  --color-info-subtle: var(--skb-info-subtle);
+  --color-overlay: var(--skb-overlay);
+  --font-sans: var(--skb-font-sans);
+  --font-mono: var(--skb-font-mono);
+  --radius-sm: var(--skb-radius-sm);
+  --radius-md: var(--skb-radius-md);
+  --radius-lg: var(--skb-radius-lg);
+  --shadow-sm: var(--skb-shadow-sm);
+  --shadow-md: var(--skb-shadow-md);
+  --shadow-lg: var(--skb-shadow-lg);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--skb-bg);
+    color: var(--skb-text);
+    font-family: var(--skb-font-sans);
+    line-height: 1.5;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    /* The application shell owns scrolling; the window itself never scrolls. */
+    overflow: hidden;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--skb-focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--skb-accent-subtle);
+  }
+}
+
+@layer components {
+  .skip-link {
+    position: fixed;
+    left: 0.75rem;
+    top: 0.75rem;
+    z-index: 100;
+    padding: 0.5rem 0.875rem;
+    border-radius: var(--skb-radius-md);
+    background: var(--skb-accent);
+    color: var(--skb-accent-contrast);
+    font-weight: 600;
+    transform: translateY(-150%);
+    transition: transform var(--skb-duration-fast) var(--skb-ease);
+  }
+
+  .skip-link:focus {
+    transform: translateY(0);
+  }
 }

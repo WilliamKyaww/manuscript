@@ -35,6 +35,7 @@ Phase 2.
 - [ ] **3.12** Backlinks and unlinked mentions query; unit tests
 
 ### UI
+- [ ] **3.24** Route-level code splitting (TanStack Router lazy routes) and lazy loading of heavy libraries (CodeMirror, KaTeX, Mermaid) before they are added — repays TD-04; the initial bundle must not grow with the editor
 - [ ] **3.13** Notes page: folder tree with create/rename/move/delete (context menu, keyboard), resizable panes
 - [ ] **3.14** CodeMirror 6 editor: Markdown highlighting, wikilink and tag autocompletion, keymaps, `Ctrl+S` + debounced autosave, conflict banner (reload / keep mine / compare)
 - [ ] **3.15** Preview renderer: GFM, KaTeX, Mermaid (lazy), code highlighting, wikilinks, embeds, callouts, highlights, tags

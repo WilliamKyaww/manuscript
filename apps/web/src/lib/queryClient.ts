@@ -1,4 +1,4 @@
-import { QueryClient } from '@tanstack/react-query';
+import { MutationCache, QueryClient } from '@tanstack/react-query';
 import { ApiError } from './api/client';
 
 /** Client errors (4xx) are not retried: repeating an unauthorised or invalid request cannot help. */
@@ -7,8 +7,16 @@ export function shouldRetry(failureCount: number, error: unknown): boolean {
   return failureCount < 2;
 }
 
-export function createQueryClient(): QueryClient {
+export interface QueryClientOptions {
+  /** Called when any mutation fails (the app shows a toast; queries render errors inline). */
+  onMutationError?: (error: unknown) => void;
+}
+
+export function createQueryClient(options: QueryClientOptions = {}): QueryClient {
   return new QueryClient({
+    mutationCache: new MutationCache({
+      onError: (error) => options.onMutationError?.(error),
+    }),
     defaultOptions: {
       queries: {
         retry: shouldRetry,

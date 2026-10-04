@@ -33,10 +33,15 @@ Rules:
 2. The page header holds title, breadcrumbs, primary actions and tabs/filters for the page.
 3. Secondary headers inside the body use `<StickySection>` (sticky within `PageBody`).
 4. Split views (editor | preview | side panel) give each pane its own sticky pane header.
-5. **Enforcement:** an E2E test visits every route, scrolls `PageBody` to the bottom, and asserts the
-   page header's position and visibility are unchanged; a component test covers `StickySection`.
+5. **Enforcement (implemented in Phase 2):** `e2e/shell.spec.ts` visits every route in
+   `apps/web/src/app/sections.ts` plus the not-found page, pads the body to force scrolling, scrolls
+   `PageBody` to the bottom and asserts that exactly one page header exists, its position is unchanged,
+   it and the `h1` stay in the viewport, and the window itself never scrolls. A second E2E test checks
+   that `StickySection` headers stick to the top of the body; `Page.test.tsx` checks the structure.
+   The check was mutation-tested: moving the header into the scroll container makes it fail.
 6. **Documented exceptions** (must be listed here):
-   - *Focus mode* in a review session may collapse the header to a slim progress bar (user-toggled).
+   - *Focus mode* in a review session may collapse the header to a slim progress bar (user-toggled) —
+     planned for Phase 8; not implemented yet. **There are currently no exceptions in the code.**
 
 ## 3. Information architecture
 
@@ -91,10 +96,15 @@ Everything reachable by keyboard; visible focus; no shortcut conflicts with the 
 
 ## 7. Accessibility
 
-Landmarks and skip link; Radix primitives for dialogs/menus/popovers; colour never the only signal
-(graph confidence styles also use dash patterns; mastery uses labels); contrast ≥ 4.5:1 for text;
-reduced-motion support; screen-reader labels for icon buttons; automated axe checks in E2E (Phase 2
-baseline, full audit Phase 21).
+Landmarks and a skip control ("Skip to main content", first in tab order); Radix primitives for
+dialogues/menus/popovers; colour never the only signal (graph confidence styles also use dash patterns;
+mastery uses labels); contrast ≥ 4.5:1 for text; reduced-motion support; screen-reader labels for icon
+buttons; focus moves to the page heading after client-side navigation.
+
+Automated checks (Phase 2 baseline, full audit Phase 21): axe (WCAG 2.0–2.2 A/AA tags) on every route
+in both themes, on open dialogues and on the collapsed sidebar; no serious or critical violations are
+allowed. axe only evaluates colour contrast for elements inside the viewport, so the tests first grow the
+viewport to fit the whole page body — otherwise anything below the fold would be silently skipped.
 
 ## 8. Design tokens (functional baseline in Phase 2)
 

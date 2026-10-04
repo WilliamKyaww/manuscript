@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { E2E_TOKEN } from './constants';
 
 test.describe('foundation', () => {
-  test('signs in with the bootstrap link and shows a healthy server', async ({ page }) => {
+  test('signs in with the bootstrap link and reaches a healthy app', async ({ page }) => {
     const problems: string[] = [];
     page.on('console', (message) => {
       if (message.type() === 'error') problems.push(message.text());
@@ -11,9 +11,9 @@ test.describe('foundation', () => {
 
     await page.goto(`/auth?token=${E2E_TOKEN}`);
     await expect(page).toHaveURL(/\/$/);
-    await expect(
-      page.getByRole('heading', { level: 1, name: 'Study Knowledge Base' }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+
+    await page.goto('/settings');
     await expect(page.getByText('Healthy')).toBeVisible();
     await expect(page.getByText(/SQLite 3\.\d+\.\d+/)).toBeVisible();
     // No script errors or Content-Security-Policy violations while loading.
@@ -22,7 +22,8 @@ test.describe('foundation', () => {
 
   test('explains how to sign in when there is no session', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('alert')).toContainText('Sign-in required');
+    await expect(page.getByRole('heading', { level: 1, name: 'Sign-in required' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0);
   });
 
   test('rejects an invalid sign-in link', async ({ page }) => {
@@ -37,11 +38,10 @@ test.describe('foundation', () => {
     const spaRoute = await request.get('/some/client/route');
     expect(spaRoute.status()).toBe(200);
     expect(await spaRoute.text()).toContain('<div id="root"></div>');
-    expect(
-      (
-        await request.get('/api/unknown', { headers: { authorization: `Bearer ${E2E_TOKEN}` } })
-      ).status(),
-    ).toBe(404);
+    const unknown = await request.get('/api/unknown', {
+      headers: { authorization: `Bearer ${E2E_TOKEN}` },
+    });
+    expect(unknown.status()).toBe(404);
   });
 
   test('sends security headers with the page', async ({ request }) => {

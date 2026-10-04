@@ -1,0 +1,93 @@
+/*
+ * Design tokens (ui.md §8). Functional baseline for Phases 2–19; the Phase 20 polish pass changes
+ * token *values*, not component structure. Components use the Tailwind utilities generated from
+ * these tokens (bg-surface, text-muted, border-border, …) — never raw colours.
+ *
+ * Text colours meet WCAG 2.2 AA (≥ 4.5:1) against bg, surface and surface-sunken in both themes;
+ * "subtle" is reserved for secondary text and icons.
+ */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --skb-bg: #f7f5f1;
+  --skb-surface: #ffffff;
+  --skb-surface-raised: #ffffff;
+  --skb-surface-sunken: #f0ede7;
+  --skb-surface-hover: #ebe7e0;
+  --skb-border: #e2ddd4;
+  --skb-border-strong: #c9c1b4;
+  --skb-text: #1f1c18;
+  --skb-text-muted: #57514a;
+  --skb-text-subtle: #6e675e;
+  --skb-accent: #2f6b5a;
+  --skb-accent-hover: #255748;
+  --skb-accent-subtle: #e3efea;
+  --skb-accent-contrast: #ffffff;
+  --skb-focus: #2f6b5a;
+  --skb-success: #256b43;
+  --skb-success-subtle: #e2f1e7;
+  --skb-warning: #8a4f00;
+  --skb-warning-subtle: #f8ecd8;
+  --skb-danger: #a8231b;
+  --skb-danger-subtle: #f8e3e1;
+  --skb-info: #2a5aa0;
+  --skb-info-subtle: #e2ebf7;
+  --skb-overlay: rgb(20 18 15 / 0.45);
+  --skb-shadow-sm: 0 1px 2px rgb(31 28 24 / 0.06);
+  --skb-shadow-md: 0 4px 12px rgb(31 28 24 / 0.08), 0 1px 3px rgb(31 28 24 / 0.06);
+  --skb-shadow-lg: 0 16px 40px rgb(31 28 24 / 0.16), 0 4px 12px rgb(31 28 24 / 0.08);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --skb-bg: #121211;
+  --skb-surface: #1a1918;
+  --skb-surface-raised: #232220;
+  --skb-surface-sunken: #0e0e0d;
+  --skb-surface-hover: #2a2826;
+  --skb-border: #2e2c29;
+  --skb-border-strong: #45423d;
+  --skb-text: #ece8e1;
+  --skb-text-muted: #b5aea4;
+  --skb-text-subtle: #9a9389;
+  --skb-accent: #6bbfa6;
+  --skb-accent-hover: #86cdb8;
+  --skb-accent-subtle: #1d3530;
+  --skb-accent-contrast: #0b1d17;
+  --skb-focus: #6bbfa6;
+  --skb-success: #6ccf96;
+  --skb-success-subtle: #173325;
+  --skb-warning: #e8ae55;
+  --skb-warning-subtle: #3a2a12;
+  --skb-danger: #f28a82;
+  --skb-danger-subtle: #3d1a17;
+  --skb-info: #8db3ec;
+  --skb-info-subtle: #19283d;
+  --skb-overlay: rgb(0 0 0 / 0.6);
+  --skb-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --skb-shadow-md: 0 4px 12px rgb(0 0 0 / 0.45);
+  --skb-shadow-lg: 0 16px 40px rgb(0 0 0 / 0.55);
+}
+
+:root {
+  --skb-font-sans:
+    "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial,
+    sans-serif;
+  --skb-font-mono: "Cascadia Code", "Cascadia Mono", Consolas, "SFMono-Regular", Menlo, monospace;
+  --skb-radius-sm: 0.25rem;
+  --skb-radius-md: 0.5rem;
+  --skb-radius-lg: 0.75rem;
+  --skb-sidebar-width: 16rem;
+  --skb-sidebar-width-collapsed: 3.75rem;
+  --skb-duration-fast: 120ms;
+  --skb-duration-normal: 200ms;
+  --skb-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --skb-duration-fast: 0ms;
+    --skb-duration-normal: 0ms;
+  }
+}

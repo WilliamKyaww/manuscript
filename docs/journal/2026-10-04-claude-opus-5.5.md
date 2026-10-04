@@ -171,3 +171,80 @@ Updated: `README.md`, `AGENTS.md`, `STATE.md`, `FEATURES.md`, `DECISIONS.md` (AD
 ### Next steps
 
 Phase 2 — application shell and layout system (`docs/checklist/phase-02-app-shell.md`).
+
+## Session 3 — Phase 2: application shell and layout system
+
+- **Date:** 4 October 2026
+- **Time:** approx. 15:30–19:20 BST (resumed after a pause)
+- **Agent model:** Claude Opus 5.5 (`claude-opus-5-5`)
+- **Phase:** 2 — Application shell and layout system
+- **Work performed:** design tokens and themes, the sticky-header page architecture, sidebar and routes,
+  UI primitives, state components, toasts, shortcut registry, command palette, Today and Settings pages,
+  session gate, component/integration tests and the all-routes E2E and accessibility suites.
+
+### What was done
+
+- **Tokens and themes:** `tokens.css` (AA-contrast colour pairs for light and dark, radii, shadows,
+  motion, sidebar widths) mapped to Tailwind 4 utilities with `@theme inline`; theme store + an external
+  `theme-init.js` in `<head>` (the CSP forbids inline scripts) so the saved theme applies before React.
+- **Layout:** `AppShell` (sidebar + `main`, window never scrolls), `Page` (fixed header outside the only
+  scroll container; title, description, actions, toolbar, breadcrumbs; document title), `StickySection`.
+  Focus moves to the new page's `h1` after client-side navigation; a skip control comes first in tab order.
+- **Navigation:** `sections.ts` is the single source of truth for the sidebar, command palette, router and
+  E2E tests; unbuilt sections show placeholders that name their phase; not-found and route-error pages
+  render inside the shell.
+- **Components:** Button, IconButton (label required), Input/Textarea, Kbd, Badge, Card, Separator,
+  Spinner, Dialog (title required), DropdownMenu, Tooltip, Tabs, Popover, EmptyState, ErrorState,
+  Skeleton, LoadingState; `components/README.md` documents the rules.
+- **Interaction:** shortcut registry (canonical keys, `mod` = Ctrl/⌘, input awareness, overrides, conflict
+  detection) with a live cheat sheet; cmdk command palette in a titled Radix dialogue; sonner toasts for
+  failed mutations via the query client's `MutationCache`.
+- **Session gate:** replaces the Phase 1 status page's sign-in/unreachable handling for the whole app;
+  the server status moved to Settings › About (TD-03 repaid).
+
+### Important decisions
+
+- The skip control is a `<button>` that focuses `main`, not a `#main` fragment link — avoids a router
+  navigation and satisfies Biome's `useValidAnchor` rule.
+- Palette items match on labels and ids only; matching on long descriptions made fuzzy search useless.
+- Sidebar widened to 16rem so the product name fits.
+- E2E accessibility scans grow the viewport to the page height first (see Problems).
+
+### Files changed
+
+New: `apps/web/src/app/**` (App, AppShell, Sidebar, SessionGate, CommandPalette, ShortcutsDialog,
+GlobalShortcuts, Toaster, sections, section-icons, layout-store, theme, shortcuts), `apps/web/src/components/**`,
+`apps/web/src/features/{today,settings,placeholder,errors}/**`, `apps/web/src/lib/{cn,platform,storage,queries,format,notify}.ts`,
+`apps/web/src/styles/tokens.css`, `apps/web/public/theme-init.js`, `apps/web/src/test/renderApp.tsx`,
+tests, `e2e/shell.spec.ts`. Changed: `index.html`, `main.tsx`, `router.tsx`, `styles/index.css`,
+`lib/queryClient.ts`, `e2e/foundation.spec.ts`, `biome.json` (Tailwind directives), root and web
+`package.json` (dependencies). Removed: `features/system/StatusPage.tsx` and its test.
+Docs: `docs/prd/ui.md` §2/§7, checklists (Phase 2 complete, task 3.24 added), FEATURES, STATE,
+README, AGENTS, technical-debt register.
+
+### Tests run
+
+| Command | Result |
+|---|---|
+| `npm run verify` | **Pass** — typecheck, Biome (127 files), 169 Vitest tests (web 48), build, smoke test |
+| `npx playwright test` | **Pass** — 56/56: sticky headers on 14 routes + sticky sections, navigation/keyboard (6), axe on 14 routes × 2 themes + dialogues + collapsed sidebar |
+| Mutation test: header moved into the scroll container | Sticky check **fails as intended** (header y 0 → −3870) |
+| Mutation test: injected axe violations | `image-alt`, `button-name` caught; low-contrast text below the fold was **not** — harness fixed |
+| Screenshots (Today, Settings, Notes, palette, cheat sheet; light/dark; collapsed sidebar) | Reviewed; label wrapping and brand truncation fixed |
+
+### Problems encountered
+
+- **axe skips colour contrast for elements outside the viewport.** Page bodies scroll internally, so
+  below-the-fold text was never checked. Fixed by growing the viewport to the page height before each
+  scan; verified with an injected low-contrast element. Recorded in `AGENTS.md` and `ui.md` §7.
+- Biome's CSS parser rejected Tailwind directives (`@theme`, `@custom-variant`) → enabled
+  `css.parser.tailwindDirectives`.
+- The SPA bundle grew to 625 kB (196 kB gzip) → TD-04, scheduled as task 3.24 before the editor lands.
+
+### Unresolved issues
+
+- TD-01, TD-02, TD-04 (`docs/backlog/technical-debt.md`); research questions RQ-01…RQ-12.
+
+### Next steps
+
+Phase 3 — notes and Markdown knowledge base, starting with code splitting (3.24).
