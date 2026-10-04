@@ -50,20 +50,31 @@ Full detail: `docs/prd/architecture.md`. Data model: `docs/prd/data-model.md`.
 
 ## 5. Commands
 
-Available from Phase 1 (the checklist records when each was verified):
+All verified on 4 October 2026 (Phase 1):
 
 | Command | What it does |
 |---|---|
 | `npm install` | Install all workspace dependencies |
-| `npm run dev` | Server (watch) + Vite dev server against `.dev-vault/` |
-| `npm run build` | Build the SPA and bundle the server |
-| `npm start` | Run the built server (serves the SPA) |
-| `npm run typecheck` | TypeScript 7 type-check of all packages |
-| `npm run lint` / `npm run format` | Biome lint / format |
-| `npm test` | Vitest unit, integration and component tests |
-| `npm run test:e2e` | Playwright end-to-end tests (builds first) |
-| `npm run verify` | typecheck → lint → test → build — **run before every commit** |
-| `run-web.bat` | One-click Windows launcher for daily use |
+| `npm run dev` | API server (`tsx watch`, port 4317) + Vite (port 5317) against `.dev-vault/` and `.dev-data/`; open the printed sign-in link |
+| `npm run build` | Build the SPA, then bundle the server into `apps/server/dist` (with `migrations/` and `web/`) |
+| `npm start` | Run the built server (serves the SPA and API on 4317) |
+| `npm run typecheck` | TypeScript 7 type-check of all packages and the E2E suite |
+| `npm run lint` / `npm run format` | Biome check / apply fixes and formatting |
+| `npm test` | Vitest unit, integration and component tests (`npx vitest run --project server` for one package) |
+| `npm run test:smoke` | Start the built bundle on a free port and check ping, auth, health and the SPA |
+| `npm run test:e2e` | Build, then Playwright end-to-end tests (Chromium; `npx playwright install chromium` once) |
+| `npm run verify` | typecheck → lint → test → build → smoke — **run before every commit** |
+| `run-web.bat` | One-click Windows launcher for daily use (`SKB_NO_BROWSER=1` to suppress the browser) |
+
+### Environment pitfalls (seen in the Claude Code / VS Code environment)
+
+- `ELECTRON_RUN_AS_NODE=1` is inherited from VS Code's extension host and makes `electron` run as
+  plain Node (`require('electron').app` is undefined). Unset it before launching Electron.
+- `NoDefaultCurrentDirectoryInExePath=1` stops `cmd.exe` finding `run-web.bat` by a relative name; call
+  batch files by their full path in automation (double-clicking in Explorer is unaffected).
+- Another local project may already use Vite's default port 5173 — this project's dev server uses 5317.
+- Never test against the user's real vault (`Documents\Study Knowledge Base`) or data directory
+  (`%APPDATA%\StudyKnowledgeBase`): set `SKB_VAULT` and `SKB_DATA_DIR` to temporary folders.
 
 ## 6. The phase and gate workflow
 

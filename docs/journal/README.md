@@ -17,4 +17,4 @@ Useful engineering history — not a diary.
 
 | Date | Model | Phase | Summary |
 |---|---|---|---|
-| [4 October 2026](./2026-10-04-claude-opus-5.5.md) | Claude Opus 5.5 | 0 → 1 | Research, PRD, ADRs, roadmap; start of Phase 1 |
+| [4 October 2026](./2026-10-04-claude-opus-5.5.md) | Claude Opus 5.5 | 0, 1 | Research, PRD, ADRs, roadmap (Phase 0); foundation build and Electron spike (Phase 1) |

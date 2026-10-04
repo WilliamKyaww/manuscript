@@ -40,7 +40,7 @@ Rules:
 | # | Phase | Depends on | Status |
 |---|---|---|---|
 | 0 | [Research & product discovery](./phase-00-research.md) | — | Complete |
-| 1 | [Foundation: repository, tooling, server and web skeletons](./phase-01-foundation.md) | 0 | Not started |
+| 1 | [Foundation: repository, tooling, server and web skeletons](./phase-01-foundation.md) | 0 | Complete |
 | 2 | [Application shell and layout system](./phase-02-app-shell.md) | 1 | Not started |
 | 3 | [Notes and Markdown knowledge base](./phase-03-notes.md) | 2 | Not started |
 | 4 | [Lexical search and quick navigation](./phase-04-search.md) | 3 | Not started |
