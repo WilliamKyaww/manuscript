@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { Page, StickySection } from './Page';
+import { Pane } from './Pane';
 
 describe('Page', () => {
   it('keeps the header outside the only scroll container (sticky-header rule)', () => {
@@ -46,6 +47,36 @@ describe('Page', () => {
       </Page>,
     );
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+  });
+});
+
+describe('Page with panes', () => {
+  it('gives every pane a fixed header outside its own scroll container', () => {
+    const { container } = render(
+      <Page title="Notes" layout="panes">
+        <Pane title="Files" actions={<button type="button">New</button>}>
+          <p>Tree</p>
+        </Pane>
+        <Pane title="Editor" hideTitle toolbar={<div>Modes</div>}>
+          <p>Text</p>
+        </Pane>
+      </Page>,
+    );
+    const body = container.querySelector('[data-page-body]');
+    expect(body?.getAttribute('data-layout')).toBe('panes');
+    expect(body?.className).toContain('overflow-hidden');
+    const panes = container.querySelectorAll('[data-pane]');
+    expect(panes).toHaveLength(2);
+    for (const pane of panes) {
+      const header = pane.querySelector('[data-pane-header]');
+      const paneBody = pane.querySelector('[data-pane-body]');
+      expect(paneBody?.contains(header ?? null)).toBe(false);
+      expect(header?.className).toContain('flex-none');
+      expect(paneBody?.className).toContain('overflow-y-auto');
+    }
+    expect(screen.getByRole('region', { name: 'Files' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Editor' })).toBeInTheDocument();
+    expect(screen.getByText('Modes').closest('[data-pane-toolbar]')).not.toBeNull();
   });
 });
 
