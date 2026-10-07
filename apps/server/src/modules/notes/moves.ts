@@ -7,6 +7,7 @@ import {
   linkTargetKey,
   normaliseKey,
   noteNameFromPath,
+  optionalString,
   relativeVaultPath,
   type TextEdit,
   toPortablePath,
@@ -110,9 +111,21 @@ export function planMove(
     for (const attachment of attachments)
       moves.push({ from: attachment.path, to: newPath(attachment.path), kind: 'attachment' });
 
+  // A note without a frontmatter title is titled by its file name, so a rename changes its title.
+  const titlesAfter = new Map<string, string>();
+  for (const note of notes) {
+    const frontmatter = JSON.parse(note.frontmatterJson) as Record<string, unknown>;
+    if (optionalString(frontmatter.title) === null) {
+      titlesAfter.set(note.id, noteNameFromPath(newPath(note.path)));
+    }
+  }
   // The link resolver as it will be after the move.
   const after = new LinkResolver(
-    repo.resolvable().map((note) => ({ ...note, path: newPath(note.path) })),
+    repo.resolvable().map((note) => ({
+      ...note,
+      path: newPath(note.path),
+      title: titlesAfter.get(note.id) ?? note.title,
+    })),
     repo.allAttachments().map((attachment) => ({ path: newPath(attachment.path) })),
   );
   const before = indexer.resolver;

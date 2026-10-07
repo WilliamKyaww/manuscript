@@ -284,6 +284,33 @@ describe('entries API: moves, folders and the trash', () => {
     expect(moved.links[0]?.resolution).toMatchObject({ kind: 'note', path: 'Notes/Raft.md' });
   });
 
+  it('rewrites links to a renamed note whose title comes from its file name', async () => {
+    await setUp({ 'Rename target.md': '# Target', 'Source.md': 'Points at [[Rename target]].' });
+    const preview = await call(MovePreviewSchema, 'POST', '/api/entries/move-preview', {
+      from: 'Rename target.md',
+      to: 'Renamed target.md',
+    });
+    expect(preview.rewrites.map((rewrite) => rewrite.source.path)).toEqual(['Source.md']);
+    await call(z.unknown(), 'POST', '/api/entries/move', {
+      from: 'Rename target.md',
+      to: 'Renamed target.md',
+      rewriteLinks: true,
+    });
+    expect(read('Source.md')).toBe('Points at [[Renamed target]].');
+  });
+
+  it('keeps links that still resolve by a frontmatter title', async () => {
+    await setUp({
+      'Old name.md': '---\ntitle: Paxos made simple\n---\n',
+      'Source.md': '[[Paxos made simple]]',
+    });
+    const preview = await call(MovePreviewSchema, 'POST', '/api/entries/move-preview', {
+      from: 'Old name.md',
+      to: 'New name.md',
+    });
+    expect(preview.rewrites).toEqual([]);
+  });
+
   it('moves folders with their notes and attachments, rewriting only links that would break', async () => {
     await setUp({
       'Week 1/Lecture.md':
