@@ -9,6 +9,7 @@ import { loadMigrations, migrate } from '../src/db/migrate';
 import { openDatabase } from '../src/db/sqlite';
 import { sessionCookieName } from '../src/security/guards';
 import { FixedClock } from '../src/shared/clock';
+import { createEventBus } from '../src/shared/events';
 import { silentLogger } from '../src/shared/logger';
 import { openVault } from '../src/vault/vault';
 
@@ -57,6 +58,7 @@ export function createTestContext(options: TestContextOptions = {}): TestContext
     ids,
     vault,
     db,
+    events: createEventBus(),
     version: '0.1.0-test',
     startedAt: clock.now(),
   };

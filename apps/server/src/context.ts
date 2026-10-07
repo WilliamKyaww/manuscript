@@ -2,6 +2,7 @@ import type { IdFactory } from '@skb/core';
 import type { ServerConfig } from './config/config';
 import type { SqlDatabase } from './db/sqlite';
 import type { Clock } from './shared/clock';
+import type { EventBus } from './shared/events';
 import type { Logger } from './shared/logger';
 import type { Vault } from './vault/vault';
 
@@ -16,6 +17,7 @@ export interface AppContext {
   readonly ids: IdFactory;
   readonly vault: Vault;
   readonly db: SqlDatabase;
+  readonly events: EventBus;
   readonly version: string;
   readonly startedAt: Date;
 }

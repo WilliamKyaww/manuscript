@@ -9,6 +9,7 @@ import { loadMigrations, migrate } from './db/migrate';
 import { openDatabase, type SqlDatabase } from './db/sqlite';
 import { loadOrCreateToken } from './security/token';
 import { type Clock, systemClock } from './shared/clock';
+import { createEventBus } from './shared/events';
 import type { Logger } from './shared/logger';
 import { openVault, type Vault } from './vault/vault';
 import { VERSION } from './version';
@@ -68,6 +69,7 @@ export async function startServer(
       ids,
       vault,
       db,
+      events: createEventBus((error) => logger.error('An event listener failed', { error })),
       version: VERSION,
       startedAt: clock.now(),
     };
