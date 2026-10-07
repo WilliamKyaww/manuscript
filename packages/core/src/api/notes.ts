@@ -136,6 +136,8 @@ export const CreateNoteBodySchema = z.object({
   lecture: z.string().trim().max(100).optional(),
 });
 export type CreateNoteBody = z.infer<typeof CreateNoteBodySchema>;
+/** What a client sends (ids as plain strings, validated by the server). */
+export type CreateNoteInput = z.input<typeof CreateNoteBodySchema>;
 
 export const createNoteEndpoint = defineEndpoint({
   method: 'POST',

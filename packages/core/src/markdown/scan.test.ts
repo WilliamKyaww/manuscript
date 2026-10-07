@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { analyseNote, maskNonProse, plainHeadingText, toSearchText } from './scan';
+import {
+  analyseNote,
+  maskNonProse,
+  obsidianCommentRanges,
+  plainHeadingText,
+  toSearchText,
+} from './scan';
 
 const targets = (text: string) => analyseNote(text).links.map((link) => link.target);
 
@@ -203,6 +209,17 @@ describe('analyseNote — words and search text', () => {
     expect(text).toContain('`code()`');
     expect(text).not.toContain('**');
     expect(text).not.toContain('[[');
+  });
+});
+
+describe('obsidianCommentRanges', () => {
+  it('finds comments, including multi-line ones, but not inside code', () => {
+    const text = 'a %%one%% b\n%%\ntwo\n\nlines\n%%\n`%%code%%`\n```\n%%fenced%%\n```';
+    const ranges = obsidianCommentRanges(text);
+    expect(ranges.map(({ start, end }) => text.slice(start, end))).toEqual([
+      '%%one%%',
+      '%%\ntwo\n\nlines\n%%',
+    ]);
   });
 });
 

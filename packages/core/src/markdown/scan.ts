@@ -103,7 +103,7 @@ function lineSpans(text: string): LineSpan[] {
 
 const FENCE_OPEN = /^ {0,3}(`{3,}|~{3,})(.*)$/;
 
-function maskBlocks(text: string, chars: string[], from: number): void {
+function maskBlocks(text: string, chars: string[], from: number, maths = true): void {
   let fence: { char: string; length: number } | null = null;
   let inMath = false;
   for (const line of lineSpans(text)) {
@@ -128,7 +128,7 @@ function maskBlocks(text: string, chars: string[], from: number): void {
       continue;
     }
     const trimmed = line.text.trimStart();
-    if (trimmed.startsWith('$$')) {
+    if (maths && trimmed.startsWith('$$')) {
       maskRange(chars, line.start, line.end);
       // `$$ x $$` on one line is a complete block; otherwise mask until the closing `$$`.
       if (!trimmed.slice(2).includes('$$')) inMath = true;
@@ -200,11 +200,33 @@ export function maskNonProse(text: string, from = 0): string {
   maskCodeSpans(chars);
   maskPattern(chars, /(?<!\\)\$\$[^\n]*?\$\$/g);
   // Inline maths: $x$ with no space just inside the dollars and no digit after (so "$5 and $6" is text).
-  maskPattern(
-    chars,
-    /(?<![\\$])\$(?=[^\s$])[^$\n]*?[^\s\\$]\$(?![\d$])|(?<![\\$])\$[^\s$\\]\$(?![\d$])/g,
-  );
+  maskPattern(chars, INLINE_MATH);
   return chars.join('');
+}
+
+/** Like `maskNonProse`, but masks only code (fenced blocks and code spans). */
+export function maskCode(text: string, from = 0): string {
+  const chars = text.split('');
+  maskRange(chars, 0, from);
+  maskBlocks(text, chars, from, false);
+  maskCodeSpans(chars);
+  return chars.join('');
+}
+
+/** Obsidian's inline maths: `$x$` with no space inside the dollars and no digit after the closing one. */
+export const INLINE_MATH =
+  /(?<![\\$])\$(?=[^\s$])[^$\n]*?[^\s\\$]\$(?![\d$])|(?<![\\$])\$[^\s$\\]\$(?![\d$])/g;
+
+/**
+ * Ranges of Obsidian comments (`%% … %%`, possibly over several lines) outside code, so a renderer
+ * can leave them out without touching `%%` that appears inside code.
+ */
+export function obsidianCommentRanges(text: string, from = 0): { start: number; end: number }[] {
+  const masked = maskCode(text, from);
+  return [...masked.matchAll(/%%[\s\S]*?%%/g)].map((match) => ({
+    start: match.index ?? 0,
+    end: (match.index ?? 0) + match[0].length,
+  }));
 }
 
 // ---------------------------------------------------------------------------------------------
