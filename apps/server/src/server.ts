@@ -7,6 +7,7 @@ import type { ServerConfig } from './config/config';
 import type { AppContext } from './context';
 import { loadMigrations, migrate } from './db/migrate';
 import { openDatabase, type SqlDatabase } from './db/sqlite';
+import { type AppModules, createModules } from './modules/index';
 import { loadOrCreateToken } from './security/token';
 import { type Clock, systemClock } from './shared/clock';
 import { createEventBus } from './shared/events';
@@ -22,6 +23,9 @@ export interface RunningServer {
   /** One-time sign-in URL for the browser (uses the Vite origin in development). */
   readonly bootstrapUrl: string;
   readonly context: AppContext;
+  readonly modules: AppModules;
+  /** Settles when the first index reconciliation after start-up has finished. */
+  readonly indexed: Promise<void>;
   close(): Promise<void>;
 }
 
@@ -30,6 +34,8 @@ export interface StartServerOptions {
   clock?: Clock;
   ids?: IdFactory;
   migrationsDir?: string;
+  /** Watch the vault for external edits (default true). */
+  watch?: boolean;
 }
 
 export class StartupError extends Error {
@@ -74,7 +80,8 @@ export async function startServer(
       startedAt: clock.now(),
     };
     let boundPort = config.port;
-    const { app } = createApp(context, { token, getPort: () => boundPort });
+    const modules = createModules(context);
+    const { app } = createApp(context, modules, { token, getPort: () => boundPort });
 
     const server = await listen(app.fetch, config, logger);
     boundPort = (server.address() as AddressInfo).port;
@@ -82,6 +89,10 @@ export async function startServer(
     const signInOrigin =
       config.mode === 'development' && config.devWebOrigin ? config.devWebOrigin : origin;
     const openedDb = db;
+    // Indexing runs after the server is listening, so start-up stays fast on large vaults.
+    const indexed = modules.start({ watch: options.watch ?? true }).catch((error) => {
+      logger.error('Indexing the vault failed', { error });
+    });
 
     let closing: Promise<void> | undefined;
     return {
@@ -90,15 +101,20 @@ export async function startServer(
       origin,
       bootstrapUrl: `${signInOrigin}/auth?token=${encodeURIComponent(token)}`,
       context,
+      modules,
+      indexed,
       close() {
         closing ??= new Promise<void>((resolve) => {
           server.close(() => resolve());
           server.closeAllConnections?.();
-        }).finally(() => {
-          openedDb.close();
-          vault.close();
-          logger.info(`${APP_NAME} stopped`);
-        });
+        })
+          .then(() => modules.close())
+          .catch((error) => logger.error('Error while stopping', { error }))
+          .finally(() => {
+            openedDb.close();
+            vault.close();
+            logger.info(`${APP_NAME} stopped`);
+          });
         return closing;
       },
     };

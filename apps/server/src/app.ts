@@ -5,6 +5,10 @@ import type { ApiRegistry } from './http/endpoint';
 import { securityHeaders } from './http/headers';
 import { errorHandler, problemResponse, toProblem } from './http/problem';
 import { staticSite } from './http/static';
+import { registerEventRoutes } from './modules/events/routes';
+import type { AppModules } from './modules/index';
+import { registerNotesRoutes } from './modules/notes/routes';
+import { registerSettingsRoutes } from './modules/settings/routes';
 import { registerSystemRoutes } from './modules/system/routes';
 import { apiGuard, authBootstrapHandler, hostGuard, type SecurityContext } from './security/guards';
 
@@ -20,7 +24,7 @@ export interface CreatedApp {
 }
 
 /** Composes middleware and module routes. Order matters: see comments. */
-export function createApp(ctx: AppContext, auth: AuthOptions): CreatedApp {
+export function createApp(ctx: AppContext, modules: AppModules, auth: AuthOptions): CreatedApp {
   const app = new Hono();
   const publicApiRoutes = new Set<string>();
   const security: SecurityContext = {
@@ -46,6 +50,9 @@ export function createApp(ctx: AppContext, auth: AuthOptions): CreatedApp {
     validateResponses: ctx.config.mode !== 'production',
   };
   registerSystemRoutes(registry, ctx);
+  registerSettingsRoutes(registry, modules.settings);
+  registerNotesRoutes(registry, modules.notes);
+  registerEventRoutes(registry, ctx);
 
   // Unknown API routes are problem-details 404s, never the SPA.
   app.all('/api/*', () => {

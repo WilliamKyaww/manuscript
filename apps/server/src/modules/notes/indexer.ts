@@ -52,6 +52,10 @@ export interface IndexBatch {
   removed?: readonly string[];
   addedFolders?: readonly string[];
   removedFolders?: readonly string[];
+  /** Notes the app itself moved: they keep their id even if their content changed too. */
+  moved?: readonly { from: string; to: string }[];
+  /** Ids to reuse for notes without a persisted id (e.g. restored from the trash), by path. */
+  idHints?: ReadonlyMap<string, string>;
 }
 
 export interface IndexResult {
@@ -69,6 +73,8 @@ export interface NoteIndexer {
   scan(): Promise<IndexResult>;
   /** Resolves once no scan is running. */
   whenIdle(): Promise<void>;
+  /** Stops a running scan at the next chunk boundary (shutdown); later scans run normally. */
+  stop(): void;
   /** Re-indexes specific files (watcher batches and the notes service). Synchronous. */
   apply(batch: IndexBatch, origin: ChangeOrigin): IndexResult;
   /** Writes the note's id into its frontmatter so other data can refer to it durably. */
@@ -93,6 +99,9 @@ interface BatchContext {
   origin: ChangeOrigin;
   /** Notes whose files have gone: matched against new files to detect moves, deleted at the end. */
   missing: Map<string, NoteRow>;
+  /** Rows of notes moved by the app, by new path. */
+  renames: Map<string, NoteRow>;
+  idHints: ReadonlyMap<string, string>;
   affectedKeys: Set<string>;
   changes: NoteChange[];
   structure: boolean;
@@ -147,6 +156,7 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
   let progress = { processed: 0, total: 0 };
   let lastScan: { at: string; ms: number } | null = null;
   let lastProgressEvent = 0;
+  let stopRequested = false;
 
   const absolute = (relativePath: string) => path.join(vault.root, ...relativePath.split('/'));
 
@@ -193,6 +203,8 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
   const newBatch = (origin: ChangeOrigin): BatchContext => ({
     origin,
     missing: new Map(),
+    renames: new Map(),
+    idHints: new Map(),
     affectedKeys: new Set(),
     changes: [],
     structure: false,
@@ -336,7 +348,14 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
     let id: string;
     let idPersisted = false;
     const stored = persistedIdOf(analysis.frontmatter);
-    if (stored) {
+    const renamed = existing ? undefined : batch.renames.get(relativePath);
+    if (renamed && (!stored || stored.id === renamed.id)) {
+      batch.missing.delete(renamed.path);
+      row = renamed;
+      movedFrom = renamed.path;
+      id = renamed.id;
+      idPersisted = stored !== null;
+    } else if (stored) {
       const owner = repo.byId(stored.id);
       if (owner && owner.path !== relativePath) {
         const ownerGone = batch.missing.has(owner.path) || !existsExactly(owner.path);
@@ -371,7 +390,8 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
         row = moved;
         movedFrom = moved.path;
       }
-      id = row?.id ?? ids('note');
+      const hinted = batch.idHints.get(relativePath);
+      id = row?.id ?? (hinted && !repo.byId(hinted) ? hinted : ids('note'));
       if (settings.notes().assignIds === 'on-index') idPersisted = rewrite(id);
     }
 
@@ -558,7 +578,15 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
 
   const apply = (input: IndexBatch, origin: ChangeOrigin): IndexResult => {
     const batch = newBatch(origin);
+    if (input.idHints) batch.idHints = input.idHints;
     transact(() => {
+      for (const { from, to } of input.moved ?? []) {
+        const row = repo.byPath(from);
+        if (row) {
+          batch.renames.set(to, row);
+          batch.missing.set(row.path, row);
+        }
+      }
       for (const folder of input.removedFolders ?? []) {
         for (const known of [...folderSet]) {
           if (known === folder || known.startsWith(`${folder}/`)) {
@@ -578,7 +606,11 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
           addFolderWithParents(folder, batch);
       }
       for (const removed of input.removed ?? []) safeIndexPath(removed, batch);
-      for (const changed of new Set(input.changed ?? [])) safeIndexPath(changed, batch);
+      const changed = new Set([
+        ...(input.moved ?? []).map((move) => move.to),
+        ...(input.changed ?? []),
+      ]);
+      for (const relativePath of changed) safeIndexPath(relativePath, batch);
       finishBatch(batch);
     });
     return publishChanges(batch);
@@ -632,6 +664,10 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
         ...attachmentChanges.map((file) => file.path),
       ];
       for (let index = 0; index < work.length; index += chunkSize) {
+        if (stopRequested) {
+          logger.info('Indexing stopped before it finished', { processed: progress.processed });
+          return publishChanges(batch);
+        }
         const chunk = work.slice(index, index + chunkSize);
         transact(() => {
           for (const relativePath of chunk) safeIndexPath(relativePath, batch);
@@ -673,10 +709,14 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
     classifier: () => classifier,
     absolute,
     scan() {
+      stopRequested = false;
       scanning ??= runScan().finally(() => {
         scanning = null;
       });
       return scanning;
+    },
+    stop() {
+      stopRequested = scanning !== null;
     },
     async whenIdle() {
       while (scanning) await scanning.catch(() => undefined);
