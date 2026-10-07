@@ -17,9 +17,13 @@ export interface EndpointSchemas {
   response: z.ZodType;
 }
 
+/** Success statuses an endpoint may declare (`201` for endpoints that create something). */
+export type SuccessStatus = 200 | 201;
+
 export interface Endpoint<S extends EndpointSchemas = EndpointSchemas> {
   readonly method: HttpMethod;
   readonly path: ApiPath;
+  readonly status: SuccessStatus;
   /** `none` only for endpoints that must work before authentication (e.g. readiness pings). */
   readonly auth: 'required' | 'none';
   readonly schemas: S;
@@ -29,13 +33,15 @@ export interface EndpointDefinition {
   method: HttpMethod;
   path: ApiPath;
   auth?: 'required' | 'none';
+  /** Defaults to 200. */
+  status?: SuccessStatus;
 }
 
 export function defineEndpoint<S extends EndpointSchemas>(
   definition: EndpointDefinition & S,
 ): Endpoint<S> {
-  const { method, path, auth = 'required', ...schemas } = definition;
-  return { method, path, auth, schemas: schemas as unknown as S };
+  const { method, path, auth = 'required', status = 200, ...schemas } = definition;
+  return { method, path, auth, status, schemas: schemas as unknown as S };
 }
 
 type ParamsInput<S> = S extends { params: infer P extends z.ZodType }

@@ -42,7 +42,7 @@ export function registerEndpoint<E extends Endpoint>(
   endpoint: E,
   handler: EndpointHandler<E>,
 ): void {
-  const { method, path, auth, schemas } = endpoint;
+  const { method, path, auth, status, schemas } = endpoint;
   if (auth === 'none') {
     if (path.includes(':'))
       throw new Error(`Public endpoints may not have path parameters: ${path}`);
@@ -74,6 +74,6 @@ export function registerEndpoint<E extends Endpoint>(
         );
       }
     }
-    return c.json(result as object, 200);
+    return c.json(result as object, status);
   });
 }
