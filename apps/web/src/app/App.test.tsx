@@ -24,9 +24,9 @@ describe('application shell', () => {
   });
 
   it('renders an honest placeholder for sections that are not built yet', async () => {
-    renderApp('/notes');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Notes' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Notes arrives in Phase 3' })).toBeInTheDocument();
+    renderApp('/library');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Library' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Library arrives in Phase 5' })).toBeInTheDocument();
   });
 
   it('shows a not-found page inside the shell for unknown addresses', async () => {
