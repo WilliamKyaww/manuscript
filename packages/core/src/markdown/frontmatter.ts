@@ -1,4 +1,4 @@
-import { Document, isMap, parse, parseDocument, type YAMLMap } from 'yaml';
+import { isMap, isNode, isScalar, parse, parseDocument, stringify } from 'yaml';
 
 /**
  * YAML frontmatter: splitting, lenient parsing and comment-preserving edits (data-model.md §3).
@@ -124,40 +124,77 @@ export function setFrontmatterValues(
   if (!split.present) {
     const additions = entries.filter(([, value]) => value !== undefined);
     if (additions.length === 0) return text;
-    // A created (not parsed) map uses block style: `id: …` rather than `{ id: … }`.
-    const document = new Document({});
-    for (const [key, value] of additions) document.set(key, value);
-    const yaml = document.toString({ lineWidth: 0 }).replace(/\n/g, eol);
+    const yaml = additions.map(([key, value]) => `${serialisePair(key, value)}${eol}`).join('');
     const bom = text.startsWith(BOM) ? BOM : '';
     return `${bom}---${eol}${yaml}---${eol}${text.slice(bom.length)}`;
   }
 
-  const parsed = parseDocument(split.yaml.replace(/\r\n/g, '\n'));
+  // Edits are made on an LF copy and converted back, so offsets are simple.
+  const source = split.yaml.replace(/\r\n/g, '\n');
+  const parsed = parseDocument(source);
   if (parsed.errors.length > 0) {
     throw new FrontmatterEditError('The frontmatter is not valid YAML, so it was not changed.');
   }
-  // Work with the general Document type: parsed documents type their nodes as read-only results.
-  const document = parsed as unknown as Document;
-  if (document.contents === null) document.contents = document.createNode({});
-  if (!isMap(document.contents)) {
+  const contents = parsed.contents;
+  if (contents !== null && (!isMap(contents) || contents.flow)) {
     throw new FrontmatterEditError(
-      'The frontmatter is not a set of key: value pairs, so it was not changed.',
+      'The frontmatter is not a list of key: value lines, so it was not changed.',
     );
   }
-  const map = document.contents as YAMLMap<unknown, unknown>;
+  const pairs = contents && isMap(contents) ? contents.items : [];
+
+  // Minimal text edits: only the lines of the keys being changed are touched, so the rest of the
+  // YAML keeps its exact formatting (quotes, flow lists, indentation, comments).
+  const edits: { offset: number; length: number; text: string }[] = [];
+  const atStart: string[] = [];
+  const atEnd: string[] = [];
   for (const [key, value] of entries) {
+    const pair = pairs.find((item) => isScalar(item.key) && item.key.value === key);
+    const keyRange = pair && isScalar(pair.key) ? pair.key.range : undefined;
+    const valueRange = pair && isNode(pair.value) ? pair.value.range : undefined;
     if (value === undefined) {
-      document.delete(key);
-    } else if (!document.has(key) && options.position === 'start') {
-      map.items.unshift(document.createPair(key, value));
+      if (!keyRange) continue;
+      const start = source.lastIndexOf('\n', keyRange[0] - 1) + 1;
+      const nodeEnd = valueRange?.[2] ?? keyRange[2];
+      const lineEnd = source.indexOf('\n', Math.max(nodeEnd - 1, start));
+      edits.push({
+        offset: start,
+        length: (lineEnd === -1 ? source.length : lineEnd + 1) - start,
+        text: '',
+      });
+    } else if (keyRange) {
+      const end = valueRange?.[1] ?? keyRange[1];
+      const keepNewline = source[end - 1] === '\n';
+      edits.push({
+        offset: keyRange[0],
+        length: end - keyRange[0],
+        text: serialisePair(key, value) + (keepNewline ? '\n' : ''),
+      });
     } else {
-      document.set(key, value);
+      (options.position === 'start' ? atStart : atEnd).push(`${serialisePair(key, value)}\n`);
     }
   }
-  let yaml = document.toString({ lineWidth: 0 });
-  if (map.items.length === 0) yaml = '';
-  yaml = yaml.replace(/\n/g, eol);
-  return text.slice(0, split.yamlStart) + yaml + text.slice(split.yamlEnd);
+  if (atStart.length > 0) edits.push({ offset: 0, length: 0, text: atStart.join('') });
+  if (atEnd.length > 0) {
+    const separator = source === '' || source.endsWith('\n') ? '' : '\n';
+    edits.push({ offset: source.length, length: 0, text: separator + atEnd.join('') });
+  }
+
+  let yaml = source;
+  for (const edit of [...edits].sort((a, b) => b.offset - a.offset)) {
+    yaml = yaml.slice(0, edit.offset) + edit.text + yaml.slice(edit.offset + edit.length);
+  }
+  if (parseDocument(yaml).errors.length > 0) {
+    throw new FrontmatterEditError(
+      'That change would make the frontmatter invalid, so it was not made.',
+    );
+  }
+  return text.slice(0, split.yamlStart) + yaml.replace(/\n/g, eol) + text.slice(split.yamlEnd);
+}
+
+/** One top-level `key: value` entry in YAML block style, without a trailing newline. */
+function serialisePair(key: string, value: unknown): string {
+  return stringify({ [key]: value }, { lineWidth: 0 }).replace(/\n$/, '');
 }
 
 /** Reads a string or list-of-strings property (e.g. `tags: [a, b]`, `tags: a, b`, or a YAML list). */

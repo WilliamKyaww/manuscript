@@ -52,7 +52,7 @@ describe('setFrontmatterValues', () => {
       { position: 'start' },
     );
     expect(result).toBe(
-      '---\nid: note_01J9Z3K4M2Q8R5T7V9X1Y3Z5A7\n# My comment\ntitle: "Consensus" # inline\ntags: [ exam, consensus ]\n---\nBody\n',
+      '---\nid: note_01J9Z3K4M2Q8R5T7V9X1Y3Z5A7\n# My comment\ntitle: "Consensus"   # inline\ntags: [exam, consensus]\n---\nBody\n',
     );
   });
 
@@ -75,6 +75,36 @@ describe('setFrontmatterValues', () => {
       '﻿---\r\ntitle: A\r\ntype: note\r\n---\r\nBody\r\n',
     );
     expect(setFrontmatterValues('Body\r\n', { id: 'x' })).toBe('---\r\nid: x\r\n---\r\nBody\r\n');
+  });
+
+  it('changes only the lines of the keys it edits', () => {
+    const text =
+      '---\n# kept\naliases: [Start, Dashboard]\ntags:\n- index\n- cs/x\ntitle: Old   # note\ncssclasses: wide\n---\n';
+    expect(setFrontmatterValues(text, { title: 'New: title' })).toBe(
+      '---\n# kept\naliases: [Start, Dashboard]\ntags:\n- index\n- cs/x\ntitle: "New: title"   # note\ncssclasses: wide\n---\n',
+    );
+    expect(setFrontmatterValues(text, { tags: ['a'] })).toBe(
+      '---\n# kept\naliases: [Start, Dashboard]\ntags:\n  - a\ntitle: Old   # note\ncssclasses: wide\n---\n',
+    );
+    expect(setFrontmatterValues(text, { title: undefined, aliases: undefined })).toBe(
+      '---\n# kept\ntags:\n- index\n- cs/x\ncssclasses: wide\n---\n',
+    );
+  });
+
+  it('adds keys at the end even without a final newline, and handles empty values', () => {
+    expect(setFrontmatterValues('---\na: 1\n---', { b: 2 })).toBe('---\na: 1\nb: 2\n---');
+    expect(setFrontmatterValues('---\nempty:\nnext: x\n---\n', { empty: 'filled' })).toBe(
+      '---\nempty: filled\nnext: x\n---\n',
+    );
+    expect(
+      setFrontmatterValues('---\n# only a comment\n---\n', { id: 'x' }, { position: 'start' }),
+    ).toBe('---\nid: x\n# only a comment\n---\n');
+  });
+
+  it('refuses frontmatter written as a single flow mapping', () => {
+    expect(() => setFrontmatterValues('---\n{a: 1}\n---\n', { id: 'x' })).toThrow(
+      FrontmatterEditError,
+    );
   });
 
   it('refuses to edit invalid YAML', () => {
