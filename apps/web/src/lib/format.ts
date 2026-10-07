@@ -27,3 +27,16 @@ const LONG_DATE = new Intl.DateTimeFormat('en-GB', {
 export function formatLongDate(date: Date): string {
   return LONG_DATE.format(date).replace(',', '');
 }
+
+const DATE_TIME = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
+/** e.g. "4 Oct 2026, 13:05" (British format, local time). */
+export function formatDateTime(date: Date): string {
+  return DATE_TIME.format(date);
+}

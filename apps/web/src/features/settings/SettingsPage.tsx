@@ -11,6 +11,7 @@ import { useApi } from '../../lib/api/context';
 import { cn } from '../../lib/cn';
 import { formatUptime } from '../../lib/format';
 import { healthQuery } from '../../lib/queries';
+import { NotesSettingsSection } from './NotesSettingsSection';
 
 const THEME_OPTIONS: {
   value: ThemePreference;
@@ -37,6 +38,7 @@ export function SettingsPage() {
   return (
     <Page title="Settings" description="Vault, appearance and information about this installation.">
       <VaultSection />
+      <NotesSettingsSection />
       <AppearanceSection />
       <KeyboardSection />
       <AboutSection />

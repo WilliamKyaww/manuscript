@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatLongDate, formatUptime, greeting } from './format';
+import { formatDateTime, formatLongDate, formatUptime, greeting } from './format';
 
 describe('formatUptime', () => {
   it.each([
@@ -25,5 +25,11 @@ describe('greeting', () => {
 describe('formatLongDate', () => {
   it('uses the British long date format', () => {
     expect(formatLongDate(new Date(2026, 9, 4))).toBe('Sunday 4 October 2026');
+  });
+});
+
+describe('formatDateTime', () => {
+  it('uses the British short format in local time', () => {
+    expect(formatDateTime(new Date(2026, 9, 4, 13, 5))).toBe('4 Oct 2026, 13:05');
   });
 });

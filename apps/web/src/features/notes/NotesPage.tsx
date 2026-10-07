@@ -2,7 +2,7 @@ import type { IndexStatus } from '@skb/core';
 import { folderOf, LinkResolver } from '@skb/core/markdown';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams, useSearch } from '@tanstack/react-router';
-import { ChevronsDownUp, FilePlus, FileSearch, FolderPlus, Paperclip } from 'lucide-react';
+import { ChevronsDownUp, FilePlus, FileSearch, FolderPlus, Paperclip, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels';
 import { Button } from '../../components/Button';
@@ -14,6 +14,7 @@ import { ApiError } from '../../lib/api/client';
 import { useApi } from '../../lib/api/context';
 import { onServerEvent } from '../../lib/events';
 import { noteQuery, treeQuery } from './api';
+import { TrashView } from './dialogs/TrashView';
 import { NoteWorkspace } from './NoteWorkspace';
 import { useNotesUi } from './notes-store';
 import { ancestorsOf, buildTree } from './tree/buildTree';
@@ -38,6 +39,7 @@ export function NotesPage() {
   const expandFolders = useNotesUi((state) => state.expandFolders);
   const collapseAll = useNotesUi((state) => state.collapseAll);
   const indexStatus = useIndexStatus(tree.data?.index);
+  const [trashOpen, setTrashOpen] = useState(false);
 
   const root = useMemo(
     () => (tree.data ? buildTree(tree.data, { attachments: showAttachments }) : null),
@@ -128,6 +130,12 @@ export function NotesPage() {
                   icon={<ChevronsDownUp size={15} />}
                   onClick={collapseAll}
                 />
+                <IconButton
+                  label="Trash"
+                  size="sm"
+                  icon={<Trash2 size={15} />}
+                  onClick={() => setTrashOpen(true)}
+                />
               </>
             }
           >
@@ -209,6 +217,7 @@ export function NotesPage() {
         </Panel>
       </Group>
       {actions.elements}
+      <TrashView open={trashOpen} onOpenChange={setTrashOpen} />
     </Page>
   );
 }

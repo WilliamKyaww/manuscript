@@ -129,6 +129,27 @@ test('renaming a note updates links to it', async ({ page }) => {
   await expect(page).toHaveURL(new RegExp(`/notes/${target.id}$`));
 });
 
+test('a deleted note goes to the trash and can be restored with the same id', async ({ page }) => {
+  const note = await createNote(page, 'Short-lived', 'Keep me.');
+  await page.goto(`/notes/${note.id}`);
+  await page.getByRole('treeitem', { name: 'Short-lived' }).focus();
+  await page.keyboard.press('Delete');
+  const confirm = page.getByRole('dialog', { name: 'Move to the trash?' });
+  await confirm.getByRole('button', { name: 'Move to trash' }).click();
+  await expect(page).toHaveURL(/\/notes$/);
+  expect(existsSync(vaultFile('Short-lived.md'))).toBe(false);
+  await expect(page.getByRole('treeitem', { name: 'Short-lived' })).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Trash' }).click();
+  const trash = page.getByRole('dialog', { name: 'Trash' });
+  const row = trash.getByRole('listitem').filter({ hasText: 'Short-lived.md' });
+  await row.getByRole('button', { name: 'Restore' }).click();
+  await expect.poll(() => readVault('Short-lived.md')).toBe('Keep me.');
+  await page.keyboard.press('Escape');
+  await page.getByRole('treeitem', { name: 'Short-lived' }).click();
+  await expect(page).toHaveURL(new RegExp(`/notes/${note.id}$`));
+});
+
 test('the editor and details panes keep their headers while scrolling a long note', async ({
   page,
 }) => {
