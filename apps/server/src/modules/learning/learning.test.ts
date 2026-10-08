@@ -121,6 +121,14 @@ describe('courses, modules and assessments', () => {
     expect(afterSubmitting.marks.pendingWeight).toBeCloseTo(0.6);
     await api.patch(`/api/assessments/${exam.id}`, { status: 'planned' }, 200, AssessmentSchema);
 
+    // A finished module archived out of the way still counts towards the year.
+    await api.patch(`/api/modules/${coc254.id}`, { archived: true }, 200, ModuleSummarySchema);
+    const [afterArchiving] = (
+      await api.get('/api/courses', z.object({ courses: z.array(CourseSchema) }))
+    ).courses;
+    expect(afterArchiving?.moduleCount).toBe(2);
+    expect(afterArchiving?.marks.secured).toBeCloseTo(69.333, 2);
+
     // Clearing a mark reopens the assessment.
     const reopened = await api.patch(
       `/api/assessments/${coursework.id}`,

@@ -124,7 +124,10 @@ export function ModulesPage() {
         </StickySection>
       ))}
       {archived.length > 0 && (
-        <StickySection title="Archived" description="Modules you have finished or dropped.">
+        <StickySection
+          title="Archived"
+          description="Finished modules. They still count towards their course's average; take a dropped module out of its course."
+        >
           <ul className="grid gap-3 md:grid-cols-2">
             {archived.map((module) => (
               <ModuleCard key={module.id} module={module} />

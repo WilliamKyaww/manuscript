@@ -130,7 +130,9 @@ export function createLearningService({ repo, clock, ids }: LearningDependencies
   const courseOf = (id: string): Course => {
     const row = repo.course(id);
     if (!row) throw new NotFoundError('That course does not exist.');
-    const modules = repo.modules().filter((module) => module.courseId === id && !module.archived);
+    // Archived modules still count: archiving tidies finished modules away, and their marks
+    // remain part of the year. A dropped module is taken out of its course instead.
+    const modules = repo.modules().filter((module) => module.courseId === id);
     const marks = courseSummary(
       modules.map((module) => ({
         credits: module.credits ?? 0,
