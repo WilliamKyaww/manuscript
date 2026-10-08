@@ -257,6 +257,20 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   `SourceParser` interface; a Phase 5 spike confirms PDF text extraction in Node and Electron with real
   lecture files before committing.
 - **Reason.** Locators (page/slide) are mandatory for citations; general extractors flatten structure.
+- **Spike result (task 5.01, 8 October 2026).** `pdfjs-dist` 6.4.299 (legacy build) and `unpdf` 1.8.1
+  were compared on two real, publicly available documents — a LaTeX paper (Raft, 18 pages) and lecture
+  slides (Stanford CS224N lecture 1, 40 slides, 5.5 MB) — in Node 24.14 and in Electron 44.5.1's Node
+  (24.21, `ELECTRON_RUN_AS_NODE`). Both produced identical text (91,448 and 14,988 characters, words and
+  line breaks intact, no stray ligature characters) in about 0.3 s and 0.2 s; image-only slides came
+  back empty, which is how pages without a text layer are detected. `unpdf` wraps pdf.js and adds
+  nothing we need, so **`pdfjs-dist` is used directly**: the legacy build on the server for text, the
+  standard build in the browser for viewing — one dependency for both. Its worker is imported into the
+  server bundle (pdf.js's in-process "fake worker") so the single-file bundle keeps working.
+- **DOCX change (8 October 2026).** `mammoth` depends on `argparse` 1.x and so on `sprintf-js`, which has
+  an unfixed denial-of-service advisory (only its command line uses it, but the dependency would ship).
+  DOCX is therefore read in-house like PPTX — `fflate` + `fast-xml-parser` over `word/document.xml` —
+  producing headings, paragraphs, lists and tables as Markdown-style text with heading-path locators.
+  This drops `mammoth` and `turndown`; rich formatting beyond that is not needed for search and study.
 
 ## ADR-0020 — Concepts are entities; relations carry provenance
 

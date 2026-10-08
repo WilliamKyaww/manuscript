@@ -1,6 +1,6 @@
 # Phase 5 — Source library and ingestion pipeline
 
-**Status:** Not started · **Branch:** `phase/05-sources`
+**Status:** In progress (from 8 October 2026) · **Branch:** `phase/05-sources`
 
 ## Objective
 Import lecture material (PDF, PPTX, DOCX, Markdown, text; optionally web pages), preserve originals,
@@ -17,7 +17,7 @@ Phase 4.
 ## Atomic tasks
 
 ### De-risking
-- [ ] **5.01** Spike: PDF text extraction with `pdfjs-dist` vs `unpdf` in Node and Electron's Node using real lecture PDFs; decision recorded (ADR-0019 update)
+- [x] **5.01** Spike: PDF text extraction with `pdfjs-dist` vs `unpdf` in Node and Electron's Node using real lecture PDFs; decision recorded (ADR-0019 update) — identical text from both on a paper and a 40-slide lecture deck in Node 24.14 and Electron 44.5's Node; `pdfjs-dist` used directly (ADR-0019 spike result)
 
 ### Foundations
 - [ ] **5.02** Migration: `sources`, `source_sections`, `chunks`, `chunks_fts`, `jobs`
@@ -30,7 +30,7 @@ Phase 4.
 - [ ] **5.07** Markdown and plain text
 - [ ] **5.08** PDF: per-page sections; "no text layer" detection; size/page limits
 - [ ] **5.09** PPTX: slide order from `presentation.xml`, titles, body text, speaker notes; zip-bomb guard
-- [ ] **5.10** DOCX: mammoth → HTML → Markdown → heading sections
+- [ ] **5.10** DOCX: in-house ``word/document.xml`` reader (fflate + fast-xml-parser) → Markdown-style text → heading sections (mammoth dropped: ADR-0019 "DOCX change")
 - [ ] **5.11** *(optional)* Web page import with safe fetch (http/https only, size cap, timeout, redirect checks) and readable-content extraction
 
 ### Pipeline
