@@ -5,7 +5,7 @@ import { create } from 'zustand';
 
 /**
  * Live updates from the server (`/api/events`, server-sent events): edits made in other programs,
- * moves, and index progress. Lists refresh themselves; the open editor subscribes for its note.
+ * moves, index progress, source imports and background job progress. Lists refresh themselves; the open editor subscribes for its note.
  */
 
 type Listener = (event: ServerEvent) => void;
@@ -46,6 +46,12 @@ export function applyEventToCache(queryClient: QueryClient, event: ServerEvent):
       void queryClient.invalidateQueries({ queryKey: ['notes', 'tree'] });
     return;
   }
+  if (event.type === 'sources.changed') {
+    void queryClient.invalidateQueries({ queryKey: ['sources'] });
+    return;
+  }
+  // Job progress is shown by the features that started the job (through onServerEvent).
+  if (event.type === 'job.updated') return;
   const external = event.notes.some((change) => change.origin === 'external');
   if (event.structure || external)
     void queryClient.invalidateQueries({ queryKey: ['notes', 'tree'] });
@@ -81,7 +87,13 @@ export function useServerEvents(): void {
       applyEventToCache(queryClient, parsed);
       dispatchServerEvent(parsed);
     };
-    for (const type of ['hello', 'vault.changed', 'index.status'] as const) {
+    for (const type of [
+      'hello',
+      'vault.changed',
+      'index.status',
+      'sources.changed',
+      'job.updated',
+    ] as const) {
       source.addEventListener(type, handle);
     }
     source.onopen = () => setConnected(true);
