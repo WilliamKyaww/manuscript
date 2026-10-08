@@ -126,3 +126,40 @@ describe('MarkdownPreview', () => {
     expect(container.querySelector('.footnotes')).not.toBeNull();
   });
 });
+
+describe('concept links (Phase 6)', () => {
+  const CONCEPT_ID = 'con_01J9Z3K4M2Q8R5T7V9X1Y3Z5A9';
+  const withConcepts = (target: string): PreviewTarget =>
+    target === 'CAP theorem'
+      ? { kind: 'concept', id: CONCEPT_ID, name: 'CAP theorem' }
+      : resolve(target);
+
+  it('links to the concept page and offers a concept for unresolved links', async () => {
+    const user = userEvent.setup();
+    const onCreateNote = vi.fn();
+    const onCreateConcept = vi.fn();
+    renderWithRouter(
+      <MarkdownPreview
+        content="See [[CAP theorem]] and [[Gossip]]; also [the theorem](CAP%20theorem)."
+        resolve={withConcepts}
+        noteId={NOTE_ID}
+        onCreateNote={onCreateNote}
+        onCreateConcept={onCreateConcept}
+      />,
+    );
+    const link = await screen.findByRole('link', { name: 'CAP theorem' });
+    expect(link).toHaveAttribute('href', `/concepts/${CONCEPT_ID}`);
+    expect(link).toHaveClass('wikilink-concept');
+    expect(screen.getByRole('link', { name: 'the theorem' })).toHaveAttribute(
+      'href',
+      `/concepts/${CONCEPT_ID}`,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Gossip' }));
+    await user.click(await screen.findByRole('menuitem', { name: /Create concept/ }));
+    expect(onCreateConcept).toHaveBeenCalledWith('Gossip');
+    await user.click(screen.getByRole('button', { name: 'Gossip' }));
+    await user.click(await screen.findByRole('menuitem', { name: /Create note/ }));
+    expect(onCreateNote).toHaveBeenCalledWith('Gossip');
+  });
+});

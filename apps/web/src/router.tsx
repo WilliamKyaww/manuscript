@@ -82,8 +82,45 @@ const sourceRoute = createRoute({
   validateSearch: validateViewerSearch,
 });
 
+const modulesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/modules',
+  component: lazyRouteComponent(() => import('./features/learning/ModulesPage'), 'ModulesPage'),
+});
+const moduleRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/modules/$moduleId',
+  component: lazyRouteComponent(
+    () => import('./features/learning/module/ModulePage'),
+    'ModulePage',
+  ),
+});
+const lectureRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/lectures/$lectureId',
+  component: lazyRouteComponent(() => import('./features/learning/LecturePage'), 'LecturePage'),
+});
+const conceptsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/concepts',
+  component: lazyRouteComponent(() => import('./features/concepts/ConceptsPage'), 'ConceptsPage'),
+});
+const conceptRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/concepts/$conceptId',
+  component: lazyRouteComponent(() => import('./features/concepts/ConceptPage'), 'ConceptPage'),
+});
+
 /** Sections that are not built yet get an honest placeholder; each phase replaces one with real routes. */
-const IMPLEMENTED = new Set(['today', 'notes', 'search', 'library', 'settings']);
+const IMPLEMENTED = new Set([
+  'today',
+  'notes',
+  'search',
+  'library',
+  'modules',
+  'concepts',
+  'settings',
+]);
 const placeholderRoutes = SECTIONS.filter((section) => !IMPLEMENTED.has(section.id)).map(
   (section) =>
     createRoute({
@@ -101,6 +138,11 @@ export const routeTree = rootRoute.addChildren([
   searchRoute,
   libraryRoute,
   sourceRoute,
+  modulesRoute,
+  moduleRoute,
+  lectureRoute,
+  conceptsRoute,
+  conceptRoute,
   ...placeholderRoutes,
 ]);
 

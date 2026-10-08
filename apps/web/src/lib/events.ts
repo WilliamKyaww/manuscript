@@ -48,6 +48,8 @@ export function applyEventToCache(queryClient: QueryClient, event: ServerEvent):
   }
   if (event.type === 'sources.changed') {
     void queryClient.invalidateQueries({ queryKey: ['sources'] });
+    // Modules and lectures list their sources.
+    void queryClient.invalidateQueries({ queryKey: ['learning'] });
     return;
   }
   // Job progress is shown by the features that started the job (through onServerEvent).
@@ -59,6 +61,9 @@ export function applyEventToCache(queryClient: QueryClient, event: ServerEvent):
   void queryClient.invalidateQueries({ queryKey: ['notes', 'mentions'] });
   void queryClient.invalidateQueries({ queryKey: ['notes', 'tags'] });
   void queryClient.invalidateQueries({ queryKey: ['notes', 'templates'] });
+  // A note's module and lecture properties and its links feed modules, lectures and concepts.
+  void queryClient.invalidateQueries({ queryKey: ['learning'] });
+  void queryClient.invalidateQueries({ queryKey: ['concepts'] });
   for (const change of event.notes) {
     // The open editor decides for itself; elsewhere a cached copy is simply out of date.
     if (change.origin === 'external' || change.kind !== 'updated') {

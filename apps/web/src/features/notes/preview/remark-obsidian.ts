@@ -16,6 +16,7 @@ import { SKIP, visit } from 'unist-util-visit';
 export type PreviewTarget =
   | { kind: 'note'; id: string; path: string }
   | { kind: 'attachment'; path: string; mediaType: string }
+  | { kind: 'concept'; id: string; name: string }
   | { kind: 'unresolved' };
 
 export interface ObsidianOptions {
@@ -63,6 +64,10 @@ function noteHref(id: string, heading: string | null): string {
   return `/notes/${encodeURIComponent(id)}${heading ? `#${headingSlug(heading)}` : ''}`;
 }
 
+function conceptHref(id: string): string {
+  return `/concepts/${encodeURIComponent(id)}`;
+}
+
 function wikilink(parts: WikilinkParts, options: ObsidianOptions): PhrasingContent {
   const { target, heading, alias } = parts;
   const label =
@@ -90,6 +95,17 @@ function wikilink(parts: WikilinkParts, options: ObsidianOptions): PhrasingConte
       url: fileUrl(resolved.path),
       children: [text(label)],
       data: { hProperties: { className: ['wikilink', 'wikilink-file'], dataFile: 'true' } },
+    };
+  }
+  if (resolved.kind === 'concept') {
+    return {
+      type: 'link',
+      url: conceptHref(resolved.id),
+      title: `Concept: ${resolved.name}`,
+      children: [text(label)],
+      data: {
+        hProperties: { className: ['wikilink', 'wikilink-concept'], dataConceptId: resolved.id },
+      },
     };
   }
   return {
@@ -241,6 +257,16 @@ function resolveRelative(
     };
   } else if (resolved.kind === 'attachment') {
     node.url = fileUrl(resolved.path);
+  } else if (resolved.kind === 'concept') {
+    node.url = conceptHref(resolved.id);
+    node.data = {
+      ...node.data,
+      hProperties: {
+        ...node.data?.hProperties,
+        className: ['internal-link', 'wikilink-concept'],
+        dataConceptId: resolved.id,
+      },
+    };
   } else if (node.type === 'link') {
     node.url = '#';
     node.data = {
