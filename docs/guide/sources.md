@@ -22,6 +22,9 @@ Names are made safe for every operating system (for example `:` becomes `-`) and
 anything: a second file with the same name becomes `week2 1.pptx`. Importing **the same file again**
 (byte for byte, whatever it is called) is recognised and nothing is copied twice.
 
+A source filed under a module appears on that module's page (**Modules**), and can be attached to one
+of its lectures (see [your course](./course.md#4-lectures)).
+
 The text is then extracted **in the background** — the list shows the progress, and you can keep
 working. A 40-slide lecture takes about a second; a long PDF a few seconds.
 
@@ -104,4 +107,3 @@ next time Manuscript starts — your originals are never only inside the applica
   recognition (Phase 11).
 - Making flashcards and questions from a page or a selection (Phases 8–9), and citations that open
   here (Phase 13).
-- Linking sources to lectures and modules of your course (Phase 6).

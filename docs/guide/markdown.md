@@ -50,7 +50,11 @@ For a bare name such as `[[Raft]]`, the first match wins:
 1. a note whose **file name** is `Raft` (`Raft.md`);
 2. a note whose frontmatter **`title`** is `Raft`;
 3. a note with **`aliases: [Raft]`**;
-4. an **attachment** called `Raft` (for file names with an extension, such as `diagram.png`).
+4. a **concept** called `Raft`, or with `Raft` among its aliases ([concepts](./course.md#6-concepts));
+5. an **attachment** called `Raft` (for file names with an extension, such as `diagram.png`).
+
+So a note always wins over a concept of the same name. Links to concepts have a dotted underline
+and open the concept page.
 
 For a target with a folder, such as `[[COC251/Paxos]]` or `[x](../Paxos.md)`:
 
@@ -61,8 +65,8 @@ For a target with a folder, such as `[[COC251/Paxos]]` or `[x](../Paxos.md)`:
 When several notes match at the same step, a note **in the linking note's own folder** wins, then the
 one with the **shortest path**. Such links are reported as ambiguous.
 
-`[[#Heading]]` links within the same note. A link to a note that does not exist yet is shown
-differently; selecting it in the preview creates the note next to the current one.
+`[[#Heading]]` links within the same note. A link that leads nowhere yet is shown differently;
+selecting it in the preview offers **Create note** (next to the current one) or **Create concept**.
 
 **Backlinks** (the Backlinks tab) list every note that links here, with the line containing the link.
 **Unlinked mentions** finds the note's name, title or aliases written as plain words in other notes
@@ -88,6 +92,9 @@ The **Properties** tab edits these with ordinary fields and keeps every other ke
 the lines of the keys you edit: comments, quoting, list style and the order of other keys stay exactly
 as they were. If the YAML is invalid, the note still opens and the problem is shown; properties can
 then be fixed with **Edit YAML** or in the editor.
+
+`module` and `lecture` file the note under a module and a lecture of [your course](./course.md)
+(`lecture: L03` is enough when `module` is given). Attaching a note on a lecture page writes them.
 
 ## 4. Note ids
 
@@ -181,7 +188,7 @@ when something needs them). Behaviour differs in a few places (ADR-0026):
 |---|---|---|
 | `Ctrl+S` | Editor | Save now |
 | `Ctrl+Click` on a wikilink | Editor | Open the linked note |
-| `[[` / `#` | Editor | Complete a note name / a tag (`Enter` accepts) |
+| `[[` / `#` | Editor | Complete a note or concept name / a tag (`Enter` accepts) |
 | `Esc`, then `Tab` | Editor | Move focus out of the editor (`Ctrl+M` toggles Tab moving focus) |
 | `Tab` / `Shift+Tab` | Editor | Indent / outdent |
 | `Ctrl+F` | Editor | Find and replace |
