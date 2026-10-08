@@ -1,5 +1,5 @@
 import type { Assessment } from '@skb/core';
-import { Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import { Badge, type BadgeTone } from '../../../components/Badge';
 import { Button } from '../../../components/Button';
@@ -29,6 +29,7 @@ export function AssessmentsSection({
   assessments: readonly Assessment[];
 }) {
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<Assessment | null>(null);
   const actions = useLearningActions();
   const total = assessments.reduce((sum, assessment) => sum + assessment.weight, 0);
   const today = isoDay(new Date());
@@ -90,9 +91,18 @@ export function AssessmentsSection({
                   )}
                 </td>
                 <td className="py-2 pr-3">
-                  <MarkInput assessment={assessment} />
+                  <MarkInput
+                    key={`${assessment.id}:${assessment.markAchieved}`}
+                    assessment={assessment}
+                  />
                 </td>
-                <td className="py-2 text-right">
+                <td className="whitespace-nowrap py-2 text-right">
+                  <IconButton
+                    label={`Edit ${assessment.title}`}
+                    icon={<Pencil size={14} />}
+                    size="sm"
+                    onClick={() => setEditing(assessment)}
+                  />
                   <IconButton
                     label={`Delete ${assessment.title}`}
                     icon={<Trash2 size={14} />}
@@ -108,6 +118,14 @@ export function AssessmentsSection({
         </table>
       )}
       {adding && <AssessmentDialog moduleId={moduleId} onClose={() => setAdding(false)} />}
+      {editing && (
+        <AssessmentDialog
+          key={editing.id}
+          moduleId={moduleId}
+          assessment={editing}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </StickySection>
   );
 }
@@ -144,15 +162,29 @@ function MarkInput({ assessment }: { assessment: Assessment }) {
   );
 }
 
-function AssessmentDialog({ moduleId, onClose }: { moduleId: string; onClose(): void }) {
+/** Adds an assessment, or edits `assessment` when given. */
+function AssessmentDialog({
+  moduleId,
+  assessment,
+  onClose,
+}: {
+  moduleId: string;
+  assessment?: Assessment;
+  onClose(): void;
+}) {
   const actions = useLearningActions();
-  const [title, setTitle] = useState('');
-  const [kind, setKind] = useState<(typeof KINDS)[number]>('exam');
-  const [weight, setWeight] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [dueTime, setDueTime] = useState('');
-  const [mark, setMark] = useState('');
+  const [title, setTitle] = useState(assessment?.title ?? '');
+  const [kind, setKind] = useState<(typeof KINDS)[number]>(assessment?.kind ?? 'exam');
+  // Rounded so that a stored 0.07 shows as 7, not 7.000000000000001.
+  const [weight, setWeight] = useState(
+    assessment ? String(Math.round(assessment.weight * 10_000) / 100) : '',
+  );
+  const [dueDate, setDueDate] = useState(assessment?.dueAt?.slice(0, 10) ?? '');
+  const [dueTime, setDueTime] = useState(assessment?.dueAt?.slice(11, 16) ?? '');
+  const [mark, setMark] = useState(assessment?.markAchieved?.toString() ?? '');
+  const [submitted, setSubmitted] = useState(assessment?.status === 'submitted');
   const [error, setError] = useState<string | null>(null);
+  const saving = assessment ? actions.updateAssessment : actions.createAssessment;
   const submit = (event: FormEvent) => {
     event.preventDefault();
     const percent = numberOrNull(weight);
@@ -160,20 +192,31 @@ function AssessmentDialog({ moduleId, onClose }: { moduleId: string; onClose(): 
       setError('Give the weight as a percentage of the module mark, more than 0 and at most 100.');
       return;
     }
-    actions.createAssessment.mutate(
-      {
-        moduleId,
-        title,
-        kind,
-        weight: percent / 100,
-        dueAt: dueDate ? (dueTime ? `${dueDate}T${dueTime}` : dueDate) : null,
-        markAchieved: numberOrNull(mark),
-      },
-      { onSuccess: onClose, onError: (reason) => setError(describeError(reason).description) },
-    );
+    const markAchieved = numberOrNull(mark);
+    // With a mark the server records it as marked.
+    const status: Assessment['status'] | undefined =
+      markAchieved === null ? (submitted ? 'submitted' : 'planned') : undefined;
+    const values = {
+      title,
+      kind,
+      weight: percent / 100,
+      dueAt: dueDate ? (dueTime ? `${dueDate}T${dueTime}` : dueDate) : null,
+      markAchieved,
+      ...(status ? { status } : {}),
+    };
+    const options = {
+      onSuccess: onClose,
+      onError: (reason: unknown) => setError(describeError(reason).description),
+    };
+    if (assessment) actions.updateAssessment.mutate({ id: assessment.id, ...values }, options);
+    else actions.createAssessment.mutate({ moduleId, ...values }, options);
   };
   return (
-    <Dialog open onOpenChange={(next) => !next && onClose()} title="Add assessment">
+    <Dialog
+      open
+      onOpenChange={(next) => !next && onClose()}
+      title={assessment ? 'Edit assessment' : 'Add assessment'}
+    >
       <form className="space-y-4" onSubmit={submit}>
         <div className="grid grid-cols-[1fr_9rem] gap-3">
           <Field label="Title">
@@ -246,13 +289,23 @@ function AssessmentDialog({ moduleId, onClose }: { moduleId: string; onClose(): 
             )}
           </Field>
         </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={submitted && mark.trim() === ''}
+            disabled={mark.trim() !== ''}
+            onChange={(event) => setSubmitted(event.target.checked)}
+          />
+          Submitted, waiting for the mark
+          <span className="text-xs text-muted">— it leaves the upcoming deadlines</span>
+        </label>
         <FormError error={error} />
         <div className="flex justify-end gap-2">
           <Button type="button" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" loading={actions.createAssessment.isPending}>
-            Add assessment
+          <Button type="submit" variant="primary" loading={saving.isPending}>
+            {assessment ? 'Save' : 'Add assessment'}
           </Button>
         </div>
       </form>

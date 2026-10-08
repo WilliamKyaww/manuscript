@@ -260,6 +260,33 @@ describe('modules', () => {
     );
   });
 
+  it('edits an assessment and records it as submitted', async () => {
+    const server = fakeServer();
+    renderApp(`/modules/${MODULE}`, server.fetch);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Edit Exam' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit assessment' });
+    expect(within(dialog).getByLabelText('Weight (%)')).toHaveValue('60');
+    expect(within(dialog).getByLabelText('Due')).toHaveValue('2026-10-14');
+    expect(within(dialog).getByLabelText('Time')).toHaveValue('09:30');
+    await user.clear(within(dialog).getByLabelText('Weight (%)'));
+    await user.type(within(dialog).getByLabelText('Weight (%)'), '55');
+    await user.click(within(dialog).getByLabelText(/Submitted, waiting for the mark/));
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() =>
+      expect(server.calls.find((call) => call.method === 'PATCH')).toMatchObject({
+        path: `/api/assessments/${EXAM}`,
+        body: {
+          title: 'Exam',
+          weight: 0.55,
+          dueAt: '2026-10-14T09:30',
+          markAchieved: null,
+          status: 'submitted',
+        },
+      }),
+    );
+  });
+
   it('attaches an existing note to a lecture', async () => {
     const server = fakeServer();
     renderApp(`/lectures/${LECTURE}`, server.fetch);
