@@ -37,7 +37,7 @@ describe('Page', () => {
 
   it('sets the document title', () => {
     render(<Page title="Settings">x</Page>);
-    expect(document.title).toBe('Settings · Study Knowledge Base');
+    expect(document.title).toBe('Settings · Manuscript');
   });
 
   it('renders exactly one level-one heading', () => {

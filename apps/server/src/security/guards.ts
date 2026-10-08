@@ -1,4 +1,4 @@
-import { ForbiddenError, UnauthenticatedError } from '@skb/core';
+import { APP_NAME, ForbiddenError, UnauthenticatedError } from '@skb/core';
 import type { Context, MiddlewareHandler } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
 import { tokensEqual } from './token';
@@ -129,7 +129,7 @@ export function authBootstrapHandler(security: SecurityContext) {
     const token = c.req.query('token');
     if (!tokensEqual(security.token, token)) {
       return c.html(
-        '<!doctype html><meta charset="utf-8"><title>Study Knowledge Base</title>' +
+        `<!doctype html><meta charset="utf-8"><title>${APP_NAME}</title>` +
           '<p>This sign-in link is not valid. Start the application with <code>run-web.bat</code>, ' +
           'or open the link printed in the server window.</p>',
         403,

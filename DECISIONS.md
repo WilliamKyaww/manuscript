@@ -27,11 +27,12 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 | [0019](#adr-0019--ingestion-parsers-with-a-phase-5-spike) | Ingestion parsers, with a Phase 5 spike | Accepted | 2026-10-04 |
 | [0020](#adr-0020--concepts-are-entities-relations-carry-provenance) | Concepts are entities; relations carry provenance | Accepted | 2026-10-04 |
 | [0021](#adr-0021--transparent-heuristic-mastery-never-asserted-by-ai) | Transparent heuristic mastery, never asserted by AI | Accepted | 2026-10-04 |
-| [0022](#adr-0022--provisional-name-study-knowledge-base-scope-skb) | Provisional name "Study Knowledge Base", scope `@skb` | Accepted | 2026-10-04 |
+| [0022](#adr-0022--provisional-name-study-knowledge-base-scope-skb) | Provisional name "Study Knowledge Base", scope `@skb` | Superseded by ADR-0027 | 2026-10-04 |
 | [0023](#adr-0023--git-workflow-phase-branches-merged-at-gates-no-ai-trailers) | Git workflow: phase branches merged at gates; no AI trailers | Accepted | 2026-10-04 |
 | [0024](#adr-0024--shared-zod-api-contracts-instead-of-hono-rpc) | Shared Zod API contracts instead of Hono RPC | Accepted | 2026-10-04 |
 | [0025](#adr-0025--note-ids-are-written-into-files-only-when-needed) | Note ids are written into files only when needed | Accepted | 2026-10-07 |
 | [0026](#adr-0026--obsidian-compatible-dialect-with-recorded-differences) | Obsidian-compatible dialect with recorded differences | Accepted | 2026-10-07 |
+| [0027](#adr-0027--the-product-is-called-manuscript-internal-identifiers-keep-skb) | The product is called Manuscript; internal identifiers keep `skb` | Accepted | 2026-10-08 |
 
 ---
 
@@ -281,6 +282,8 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 
 ## ADR-0022 — Provisional name "Study Knowledge Base", scope `@skb`
 
+**Superseded by ADR-0027** (8 October 2026).
+
 - **Context.** The repository is `study-knowledge-base`; the brief calls the product a "Personal
   Knowledge & Learning OS" but gives no brand name.
 - **Decision.** Display name **Study Knowledge Base**, package scope `@skb/*`, vault metadata folder
@@ -356,3 +359,29 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 - **Consequences.** A link that resolves only by `title` will look unresolved in Obsidian (documented in
   `docs/guide/markdown.md` §10). A setting to allow remote images and block-level navigation are in the
   backlog.
+
+## ADR-0027 — The product is called Manuscript; internal identifiers keep `skb`
+
+- **Context.** ADR-0022 chose "Study Knowledge Base" provisionally (research question RQ-11). On
+  8 October 2026 the user named the product **Manuscript**. The old name appears in display strings,
+  default folders (`Documents\Study Knowledge Base`, `%APPDATA%\StudyKnowledgeBase`), the ping
+  identifier and the repository name, and as the abbreviation `skb` in technical identifiers: the
+  vault folder `.skb/`, the `skb-id` frontmatter key, the `@skb/*` packages, `SKB_*` environment
+  variables, cookie names and problem-type URNs. The user had already run the app, so folders under
+  the old name exist (with a note in them).
+- **Options.** (a) Rename display strings only; (b) rename everything, including persisted
+  identifiers, with migrations; (c) rename everything users see, keep technical identifiers.
+- **Decision.** (c). Display name `APP_NAME = 'Manuscript'`, machine identifier `APP_ID = 'manuscript'`
+  (ping, `vault.json` `createdBy`, Linux data folder), default vault `Documents\Manuscript`, data folder
+  `%APPDATA%\Manuscript` (macOS `~/Library/Application Support/Manuscript`), root package
+  `manuscript`, GitHub repository `WilliamKyaww/manuscript`. When no folder with the new name exists
+  but one with the old name does, the app and the launcher keep using the old one and say so at
+  start-up; nothing is moved automatically. `skb` stays as the internal prefix: `.skb/`, `skb-id`,
+  `skb.db`, `@skb/*`, `SKB_*`, `skb_session_*`, `urn:skb:problem:*`.
+- **Reason.** Users see the new name everywhere they look, while files already written into vaults
+  (`.skb/`, `skb-id`) and every configuration that uses `SKB_*` keep working with no migration — the
+  only kind of change that cannot lose data. A three-letter internal prefix need not match the brand.
+- **Consequences.** The legacy names live in one constant (`LEGACY_APP_NAMES`) and two small fallbacks
+  (server configuration and the launcher, TD-01). Renaming the default folders is up to the user
+  (`docs/guide/README.md`). If a later phase wants the internal prefix renamed too, it needs a vault
+  migration (rename `.skb/`, read both id keys) and a new ADR.

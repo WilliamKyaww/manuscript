@@ -19,4 +19,4 @@ Useful engineering history — not a diary.
 |---|---|---|---|
 | [4 October 2026](./2026-10-04-claude-opus-5.5.md) | Claude Opus 5.5 | 0, 1, 2 | Research, PRD, ADRs, roadmap (Phase 0); foundation and Electron spike (Phase 1); application shell (Phase 2) |
 | [7 October 2026](./2026-10-07-claude-opus-5.5.md) | Claude Opus 5.5 | 3 | Markdown core, notes index and watcher, notes API, editor/preview/tree UI, code splitting, E2E, Obsidian and performance checks |
-| [8 October 2026](./2026-10-08-claude-opus-5.5.md) | Claude Opus 5.5 | 3 | `.skb` rebuild test, Markdown guide, ADR-0025/0026, documentation, gate and merge |
+| [8 October 2026](./2026-10-08-claude-opus-5.5.md) | Claude Opus 5.5 | 3, — | `.skb` rebuild test, Markdown guide, ADR-0025/0026, gate and merge; renamed the project to Manuscript (ADR-0027) |

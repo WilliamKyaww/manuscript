@@ -1,7 +1,7 @@
 # Notes and Markdown
 
 Your notes are ordinary Markdown files in your vault folder. You can edit them here, in Obsidian, in
-VS Code or in any text editor — Study Knowledge Base picks up changes made elsewhere within about a
+VS Code or in any text editor — Manuscript picks up changes made elsewhere within about a
 second. This page describes the Markdown it understands and how notes behave.
 
 ## Contents

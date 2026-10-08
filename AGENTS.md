@@ -1,4 +1,4 @@
-# AGENTS.md — working on Study Knowledge Base
+# AGENTS.md — working on Manuscript
 
 Instructions for coding agents (and humans) working in this repository. Read this file fully before
 changing anything.
@@ -77,8 +77,12 @@ All verified on 4 October 2026 (Phase 1):
 - axe (`@axe-core/playwright`) only checks colour contrast for elements inside the viewport, and page
   bodies scroll internally: grow the viewport to the page height first (see `fitViewportToContent` in
   `e2e/shell.spec.ts`), otherwise below-the-fold content is silently skipped.
-- Never test against the user's real vault (`Documents\Study Knowledge Base`) or data directory
-  (`%APPDATA%\StudyKnowledgeBase`): set `SKB_VAULT` and `SKB_DATA_DIR` to temporary folders.
+- Never test against the user's real vault (`Documents\Manuscript`, or the pre-rename
+  `Documents\Study Knowledge Base`) or data directory (`%APPDATA%\Manuscript` or
+  `%APPDATA%\StudyKnowledgeBase`): set `SKB_VAULT` and `SKB_DATA_DIR` to temporary folders.
+- The product is **Manuscript** (ADR-0027), but internal identifiers keep the `skb` prefix (`.skb/`,
+  `skb-id`, `@skb/*`, `SKB_*`). Do not rename them without a vault migration and a new ADR. The local
+  folder may still be called `study-knowledge-base` until the user renames it.
 - Python's `write_text` on Windows writes CRLF line endings unless given `newline='\n'`; Biome then
   rejects the file. Git normalises committed text to LF, but the working copy must be LF too.
 - Shell here-documents in the agent's Bash tool can collapse a double backslash to a single one,

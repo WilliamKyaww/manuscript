@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { APP_NAME, AppError } from '@skb/core';
+import { APP_NAME, AppError, LEGACY_APP_NAMES } from '@skb/core';
 import { ConfigError, resolveConfig, type ServerConfig } from './config/config';
 import { openInBrowser } from './platform/browser';
 import { type RunningServer, StartupError, startServer } from './server';
@@ -63,6 +63,13 @@ function printReady(running: RunningServer, logger: Logger): void {
     vault: running.context.vault.root,
     mode: running.config.mode,
   });
+  if (path.basename(running.context.vault.root) === LEGACY_APP_NAMES.display) {
+    logger.info(
+      `Using the vault folder from before the rename to ${APP_NAME}. To use the new name, close the ` +
+        `app and rename the folder to "${APP_NAME}" (ADR-0027).`,
+      { vault: running.context.vault.root },
+    );
+  }
   // Printed directly (never through the logger) so that the sign-in link is never written to log files.
   process.stdout.write(
     `\n  Open ${APP_NAME}: ${running.bootstrapUrl}\n  Press Ctrl+C to stop.\n\n`,

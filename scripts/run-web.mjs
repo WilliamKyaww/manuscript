@@ -10,7 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const APP = 'Study Knowledge Base';
+const APP = 'Manuscript';
 const MIN_NODE_MAJOR = 24;
 const root = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const serverBundle = path.join(root, 'apps', 'server', 'dist', 'server.mjs');
@@ -47,21 +47,32 @@ function newestMtime(target) {
   return newest;
 }
 
-/** Mirrors defaultDataDir() in apps/server/src/config/config.ts. */
+/**
+ * Mirrors defaultDataDir() in apps/server/src/config/config.ts (TD-01), including the fallback to a
+ * folder created before the project was renamed (ADR-0027).
+ */
 function dataDir() {
   if (process.env.SKB_DATA_DIR) return path.resolve(process.env.SKB_DATA_DIR);
   const home = os.homedir();
+  const prefer = (base, current, legacy) => {
+    const currentPath = path.join(base, current);
+    const legacyPath = path.join(base, legacy);
+    return !existsSync(currentPath) && existsSync(legacyPath) ? legacyPath : currentPath;
+  };
   if (process.platform === 'win32') {
-    return path.join(
-      process.env.APPDATA ?? path.join(home, 'AppData', 'Roaming'),
+    const base = process.env.APPDATA ?? path.join(home, 'AppData', 'Roaming');
+    return prefer(base, 'Manuscript', 'StudyKnowledgeBase');
+  }
+  if (process.platform === 'darwin') {
+    return prefer(
+      path.join(home, 'Library', 'Application Support'),
+      'Manuscript',
       'StudyKnowledgeBase',
     );
   }
-  if (process.platform === 'darwin') {
-    return path.join(home, 'Library', 'Application Support', 'StudyKnowledgeBase');
-  }
-  return path.join(
+  return prefer(
     process.env.XDG_CONFIG_HOME ?? path.join(home, '.config'),
+    'manuscript',
     'study-knowledge-base',
   );
 }
@@ -73,7 +84,8 @@ async function alreadyRunning() {
     });
     if (!response.ok) return false;
     const body = await response.json();
-    return body?.app === 'study-knowledge-base';
+    // Also recognise an instance started before the rename (ADR-0027).
+    return body?.app === 'manuscript' || body?.app === 'study-knowledge-base';
   } catch {
     return false;
   }

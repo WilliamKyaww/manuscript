@@ -2,7 +2,7 @@
   "name": "@skb/core",
   "version": "0.1.0",
   "private": true,
-  "description": "Shared schemas, types and pure logic for Study Knowledge Base.",
+  "description": "Shared schemas, types and pure logic for Manuscript.",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",

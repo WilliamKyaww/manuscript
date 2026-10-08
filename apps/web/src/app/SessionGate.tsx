@@ -21,7 +21,7 @@ export function SessionGate({ children }: { children: ReactNode }) {
   if (health.isPending) {
     return (
       <FullScreen>
-        <Spinner size="lg" label="Starting Study Knowledge Base" className="text-accent" />
+        <Spinner size="lg" label="Starting Manuscript" className="text-accent" />
         <h1 className="mt-4 text-base font-medium text-muted">Connecting to the local server…</h1>
       </FullScreen>
     );
@@ -54,7 +54,7 @@ export function SessionGate({ children }: { children: ReactNode }) {
       </h1>
       <p className="mt-2 max-w-md text-sm text-muted" role="alert">
         {unreachable
-          ? 'Make sure Study Knowledge Base is running (run-web.bat, or npm run dev while developing), then try again.'
+          ? 'Make sure Manuscript is running (run-web.bat, or npm run dev while developing), then try again.'
           : (error?.message ?? 'An unknown error occurred.')}
       </p>
       <Button

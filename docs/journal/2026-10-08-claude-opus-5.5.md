@@ -54,3 +54,63 @@ None new beyond ADR-0025/0026 (recorded with yesterday's work).
 
 Phase 4 — lexical search and quick navigation on top of the `notes_fts` table: create
 `phase/04-search` from `main`.
+
+## Session 6 — renaming the project to Manuscript
+
+- **Date:** Thursday 8 October 2026
+- **Time:** afternoon (after the Phase 3 merge)
+- **Agent model:** Claude Opus 5.5 (`claude-opus-5-5`)
+- **Phase:** between phases (housekeeping before Phase 4)
+- **Work performed:** renamed the product from "Study Knowledge Base" to **Manuscript** in the
+  application, the documentation and on GitHub, without disturbing the folders the user already uses.
+
+### What was done
+
+1. **Application.** `APP_NAME = 'Manuscript'`, `APP_ID = 'manuscript'`; page titles, sidebar, sign-in
+   and error messages, favicon title, launcher (`run-web.bat`, `scripts/run-web.mjs`), package names and
+   descriptions. Default folders are now `Documents\Manuscript` and `%APPDATA%\Manuscript`.
+2. **No orphaned data.** The user had already run the app (a vault with `Test1.md` in
+   `Documents\Study Knowledge Base`, a token in `%APPDATA%\StudyKnowledgeBase`, and the server still
+   running). When only the old folders exist they keep being used (server and launcher), the server
+   says so at start-up, and the launcher still recognises a running instance from before the rename.
+   Nothing was moved or stopped.
+3. **GitHub.** The private repository `WilliamKyaww/study-knowledge-base` was renamed to
+   `WilliamKyaww/manuscript` through the GitHub API (the GitHub CLI is not installed; the call used the
+   credential git already stores, without printing it) and `origin` was updated. GitHub redirects the
+   old URL. Nothing has been pushed yet; the repository has no branches.
+4. **Documentation.** ADR-0027 (supersedes ADR-0022), README, AGENTS, the architecture PRD, the guides
+   (with how to rename the folders), RQ-11 marked answered, the Phase 0 checklist annotated.
+
+### Important decisions
+
+- **ADR-0027:** everything users see says Manuscript; internal identifiers keep the `skb` prefix
+  (`.skb/`, `skb-id`, `skb.db`, `@skb/*`, `SKB_*`, cookie names, problem URNs) so existing vaults and
+  configuration need no migration.
+
+### Files changed
+
+`packages/core/src/app.ts`; `apps/server/src/{config/config,main,vault/vault,security/guards}.ts` and
+tests; `apps/web/{index.html,public/favicon.svg}`, `src/app/{SessionGate,Sidebar}.tsx`,
+`src/lib/{notify,api/client}.ts`, `src/components/Page.test.tsx`; `run-web.bat`, `scripts/run-web.mjs`;
+package manifests and lockfile; `DECISIONS.md`, `README.md`, `AGENTS.md`, `STATE.md`,
+`docs/prd/architecture.md`, `docs/guide/*`, `docs/backlog/research-questions.md`,
+`docs/checklist/phase-00-research.md`.
+
+### Tests run
+
+| Command | Result |
+|---|---|
+| `npx vitest run` | **Pass** — 327 tests (new: legacy-folder fallback) |
+| `npm run verify` | **Pass** — type-check, Biome, 327 tests, build, smoke |
+| `npx playwright test` | **Pass** — 63/63 |
+
+### Unresolved issues
+
+- The local project folder is still called `study-knowledge-base`; the user will rename it (renaming it
+  from inside the running session would break the session).
+- The user's vault and settings are still in the old folders; renaming them is optional
+  (`docs/guide/README.md`).
+
+### Next steps
+
+Phase 4 — lexical search and quick navigation.

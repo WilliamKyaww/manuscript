@@ -36,7 +36,7 @@ export function Sidebar() {
         {!collapsed && (
           <Link to="/" className="flex min-w-0 flex-1 items-center gap-2 rounded-md font-semibold">
             <img src="/favicon.svg" alt="" className="size-7" />
-            <span className="truncate text-sm">Study Knowledge Base</span>
+            <span className="truncate text-sm">Manuscript</span>
           </Link>
         )}
         <IconButton

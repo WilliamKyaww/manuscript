@@ -42,7 +42,7 @@ describe('openVault', () => {
         id: vault.id,
         layoutVersion: 1,
         createdAt: '2026-10-04T12:00:00.000Z',
-        createdBy: 'study-knowledge-base@0.1.0',
+        createdBy: 'manuscript@0.1.0',
       });
       expect(vault.paths.database).toBe(path.join(root, '.skb', 'skb.db'));
     } finally {

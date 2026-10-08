@@ -23,8 +23,8 @@ describe('resolveConfig', () => {
     expect(config.mode).toBe('production');
     expect(config.host).toBe('127.0.0.1');
     expect(config.port).toBe(4317);
-    expect(config.vaultPath).toBe(path.join(home, 'Documents', 'Study Knowledge Base'));
-    expect(config.dataDir).toBe(path.join(home, '.config', 'study-knowledge-base'));
+    expect(config.vaultPath).toBe(path.join(home, 'Documents', 'Manuscript'));
+    expect(config.dataDir).toBe(path.join(home, '.config', 'manuscript'));
     expect(config.webDir).toBe(path.resolve('/repo/dist/web'));
     expect(config.logLevel).toBe('info');
     expect(config.openBrowser).toBe(false);
@@ -44,7 +44,27 @@ describe('resolveConfig', () => {
   it('places app data in %APPDATA% on Windows', () => {
     const appData = path.resolve('/Users/will/AppData/Roaming');
     const config = resolveConfig(input({ platform: 'win32', env: { APPDATA: appData } }));
-    expect(config.dataDir).toBe(path.join(appData, 'StudyKnowledgeBase'));
+    expect(config.dataDir).toBe(path.join(appData, 'Manuscript'));
+  });
+
+  it('keeps using folders created under the old name when no new ones exist (ADR-0027)', () => {
+    const appData = path.resolve('/Users/will/AppData/Roaming');
+    const legacyVault = path.join(home, 'Documents', 'Study Knowledge Base');
+    const legacyData = path.join(appData, 'StudyKnowledgeBase');
+    const onlyLegacy = (candidate: string) => candidate === legacyVault || candidate === legacyData;
+    const config = resolveConfig(
+      input({ platform: 'win32', env: { APPDATA: appData }, exists: onlyLegacy }),
+    );
+    expect(config.vaultPath).toBe(legacyVault);
+    expect(config.dataDir).toBe(legacyData);
+
+    // Once a folder with the new name exists, it wins.
+    const both = (candidate: string) => onlyLegacy(candidate) || candidate.includes('Manuscript');
+    const renamed = resolveConfig(
+      input({ platform: 'win32', env: { APPDATA: appData }, exists: both }),
+    );
+    expect(renamed.vaultPath).toBe(path.join(home, 'Documents', 'Manuscript'));
+    expect(renamed.dataDir).toBe(path.join(appData, 'Manuscript'));
   });
 
   it('lets CLI flags win over environment variables', () => {
