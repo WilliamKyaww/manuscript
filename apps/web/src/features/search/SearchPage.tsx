@@ -32,6 +32,7 @@ const FILTER_LABELS: Record<FilterKey, string> = {
   type: 'Type',
   folder: 'Folder',
   module: 'Module',
+  kind: 'Kind',
 };
 
 const selectClasses =

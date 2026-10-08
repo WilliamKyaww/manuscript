@@ -8,3 +8,4 @@ export * from './errors';
 export * from './ids';
 export * from './search/fuzzy';
 export * from './search/query';
+export * from './sources/index';

@@ -24,9 +24,18 @@ describe('parseSearchQuery', () => {
       type: ['summary'],
       folder: ['Week 1'],
       module: ['COC251'],
+      kind: [],
     });
     expect(parsed.excludedFilters.tag).toEqual(['draft']);
     expect(parsed.match).toBe('"quorum"*');
+  });
+
+  it('normalises kind filters and keeps unknown kinds so that they match nothing', () => {
+    const parsed = parseSearchQuery('raft kind:Slides kind:PPTX kind:notes -kind:md kind:video');
+    expect(parsed.filters.kind).toEqual(['slides', 'note', 'video']);
+    expect(parsed.excludedFilters.kind).toEqual(['text']);
+    expect(withFilter('raft', 'kind', 'pdf')).toBe('raft kind:pdf');
+    expect(withoutFilter('raft kind:pdf', 'kind', 'pdf')).toBe('raft');
   });
 
   it('allows a query of filters only', () => {
