@@ -2,6 +2,7 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  lazyRouteComponent,
   Outlet,
   type RouterHistory,
 } from '@tanstack/react-router';
@@ -9,11 +10,12 @@ import { AppShell } from './app/AppShell';
 import { SessionGate } from './app/SessionGate';
 import { SECTIONS } from './app/sections';
 import { NotFoundPage, RouteErrorPage } from './features/errors/ErrorPages';
+import { PagePending } from './features/errors/PagePending';
 import { SectionPlaceholder } from './features/placeholder/SectionPlaceholder';
-import { SettingsPage } from './features/settings/SettingsPage';
-import { TodayPage } from './features/today/TodayPage';
 
 // Code-based routes (ADR-0018): no generated route tree to keep in sync.
+// Every page is its own chunk (task 3.24), so heavy libraries such as the editor, KaTeX and Mermaid
+// load only with the pages that use them and the initial bundle stays small.
 function RootLayout() {
   return (
     <SessionGate>
@@ -29,16 +31,33 @@ const rootRoute = createRootRoute({ component: RootLayout, notFoundComponent: No
 const todayRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: TodayPage,
+  component: lazyRouteComponent(() => import('./features/today/TodayPage'), 'TodayPage'),
 });
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings',
-  component: SettingsPage,
+  component: lazyRouteComponent(() => import('./features/settings/SettingsPage'), 'SettingsPage'),
+});
+
+const NotesPage = lazyRouteComponent(() => import('./features/notes/NotesPage'), 'NotesPage');
+const notesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/notes',
+  component: NotesPage,
+});
+const noteRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/notes/$noteId',
+  component: NotesPage,
+  // `?line=12` opens the note at a line (used by backlinks).
+  validateSearch: (search: Record<string, unknown>): { line?: number } => {
+    const line = Number(search.line);
+    return Number.isInteger(line) && line > 0 ? { line } : {};
+  },
 });
 
 /** Sections that are not built yet get an honest placeholder; each phase replaces one with real routes. */
-const IMPLEMENTED = new Set(['today', 'settings']);
+const IMPLEMENTED = new Set(['today', 'notes', 'settings']);
 const placeholderRoutes = SECTIONS.filter((section) => !IMPLEMENTED.has(section.id)).map(
   (section) =>
     createRoute({
@@ -48,13 +67,20 @@ const placeholderRoutes = SECTIONS.filter((section) => !IMPLEMENTED.has(section.
     }),
 );
 
-export const routeTree = rootRoute.addChildren([todayRoute, settingsRoute, ...placeholderRoutes]);
+export const routeTree = rootRoute.addChildren([
+  todayRoute,
+  settingsRoute,
+  notesRoute,
+  noteRoute,
+  ...placeholderRoutes,
+]);
 
 export function createAppRouter(options: { history?: RouterHistory } = {}) {
   return createRouter({
     routeTree,
     defaultPreload: 'intent',
     defaultErrorComponent: RouteErrorPage,
+    defaultPendingComponent: PagePending,
     ...(options.history ? { history: options.history } : {}),
   });
 }

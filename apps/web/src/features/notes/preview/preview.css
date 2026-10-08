@@ -1,0 +1,296 @@
+/*
+ * Reading view of a note. Colours come from the design tokens, so light and dark themes work
+ * without separate rules; contrast follows the tokens' WCAG AA pairs.
+ */
+
+.markdown-body {
+  color: var(--skb-text);
+  font-size: 15px;
+  line-height: 1.7;
+  overflow-wrap: break-word;
+}
+
+.markdown-body > :first-child {
+  margin-top: 0;
+}
+
+.markdown-body :where(p, ul, ol, blockquote, pre, table, .table-wrapper, details, .callout, hr) {
+  margin: 0 0 1em;
+}
+
+.markdown-body :where(h1, h2, h3, h4, h5, h6) {
+  margin: 1.6em 0 0.6em;
+  font-weight: 650;
+  line-height: 1.3;
+  scroll-margin-top: 1rem;
+}
+
+.markdown-body h1 {
+  font-size: 1.75em;
+}
+.markdown-body h2 {
+  font-size: 1.4em;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--skb-border);
+}
+.markdown-body h3 {
+  font-size: 1.2em;
+}
+.markdown-body :where(h4, h5, h6) {
+  font-size: 1em;
+}
+
+.markdown-body :where(ul, ol) {
+  padding-left: 1.6em;
+}
+.markdown-body ul {
+  list-style: disc;
+}
+.markdown-body ol {
+  list-style: decimal;
+}
+.markdown-body li + li {
+  margin-top: 0.2em;
+}
+.markdown-body li > :where(ul, ol) {
+  margin: 0.2em 0 0;
+}
+.markdown-body .contains-task-list {
+  list-style: none;
+  padding-left: 0.4em;
+}
+.markdown-body .task-list-item input {
+  margin-right: 0.5em;
+  vertical-align: middle;
+}
+
+.markdown-body a {
+  color: var(--skb-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.markdown-body .wikilink-unresolved {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--skb-text-muted);
+  font: inherit;
+  text-decoration: underline dashed;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.markdown-body blockquote {
+  padding: 0.1em 1em;
+  border-left: 3px solid var(--skb-border-strong);
+  color: var(--skb-text-muted);
+}
+
+.markdown-body :where(code, kbd) {
+  font-family: var(--skb-font-mono);
+  font-size: 0.88em;
+}
+.markdown-body :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border-radius: var(--skb-radius-sm);
+  background: var(--skb-surface-sunken);
+}
+.markdown-body pre {
+  padding: 0.9em 1em;
+  overflow-x: auto;
+  border: 1px solid var(--skb-border);
+  border-radius: var(--skb-radius-md);
+  background: var(--skb-surface-sunken);
+  line-height: 1.5;
+}
+
+.markdown-body hr {
+  border: 0;
+  border-top: 1px solid var(--skb-border);
+}
+
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--skb-radius-sm);
+}
+
+.markdown-body .table-wrapper {
+  overflow-x: auto;
+}
+.markdown-body table {
+  border-collapse: collapse;
+  min-width: 50%;
+}
+.markdown-body :where(th, td) {
+  padding: 0.35em 0.75em;
+  border: 1px solid var(--skb-border);
+  text-align: left;
+}
+.markdown-body th {
+  background: var(--skb-surface);
+  font-weight: 600;
+}
+
+.markdown-body mark {
+  padding: 0 0.15em;
+  border-radius: 2px;
+  background: var(--skb-warning-subtle);
+  color: inherit;
+}
+
+.markdown-body .tag {
+  padding: 0.05em 0.45em;
+  border-radius: 999px;
+  background: var(--skb-accent-subtle);
+  color: var(--skb-accent);
+  font-size: 0.9em;
+}
+
+.markdown-body .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.2em 0;
+}
+
+/* Footnotes */
+.markdown-body .footnotes {
+  margin-top: 2em;
+  font-size: 0.9em;
+  color: var(--skb-text-muted);
+}
+
+/* Callouts: > [!note] Title */
+.markdown-body .callout {
+  --callout: var(--skb-info);
+  --callout-bg: var(--skb-info-subtle);
+  padding: 0.6em 1em;
+  border-left: 4px solid var(--callout);
+  border-radius: var(--skb-radius-md);
+  background: var(--callout-bg);
+}
+.markdown-body .callout-title {
+  margin: 0;
+  font-weight: 650;
+  color: var(--skb-text);
+}
+.markdown-body summary.callout-title {
+  cursor: pointer;
+}
+.markdown-body .callout-content {
+  margin: 0.4em 0 0;
+  padding: 0;
+  border: 0;
+  color: var(--skb-text);
+}
+.markdown-body .callout-content > :last-child {
+  margin-bottom: 0;
+}
+.markdown-body
+  :where(
+    .callout-tip,
+    .callout-hint,
+    .callout-important,
+    .callout-success,
+    .callout-check,
+    .callout-done
+  ) {
+  --callout: var(--skb-success);
+  --callout-bg: var(--skb-success-subtle);
+}
+.markdown-body
+  :where(
+    .callout-warning,
+    .callout-caution,
+    .callout-attention,
+    .callout-question,
+    .callout-help,
+    .callout-faq
+  ) {
+  --callout: var(--skb-warning);
+  --callout-bg: var(--skb-warning-subtle);
+}
+.markdown-body
+  :where(
+    .callout-danger,
+    .callout-error,
+    .callout-failure,
+    .callout-fail,
+    .callout-missing,
+    .callout-bug
+  ) {
+  --callout: var(--skb-danger);
+  --callout-bg: var(--skb-danger-subtle);
+}
+.markdown-body :where(.callout-quote, .callout-cite, .callout-example) {
+  --callout: var(--skb-border-strong);
+  --callout-bg: var(--skb-surface);
+}
+
+/* Embeds */
+.markdown-body .embed-note {
+  margin: 0 0 1em;
+  padding: 0.6em 1em;
+  border: 1px solid var(--skb-border);
+  border-left: 3px solid var(--skb-accent);
+  border-radius: var(--skb-radius-md);
+}
+.markdown-body .embed-note-title {
+  margin-bottom: 0.4em;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+.markdown-body .embed-pdf {
+  width: 100%;
+  height: 70vh;
+  border: 1px solid var(--skb-border);
+  border-radius: var(--skb-radius-md);
+}
+.markdown-body .embed-media {
+  width: 100%;
+  max-height: 70vh;
+}
+.markdown-body .embed-file {
+  display: inline-flex;
+  gap: 0.4em;
+  align-items: center;
+  padding: 0.3em 0.7em;
+  border: 1px solid var(--skb-border);
+  border-radius: var(--skb-radius-md);
+  text-decoration: none;
+}
+.markdown-body :where(.embed-missing, .external-image, .embed-note-limit, .embed-note-loading) {
+  color: var(--skb-text-muted);
+  font-style: italic;
+}
+
+.markdown-body .mermaid {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 1em;
+  overflow-x: auto;
+}
+.markdown-body .mermaid-error {
+  color: var(--skb-danger);
+}
+
+/* Code highlighting (highlight.js classes) */
+.markdown-body :where(.hljs-keyword, .hljs-selector-tag, .hljs-built_in, .hljs-type, .hljs-meta) {
+  color: var(--skb-accent);
+}
+.markdown-body :where(.hljs-string, .hljs-regexp, .hljs-addition, .hljs-attribute) {
+  color: var(--skb-success);
+}
+.markdown-body :where(.hljs-number, .hljs-literal, .hljs-symbol, .hljs-bullet) {
+  color: var(--skb-warning);
+}
+.markdown-body :where(.hljs-title, .hljs-function, .hljs-class, .hljs-section, .hljs-name) {
+  color: var(--skb-info);
+}
+.markdown-body :where(.hljs-comment, .hljs-quote) {
+  color: var(--skb-text-muted);
+  font-style: italic;
+}
+.markdown-body .hljs-deletion {
+  color: var(--skb-danger);
+}

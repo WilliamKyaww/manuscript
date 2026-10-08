@@ -12,6 +12,9 @@ import { cn } from '../lib/cn';
  *     <PageBody>      flex: 1; overflow-y: auto — the page's only scroll container
  *
  * Every route renders exactly one <Page>. Secondary headers inside the body use <StickySection>.
+ *
+ * With `layout="panes"` the body does not scroll itself: it holds side-by-side <Pane>s (see
+ * Pane.tsx), each with its own fixed header and its own scroll container — the same rule, per pane.
  */
 
 export interface Breadcrumb {
@@ -20,6 +23,7 @@ export interface Breadcrumb {
 }
 
 export type PageWidth = 'default' | 'wide' | 'full';
+export type PageLayout = 'scroll' | 'panes';
 
 export interface PageProps {
   title: string;
@@ -29,6 +33,8 @@ export interface PageProps {
   /** Second header row for tabs or filters — part of the fixed header. */
   toolbar?: ReactNode;
   width?: PageWidth;
+  /** `panes`: the body is a row of independently scrolling panes instead of one scroll container. */
+  layout?: PageLayout;
   children: ReactNode;
   bodyClassName?: string;
 }
@@ -52,6 +58,7 @@ export function Page({
   breadcrumbs,
   toolbar,
   width = 'default',
+  layout = 'scroll',
   children,
   bodyClassName,
 }: PageProps) {
@@ -82,11 +89,21 @@ export function Page({
           </div>
         )}
       </header>
-      <div data-page-body className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className={cn('mx-auto w-full px-6 py-6', WIDTHS[width], bodyClassName)}>
+      {layout === 'panes' ? (
+        <div
+          data-page-body
+          data-layout="panes"
+          className={cn('flex min-h-0 flex-1 overflow-hidden', bodyClassName)}
+        >
           {children}
         </div>
-      </div>
+      ) : (
+        <div data-page-body className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className={cn('mx-auto w-full px-6 py-6', WIDTHS[width], bodyClassName)}>
+            {children}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

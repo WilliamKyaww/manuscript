@@ -89,6 +89,8 @@ export const ProblemDetailsSchema = z.object({
   code: z.string(),
   instance: z.string().optional(),
   issues: z.array(z.object({ path: z.string(), message: z.string() })).optional(),
+  /** Machine-readable extra facts (RFC 9457 extension member); never secrets. */
+  details: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type ProblemDetails = z.infer<typeof ProblemDetailsSchema>;

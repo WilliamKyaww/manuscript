@@ -4,9 +4,11 @@ A personal **Knowledge & Learning OS**: a Markdown knowledge base, a lecture/sou
 graph and a spaced-repetition learning system that share one data model — with an AI agent that can
 search, explain, generate study material and act on the knowledge base through permissioned tools.
 
-> **Status: Phases 0–2 complete** (research and planning; secure local server, database, vault and
-> launcher; application shell with themes, command palette and sticky-header layout). Notes arrive in
-> Phase 3. See [`STATE.md`](./STATE.md) and
+> **Status: Phases 0–3 complete** (research and planning; secure local server, database, vault and
+> launcher; application shell; **notes**: Markdown files in your vault with an editor, preview,
+> wikilinks, backlinks, templates, attachments, trash and live pick-up of edits made in Obsidian or
+> VS Code). Search arrives in Phase 4. See [`STATE.md`](./STATE.md),
+> [`docs/guide/markdown.md`](./docs/guide/markdown.md) and
 > [`docs/checklist/`](./docs/checklist/README.md) for the roadmap.
 
 ## Why it exists
@@ -85,6 +87,7 @@ HttpOnly cookie after you open the sign-in link). Requests with a foreign `Host`
 | `npm run lint` / `npm run format` | Biome lint and format (check / write) |
 | `npm run test:smoke` | Starts the built server bundle and checks ping, auth, health and the SPA |
 | `npm run test:e2e` | Builds, then Playwright end-to-end tests in Chromium (first run: `npx playwright install chromium`) |
+| `npm run test:perf` | Generates 10,000 notes and checks the indexing and note-opening budgets |
 | **`npm run verify`** | typecheck → lint → tests → build → smoke test (run before every commit) |
 
 ## Troubleshooting
@@ -95,6 +98,10 @@ HttpOnly cookie after you open the sign-in link). Requests with a foreign `Host`
   with `run-web.bat`, which signs you in automatically.
 - **"This vault is already open in another process"** — close the other instance; after a crash the lock
   is recovered automatically on the next start.
+- **"This note was changed outside the editor"** — another program saved the note while you had unsaved
+  changes. Nothing has been overwritten: use **Compare**, then keep your version or reload theirs.
+- **A note opens read-only** — the file is not UTF-8 text or is larger than about 5 MB; edit it in another
+  program or convert it to UTF-8.
 
 ## Documentation
 
@@ -103,6 +110,7 @@ HttpOnly cookie after you open the sign-in link). Requests with a foreign `Host`
 | [`STATE.md`](./STATE.md) | Current state of the project |
 | [`FEATURES.md`](./FEATURES.md) | Feature inventory and statuses |
 | [`DECISIONS.md`](./DECISIONS.md) | Architecture decision records |
+| [`docs/guide/`](./docs/guide/README.md) | User guides: notes and the Markdown dialect |
 | [`AGENTS.md`](./AGENTS.md) | How to work on this repository (agents and humans) |
 | [`docs/`](./docs/README.md) | Research, PRD, checklists, journal, backlog |
 

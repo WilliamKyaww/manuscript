@@ -57,9 +57,12 @@ Paxos guarantees **safety** but not liveness under asynchrony — see [[FLP impo
 $$ \text{quorum} > \frac{n}{2} $$
 ```
 
-- Only `id` is ever added automatically (on first index, if missing; configurable). All other keys are
-  optional and validated leniently (unknown keys preserved; invalid values reported as warnings).
-- Frontmatter is edited with a comment-preserving YAML library so user formatting survives.
+- Only `id` is ever added automatically — by default only when other data must refer to the note,
+  or to every note on first index if configured (ADR-0025); a foreign `id` value is kept and `skb-id`
+  used instead. All other keys are optional and validated leniently (unknown keys preserved; invalid
+  values reported as warnings).
+- Frontmatter is edited with minimal text edits guided by the YAML parser: only the edited key's
+  lines change, so comments, quoting and formatting survive byte for byte.
 - Markdown dialect: CommonMark + GFM + Obsidian extensions (wikilinks, embeds, tags, callouts,
   highlights, comments, maths) + Mermaid fences (`docs/prd/knowledge-system.md` §2).
 
@@ -110,17 +113,24 @@ Columns marked † are indexed. `…_json` columns are Zod-validated.
 
 ### 5.1 Knowledge
 
-**notes** (derived index of `.md` files)
-`id` PK · `path`† (vault-relative, unique) · `title` · `type` · `module_code`† · `lecture_key`† ·
-`frontmatter_json` · `content_hash` · `word_count` · `mtime` · `created_at` · `updated_at` ·
-`indexed_at` · `warnings_json`
+**notes** (derived index of `.md` files; migration `0002_notes`)
+`doc_id` PK (internal; FTS rowid) · `id` (unique `note_…`) · `path` (unique) · `path_key`† · `name_key`† ·
+`title` · `title_key`† · `type` · `module_code`† · `lecture_key`† · `frontmatter_json` · `content_hash`
+(sha256 of the bytes) · `size_bytes` · `mtime_ms` · `word_count` · `id_persisted` · `warnings_json` ·
+`created_at` · `updated_at` · `indexed_at`. Keys are NFC, lower-case, `.md`-less forms used for
+case-insensitive link resolution.
+
+**note_aliases** (derived) `doc_id`† · `alias` · `alias_key`†
 
 **note_links** (derived)
-`id` · `source_note_id`† · `target_raw` (as written) · `target_kind` (`note` | `concept` | `attachment` |
-`unresolved`) · `target_id`† · `heading` · `alias` · `link_type` (`wikilink` | `markdown` | `embed`) ·
-`line` · `col`
+`link_id` · `source_doc`† · `ordinal` · `syntax` (`wikilink` | `markdown`) · `embed` · `target_raw` (as
+written) · `target_name_key`† (last path segment, for re-resolution) · `heading` · `block_ref` · `alias` ·
+`target_kind` (`note` | `attachment` | `unresolved`; `concept` from Phase 6) · `target_doc`† ·
+`target_path` · `ambiguous` · `line` · `col` · `context` (the source line, for backlinks)
 
-**note_tags** (derived) `note_id`† · `tag`† (normalised lower-case, `/` hierarchy allowed)
+**note_tags** (derived) `doc_id`† · `tag`† (normalised lower-case, `/` hierarchy allowed)
+
+**attachments** (derived) `path` PK · `name_key`† · `size_bytes` · `mtime_ms` · `media_type` · `indexed_at`
 
 **notes_fts** (FTS5, derived) `title`, `headings`, `body`, `tags` — `tokenize='porter unicode61 remove_diacritics 2'`
 

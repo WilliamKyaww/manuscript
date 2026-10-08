@@ -7,8 +7,10 @@ import type { ServerConfig } from '../src/config/config';
 import type { AppContext } from '../src/context';
 import { loadMigrations, migrate } from '../src/db/migrate';
 import { openDatabase } from '../src/db/sqlite';
+import { createModules } from '../src/modules/index';
 import { sessionCookieName } from '../src/security/guards';
 import { FixedClock } from '../src/shared/clock';
+import { createEventBus } from '../src/shared/events';
 import { silentLogger } from '../src/shared/logger';
 import { openVault } from '../src/vault/vault';
 
@@ -57,6 +59,7 @@ export function createTestContext(options: TestContextOptions = {}): TestContext
     ids,
     vault,
     db,
+    events: createEventBus(),
     version: '0.1.0-test',
     startedAt: clock.now(),
   };
@@ -80,7 +83,11 @@ export interface RequestOptions extends RequestInit {
 /** Creates the app on a test context and a request helper that adds Host and credentials. */
 export function createTestApp(options: TestContextOptions = {}) {
   const test = createTestContext(options);
-  const { app } = createApp(test.ctx, { token: TEST_TOKEN, getPort: () => test.ctx.config.port });
+  const modules = createModules(test.ctx);
+  const { app } = createApp(test.ctx, modules, {
+    token: TEST_TOKEN,
+    getPort: () => test.ctx.config.port,
+  });
   const request = (pathname: string, init: RequestOptions = {}) => {
     const { auth = 'bearer', host = TEST_HOST, headers, ...rest } = init;
     const merged = new Headers(headers);
@@ -89,5 +96,5 @@ export function createTestApp(options: TestContextOptions = {}) {
     if (auth === 'cookie') merged.set('cookie', `${sessionCookieName(TEST_PORT)}=${TEST_TOKEN}`);
     return app.request(pathname, { ...rest, headers: merged });
   };
-  return { ...test, app, request };
+  return { ...test, app, modules, request };
 }

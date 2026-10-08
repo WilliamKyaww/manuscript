@@ -35,13 +35,20 @@ autocompletion, so both agree on what a link or tag is.
 
 ## 3. Links, backlinks and resolution
 
-Resolution order for `[[X]]` (case-insensitive, Unicode-normalised):
+Resolution order for `[[X]]` (case-insensitive, Unicode-normalised; implemented in
+`@skb/core/markdown` and shared by the index and the editor):
 
-1. A note whose file name (without `.md`) or `title` equals X; then a note alias equal to X.
-   Ambiguity (two notes named X) prefers the shortest vault path, as Obsidian does, and is reported.
-2. A **concept** whose name or alias equals X → links to the concept page.
+1. A note whose file name (without `.md`) equals X; then one whose frontmatter `title` equals X; then
+   a note alias equal to X. Ambiguity (two notes named X) prefers a note in the linking note's own
+   folder, then the shortest vault path (as Obsidian does), and is reported.
+2. A **concept** whose name or alias equals X → links to the concept page (Phase 6).
 3. An attachment whose file name equals X.
-4. Otherwise **unresolved** — shown distinctly with "Create note" / "Create concept" actions.
+4. Otherwise **unresolved** — shown distinctly; selecting it creates the note ("Create concept" from
+   Phase 6).
+
+Targets with a folder (`[[Folder/X]]`, Markdown links such as `[t](../X.md)`) resolve relative to the
+linking note, then from the vault root (`/X` means only this), then by path suffix. The user-facing
+rules and the differences from Obsidian (ADR-0026) are in `docs/guide/markdown.md`.
 
 Backlinks panel shows linked mentions (with context lines) and **unlinked mentions** (plain-text
 occurrences of the note title/aliases), each with a one-click "link" action.

@@ -7,6 +7,7 @@ import {
   type ProblemDetails,
   ProblemDetailsSchema,
 } from '@skb/core';
+import type { z } from 'zod';
 
 /**
  * Typed HTTP client built on the shared API contracts in `@skb/core` (ADR-0024). Responses are
@@ -45,6 +46,8 @@ type InputArgs<E extends Endpoint> =
 
 export interface ApiClient {
   request<E extends Endpoint>(endpoint: E, ...args: InputArgs<E>): Promise<EndpointOutput<E>>;
+  /** Multipart upload (attachments): POSTs `form` to `path` and validates the reply with `schema`. */
+  upload<T extends z.ZodType>(path: string, form: FormData, schema: T): Promise<z.output<T>>;
 }
 
 export interface ApiClientOptions {
@@ -67,11 +70,52 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
   const fetchImpl = options.fetch ?? ((input, init) => globalThis.fetch(input, init));
   const baseUrl = options.baseUrl ?? '';
 
+  /** Sends a request and validates a successful JSON reply against `schema`. */
+  async function send<T extends z.ZodType>(
+    url: string,
+    init: RequestInit,
+    schema: T,
+  ): Promise<z.output<T>> {
+    let response: Response;
+    try {
+      response = await fetchImpl(url, init);
+    } catch (cause) {
+      throw new ApiError(0, null, 'Cannot reach the Study Knowledge Base server. Is it running?', {
+        cause,
+      });
+    }
+
+    if (!response.ok) {
+      const problem = await readProblem(response);
+      throw new ApiError(
+        response.status,
+        problem,
+        problem?.detail ?? `Request failed with status ${response.status}.`,
+      );
+    }
+
+    let json: unknown;
+    try {
+      json = await response.json();
+    } catch (cause) {
+      throw new ApiError(
+        response.status,
+        null,
+        'The server sent a response that is not valid JSON.',
+        { cause },
+      );
+    }
+    const parsed = schema.safeParse(json);
+    if (!parsed.success) {
+      throw new ApiError(response.status, null, 'The server sent an unexpected response.', {
+        cause: parsed.error,
+      });
+    }
+    return parsed.data;
+  }
+
   return {
-    async request<E extends Endpoint>(
-      endpoint: E,
-      ...args: InputArgs<E>
-    ): Promise<EndpointOutput<E>> {
+    request<E extends Endpoint>(endpoint: E, ...args: InputArgs<E>): Promise<EndpointOutput<E>> {
       const input = args[0] as
         | { params?: Record<string, unknown>; query?: Record<string, unknown>; body?: unknown }
         | undefined;
@@ -82,46 +126,20 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
         headers['Content-Type'] = 'application/json';
         init.body = JSON.stringify(input.body);
       }
-
-      let response: Response;
-      try {
-        response = await fetchImpl(url, init);
-      } catch (cause) {
-        throw new ApiError(
-          0,
-          null,
-          'Cannot reach the Study Knowledge Base server. Is it running?',
-          { cause },
-        );
-      }
-
-      if (!response.ok) {
-        const problem = await readProblem(response);
-        throw new ApiError(
-          response.status,
-          problem,
-          problem?.detail ?? `Request failed with status ${response.status}.`,
-        );
-      }
-
-      let json: unknown;
-      try {
-        json = await response.json();
-      } catch (cause) {
-        throw new ApiError(
-          response.status,
-          null,
-          'The server sent a response that is not valid JSON.',
-          { cause },
-        );
-      }
-      const parsed = endpoint.schemas.response.safeParse(json);
-      if (!parsed.success) {
-        throw new ApiError(response.status, null, 'The server sent an unexpected response.', {
-          cause: parsed.error,
-        });
-      }
-      return parsed.data as EndpointOutput<E>;
+      return send(url, init, endpoint.schemas.response) as Promise<EndpointOutput<E>>;
+    },
+    upload(path, form, schema) {
+      // No Content-Type header: the browser sets the multipart boundary itself.
+      return send(
+        `${baseUrl}${path}`,
+        {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { Accept: 'application/json' },
+          body: form,
+        },
+        schema,
+      );
     },
   };
 }

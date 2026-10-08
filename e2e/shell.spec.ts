@@ -9,6 +9,15 @@ const ROUTES = [
   { path: '/no/such/page', title: 'Page not found' },
 ];
 
+/** Appends tall filler to a scroll container and scrolls it to the end (runs in the page). */
+function fillAndScroll(element: Element) {
+  const filler = document.createElement('div');
+  filler.style.height = '4000px';
+  (element.firstElementChild ?? element).appendChild(filler);
+  element.scrollTop = element.scrollHeight;
+  return { body: element.scrollTop, window: document.scrollingElement?.scrollTop ?? 0 };
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto(`/auth?token=${E2E_TOKEN}`);
   await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
@@ -23,18 +32,27 @@ test.describe('sticky headers (permanent requirement, ui.md §2)', () => {
       const header = page.locator('[data-page-header]');
       await expect(header).toHaveCount(1);
       const before = await header.boundingBox();
+      const body = page.locator('[data-page-body]');
 
-      // Make the body long enough to scroll whatever the page's real content is, then scroll to the end.
-      const scroll = await page.locator('[data-page-body]').evaluate((body) => {
-        const filler = document.createElement('div');
-        filler.style.height = '4000px';
-        (body.firstElementChild ?? body).appendChild(filler);
-        body.scrollTop = body.scrollHeight;
-        return { body: body.scrollTop, window: document.scrollingElement?.scrollTop ?? 0 };
-      });
-
-      expect(scroll.body).toBeGreaterThan(1000);
-      expect(scroll.window).toBe(0);
+      if ((await body.getAttribute('data-layout')) === 'panes') {
+        // Paned pages: every pane keeps its own header above its own scroll container.
+        const panes = page.locator('[data-pane]');
+        expect(await panes.count()).toBeGreaterThan(0);
+        for (const pane of await panes.all()) {
+          const paneHeader = pane.locator('[data-pane-header]');
+          const paneBefore = await paneHeader.boundingBox();
+          const scrolled = await pane.locator('[data-pane-body]').evaluate(fillAndScroll);
+          expect(scrolled.body).toBeGreaterThan(1000);
+          expect(scrolled.window).toBe(0);
+          expect((await paneHeader.boundingBox())?.y).toBe(paneBefore?.y);
+          await expect(paneHeader).toBeInViewport();
+        }
+      } else {
+        // Make the body long enough to scroll whatever the page's real content is, then scroll to the end.
+        const scroll = await body.evaluate(fillAndScroll);
+        expect(scroll.body).toBeGreaterThan(1000);
+        expect(scroll.window).toBe(0);
+      }
       expect((await header.boundingBox())?.y).toBe(before?.y);
       await expect(header).toBeInViewport();
       await expect(title).toBeInViewport();
@@ -133,9 +151,15 @@ test.describe('accessibility (axe: no serious or critical violations)', () => {
     const height = await page.evaluate(() => {
       const header = document.querySelector('[data-page-header]');
       const body = document.querySelector('[data-page-body]');
-      return Math.ceil(
-        (header?.getBoundingClientRect().height ?? 0) + (body?.scrollHeight ?? 0) + 40,
+      // Paned pages scroll inside each pane: size for the tallest pane instead.
+      const scrollers = [
+        ...document.querySelectorAll('[data-pane-body], [data-scroll-region], .cm-scroller'),
+      ];
+      const tallest = Math.max(
+        body?.scrollHeight ?? 0,
+        ...scrollers.map((element) => element.scrollHeight + 80),
       );
+      return Math.ceil((header?.getBoundingClientRect().height ?? 0) + tallest + 40);
     });
     const width = page.viewportSize()?.width ?? 1280;
     await page.setViewportSize({ width, height: Math.min(Math.max(height, 720), 8000) });

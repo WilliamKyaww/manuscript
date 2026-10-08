@@ -64,6 +64,7 @@ All verified on 4 October 2026 (Phase 1):
 | `npm run test:smoke` | Start the built bundle on a free port and check ping, auth, health and the SPA |
 | `npm run test:e2e` | Build, then Playwright end-to-end tests (Chromium; `npx playwright install chromium` once) |
 | `npm run verify` | typecheck → lint → test → build → smoke — **run before every commit** |
+| `npm run test:perf` | Generates 10,000 notes and checks the notes performance budgets (`architecture.md` §14); run before a gate that touches indexing |
 | `run-web.bat` | One-click Windows launcher for daily use (`SKB_NO_BROWSER=1` to suppress the browser) |
 
 ### Environment pitfalls (seen in the Claude Code / VS Code environment)
@@ -78,6 +79,13 @@ All verified on 4 October 2026 (Phase 1):
   `e2e/shell.spec.ts`), otherwise below-the-fold content is silently skipped.
 - Never test against the user's real vault (`Documents\Study Knowledge Base`) or data directory
   (`%APPDATA%\StudyKnowledgeBase`): set `SKB_VAULT` and `SKB_DATA_DIR` to temporary folders.
+- Python's `write_text` on Windows writes CRLF line endings unless given `newline='\n'`; Biome then
+  rejects the file. Git normalises committed text to LF, but the working copy must be LF too.
+- Shell here-documents in the agent's Bash tool can collapse a double backslash to a single one,
+  turning `'\n'` in generated code into a real line break. Edit code that contains backslash escapes
+  with the editor tools instead.
+- Notes test vaults: write CRLF, byte-order marks or non-UTF-8 bytes from code (see
+  `apps/server/test/fixtures/obsidian-vault.ts`), not as committed files, which git would normalise.
 
 ## 6. The phase and gate workflow
 

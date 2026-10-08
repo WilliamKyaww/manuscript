@@ -32,6 +32,7 @@ export function toProblem(error: unknown, instance?: string): ProblemDetails {
       code: error.code,
       ...(instance ? { instance } : {}),
       ...(error.issues && error.issues.length > 0 ? { issues: error.issues } : {}),
+      ...(error.details ? { details: error.details } : {}),
     };
   }
   if (error instanceof HTTPException) {
