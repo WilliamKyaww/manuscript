@@ -1,3 +1,5 @@
+import { useNavigate } from '@tanstack/react-router';
+import { SEARCH_INPUT_ID } from '../features/search/search-ids';
 import { useLayoutStore } from './layout-store';
 import { useShortcut } from './shortcuts/useShortcuts';
 
@@ -8,6 +10,31 @@ export function GlobalShortcuts() {
     setCommandPaletteOpen(!commandPaletteOpen);
   };
   const openShortcuts = () => useLayoutStore.getState().setShortcutsOpen(true);
+  const navigate = useNavigate();
+
+  useShortcut({
+    id: 'app.quick-switcher',
+    keys: 'mod+o',
+    description: 'Open a note by name',
+    group: 'Navigation',
+    allowInInputs: true,
+    handler: () => {
+      const { quickSwitcherOpen, setQuickSwitcherOpen } = useLayoutStore.getState();
+      setQuickSwitcherOpen(!quickSwitcherOpen);
+    },
+  });
+  useShortcut({
+    id: 'app.search',
+    keys: 'mod+shift+f',
+    description: 'Search notes',
+    group: 'Navigation',
+    allowInInputs: true,
+    handler: () => {
+      void navigate({ to: '/search' }).then(() =>
+        document.getElementById(SEARCH_INPUT_ID)?.focus(),
+      );
+    },
+  });
 
   useShortcut({
     id: 'app.command-palette',

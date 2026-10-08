@@ -1,8 +1,12 @@
+import { rankCandidates } from '@skb/core';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Command } from 'cmdk';
-import { Keyboard, Monitor, Moon, PanelLeft, Sun } from 'lucide-react';
+import { Command, defaultFilter } from 'cmdk';
+import { FileText, Keyboard, Monitor, Moon, PanelLeft, Search, Sun } from 'lucide-react';
 import { Dialog as RadixDialog, VisuallyHidden } from 'radix-ui';
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { treeQuery } from '../features/notes/api';
+import { useApi } from '../lib/api/context';
 import { useLayoutStore } from './layout-store';
 import { sectionIcon } from './section-icons';
 import { SECTIONS } from './sections';
@@ -11,15 +15,47 @@ import { type ThemePreference, useThemeStore } from './theme/theme';
 const groupClasses =
   '[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-subtle';
 
+/**
+ * Sections and commands rank as usual; notes and "search notes" (already ranked by our own matcher)
+ * always come after them, so typing a section's name and pressing Enter still goes there.
+ */
+function paletteFilter(value: string, search: string, keywords?: string[]): number {
+  if (value.startsWith('note ') || value.startsWith('search notes for ')) return 0.001;
+  return defaultFilter(value, search, keywords);
+}
+
 const itemClasses =
   'flex cursor-default items-center gap-3 rounded-md px-3 py-2 text-sm text-text select-none data-[selected=true]:bg-surface-hover';
 
-/** Ctrl+K palette: jump to any section or run an application command (searches arrive in Phase 4). */
+/**
+ * Ctrl+K palette: jump to any section or run an application command; with two or more characters
+ * typed it also offers the best-matching notes and a full-text search (task 4.08).
+ */
 export function CommandPalette() {
   const open = useLayoutStore((state) => state.commandPaletteOpen);
   const setOpen = useLayoutStore((state) => state.setCommandPaletteOpen);
   const navigate = useNavigate();
   const setTheme = useThemeStore((state) => state.setPreference);
+  const api = useApi();
+  const [search, setSearch] = useState('');
+  const tree = useQuery({ ...treeQuery(api), enabled: open });
+  useEffect(() => {
+    if (!open) setSearch('');
+  }, [open]);
+  const trimmed = search.trim();
+  const notes = useMemo(() => {
+    if (trimmed.length < 2) return [];
+    const candidates = (tree.data?.notes ?? []).map((note) => ({
+      id: note.id,
+      title: note.title,
+      names: [
+        note.path.slice(note.path.lastIndexOf('/') + 1).replace(/\.md$/i, ''),
+        ...note.aliases,
+      ],
+      path: note.path,
+    }));
+    return rankCandidates(trimmed, candidates, { limit: 5 });
+  }, [trimmed, tree.data]);
 
   const run = (action: () => void) => {
     setOpen(false);
@@ -44,9 +80,11 @@ export function CommandPalette() {
           <VisuallyHidden.Root>
             <RadixDialog.Title>Command palette</RadixDialog.Title>
           </VisuallyHidden.Root>
-          <Command label="Command palette" loop>
+          <Command label="Command palette" loop filter={paletteFilter}>
             <Command.Input
-              placeholder="Jump to a page or run a command…"
+              value={search}
+              onValueChange={setSearch}
+              placeholder="Jump to a page or a note, or run a command…"
               className="h-12 w-full border-b border-border bg-transparent px-4 text-sm text-text outline-none placeholder:text-subtle"
             />
             <Command.List className="max-h-[min(24rem,60vh)] overflow-y-auto p-2">
@@ -109,6 +147,40 @@ export function CommandPalette() {
                   Show keyboard shortcuts
                 </Command.Item>
               </Command.Group>
+              {trimmed.length >= 2 && (
+                <Command.Group heading="Notes" className={groupClasses}>
+                  {notes.map((match) => (
+                    <Command.Item
+                      key={match.candidate.id}
+                      // Contains what was typed, so cmdk's own filter always keeps our ranked matches.
+                      value={`note ${match.candidate.id} ${trimmed}`}
+                      onSelect={() =>
+                        run(
+                          () =>
+                            void navigate({
+                              to: '/notes/$noteId',
+                              params: { noteId: match.candidate.id },
+                            }),
+                        )
+                      }
+                      className={itemClasses}
+                    >
+                      <FileText aria-hidden="true" size={16} className="text-muted" />
+                      <span className="truncate">{match.candidate.title}</span>
+                    </Command.Item>
+                  ))}
+                  <Command.Item
+                    value={`search notes for ${trimmed}`}
+                    onSelect={() =>
+                      run(() => void navigate({ to: '/search', search: { q: trimmed } }))
+                    }
+                    className={itemClasses}
+                  >
+                    <Search aria-hidden="true" size={16} className="text-muted" />
+                    Search notes for “{trimmed}”
+                  </Command.Item>
+                </Command.Group>
+              )}
             </Command.List>
           </Command>
         </RadixDialog.Content>

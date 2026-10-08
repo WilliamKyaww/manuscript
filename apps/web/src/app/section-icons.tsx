@@ -11,6 +11,7 @@ import {
   MessagesSquare,
   Network,
   PencilLine,
+  Search,
   Settings,
   Sun,
 } from 'lucide-react';
@@ -18,6 +19,7 @@ import {
 export const SECTION_ICONS: Record<string, LucideIcon> = {
   today: Sun,
   notes: FileText,
+  search: Search,
   library: BookOpenText,
   concepts: Lightbulb,
   graph: Network,
