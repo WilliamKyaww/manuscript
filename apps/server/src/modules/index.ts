@@ -1,8 +1,13 @@
 import type { AppContext } from '../context';
 import { createJobQueue, type JobQueue } from '../jobs/queue';
 import { createJobsRepository } from '../jobs/repository';
+import { notifyingAfter } from '../shared/change-events';
 import { createConceptsRepository } from './concepts/repository';
 import { type ConceptsService, createConceptsService } from './concepts/service';
+import { createGraphRepository } from './graph/graph-repository';
+import { createRelationsService, type RelationsService } from './graph/relations';
+import { createRelationsRepository } from './graph/relations-repository';
+import { createGraphService, type GraphService } from './graph/service';
 import { createLecturesService, type LecturesService } from './learning/lectures';
 import { createLearningRepository } from './learning/repository';
 import { createLearningService, type LearningService } from './learning/service';
@@ -26,6 +31,8 @@ export interface AppModules {
   readonly learning: LearningService;
   readonly lectures: LecturesService;
   readonly concepts: ConceptsService;
+  readonly relations: RelationsService;
+  readonly graph: GraphService;
   start(options: { watch: boolean }): Promise<void>;
   close(): Promise<void>;
 }
@@ -47,23 +54,63 @@ export function createModules(ctx: AppContext): AppModules {
     clock: ctx.clock,
     logger: ctx.logger,
   });
+  // Data held only in the database announces its changes, so the graph and other tabs can follow.
+  const changed = (area: 'course' | 'concepts') => () =>
+    ctx.events.publish({ type: 'data.changed', area });
   const learningRepo = createLearningRepository(ctx.db);
-  const learning = createLearningService({ repo: learningRepo, clock: ctx.clock, ids: ctx.ids });
-  const lectures = createLecturesService({
-    repo: learningRepo,
-    learning,
-    notes: notes.notes,
-    sources: sources.repo,
+  const learning = notifyingAfter(
+    createLearningService({ repo: learningRepo, clock: ctx.clock, ids: ctx.ids }),
+    [
+      'createCourse',
+      'updateCourse',
+      'deleteCourse',
+      'createModule',
+      'updateModule',
+      'deleteModule',
+      'createTopic',
+      'updateTopic',
+      'deleteTopic',
+      'createAssessment',
+      'updateAssessment',
+      'deleteAssessment',
+    ],
+    changed('course'),
+  );
+  const lectures = notifyingAfter(
+    createLecturesService({
+      repo: learningRepo,
+      learning,
+      notes: notes.notes,
+      sources: sources.repo,
+      clock: ctx.clock,
+      ids: ctx.ids,
+    }),
+    ['create', 'update', 'delete', 'attachSource', 'detachSource', 'attachNote', 'detachNote'],
+    changed('course'),
+  );
+  const concepts = notifyingAfter(
+    createConceptsService({
+      repo: createConceptsRepository(ctx.db),
+      notesRepo: notes.repo,
+      indexer: notes.indexer,
+      search,
+      clock: ctx.clock,
+      ids: ctx.ids,
+    }),
+    ['create', 'update', 'remove'],
+    changed('concepts'),
+  );
+  const relationsRepo = createRelationsRepository(ctx.db);
+  const relations = createRelationsService({
+    repo: relationsRepo,
+    indexer: notes.indexer,
+    events: ctx.events,
     clock: ctx.clock,
     ids: ctx.ids,
   });
-  const concepts = createConceptsService({
-    repo: createConceptsRepository(ctx.db),
-    notesRepo: notes.repo,
-    indexer: notes.indexer,
-    search,
-    clock: ctx.clock,
-    ids: ctx.ids,
+  const graph = createGraphService({
+    repo: createGraphRepository(ctx.db, relationsRepo),
+    events: ctx.events,
   });
   // Before the first scan, so links to concepts resolve as notes are indexed.
   concepts.sync();
@@ -76,12 +123,15 @@ export function createModules(ctx: AppContext): AppModules {
     learning,
     lectures,
     concepts,
+    relations,
+    graph,
     async start(options) {
       await notes.start(options);
       jobs.start();
       await sources.start();
     },
     async close() {
+      graph.close();
       await sources.close();
       await jobs.close();
       await notes.close();
