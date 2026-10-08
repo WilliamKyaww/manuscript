@@ -280,12 +280,12 @@ export function createLearningRepository(db: SqlDatabase) {
         )
         .map(toAssessment),
     assessment: (id: string) => one('SELECT * FROM assessments WHERE id = ?', [id], toAssessment),
-    /** Unmarked assessments due between two dates (inclusive), soonest first. */
+    /** Assessments still to do (not submitted or marked) due between two dates (inclusive), soonest first. */
     dueBetween: (from: string, to: string) =>
       db
         .all<Raw>(
           `SELECT a.* FROM assessments a JOIN modules m ON m.id = a.module_id
-           WHERE m.archived = 0 AND a.status <> 'marked' AND a.due_at IS NOT NULL
+           WHERE m.archived = 0 AND a.status = 'planned' AND a.due_at IS NOT NULL
              AND substr(a.due_at, 1, 10) BETWEEN ? AND ?
            ORDER BY a.due_at, a.title`,
           [from, to],

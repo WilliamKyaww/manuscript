@@ -62,13 +62,12 @@ describe('courses, modules and assessments', () => {
       AssessmentSchema,
     );
     expect(coursework.status).toBe('marked');
-    await api.post(`/api/modules/${coc251.id}/assessments`, {
-      title: 'Exam',
-      kind: 'exam',
-      weight: 0.6,
-      dueAt: '2026-10-14T09:30',
-      durationMinutes: 120,
-    });
+    const exam = await api.post(
+      `/api/modules/${coc251.id}/assessments`,
+      { title: 'Exam', kind: 'exam', weight: 0.6, dueAt: '2026-10-14T09:30', durationMinutes: 120 },
+      201,
+      AssessmentSchema,
+    );
     const tooMuch = await api.post<{ detail: string }>(
       `/api/modules/${coc251.id}/assessments`,
       { title: 'Quiz', kind: 'test', weight: 0.1 },
@@ -110,6 +109,17 @@ describe('courses, modules and assessments', () => {
       (await api.get('/api/deadlines?days=7', z.object({ deadlines: z.array(z.unknown()) })))
         .deadlines,
     ).toEqual([]);
+
+    // Work handed in is no longer a deadline, though it still awaits a mark.
+    await api.patch(`/api/assessments/${exam.id}`, { status: 'submitted' }, 200, AssessmentSchema);
+    expect(
+      (await api.get('/api/deadlines?days=14', z.object({ deadlines: z.array(z.unknown()) })))
+        .deadlines,
+    ).toEqual([]);
+    const afterSubmitting = await api.get(`/api/modules/${coc251.id}`, ModuleDetailSchema);
+    expect(afterSubmitting.nextDeadline).toBeNull();
+    expect(afterSubmitting.marks.pendingWeight).toBeCloseTo(0.6);
+    await api.patch(`/api/assessments/${exam.id}`, { status: 'planned' }, 200, AssessmentSchema);
 
     // Clearing a mark reopens the assessment.
     const reopened = await api.patch(
@@ -158,6 +168,24 @@ describe('courses, modules and assessments', () => {
       ['Consensus', null],
       ['Paxos', consensus.id],
     ]);
+
+    // New topics go last; an explicit ordinal moves one.
+    const replication = await api.post(
+      `/api/modules/${module.id}/topics`,
+      { title: 'Replication' },
+      201,
+      TopicSchema,
+    );
+    expect(replication.ordinal).toBe(2);
+    await api.patch(`/api/topics/${consensus.id}`, { ordinal: 5 }, 200, TopicSchema);
+    const reordered = await api.get(`/api/modules/${module.id}`, ModuleDetailSchema);
+    expect(reordered.topics.map((topic) => topic.title)).toEqual([
+      'Paxos',
+      'Replication',
+      'Consensus',
+    ]);
+
+    await api.delete(`/api/topics/${replication.id}`);
     await api.delete(`/api/topics/${consensus.id}`);
     expect((await api.get(`/api/modules/${module.id}`, ModuleDetailSchema)).topics).toEqual([]);
   });

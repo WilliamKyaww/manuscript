@@ -104,7 +104,7 @@ export function createLearningService({ repo, clock, ids }: LearningDependencies
     const assessments = repo.assessments(module.id);
     const marks = moduleSummary(assessments);
     const next = assessments.find(
-      (row) => row.status !== 'marked' && row.dueAt !== null && row.dueAt.slice(0, 10) >= today(),
+      (row) => row.status === 'planned' && row.dueAt !== null && row.dueAt.slice(0, 10) >= today(),
     );
     return {
       ...refOf(module),
