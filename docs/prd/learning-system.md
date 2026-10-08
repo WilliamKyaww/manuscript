@@ -15,9 +15,17 @@ Course (e.g. "Year 3 — CS & AI")
 Concept ── may belong to several modules/topics (cross-module connections)
 ```
 
-**Mark calculator** (Phase 6): module mark = Σ weightᵢ × markᵢ; for a target T the required mark on the
-remaining assessments is `(T − Σ achieved weightᵢ·markᵢ) / Σ remaining weightᵢ`; the final-year average
-is credit-weighted across modules. Shown on the module page and the dashboard against the 85 % goal.
+Modules are tied to the vault by their **code** (`Sources/<code>/`, a note's `module:` property) and a
+note belongs to a lecture by its `lecture:` property; the files are the record of those associations
+(ADR-0029). Lecture ↔ source links are kept by the app. Archived modules still count towards their
+course; only planned (not submitted or marked) assessments are deadlines.
+
+**Mark calculator** (Phase 6, `@skb/core` `learning/marks.ts`): module mark = Σ weightᵢ × markᵢ; for a
+target T the required mark on the remaining assessments is `(T − Σ achieved weightᵢ·markᵢ) / Σ remaining
+weightᵢ`, where weight not yet given to an assessment counts as remaining; the outcome is *needed*
+(with that average), *secured*, *out of reach* (with the best still possible) or *missed* (with the
+final mark). The year average is credit-weighted across modules. Shown on the module page, the course
+card and Today against the target.
 
 ## 2. Concepts as the unit of learning
 

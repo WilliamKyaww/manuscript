@@ -34,6 +34,7 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 | [0026](#adr-0026--obsidian-compatible-dialect-with-recorded-differences) | Obsidian-compatible dialect with recorded differences | Accepted | 2026-10-07 |
 | [0027](#adr-0027--the-product-is-called-manuscript-internal-identifiers-keep-skb) | The product is called Manuscript; internal identifiers keep `skb` | Accepted | 2026-10-08 |
 | [0028](#adr-0028--the-source-library-follows-the-sources-folder) | The source library follows the `Sources` folder | Accepted | 2026-10-08 |
+| [0029](#adr-0029--course-structure-in-the-database-tied-to-files-by-module-code) | Course structure in the database, tied to files by module code | Accepted | 2026-10-08 |
 
 ---
 
@@ -431,4 +432,39 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   so renaming the file renames the source. Module codes are folder names until Phase 6 makes modules
   entities (it will map existing folder codes onto them). Moves made while the app is closed are
   matched by hash at the next start, which reads every new or changed file once.
+- **Date.** 8 October 2026.
+
+## ADR-0029 — Course structure in the database, tied to files by module code
+
+- **Context.** Phase 6 adds courses, modules, lectures, topics, assessments and concepts. The vault
+  already says which module things belong to — sources by their `Sources/<code>/` folder (ADR-0028),
+  notes by their `module` and `lecture` properties — and the user edits both in other programs.
+  The checklist planned a `lecture_notes` table "mirroring" frontmatter. Separately, wikilinks have
+  to reach concepts, which are database entities (ADR-0020), without breaking how links to notes
+  resolve.
+- **Options.** (a) Course entities in the database, with join tables (`lecture_notes`, module ids on
+  notes and sources) kept in sync with the files. (b) The course structure as files too (a YAML file
+  or a note per module and lecture). (c) Course entities in the database, joined to files by the
+  module **code** and lecture **key** at query time, with any association made through the app
+  written into the file.
+- **Decision.** (c). Modules have a unique, case-insensitive `code_key`; a module's sources and
+  notes are those whose `module_code` matches it, and a lecture's notes are those whose `lecture`
+  property names it (`COC251/L03`, or `L03` with `module: COC251`). Attaching a note writes those
+  two properties (a minimal frontmatter edit); detaching removes `lecture`. There is no
+  `lecture_notes` table. Which sources belong to a lecture cannot be said by the file, so that one
+  association is a table (`lecture_sources`). A code or key cannot change while files refer to it.
+  Concepts share one case-folded namespace of names and aliases, and a bare link resolves to a
+  **note first** (file name, title, alias), then a concept, then an attachment; links to concepts are
+  never rewritten by moves, and deleting a concept leaves them unresolved.
+- **Reason.** The files stay the record of what belongs where: a note filed in Obsidian is in the
+  right lecture at once, there is no second copy to drift or conflict, and losing `.skb/` loses no
+  association a file carries. Module codes are what students already write. Notes winning over
+  concepts keeps every existing link meaning what it meant (ADR-0020: concepts resolve "when no
+  note matches").
+- **Consequences.** Renaming a module code or lecture key is refused while notes or sources use it,
+  until a rename that moves the folder and rewrites the properties exists (backlog B-LE-11). The
+  course structure, assessments, marks and concepts themselves live only in `.skb/skb.db` and
+  need the Phase 16 export (data-model.md §6); a backing note is where a concept's longer
+  explanation belongs. Creating a note with a concept's name takes over that name's links, by
+  design. Joins use `lower(module_code)`, which the indexed columns keep cheap at a student's scale.
 - **Date.** 8 October 2026.

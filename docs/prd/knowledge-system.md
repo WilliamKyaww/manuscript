@@ -41,10 +41,11 @@ Resolution order for `[[X]]` (case-insensitive, Unicode-normalised; implemented 
 1. A note whose file name (without `.md`) equals X; then one whose frontmatter `title` equals X; then
    a note alias equal to X. Ambiguity (two notes named X) prefers a note in the linking note's own
    folder, then the shortest vault path (as Obsidian does), and is reported.
-2. A **concept** whose name or alias equals X → links to the concept page (Phase 6).
+2. A **concept** whose name or alias equals X → links to the concept page (Phase 6; names and aliases
+   share one case-folded namespace, so this is never ambiguous — ADR-0029).
 3. An attachment whose file name equals X.
-4. Otherwise **unresolved** — shown distinctly; selecting it creates the note ("Create concept" from
-   Phase 6).
+4. Otherwise **unresolved** — shown distinctly; selecting it in the preview offers **Create note**
+   (next to the linking note) or **Create concept** (named after the link).
 
 Targets with a folder (`[[Folder/X]]`, Markdown links such as `[t](../X.md)`) resolve relative to the
 linking note, then from the vault root (`/X` means only this), then by path suffix. The user-facing
