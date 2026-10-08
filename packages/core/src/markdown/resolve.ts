@@ -19,9 +19,10 @@ import {
  *   1. a note whose file name equals the target;
  *   2. a note whose frontmatter `title` equals the target;
  *   3. a note alias;
- *   4. an attachment (any non-note file) by file name.
+ *   4. a concept by name or alias (Phase 6; folder-qualified targets never match concepts);
+ *   5. an attachment (any non-note file) by file name.
  * Several candidates at one step prefer the linking note's own folder, then the shortest path, and
- * are reported as ambiguous. Concepts join the order in Phase 6.
+ * are reported as ambiguous. Concept names and aliases are unique, so a concept is never ambiguous.
  */
 
 export interface ResolvableNote {
@@ -35,9 +36,16 @@ export interface ResolvableAttachment {
   path: string;
 }
 
+export interface ResolvableConcept {
+  id: string;
+  name: string;
+  aliases: readonly string[];
+}
+
 export type LinkResolution =
   | { kind: 'note'; noteId: string; path: string; ambiguous: boolean }
   | { kind: 'attachment'; path: string; ambiguous: boolean }
+  | { kind: 'concept'; conceptId: string; name: string }
   | { kind: 'unresolved' };
 
 interface NoteEntry {
@@ -114,13 +122,17 @@ export class LinkResolver {
   readonly #byAlias = new KeyIndex<NoteEntry>();
   readonly #attachmentsByName = new KeyIndex<AttachmentEntry>();
   readonly #attachmentsByPath = new KeyIndex<AttachmentEntry>();
+  readonly #concepts = new Map<string, { concept: ResolvableConcept; keys: string[] }>();
+  readonly #conceptsByKey = new Map<string, ResolvableConcept>();
 
   constructor(
     notes: readonly ResolvableNote[] = [],
     attachments: readonly ResolvableAttachment[] = [],
+    concepts: readonly ResolvableConcept[] = [],
   ) {
     for (const note of notes) this.setNote(note);
     for (const attachment of attachments) this.setAttachment(attachment);
+    for (const concept of concepts) this.setConcept(concept);
   }
 
   get noteCount(): number {
@@ -129,6 +141,10 @@ export class LinkResolver {
 
   get attachmentCount(): number {
     return this.#attachments.size;
+  }
+
+  get conceptCount(): number {
+    return this.#concepts.size;
   }
 
   getNote(id: string): ResolvableNote | undefined {
@@ -189,6 +205,27 @@ export class LinkResolver {
     this.#attachmentsByPath.delete(pathKey, entry);
   }
 
+  /** Adds or replaces a concept (matched by id). Its name and aliases become link targets. */
+  setConcept(concept: ResolvableConcept): void {
+    this.removeConcept(concept.id);
+    const keys = [...new Set([concept.name, ...concept.aliases].map(normaliseKey))].filter(
+      (key) => key !== '',
+    );
+    const entry = { concept: { ...concept, aliases: [...concept.aliases] }, keys };
+    this.#concepts.set(concept.id, entry);
+    for (const key of keys)
+      if (!this.#conceptsByKey.has(key)) this.#conceptsByKey.set(key, entry.concept);
+  }
+
+  removeConcept(id: string): void {
+    const entry = this.#concepts.get(id);
+    if (!entry) return;
+    this.#concepts.delete(id);
+    for (const key of entry.keys) {
+      if (this.#conceptsByKey.get(key)?.id === id) this.#conceptsByKey.delete(key);
+    }
+  }
+
   /** Resolves a link target (without `#heading`) written in the note at `sourcePath`. */
   resolve(target: string, sourcePath?: string): LinkResolution {
     const trimmed = target.trim();
@@ -224,6 +261,8 @@ export class LinkResolver {
       const candidates = index.get(key);
       if (candidates.length > 0) return this.#pickNote(candidates, sourceFolder);
     }
+    const concept = this.#conceptsByKey.get(key);
+    if (concept) return { kind: 'concept', conceptId: concept.id, name: concept.name };
     const attachments = this.#attachmentsByName.get(attachmentPathKey(trimmed));
     if (attachments.length > 0) return this.#pickAttachment(attachments, sourceFolder);
     return { kind: 'unresolved' };

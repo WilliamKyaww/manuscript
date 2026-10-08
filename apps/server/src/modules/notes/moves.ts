@@ -172,7 +172,9 @@ export function planMove(
       if (link.target.trim() === '') continue;
       const was = before.resolve(link.target, source.path);
       const will = after.resolve(link.target, sourcePathAfter);
-      if (was.kind === 'unresolved' || sameTarget(was, will, newPath)) continue;
+      // Concept links name the concept, not a file, so moves never change them.
+      if (was.kind === 'unresolved' || was.kind === 'concept' || sameTarget(was, will, newPath))
+        continue;
       const targetAfter = newPath(was.path);
       let replacement: string;
       if (link.syntax === 'markdown') {

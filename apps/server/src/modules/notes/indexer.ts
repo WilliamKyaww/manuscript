@@ -18,6 +18,7 @@ import {
   type NoteAnalysis,
   normaliseKey,
   noteNameFromPath,
+  type ResolvableConcept,
 } from '@skb/core/markdown';
 import type { Clock } from '../../shared/clock';
 import type { EventBus } from '../../shared/events';
@@ -88,6 +89,11 @@ export interface NoteIndexer {
   ensurePersistentId(noteId: string): NoteRow;
   /** Absolute path of a vault-relative path produced by the index (already validated). */
   absolute(relativePath: string): string;
+  /**
+   * Replaces the concepts that links can resolve to (after notes, before attachments) and
+   * re-resolves the links whose targets are affected.
+   */
+  setConcepts(concepts: readonly ResolvableConcept[]): void;
   /** Listens for attachment changes after each batch and each scan; returns an unsubscribe function. */
   onAttachmentsChanged(listener: (change: AttachmentChange) => void): () => void;
 }
@@ -160,6 +166,7 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
   const chunkSize = deps.chunkSize ?? 200;
   const resolver = new LinkResolver();
   const docByNoteId = new Map<string, number>();
+  let concepts: readonly ResolvableConcept[] = [];
   let folderSet = new Set<string>();
   let classifier = createClassifier(settings.notes().ignorePatterns);
   let scanning: Promise<IndexResult> | null = null;
@@ -191,6 +198,7 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
     }
     for (const attachment of repo.allAttachments())
       resolver.setAttachment({ path: attachment.path });
+    for (const concept of concepts) resolver.setConcept(concept);
   };
   loadResolver();
 
@@ -242,26 +250,29 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
     sourcePath: string,
     sourceDoc: number,
   ): LinkResolutionRow => {
+    const none = { targetDoc: null, targetPath: null, targetConcept: null, ambiguous: false };
     if (target.trim() === '')
-      return { targetKind: 'note', targetDoc: sourceDoc, targetPath: sourcePath, ambiguous: false };
+      return { ...none, targetKind: 'note', targetDoc: sourceDoc, targetPath: sourcePath };
     const result = resolver.resolve(target, sourcePath);
     if (result.kind === 'note') {
       return {
+        ...none,
         targetKind: 'note',
         targetDoc: docByNoteId.get(result.noteId) ?? null,
         targetPath: result.path,
         ambiguous: result.ambiguous,
       };
     }
-    if (result.kind === 'attachment') {
+    if (result.kind === 'attachment')
       return {
+        ...none,
         targetKind: 'attachment',
-        targetDoc: null,
         targetPath: result.path,
         ambiguous: result.ambiguous,
       };
-    }
-    return { targetKind: 'unresolved', targetDoc: null, targetPath: null, ambiguous: false };
+    if (result.kind === 'concept')
+      return { ...none, targetKind: 'concept', targetConcept: result.conceptId };
+    return { ...none, targetKind: 'unresolved' };
   };
 
   const removeNoteRow = (row: NoteRow, batch: BatchContext) => {
@@ -549,6 +560,7 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
         next.targetKind !== link.targetKind ||
         next.targetDoc !== link.targetDoc ||
         next.targetPath !== link.targetPath ||
+        next.targetConcept !== link.targetConcept ||
         next.ambiguous !== link.ambiguous
       ) {
         repo.updateLinkResolution(link.linkId, next);
@@ -759,6 +771,17 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
       while (scanning) await scanning.catch(() => undefined);
     },
     apply,
+    setConcepts(next) {
+      const keysOfConcept = (concept: ResolvableConcept) =>
+        [concept.name, ...concept.aliases].map(normaliseKey);
+      const affected = new Set([...concepts, ...next].flatMap(keysOfConcept));
+      for (const concept of concepts) resolver.removeConcept(concept.id);
+      concepts = next.map((concept) => ({ ...concept, aliases: [...concept.aliases] }));
+      for (const concept of concepts) resolver.setConcept(concept);
+      const batch = newBatch('app');
+      for (const key of affected) batch.affectedKeys.add(key);
+      transact(() => reResolve(batch));
+    },
     onAttachmentsChanged(listener) {
       attachmentListeners.add(listener);
       return () => {

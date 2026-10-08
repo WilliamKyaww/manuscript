@@ -130,7 +130,10 @@ export function createNotesService({
       if (target.trim() === '')
         return { kind: 'note', noteId: asNoteId(row.id), path: row.path, ambiguous: false };
       const result = indexer.resolver.resolve(target, row.path);
-      return result.kind === 'note' ? { ...result, noteId: asNoteId(result.noteId) } : result;
+      if (result.kind === 'note') return { ...result, noteId: asNoteId(result.noteId) };
+      if (result.kind === 'concept')
+        return { ...result, conceptId: result.conceptId as Id<'concept'> };
+      return result;
     };
     return {
       ...summaryOf(row, aliases),
