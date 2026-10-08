@@ -13,6 +13,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/States';
 import { ApiError } from '../../lib/api/client';
 import { useApi } from '../../lib/api/context';
 import { onServerEvent } from '../../lib/events';
+import { recordOpened } from '../search/api';
 import { noteQuery, treeQuery } from './api';
 import { TrashView } from './dialogs/TrashView';
 import { NoteWorkspace } from './NoteWorkspace';
@@ -61,6 +62,12 @@ export function NotesPage() {
   useEffect(() => {
     if (activePath) expandFolders(ancestorsOf(activePath));
   }, [activePath, expandFolders]);
+
+  // Remembered for the quick switcher's "recently opened" list.
+  const currentId = current?.id;
+  useEffect(() => {
+    if (currentId) recordOpened(api, currentId);
+  }, [api, currentId]);
 
   const missing = note.error instanceof ApiError && note.error.status === 404;
 

@@ -51,6 +51,7 @@ export function resetUiState(): void {
     sidebarCollapsed: false,
     commandPaletteOpen: false,
     shortcutsOpen: false,
+    quickSwitcherOpen: false,
   });
   useThemeStore.setState({ preference: 'system', resolved: 'light' });
   document.documentElement.dataset.theme = 'light';

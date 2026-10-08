@@ -34,6 +34,15 @@ export const SECTIONS: readonly Section[] = [
     phase: 3,
   },
   {
+    id: 'search',
+    label: 'Search',
+    path: '/search',
+    group: 'knowledge',
+    description:
+      'Full-text search across your notes, with filters by tag, type, folder and module.',
+    phase: 4,
+  },
+  {
     id: 'library',
     label: 'Library',
     path: '/library',

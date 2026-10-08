@@ -1,5 +1,6 @@
 import { useRouterState } from '@tanstack/react-router';
 import { type ReactNode, useEffect, useRef } from 'react';
+import { QuickSwitcher } from '../features/search/QuickSwitcher';
 import { useServerEvents } from '../lib/events';
 import { CommandPalette } from './CommandPalette';
 import { GlobalShortcuts } from './GlobalShortcuts';
@@ -32,6 +33,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {children}
       </main>
       <CommandPalette />
+      <QuickSwitcher />
       <ShortcutsDialog />
       <GlobalShortcuts />
     </div>
@@ -53,7 +55,12 @@ function useFocusPageTitleOnNavigation(): void {
     if (previous.current === section) return;
     previous.current = section;
     const frame = requestAnimationFrame(() => {
-      document.querySelector<HTMLElement>('[data-page-title]')?.focus({ preventScroll: true });
+      // A page may name the control people use first (the search box); otherwise its title.
+      const target =
+        document.querySelector<HTMLElement>(
+          '[data-page-body] [data-autofocus], [data-page-header] [data-autofocus]',
+        ) ?? document.querySelector<HTMLElement>('[data-page-title]');
+      target?.focus({ preventScroll: true });
     });
     return () => cancelAnimationFrame(frame);
   }, [section]);

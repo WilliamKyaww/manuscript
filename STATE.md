@@ -4,8 +4,9 @@ _Last updated: 8 October 2026 — Claude Opus 5.5._
 
 ## Current phase
 
-**Phase 4 — Lexical search and quick navigation: next.** Phases 0 (research), 1 (foundation),
-2 (application shell) and 3 (notes and Markdown knowledge base) are complete and merged into `main`.
+**Phase 5 — Source library and ingestion pipeline: next.** Phases 0 (research), 1 (foundation),
+2 (application shell), 3 (notes and Markdown knowledge base) and 4 (lexical search and quick
+navigation) are complete and merged into `main`.
 
 ## What works
 
@@ -24,22 +25,26 @@ _Last updated: 8 October 2026 — Claude Opus 5.5._
   (completions, autosave, Ctrl+S, conflict banner with Compare), preview (GFM, KaTeX, highlight.js,
   lazy Mermaid, wikilinks, transclusion, PDF/audio/video embeds, callouts, sanitised HTML), edit /
   split / preview, outline, backlinks, properties, new-note and trash dialogues, Settings › Notes.
+- **Search** (Phase 4): full-text search over notes (`/search`, `Ctrl+Shift+F`) with BM25 ranking,
+  highlighted snippets, phrases, `OR`, exclusions and composable tag/type/folder/module filters, opening
+  results at the matching line; a quick switcher (`Ctrl+O`) by name, title or alias with recent notes;
+  notes and "Search notes for …" in the command palette. Hostile input never errors.
 - **Application shell:** sidebar, sticky page headers (per pane on paned pages), themes, command
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf` (10,000 notes), **`run-web.bat`**.
-- **Tests:** 326 Vitest tests and 63 Playwright tests (incl. sticky headers on every route and pane,
-  axe in both themes and all note views, an Obsidian-compatibility check) — all green. Performance:
-  10,000 notes index in 23.6 s, start-up with an index 1.25 s, note open p95 2 ms.
+- **Tests:** 357 Vitest tests and 70 Playwright tests (incl. sticky headers on every route and pane,
+  axe in both themes and all note views, an Obsidian-compatibility check) — all green. Performance at
+  10,000 notes: index 27 s, start-up with an index 1.2 s, note open p95 1 ms, search p95 47 ms.
 
 ## In progress
 
-- Nothing; Phase 4 not yet started.
+- Nothing; Phase 5 not yet started.
 
 ## Incomplete / not started
 
-- Phases 4–22. Search, sources, learning and AI features do not exist yet; their sections show
-  placeholders. Block references open the note but do not scroll to the block (B-KM-10).
+- Phases 5–22. Sources, learning and AI features do not exist yet; their sections show placeholders.
+  Search has no date filters yet (B-SE-01). Block references open the note but do not scroll to the block (B-KM-10).
 
 ## Broken
 
@@ -47,9 +52,11 @@ _Last updated: 8 October 2026 — Claude Opus 5.5._
 
 ## Next steps
 
-1. Create `phase/04-search` from `main`.
-2. Phase 4: FTS5 search over the `notes_fts` table built in Phase 3 (BM25 weights, snippets, filters,
-   operators), the quick switcher (`Ctrl+O`) and search from the command palette.
+1. Create `phase/05-sources` from `main`.
+2. Phase 5: the persistent job queue, the source library (PDF, PPTX, DOCX, Markdown, text), originals
+   kept byte for byte under `Sources/`, page/slide-aware chunks in a `chunks_fts` table that search
+   then covers (result kind `chunk`), and the source viewer — starting with the parser spike
+   (ADR-0019).
 
 ## Relevant decisions
 

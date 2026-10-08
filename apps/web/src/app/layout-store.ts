@@ -12,6 +12,8 @@ interface LayoutState {
   setCommandPaletteOpen(open: boolean): void;
   shortcutsOpen: boolean;
   setShortcutsOpen(open: boolean): void;
+  quickSwitcherOpen: boolean;
+  setQuickSwitcherOpen(open: boolean): void;
 }
 
 export const useLayoutStore = create<LayoutState>((set, get) => ({
@@ -25,10 +27,23 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
   },
   commandPaletteOpen: false,
   setCommandPaletteOpen(open) {
-    set({ commandPaletteOpen: open, ...(open ? { shortcutsOpen: false } : {}) });
+    set({
+      commandPaletteOpen: open,
+      ...(open ? { shortcutsOpen: false, quickSwitcherOpen: false } : {}),
+    });
   },
   shortcutsOpen: false,
   setShortcutsOpen(open) {
-    set({ shortcutsOpen: open, ...(open ? { commandPaletteOpen: false } : {}) });
+    set({
+      shortcutsOpen: open,
+      ...(open ? { commandPaletteOpen: false, quickSwitcherOpen: false } : {}),
+    });
+  },
+  quickSwitcherOpen: false,
+  setQuickSwitcherOpen(open) {
+    set({
+      quickSwitcherOpen: open,
+      ...(open ? { commandPaletteOpen: false, shortcutsOpen: false } : {}),
+    });
   },
 }));

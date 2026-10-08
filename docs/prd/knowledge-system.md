@@ -56,9 +56,13 @@ occurrences of the note title/aliases), each with a one-click "link" action.
 ## 4. Search (Phase 4; semantic in Phase 10)
 
 - **Quick switcher** (`Ctrl+O`): fuzzy title/alias match over notes, concepts, sources, modules.
-- **Full-text search** (`Ctrl+Shift+F`): FTS5 BM25 over notes and source chunks with column weights
-  (title 10, headings 4, body 1), highlighted snippets, filters (type, tag, folder, module, source kind,
-  date), operators (`"phrase"`, `-exclude`, `tag:`, `module:`, `type:`).
+- **Full-text search** (`Ctrl+Shift+F`): FTS5 BM25 over notes (source chunks from Phase 5) with column
+  weights (title and aliases 10, headings 4, body 1, tags 2), highlighted snippets, filters (type, tag,
+  folder, module; source kind from Phase 5; date in the backlog, B-SE-01), operators (`"phrase"`,
+  `-exclude`, `OR`, `tag:`/`#tag`, `module:`, `type:`, `folder:`, negated filters). Words match as
+  prefixes; several tags must all apply, other repeated filters are alternatives; counts stop at 1,000.
+  The parser (`@skb/core` `search/query.ts`) quotes every term, so input never reaches FTS5 as syntax.
+  Implemented in Phase 4; user guide `docs/guide/search.md`.
 - **Hybrid** (Phase 10): BM25 and embedding results fused with Reciprocal Rank Fusion (k = 60);
   optional reranking; "Related notes" panel from embeddings.
 - Index updates are incremental and transactional with each write; a full rebuild is a background job.

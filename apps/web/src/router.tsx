@@ -56,8 +56,17 @@ const noteRoute = createRoute({
   },
 });
 
+const searchRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/search',
+  component: lazyRouteComponent(() => import('./features/search/SearchPage'), 'SearchPage'),
+  // The query lives in the address, so searches can be bookmarked and survive a reload.
+  validateSearch: (search: Record<string, unknown>): { q?: string } =>
+    typeof search.q === 'string' && search.q !== '' ? { q: search.q } : {},
+});
+
 /** Sections that are not built yet get an honest placeholder; each phase replaces one with real routes. */
-const IMPLEMENTED = new Set(['today', 'notes', 'settings']);
+const IMPLEMENTED = new Set(['today', 'notes', 'search', 'settings']);
 const placeholderRoutes = SECTIONS.filter((section) => !IMPLEMENTED.has(section.id)).map(
   (section) =>
     createRoute({
@@ -72,6 +81,7 @@ export const routeTree = rootRoute.addChildren([
   settingsRoute,
   notesRoute,
   noteRoute,
+  searchRoute,
   ...placeholderRoutes,
 ]);
 

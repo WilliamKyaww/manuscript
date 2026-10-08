@@ -132,7 +132,9 @@ written) · `target_name_key`† (last path segment, for re-resolution) · `head
 
 **attachments** (derived) `path` PK · `name_key`† · `size_bytes` · `mtime_ms` · `media_type` · `indexed_at`
 
-**notes_fts** (FTS5, derived) `title`, `headings`, `body`, `tags` — `tokenize='porter unicode61 remove_diacritics 2'`
+**notes_fts** (FTS5, derived) `title` (with aliases), `headings`, `body`, `tags` — `tokenize='porter unicode61 remove_diacritics 2'`; rank configured as `bm25(10, 4, 1, 2)` (migration `0004`)
+
+**recent_items** (canonical, low stakes; migration `0003`) `kind` · `item_id` · `opened_at` — the last 100 opened notes for the quick switcher; missing items are skipped on read
 
 ### 5.2 Sources
 

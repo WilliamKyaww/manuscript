@@ -20,7 +20,7 @@ import { openVault } from '../../src/vault/vault';
 
 const NOTE_COUNT = Number(process.argv[2] ?? 10_000);
 const FOLDERS = 50;
-const BUDGETS = { fullIndexMs: 60_000, startupMs: 3_000, noteOpenP95Ms: 100 };
+const BUDGETS = { fullIndexMs: 60_000, startupMs: 3_000, noteOpenP95Ms: 100, searchP95Ms: 150 };
 
 /** Small deterministic PRNG (mulberry32) so every run generates the same vault. */
 function random(seed: number) {
@@ -192,6 +192,44 @@ async function main() {
       backlinkTimings.push(performance.now() - before);
     }
     record('Backlinks, p95', percentile(backlinkTimings, 0.95));
+
+    // Full-text search (task 4.09): a mix of the query shapes people type.
+    const queries = [
+      'consensus',
+      'leader election',
+      '"gradient descent"',
+      'trans',
+      'quorum tag:module-3',
+      'lock -deadlock',
+      'kernel OR tensor',
+      'module:COC207',
+      'folder:"Module 4" attention',
+      'replication log safety',
+    ];
+    const searchTimings: number[] = [];
+    let found = 0;
+    for (let round = 0; round < 20; round += 1) {
+      for (const query of queries) {
+        const before = performance.now();
+        found += session.modules.search.search(query, { limit: 20, offset: 0 }).results.length;
+        searchTimings.push(performance.now() - before);
+      }
+    }
+    record(
+      `Search, p95 (${searchTimings.length} queries, ${found} results)`,
+      percentile(searchTimings, 0.95),
+      BUDGETS.searchP95Ms,
+    );
+    record('Search, median', percentile(searchTimings, 0.5));
+    if (process.env.SKB_PERF_DETAIL) {
+      for (const query of queries) {
+        const before = performance.now();
+        const response = session.modules.search.search(query, { limit: 20, offset: 0 });
+        console.log(
+          `${Math.round(performance.now() - before)} ms  total ${response.total}  ${query}`,
+        );
+      }
+    }
     const changed = notePath(1);
     writeFileSync(
       path.join(root, ...changed.split('/')),
