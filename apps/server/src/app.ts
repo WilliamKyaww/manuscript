@@ -8,6 +8,7 @@ import { staticSite } from './http/static';
 import { registerEventRoutes } from './modules/events/routes';
 import type { AppModules } from './modules/index';
 import { registerNotesRoutes } from './modules/notes/routes';
+import { registerSearchRoutes } from './modules/search/routes';
 import { registerSettingsRoutes } from './modules/settings/routes';
 import { registerSystemRoutes } from './modules/system/routes';
 import { apiGuard, authBootstrapHandler, hostGuard, type SecurityContext } from './security/guards';
@@ -52,6 +53,7 @@ export function createApp(ctx: AppContext, modules: AppModules, auth: AuthOption
   registerSystemRoutes(registry, ctx);
   registerSettingsRoutes(registry, modules.settings);
   registerNotesRoutes(registry, modules.notes);
+  registerSearchRoutes(registry, modules.search);
   registerEventRoutes(registry, ctx);
 
   // Unknown API routes are problem-details 404s, never the SPA.
