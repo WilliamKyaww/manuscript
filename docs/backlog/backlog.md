@@ -1,6 +1,6 @@
 # Backlog items
 
-_Last reviewed: 4 October 2026 (Phase 0)._
+_Last reviewed: 8 October 2026 (Phase 5)._
 
 ## Knowledge (KM)
 
@@ -22,6 +22,15 @@ _Last reviewed: 4 October 2026 (Phase 0)._
 | B-SE-01 | Date filters in search (`created:`, `updated:` before/after) | Listed in knowledge-system.md §4; not needed for the Phase 4 gate | Phase 4 |
 | B-SE-02 | Highlight the search terms inside the opened note | Results open at the matching line; marking every occurrence would help scanning | Phase 4 |
 | B-SE-03 | Search operators for a single field (`title:`, `heading:`) | Narrower searches in large vaults | Phase 4 |
+| B-SE-04 | Group search hits by source (e.g. "Lecture 3 — 6 slides match") with a way to expand | A repeated slide (a lecture plan shown five times) fills the first page of results | Phase 5 |
+| B-SE-05 | Highlight the search terms on the opened page or slide in the source viewer | The viewer opens at the right page; marking the words would make the passage obvious | Phase 5 |
+| B-SE-06 | Sources in the quick switcher and the command palette | Jump to a lecture by name as quickly as to a note | Phase 5 |
+| B-SO-01 | Web page import with safe fetch (http/https only, size cap, timeout, redirect checks) and readable-content extraction | Optional task 5.11, not needed for the Phase 5 gate | Phase 5 |
+| B-SO-02 | Render PPTX slides as pictures (e.g. by converting to PDF with an installed LibreOffice) | Slides are shown as text; diagrams and layout need the original | Phase 5 |
+| B-SO-03 | DOCX footnotes, endnotes, comments, headers and text boxes as sections | Only the body is read today | Phase 5 |
+| B-SO-04 | Two-column PDF reading order and smarter de-hyphenation | Text comes in pdf.js order; only lower-case words broken at a line end are rejoined | Phase 5 |
+| B-SO-05 | Desktop file picker importing by path (no upload) and a "Reveal in Explorer" action | `POST /api/sources/import-path` exists; the picker arrives with the desktop app | Phase 5 → 18 |
+| B-SO-06 | Pre-read all PDF page sizes so jumps land exactly in documents with mixed page sizes | The viewer reserves space using the first page's size until a page renders (TD-09) | Phase 5 |
 
 ## Learning (LE)
 

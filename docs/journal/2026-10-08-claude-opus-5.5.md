@@ -172,3 +172,101 @@ Phase 4 — lexical search and quick navigation.
 ### Next steps
 
 Phase 5 — source library and ingestion pipeline (`phase/05-sources`).
+
+## Session 8 — Phase 5: source library and ingestion pipeline
+
+- **Date:** Thursday 8 October 2026
+- **Time:** about 12:10–17:45
+- **Agent model:** Claude Opus 5.5 (`claude-opus-5-5`)
+- **Phase:** 5 — Source library and ingestion pipeline (branch `phase/05-sources`)
+- **Work performed:** built and verified Phase 5 end to end and merged it.
+
+### What was done
+
+1. **Spike and dependencies (5.01).** pdfjs-dist and unpdf compared on real PDFs (Raft paper, CS224N
+   lecture 1) in Node and Electron's Node: identical text, so pdf.js is used directly (ADR-0019). mammoth
+   was dropped for a vulnerable transitive dependency; DOCX is read in-house like PPTX. Added
+   pdfjs-dist, fflate, fast-xml-parser and a `shell-quote` override (TD-07).
+2. **Core (5.05, 5.06, 5.12).** Source kinds, the shared `LocatorSchema`, `SourceParser` /
+   `NormalisedDocument`; type detection by extension and magic bytes; the section-aware chunker; the
+   `kind:` search filter; contracts for sources, jobs and the new events.
+3. **Jobs (5.02, 5.03).** Migration `0005` and the SQLite job queue (`src/jobs/`): atomic claiming,
+   retries with back-off for unexpected errors, permanent errors with user-facing reasons, time limits,
+   cancellation, recovery after a crash or shutdown, `job.updated` events.
+4. **Parsers (5.07–5.10).** Markdown/text (fence-aware headings), PDF (pages, missing text layers,
+   password/damage/page limits, de-hyphenation), PPTX (presentation order, groups, tables, speaker
+   notes, chrome left out), DOCX (headings by style name or outline level, lists, tables, tracked
+   changes); a size-checked ZIP reader and an XML helper that refuses DOCTYPEs.
+5. **Library (5.04, 5.13–5.15).** Import by upload or server path into `Sources/<module | Inbox>/`
+   (byte for byte, SHA-256 de-duplication, safe unique names); idempotent ingestion in one
+   transaction; the reconciler that follows the folder through the notes index (ADR-0028); the API.
+6. **Search (5.16).** Source passages ranked with notes, one per page/slide/section, with locators.
+7. **Web (5.17, 5.18).** Library page (modules, drag and drop, live progress, retry, delete) and the
+   viewer (pdf.js pages with thumbnails, zoom and a text layer; slides with notes; documents by
+   section) with deep links; source results in search; "Search for …" in the palette.
+8. **Verification (5.19, 5.20).** `e2e/library.spec.ts`; security tests (zip bomb, 3,001-page PDF,
+   size limit, traversal and unportable names, mismatched types, path-import rules); the smoke test
+   imports and finds a PDF through the bundled server; the performance test adds a 10,000-page library.
+9. **Docs (5.21).** `docs/guide/sources.md`; search guide, data model, architecture, tech stack,
+   ADR-0028, backlog B-SE-04…06 and B-SO-01…06, TD-07…09, FEATURES, STATE, AGENTS.md pitfalls.
+
+### Important decisions
+
+- **ADR-0028:** the library follows the `Sources` folder — matched by path, then by hash; moves keep
+  the id, deletions mark *missing*, trash restores revive, unknown supported files register, and the
+  library rebuilds from the folder if `.skb/` is lost.
+- A source is titled by its file name; module codes are folder names until Phase 6.
+- Search shows one hit per page, slide or section (its best chunk); tags and types leave sources out;
+  folder filters decide which index can match.
+- Ingestion is a no-op when the content hash and parser version are unchanged, so enqueueing is
+  always safe; a failed re-ingestion keeps the previous sections.
+
+### Files changed
+
+- `packages/core/src/sources/*`, `packages/core/src/api/{jobs,sources,search,vault}.ts`,
+  `packages/core/src/search/query.ts`
+- `apps/server/src/jobs/*`, `apps/server/src/db/migrations/0005_sources.sql`,
+  `apps/server/src/modules/sources/**`, `apps/server/src/modules/search/{clauses,repository,service}.ts`,
+  `apps/server/src/modules/notes/indexer.ts` (attachment events), `apps/server/src/modules/index.ts`
+- `apps/web/src/features/library/**`, `apps/web/src/components/ProgressBar.tsx`,
+  `apps/web/src/features/search/SearchPage.tsx`, `apps/web/src/router.tsx`, `apps/web/vite.config.ts`
+- `e2e/library.spec.ts`, `e2e/axe.ts`, `scripts/smoke-server.mjs`, `apps/server/test/**`
+- Docs listed above; `THIRD_PARTY_NOTICES.md` (pdf.js text-layer CSS).
+
+### Tests run
+
+| Command | Result |
+|---|---|
+| `npm run verify` | **Pass** — type-check, Biome, **424** Vitest tests, build, smoke (incl. a PDF import) |
+| `npx playwright test` | **Pass** — **72/72** (2 new library tests; the library page in the sticky-header and axe checks) |
+| `npm run test:perf` | **Pass** — search p95 **30 ms** at 10,000 notes; **105 ms** with 10,000 PDF pages (21,143 chunks) as well (budget 150 ms) |
+| Manual | Imported the CS224N lecture (40 pages, 5.3 MB), the Raft paper and a DOCX in the browser; screenshots of the library, search, the PDF viewer (light and dark) and the document view checked |
+
+### Problems encountered
+
+- **pdf.js refuses Node `Buffer`s** (`readFileSync` returns one; `Buffer.slice()` is still one): the PDF
+  parser now copies into a plain `Uint8Array`. Found by the first integration test.
+- **Search was over budget after adding sources.** Ranking a `UNION` of notes and chunks in SQL sorted
+  every match and ran the FTS MATCH again for snippets. Each index is now read in FTS5's own rank order
+  with an early `LIMIT` and inline snippets, and merged in code; excluded words join the FTS5
+  expression as `NOT` (210 → 25 ms for `lock -deadlock`); folder filters skip the index that cannot
+  match (334 → 25 ms).
+- **Noisy timings.** With chat, music and browsers running, the same code measured two to three times
+  slower; the Phase 4 code itself measured p95 186 ms in that state. Comparing against a worktree of
+  the previous gate showed what was real (now in AGENTS.md).
+- **Thumbnails did not follow** a deep-linked page: the effect ran before the thumbnails existed.
+- **A flaky Notes page test** (pre-existing): the first lazily loaded route can take more than
+  Testing Library's one-second default on a busy machine; the timeout is now five seconds.
+- Tooling: a commit message written with `Set-Content -Encoding utf8` began with a byte-order mark
+  (amended before anything else was committed on top); PowerShell treats curly quotes as string
+  delimiters.
+
+### Unresolved issues
+
+- Optional task 5.11 (web page import) moved to the backlog (B-SO-01).
+- Slides are shown as text (B-SO-02); scanned pages need OCR (Phase 11); search hits are not grouped
+  by source (B-SE-04).
+
+### Next steps
+
+Phase 6 — course structure and concepts (`phase/06-course-structure`).

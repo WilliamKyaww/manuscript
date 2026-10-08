@@ -4,11 +4,13 @@ A personal **Knowledge & Learning OS**: a Markdown knowledge base, a lecture/sou
 graph and a spaced-repetition learning system that share one data model — with an AI agent that can
 search, explain, generate study material and act on the knowledge base through permissioned tools.
 
-> **Status: Phases 0–4 complete** (research and planning; secure local server, database, vault and
+> **Status: Phases 0–5 complete** (research and planning; secure local server, database, vault and
 > launcher; application shell; **notes**: Markdown files in your vault with an editor, preview,
 > wikilinks, backlinks, templates, attachments, trash and live pick-up of edits made in Obsidian or
 > VS Code; **search**: full-text search with filters, a quick switcher and notes in the command
-> palette). The source library arrives in Phase 5. See [`STATE.md`](./STATE.md), the
+> palette; **library**: PDF, PowerPoint, Word, Markdown and text sources kept byte for byte, read in
+> the background, searchable down to the page or slide, with a viewer). Course structure and concepts
+> arrive in Phase 6. See [`STATE.md`](./STATE.md), the
 > [user guides](./docs/guide/README.md) and
 > [`docs/checklist/`](./docs/checklist/README.md) for the roadmap.
 

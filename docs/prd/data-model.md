@@ -138,19 +138,29 @@ written) · `target_name_key`† (last path segment, for re-resolution) · `head
 
 ### 5.2 Sources
 
-**sources**
-`id` PK · `kind` (`pdf` | `pptx` | `docx` | `markdown` | `text` | `url` | `audio` | `video` | `image`) ·
-`title` · `path` (vault-relative original) · `original_name` · `mime` · `sha256`† · `size_bytes` ·
-`page_count` · `status` (`pending` | `processing` | `ready` | `failed`) · `error` · `module_id`† ·
-`lecture_id`† · `url` · `metadata_json` · `created_at` · `ingested_at` · `deleted_at`
+**sources** (canonical, migration `0005`; kept in step with the `Sources/` folder, ADR-0028)
+`id` PK (`src_…`) · `kind` (`pdf` | `pptx` | `docx` | `markdown` | `text` | `url` | `audio` | `video` |
+`image`) · `title` (the file name without extension) · `path` (vault-relative original; unique among
+live sources) · `original_name` · `media_type` · `sha256`† · `size_bytes` · `mtime_ms` (lets
+reconciliation skip unchanged files) · `page_count` · `status` (`pending` | `processing` | `ready` |
+`failed`) · `error` · `module_code`† (the `Sources/<module>/` folder; `NULL` for the inbox — Phase 6
+maps codes onto module entities) · `url` · `metadata_json` · `warnings_json` · `parser_version` and
+`ingested_sha256` (what the current sections were produced from; ingestion is a no-op when both
+match) · `created_at` · `ingested_at` · `missing_at` (the original disappeared; cleared when the same
+content reappears) · `deleted_at` (moved to the trash through the app)
 
-**source_sections** (derived) `id` · `source_id`† · `ordinal` · `kind` (`page` | `slide` | `heading` |
-`segment`) · `label` ("Slide 3", "p. 12", "00:12:30") · `locator_json` · `text`
+**source_sections** (derived) `id` (integer; replaced on re-ingestion) · `source_id`† · `ordinal` ·
+`kind` (`page` | `slide` | `heading` | `segment`) · `label` ("Slide 3", "p. 12", a heading) ·
+`heading_path_json` · `locator_json` · `text` · `notes` (speaker notes)
 
-**chunks** (derived) `id` · `owner_type` (`source` | `note`) · `owner_id`† · `section_id` · `ordinal` ·
-`text` · `context_prefix` (document › section path) · `token_estimate` · `locator_json`
+**chunks** (derived) `id` (integer; also the `chunks_fts` rowid) · `owner_type` (`source` | `note`) ·
+`owner_id`† · `section_id`† · `ordinal` · `text` · `context_prefix` (document › section path) ·
+`token_estimate` · `locator_json`. Chunks never cross a section; about 300 estimated tokens with a
+little overlap (`@skb/core` `chunkDocument`).
 
-**chunks_fts** (FTS5, derived) `context_prefix`, `text`
+**chunks_fts** (FTS5, derived, external content over `chunks`, kept in step by triggers) `context_prefix`,
+`text` — same tokenizer as `notes_fts`; rank configured as `bm25(2, 1)`. Search shows one hit per
+section (its best chunk).
 
 **embeddings** (derived, P1) `chunk_id` · `model` · `dims` · `vector` (BLOB float32) — PK (`chunk_id`, `model`)
 
@@ -277,8 +287,11 @@ counts, time limit) · `created_at` — **quiz_items** `quiz_id` · `question_id
 `input_json` · `output_json` · `status` (`auto_approved` | `approved` | `denied` | `executed` |
 `failed` | `undone`) · `snapshot_ref` · `created_at`
 
-**jobs** `id` · `kind` · `payload_json` · `status` (`queued` | `running` | `succeeded` | `failed` |
-`cancelled`) · `progress` (0–1) · `message` · `attempts` · `run_after` · `created_at` · `updated_at`
+**jobs** (migration `0005`) `id` · `kind` (e.g. `source.ingest`) · `subject` (the entity worked on) ·
+`payload_json` · `status` (`queued` | `running` | `succeeded` | `failed` | `cancelled`) · `progress`
+(0–1) · `message` (current step) · `error` (last failure, user-facing) · `attempts` · `max_attempts` ·
+`run_after` (retry back-off) · `created_at` · `updated_at` · `finished_at`. Finished jobs are kept for
+14 days; jobs left running by a crash are queued again at start-up.
 
 **settings** `key` PK · `value_json` (vault-scoped, non-secret)
 
@@ -288,6 +301,7 @@ counts, time limit) · `created_at` — **quiz_items** `quiz_id` · `question_id
 |---|---|---|
 | Notes, templates, attachments | Yes (files) | As-is (Markdown) |
 | Source originals | Yes (files) | As-is |
+| Source library (rows) | Rebuilt from `Sources/` (module from the folder); missing/deleted states and later references are lost | JSON (Phase 16) |
 | Note index, FTS, chunks, embeddings | Rebuilt automatically | — |
 | Course structure, concepts, relations | No — **export required** | JSON (+ optional Markdown concept notes) |
 | Cards, schedules, review logs | No — **export required** | JSON, CSV, Anki-compatible TSV |

@@ -24,7 +24,7 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 | [0016](#adr-0016--electron-44-electron-builder-nsis-server-in-a-utilityprocess) | Electron 44, electron-builder (NSIS), server in a utilityProcess | Accepted | 2026-10-04 |
 | [0017](#adr-0017--tooling-typescript-7-biome-npm-workspaces-vitest-playwright-esbuild) | Tooling: TypeScript 7, Biome, npm workspaces, Vitest, Playwright, esbuild | Accepted | 2026-10-04 |
 | [0018](#adr-0018--frontend-react-19-vite-8-tanstack-tailwind-4-radix) | Frontend: React 19, Vite 8, TanStack, Tailwind 4, Radix | Accepted | 2026-10-04 |
-| [0019](#adr-0019--ingestion-parsers-with-a-phase-5-spike) | Ingestion parsers, with a Phase 5 spike | Accepted | 2026-10-04 |
+| [0019](#adr-0019--ingestion-parsers-with-a-phase-5-spike) | Ingestion parsers, with a Phase 5 spike | Accepted (spike result and DOCX change 2026-10-08) | 2026-10-04 |
 | [0020](#adr-0020--concepts-are-entities-relations-carry-provenance) | Concepts are entities; relations carry provenance | Accepted | 2026-10-04 |
 | [0021](#adr-0021--transparent-heuristic-mastery-never-asserted-by-ai) | Transparent heuristic mastery, never asserted by AI | Accepted | 2026-10-04 |
 | [0022](#adr-0022--provisional-name-study-knowledge-base-scope-skb) | Provisional name "Study Knowledge Base", scope `@skb` | Superseded by ADR-0027 | 2026-10-04 |
@@ -33,6 +33,7 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 | [0025](#adr-0025--note-ids-are-written-into-files-only-when-needed) | Note ids are written into files only when needed | Accepted | 2026-10-07 |
 | [0026](#adr-0026--obsidian-compatible-dialect-with-recorded-differences) | Obsidian-compatible dialect with recorded differences | Accepted | 2026-10-07 |
 | [0027](#adr-0027--the-product-is-called-manuscript-internal-identifiers-keep-skb) | The product is called Manuscript; internal identifiers keep `skb` | Accepted | 2026-10-08 |
+| [0028](#adr-0028--the-source-library-follows-the-sources-folder) | The source library follows the `Sources` folder | Accepted | 2026-10-08 |
 
 ---
 
@@ -399,3 +400,35 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   (server configuration and the launcher, TD-01). Renaming the default folders is up to the user
   (`docs/guide/README.md`). If a later phase wants the internal prefix renamed too, it needs a vault
   migration (rename `.skb/`, read both id keys) and a new ADR.
+
+## ADR-0028 — The source library follows the `Sources` folder
+
+- **Context.** Sources are canonical rows (data-model.md §4: their module, and later the cards,
+  questions and citations that point at them), but their originals are files in the vault that the
+  user can see, move, rename, edit and delete in other programs (ADR-0004). A library kept only in
+  `.skb/skb.db` would drift from the folder, and deleting `.skb/` would leave originals the
+  application no longer knows — knowledge held hostage by the database.
+- **Options.** (a) The database is the library; files are only reachable through the app's import and
+  delete. (b) The folder is the library: the database rows are re-derived from the files and the app
+  follows whatever happens to them. (c) A hybrid: rows are canonical for what they carry, and the
+  application reconciles them with the folder through the notes index (which already watches every
+  file in the vault).
+- **Decision.** (c). The notes indexer reports attachment changes; a reconciler (task 5.14) matches
+  every supported file under `Sources/` with a source row by path, then by SHA-256: a moved or renamed
+  file keeps its source id and is not re-parsed; a file edited in place is re-ingested; a file that
+  disappears marks its source *missing* (its sections stay, it leaves search) until the same content
+  reappears anywhere in `Sources/`; a file whose content matches a source deleted through the app
+  (restored from the trash) brings that source back with its id; any other supported file found there
+  is registered and ingested, with its module taken from its folder (`Sources/<module>/…`, `Inbox`
+  meaning none); an exact copy of a source that is still in place is left alone (one source per
+  content). Deleting a source through the app moves the original to the trash. A full reconciliation
+  runs at every start, after the notes index, and also re-ingests sources whose parser version has
+  changed.
+- **Reason.** The user keeps full control of the originals in a plain folder, external organisation
+  is never fought, and losing `.skb/` loses no material: the library rebuilds itself from `Sources/`.
+  Matching by content hash keeps ids (and so future references) stable across moves, the common case.
+- **Consequences.** Two files with identical bytes are one source. A source's title is its file name,
+  so renaming the file renames the source. Module codes are folder names until Phase 6 makes modules
+  entities (it will map existing folder codes onto them). Moves made while the app is closed are
+  matched by hash at the next start, which reads every new or changed file once.
+- **Date.** 8 October 2026.
