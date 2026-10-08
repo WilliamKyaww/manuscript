@@ -96,7 +96,9 @@ export function SearchPage() {
 
   const pages = results.data?.pages ?? [];
   const first = pages[0];
-  const items = pages.flatMap((page) => page.results);
+  const items = pages.flatMap((page) =>
+    page.results.flatMap((result) => (result.kind === 'note' ? [result] : [])),
+  );
   const chips = FILTER_KEYS.flatMap((key) => [
     ...parsed.filters[key].map((value) => ({ key, value, negated: false })),
     ...parsed.excludedFilters[key].map((value) => ({ key, value, negated: true })),

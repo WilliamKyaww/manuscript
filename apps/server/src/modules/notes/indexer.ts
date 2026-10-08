@@ -64,6 +64,13 @@ export interface IndexResult {
   structure: boolean;
 }
 
+/** Attachment files that changed in one batch (the source library follows files in Sources/). */
+export interface AttachmentChange {
+  /** Attachments that appeared, or whose size or modification time changed. */
+  changed: { path: string; sizeBytes: number; mtimeMs: number }[];
+  removed: string[];
+}
+
 export interface NoteIndexer {
   readonly resolver: LinkResolver;
   status(): IndexStatus;
@@ -81,6 +88,8 @@ export interface NoteIndexer {
   ensurePersistentId(noteId: string): NoteRow;
   /** Absolute path of a vault-relative path produced by the index (already validated). */
   absolute(relativePath: string): string;
+  /** Listens for attachment changes after each batch and each scan; returns an unsubscribe function. */
+  onAttachmentsChanged(listener: (change: AttachmentChange) => void): () => void;
 }
 
 export interface NoteIndexerDependencies {
@@ -105,6 +114,8 @@ interface BatchContext {
   affectedKeys: Set<string>;
   changes: NoteChange[];
   structure: boolean;
+  attachmentsChanged: Map<string, { sizeBytes: number; mtimeMs: number }>;
+  attachmentsRemoved: Set<string>;
 }
 
 const utf8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
@@ -208,6 +219,8 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
     affectedKeys: new Set(),
     changes: [],
     structure: false,
+    attachmentsChanged: new Map(),
+    attachmentsRemoved: new Set(),
   });
 
   const addFolderWithParents = (folder: string, batch?: BatchContext) => {
@@ -272,6 +285,8 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
     if (!repo.attachment(attachmentPath)) return;
     repo.deleteAttachment(attachmentPath);
     resolver.removeAttachment(attachmentPath);
+    batch.attachmentsChanged.delete(attachmentPath);
+    batch.attachmentsRemoved.add(attachmentPath);
     const name = attachmentPath.slice(attachmentPath.lastIndexOf('/') + 1);
     batch.affectedKeys.add(normaliseKey(name));
     batch.affectedKeys.add(targetNameKey(name));
@@ -291,6 +306,8 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
       mediaType: mediaTypeFor(relativePath),
       indexedAt: clock.now().toISOString(),
     });
+    batch.attachmentsRemoved.delete(relativePath);
+    batch.attachmentsChanged.set(relativePath, { sizeBytes: stats.size, mtimeMs });
     if (!existing) {
       resolver.setAttachment({ path: relativePath });
       batch.affectedKeys.add(normaliseKey(name));
@@ -551,9 +568,29 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
     reResolve(batch);
   };
 
+  const attachmentListeners = new Set<(change: AttachmentChange) => void>();
+
   const publishChanges = (batch: BatchContext): IndexResult => {
     if (batch.changes.length > 0 || batch.structure) {
       events.publish({ type: 'vault.changed', notes: batch.changes, structure: batch.structure });
+    }
+    if (batch.attachmentsChanged.size > 0 || batch.attachmentsRemoved.size > 0) {
+      const change: AttachmentChange = {
+        changed: [...batch.attachmentsChanged].map(([attachmentPath, file]) => ({
+          path: attachmentPath,
+          ...file,
+        })),
+        removed: [...batch.attachmentsRemoved],
+      };
+      batch.attachmentsChanged.clear();
+      batch.attachmentsRemoved.clear();
+      for (const listener of attachmentListeners) {
+        try {
+          listener(change);
+        } catch (error) {
+          logger.error('An attachment listener failed', { error });
+        }
+      }
     }
     return { notes: batch.changes, structure: batch.structure };
   };
@@ -722,6 +759,12 @@ export function createNoteIndexer(deps: NoteIndexerDependencies): NoteIndexer {
       while (scanning) await scanning.catch(() => undefined);
     },
     apply,
+    onAttachmentsChanged(listener) {
+      attachmentListeners.add(listener);
+      return () => {
+        attachmentListeners.delete(listener);
+      };
+    },
     ensurePersistentId(noteId) {
       const row = repo.byId(noteId);
       if (!row) throw new NotFoundError('That note does not exist.');

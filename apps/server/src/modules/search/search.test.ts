@@ -1,6 +1,11 @@
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { ProblemDetailsSchema, SearchResponseSchema } from '@skb/core';
+import {
+  ProblemDetailsSchema,
+  type SearchResponse,
+  SearchResponseSchema,
+  type SearchResult,
+} from '@skb/core';
 import { afterEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createTestApp } from '../../../test/helpers';
@@ -37,18 +42,26 @@ async function search(q: string, extra = '') {
   return SearchResponseSchema.parse(await response.json());
 }
 
-const paths = async (q: string) => (await search(q)).results.map((result) => result.note.path);
+/** The results as notes (these tests have no sources). */
+function notesOf(response: SearchResponse): Extract<SearchResult, { kind: 'note' }>[] {
+  return response.results.map((result) => {
+    if (result.kind !== 'note') throw new Error('Expected only note results.');
+    return result;
+  });
+}
+
+const paths = async (q: string) => notesOf(await search(q)).map((result) => result.note.path);
 
 describe('search', () => {
   it('ranks title matches above body matches and returns highlighted snippets', async () => {
     await setUp();
     const result = await search('leader');
-    expect(result.results.map((entry) => entry.note.path).sort()).toEqual([
-      'Inbox/Draft.md',
-      'Modules/COC251/Paxos.md',
-      'Modules/COC251/Raft.md',
-    ]);
-    const raft = result.results.find((entry) => entry.note.path === 'Modules/COC251/Raft.md');
+    expect(
+      notesOf(result)
+        .map((entry) => entry.note.path)
+        .sort(),
+    ).toEqual(['Inbox/Draft.md', 'Modules/COC251/Paxos.md', 'Modules/COC251/Raft.md']);
+    const raft = notesOf(result).find((entry) => entry.note.path === 'Modules/COC251/Raft.md');
     expect(
       raft?.snippet.some((part) => part.match && part.text.toLowerCase().startsWith('leader')),
     ).toBe(true);
@@ -58,7 +71,7 @@ describe('search', () => {
 
     // The title weighs more than a short note repeating the word.
     const titled = await search('raft');
-    expect(titled.results.map((entry) => entry.note.path)[0]).toBe('Modules/COC251/Raft.md');
+    expect(notesOf(titled).map((entry) => entry.note.path)[0]).toBe('Modules/COC251/Raft.md');
     expect(titled.results).toHaveLength(3);
     expect(titled.results[0]?.title).toEqual([{ text: 'Raft', match: true }]);
   });
@@ -103,7 +116,7 @@ describe('search', () => {
     ]);
     // A filter-only search returns the body start as context and no line.
     const filtered = await search('type:summary');
-    expect(filtered.results[0]?.line).toBeNull();
+    expect(notesOf(filtered)[0]?.line).toBeNull();
     expect(filtered.results[0]?.snippet[0]?.text).toContain('Gradient descent');
   });
 
@@ -113,12 +126,13 @@ describe('search', () => {
     const second = await search('leader', '&limit=2&offset=2');
     expect(first.results).toHaveLength(2);
     expect(second.results).toHaveLength(1);
-    const all = [...first.results, ...second.results].map((entry) => entry.note.path);
+    const all = [...notesOf(first), ...notesOf(second)].map((entry) => entry.note.path);
     expect(new Set(all).size).toBe(3);
     expect(first.total).toBe(3);
   });
 
-  it('stops counting after 1,000 matches but keeps paging', async () => {
+  // Writing and indexing 1,005 notes takes a few seconds when the whole suite runs in parallel.
+  it('stops counting after 1,000 matches but keeps paging', { timeout: 30_000 }, async () => {
     harness = createTestApp();
     const folder = path.join(harness.ctx.vault.root, 'Many');
     mkdirSync(folder, { recursive: true });

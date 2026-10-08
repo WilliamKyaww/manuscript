@@ -2,6 +2,7 @@ export * from './api/contract';
 export * from './api/jobs';
 export * from './api/notes';
 export * from './api/search';
+export * from './api/sources';
 export * from './api/system';
 export * from './api/vault';
 export * from './app';

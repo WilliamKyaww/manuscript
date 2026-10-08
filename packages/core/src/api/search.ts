@@ -1,5 +1,7 @@
 import { z } from 'zod';
+import { idSchema } from '../ids';
 import { MAX_QUERY_LENGTH } from '../search/query';
+import { LocatorSchema, SourceKindSchema } from '../sources/types';
 import { defineEndpoint } from './contract';
 import { NoteRefSchema } from './notes';
 
@@ -18,8 +20,27 @@ export const NoteSearchResultSchema = z.object({
   line: z.number().int().positive().nullable(),
 });
 
-/** Source chunks join this union in Phase 5. */
-export const SearchResultSchema = z.discriminatedUnion('kind', [NoteSearchResultSchema]);
+/** A matching passage of a source: one result per page, slide or section (its best chunk). */
+export const SourceSearchResultSchema = z.object({
+  kind: z.literal('source'),
+  source: z.object({
+    id: idSchema('source'),
+    title: z.string(),
+    kind: SourceKindSchema,
+    path: z.string(),
+  }),
+  /** Where the passage is: "p. 12", "Slide 3", a heading. */
+  section: z.object({ ordinal: z.number().int().nonnegative(), label: z.string() }),
+  locator: LocatorSchema,
+  /** The document › section path with matches highlighted. */
+  title: z.array(TextPartSchema),
+  snippet: z.array(TextPartSchema),
+});
+
+export const SearchResultSchema = z.discriminatedUnion('kind', [
+  NoteSearchResultSchema,
+  SourceSearchResultSchema,
+]);
 export type SearchResult = z.infer<typeof SearchResultSchema>;
 
 export const SearchResponseSchema = z.object({
