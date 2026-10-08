@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import {
   type Id,
   IMPORTABLE_SOURCE_KINDS,
+  type Locator,
   LocatorSchema,
   type ParsedQuery,
   parseSearchQuery,
@@ -35,6 +36,15 @@ export interface SearchService {
   search(query: string, page: { limit: number; offset: number }): SearchResponse;
   recordRecent(kind: 'note', id: string): void;
   recent(limit: number): RecentItem[];
+  /** The best source passages containing any of these exact phrases (a concept's name and aliases). */
+  sourcePassages(phrases: readonly string[], limit: number): SourcePassage[];
+}
+
+export interface SourcePassage {
+  source: { id: Id<'source'>; title: string };
+  section: { ordinal: number; label: string };
+  locator: Locator;
+  snippet: TextPart[];
 }
 
 export interface SearchServiceDependencies {
@@ -229,6 +239,37 @@ export function createSearchService({
         highlights: parsed.highlights,
         tookMs: Math.round((performance.now() - started) * 10) / 10,
       };
+    },
+
+    sourcePassages(phrases, limit) {
+      // Quotes are dropped rather than escaped: a phrase is matched as words in order either way.
+      const terms = phrases
+        .map((phrase) => phrase.replace(/"/g, ' ').trim())
+        .filter((phrase) => /[\p{L}\p{N}]/u.test(phrase));
+      if (terms.length === 0) return [];
+      const none = { tag: [], type: [], folder: [], module: [], kind: [] };
+      const page = repo.search({
+        match: terms.map((term) => `"${term}"`).join(' OR '),
+        exclude: null,
+        filters: none,
+        excludedFilters: none,
+        scope: { notes: false, sourceKinds: IMPORTABLE_SOURCE_KINDS },
+        limit,
+        offset: 0,
+      });
+      return page.rows.flatMap((row): SourcePassage[] => {
+        if (row.kind !== 'source') return [];
+        const locator = LocatorSchema.safeParse(JSON.parse(row.locatorJson));
+        if (!locator.success) return [];
+        return [
+          {
+            source: { id: row.sourceId as Id<'source'>, title: row.sourceTitle },
+            section: { ordinal: row.sectionOrdinal, label: row.sectionLabel },
+            locator: locator.data,
+            snippet: toParts(oneLine(row.snippet)),
+          },
+        ];
+      });
     },
 
     recordRecent(kind, id) {

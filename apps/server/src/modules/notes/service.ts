@@ -46,6 +46,11 @@ export interface NotesService {
   get(id: string): NoteDetail;
   create(input: CreateNoteBody): NoteDetail;
   update(id: string, input: { content: string; baseHash: string }): NoteDetail;
+  /**
+   * Sets (or, with `undefined`, removes) frontmatter properties of a note on the user's behalf —
+   * e.g. attaching it to a lecture — editing only those keys' lines.
+   */
+  setProperties(id: string, values: Readonly<Record<string, unknown>>): NoteDetail;
   backlinks(id: string): { linked: Backlink[] };
   unlinkedMentions(id: string): { mentions: UnlinkedMention[]; truncated: boolean };
   linkMention(
@@ -276,6 +281,27 @@ export function createNotesService({
       }
       if (current.text === content) return toDetail(current.row, current.text, current.hash);
       writeFileAtomic(file, content);
+      indexer.apply({ changed: [current.row.path] }, 'app');
+      return detailAt(current.row.path);
+    },
+
+    setProperties(id, values) {
+      const current = readCurrent(id);
+      const readOnly = warningsOf(current.row).find((warning) =>
+        READ_ONLY_WARNINGS.has(warning.code),
+      );
+      if (readOnly) throw new ValidationError(`This note is read-only here: ${readOnly.message}`);
+      let updated: string;
+      try {
+        updated = setFrontmatterValues(current.text, values);
+      } catch (error) {
+        if (!(error instanceof FrontmatterEditError)) throw error;
+        throw new ValidationError(
+          `The properties of "${current.row.path}" cannot be changed: ${error.message}`,
+        );
+      }
+      if (updated === current.text) return toDetail(current.row, current.text, current.hash);
+      writeFileAtomic(indexer.absolute(current.row.path), updated);
       indexer.apply({ changed: [current.row.path] }, 'app');
       return detailAt(current.row.path);
     },

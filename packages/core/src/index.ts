@@ -1,4 +1,6 @@
+export * from './api/concepts';
 export * from './api/contract';
+export * from './api/course';
 export * from './api/jobs';
 export * from './api/notes';
 export * from './api/search';
