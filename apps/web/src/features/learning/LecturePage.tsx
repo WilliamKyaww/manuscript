@@ -10,6 +10,7 @@ import { Page, StickySection } from '../../components/Page';
 import { EmptyState, ErrorState, LoadingState } from '../../components/States';
 import { ApiError } from '../../lib/api/client';
 import { useApi } from '../../lib/api/context';
+import { cn } from '../../lib/cn';
 import { notifyError } from '../../lib/notify';
 import { sourcesQuery } from '../library/api';
 import { SourceIcon } from '../library/SourceRow';
@@ -182,7 +183,7 @@ function LectureSources({ lecture }: { lecture: LectureDetail }) {
       <div className="flex items-center gap-2">
         <select
           aria-label="Source to attach"
-          className={`${selectClasses} w-80`}
+          className={cn(selectClasses, 'w-80')}
           value={choice}
           onChange={(event) => setChoice(event.target.value)}
         >
@@ -249,7 +250,7 @@ function LectureNotes({ lecture }: { lecture: LectureDetail }) {
         <div className="flex items-center gap-2">
           <select
             aria-label="Template for the new note"
-            className={`${selectClasses} h-8 w-44`}
+            className={cn(selectClasses, 'h-8 w-44')}
             value={templateId}
             onChange={(event) => setTemplateId(event.target.value)}
           >

@@ -10,6 +10,7 @@ import { IconButton } from '../../components/IconButton';
 import { Page, StickySection } from '../../components/Page';
 import { EmptyState, ErrorState, LoadingState } from '../../components/States';
 import { useApi } from '../../lib/api/context';
+import { formatCount } from '../../lib/format';
 import { coursesQuery, modulesQuery } from './api';
 import { CourseDialog, ModuleDialog } from './dialogs';
 import { formatDue, formatPercent } from './format';
@@ -171,8 +172,12 @@ function ModuleCard({ module }: { module: ModuleSummary }) {
           </span>
         )}
         <span className="mt-2 block text-xs text-subtle">
-          {module.counts.lectures} lectures · {module.counts.assessments} assessments ·{' '}
-          {module.counts.sources} sources · {module.counts.notes} notes
+          {[
+            formatCount(module.counts.lectures, 'lecture'),
+            formatCount(module.counts.assessments, 'assessment'),
+            formatCount(module.counts.sources, 'source'),
+            formatCount(module.counts.notes, 'note'),
+          ].join(' · ')}
         </span>
       </Link>
     </li>

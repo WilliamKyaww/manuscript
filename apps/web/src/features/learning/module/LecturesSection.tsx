@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Badge } from '../../../components/Badge';
 import { Button } from '../../../components/Button';
 import { StickySection } from '../../../components/Page';
+import { formatCount } from '../../../lib/format';
 import { LectureDialog } from '../dialogs';
 
 /** The next free key in the module's style, e.g. after L01 and L02 comes L03. */
@@ -59,7 +60,8 @@ export function LecturesSection({
                     .join(' · ')}
                 </span>
                 <span className="shrink-0 text-xs text-subtle">
-                  {lecture.sourceCount} sources · {lecture.noteCount} notes
+                  {formatCount(lecture.sourceCount, 'source')} ·{' '}
+                  {formatCount(lecture.noteCount, 'note')}
                 </span>
               </Link>
             </li>

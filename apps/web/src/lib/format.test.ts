@@ -1,5 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { formatBytes, formatDateTime, formatLongDate, formatUptime, greeting } from './format';
+import {
+  formatBytes,
+  formatCount,
+  formatDateTime,
+  formatLongDate,
+  formatUptime,
+  greeting,
+} from './format';
+
+describe('formatCount', () => {
+  it('uses the singular only for exactly one', () => {
+    expect(formatCount(0, 'note')).toBe('0 notes');
+    expect(formatCount(1, 'note')).toBe('1 note');
+    expect(formatCount(2, 'note')).toBe('2 notes');
+    expect(formatCount(2, 'analysis', 'analyses')).toBe('2 analyses');
+  });
+});
 
 describe('formatUptime', () => {
   it.each([

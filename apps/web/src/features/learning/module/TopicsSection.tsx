@@ -5,6 +5,7 @@ import { Button } from '../../../components/Button';
 import { IconButton } from '../../../components/IconButton';
 import { Input } from '../../../components/Input';
 import { StickySection } from '../../../components/Page';
+import { cn } from '../../../lib/cn';
 import { notifyError } from '../../../lib/notify';
 import { useLearningActions } from '../api';
 import { selectClasses } from '../Field';
@@ -85,7 +86,7 @@ export function TopicsSection({
         />
         <select
           aria-label="Inside"
-          className={`${selectClasses} w-56`}
+          className={cn(selectClasses, 'w-56')}
           value={parentId}
           onChange={(event) => setParentId(event.target.value)}
         >

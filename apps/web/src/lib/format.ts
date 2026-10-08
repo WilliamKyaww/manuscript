@@ -41,6 +41,11 @@ export function formatDateTime(date: Date): string {
   return DATE_TIME.format(date);
 }
 
+/** A count with its noun, e.g. "1 note", "3 notes", "2 analyses" (with an explicit plural). */
+export function formatCount(count: number, singular: string, plural = `${singular}s`): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
 /** File size in binary units with one decimal below ten, e.g. "840 KB", "5.2 MB". */
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
