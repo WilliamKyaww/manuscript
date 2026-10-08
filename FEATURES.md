@@ -6,7 +6,7 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 8 October 2026 (end of Phase 5)._
+_Last updated: 9 October 2026 (end of Phase 6)._
 
 ## Platform and architecture
 
@@ -66,8 +66,8 @@ _Last updated: 8 October 2026 (end of Phase 5)._
 
 | ID | Feature | Status | Phase |
 |---|---|---|---|
-| F-GR-01 | Concepts with aliases, memberships and concept pages | Planned | 6 |
-| F-GR-02 | Wikilinks resolving to concepts | Planned | 6 |
+| F-GR-01 | Concepts with aliases, memberships and concept pages (mentions in notes, passages in sources) | Complete | 6 |
+| F-GR-02 | Wikilinks resolving to concepts after notes; create a concept from an unresolved link | Complete | 6 |
 | F-GR-03 | Typed relations with confidence, status and evidence | Planned | 7 |
 | F-GR-04 | Graph analytics (communities, core concepts, bridges, gaps, paths) | Planned | 7 |
 | F-GR-05 | Study prompts generated from graph analytics | Planned | 7 |
@@ -79,9 +79,10 @@ _Last updated: 8 October 2026 (end of Phase 5)._
 
 | ID | Feature | Status | Phase |
 |---|---|---|---|
-| F-CS-01 | Courses, modules, lectures, topics | Planned | 6 |
-| F-CS-02 | Assessments with weights and deadlines | Planned | 6 |
-| F-CS-03 | Mark calculator against the 85 % target | Planned | 6 |
+| F-CS-01 | Courses, modules, lectures, topics (modules tied to files by code, ADR-0029) | Complete | 6 |
+| F-CS-02 | Assessments with weights (≤ 100 %), deadlines, marks and submitted status | Complete | 6 |
+| F-CS-03 | Mark calculator against module targets and the course average (credit-weighted) | Complete | 6 |
+| F-CS-04 | Lecture pages: attached sources, notes filed by their `lecture` property, lecture notes from templates | Complete | 6 |
 
 ## Learning — flashcards and spaced repetition
 
@@ -115,7 +116,7 @@ _Last updated: 8 October 2026 (end of Phase 5)._
 | F-PN-01 | Guardrailed Socratic tutor mode | Planned | 14 |
 | F-PN-02 | Misconception check against the knowledge base | Planned | 14 |
 | F-PN-03 | Rolling study planner with reasons | Planned | 14 |
-| F-PN-04 | Today dashboard | Planned | 14 |
+| F-PN-04 | Today dashboard | Partial — upcoming deadlines and progress towards the target average work (Phase 6); reviews due, weak areas and the plan arrive in Phases 8, 9 and 14 | 14 |
 
 ## AI and agent
 
