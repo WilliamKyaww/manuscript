@@ -11,6 +11,7 @@ import { SessionGate } from './app/SessionGate';
 import { SECTIONS } from './app/sections';
 import { NotFoundPage, RouteErrorPage } from './features/errors/ErrorPages';
 import { PagePending } from './features/errors/PagePending';
+import { validateViewerSearch } from './features/library/links';
 import { SectionPlaceholder } from './features/placeholder/SectionPlaceholder';
 
 // Code-based routes (ADR-0018): no generated route tree to keep in sync.
@@ -65,8 +66,24 @@ const searchRoute = createRoute({
     typeof search.q === 'string' && search.q !== '' ? { q: search.q } : {},
 });
 
+const libraryRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/library',
+  component: lazyRouteComponent(() => import('./features/library/LibraryPage'), 'LibraryPage'),
+});
+const sourceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/library/$sourceId',
+  component: lazyRouteComponent(
+    () => import('./features/library/viewer/SourceViewerPage'),
+    'SourceViewerPage',
+  ),
+  // `?page=12`, `?slide=3&notes=1` or `?section=4` open the source at a locator (task 5.18).
+  validateSearch: validateViewerSearch,
+});
+
 /** Sections that are not built yet get an honest placeholder; each phase replaces one with real routes. */
-const IMPLEMENTED = new Set(['today', 'notes', 'search', 'settings']);
+const IMPLEMENTED = new Set(['today', 'notes', 'search', 'library', 'settings']);
 const placeholderRoutes = SECTIONS.filter((section) => !IMPLEMENTED.has(section.id)).map(
   (section) =>
     createRoute({
@@ -82,6 +99,8 @@ export const routeTree = rootRoute.addChildren([
   notesRoute,
   noteRoute,
   searchRoute,
+  libraryRoute,
+  sourceRoute,
   ...placeholderRoutes,
 ]);
 

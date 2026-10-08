@@ -2,6 +2,8 @@ import {
   FILTER_KEYS,
   type FilterKey,
   parseSearchQuery,
+  RESULT_KINDS,
+  type SearchResult,
   withFilter,
   withoutFilter,
 } from '@skb/core';
@@ -15,6 +17,8 @@ import { Highlighted } from '../../components/Highlighted';
 import { Page } from '../../components/Page';
 import { EmptyState, ErrorState, LoadingState } from '../../components/States';
 import { useApi } from '../../lib/api/context';
+import { KIND_LABELS, viewerSearchFor } from '../library/links';
+import { SourceIcon } from '../library/SourceRow';
 import { tagsQuery, treeQuery } from '../notes/api';
 import { searchQuery } from './api';
 import { SEARCH_INPUT_ID } from './search-ids';
@@ -22,7 +26,8 @@ import { SEARCH_INPUT_ID } from './search-ids';
 /**
  * Full-text search (task 4.07). The query lives in the address (`/search?q=…`); typing updates it
  * after a short pause. Filters can be typed (`tag:exam`) or picked from the menus, and are shown as
- * removable chips. Selecting a result opens the note at the first matching line.
+ * removable chips. A note opens at its first matching line; a source passage opens its page, slide or
+ * section in the viewer.
  */
 
 const TYPING_DELAY_MS = 200;
@@ -45,7 +50,7 @@ export function SearchPage() {
   const urlQuery = typeof search.q === 'string' ? search.q : '';
   const [input, setInput] = useState(urlQuery);
   const inputRef = useRef<HTMLInputElement>(null);
-  const ids = { tag: useId(), type: useId(), folder: useId() };
+  const ids = { tag: useId(), type: useId(), folder: useId(), kind: useId() };
 
   // The address follows the input after a pause; the input follows the address only for changes
   // made elsewhere (back/forward, the command palette) — never for the echo of our own update,
@@ -96,9 +101,7 @@ export function SearchPage() {
 
   const pages = results.data?.pages ?? [];
   const first = pages[0];
-  const items = pages.flatMap((page) =>
-    page.results.flatMap((result) => (result.kind === 'note' ? [result] : [])),
-  );
+  const items = pages.flatMap((page) => page.results);
   const chips = FILTER_KEYS.flatMap((key) => [
     ...parsed.filters[key].map((value) => ({ key, value, negated: false })),
     ...parsed.excludedFilters[key].map((value) => ({ key, value, negated: true })),
@@ -128,8 +131,8 @@ export function SearchPage() {
                   ref={inputRef}
                   id={SEARCH_INPUT_ID}
                   type="search"
-                  aria-label="Search notes"
-                  placeholder='Search notes — try "leader election" tag:exam -draft'
+                  aria-label="Search notes and sources"
+                  placeholder='Search notes and sources — try "leader election" tag:exam -draft'
                   autoComplete="off"
                   spellCheck={false}
                   data-autofocus
@@ -158,6 +161,12 @@ export function SearchPage() {
               label="Folder"
               values={tree.data?.folders ?? []}
               onPick={(value) => setQuery(withFilter(input, 'folder', value))}
+            />
+            <FilterSelect
+              id={ids.kind}
+              label="Kind"
+              values={RESULT_KINDS}
+              onPick={(value) => setQuery(withFilter(input, 'kind', value))}
             />
             {chips.map((chip) => (
               <span
@@ -190,8 +199,8 @@ export function SearchPage() {
         <>
           <p role="status" className="mb-4 text-sm text-muted">
             {first.total === 0
-              ? 'No notes match.'
-              : `${first.total}${first.totalCapped ? '+' : ''} ${first.total === 1 && !first.totalCapped ? 'note' : 'notes'} · ${first.tookMs} ms`}
+              ? 'Nothing matches.'
+              : `${first.total}${first.totalCapped ? '+' : ''} ${first.total === 1 && !first.totalCapped ? 'result' : 'results'} · ${first.tookMs} ms`}
           </p>
           {first.total === 0 && (
             <EmptyState
@@ -202,28 +211,8 @@ export function SearchPage() {
           )}
           <ol aria-label="Search results" className="space-y-2">
             {items.map((result) => (
-              <li key={result.note.id}>
-                <Link
-                  to="/notes/$noteId"
-                  params={{ noteId: result.note.id }}
-                  search={result.line ? { line: result.line } : {}}
-                  className="block rounded-lg border border-border bg-surface p-3 hover:border-border-strong hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-focus"
-                >
-                  <span className="flex items-center gap-2">
-                    <FileText aria-hidden="true" size={15} className="shrink-0 text-muted" />
-                    <Highlighted parts={result.title} className="truncate font-medium" />
-                    {result.note.type && <Badge>{result.note.type}</Badge>}
-                  </span>
-                  <span className="mt-0.5 block truncate text-xs text-muted">
-                    {result.note.path}
-                  </span>
-                  {result.snippet.length > 0 && (
-                    <Highlighted
-                      parts={result.snippet}
-                      className="mt-1.5 line-clamp-2 block text-sm text-muted"
-                    />
-                  )}
-                </Link>
+              <li key={resultKey(result)}>
+                <ResultLink result={result} />
               </li>
             ))}
           </ol>
@@ -240,6 +229,57 @@ export function SearchPage() {
         </>
       )}
     </Page>
+  );
+}
+
+const resultKey = (result: SearchResult) =>
+  result.kind === 'note' ? result.note.id : `${result.source.id}:${result.section.ordinal}`;
+
+const resultClasses =
+  'block rounded-lg border border-border bg-surface p-3 hover:border-border-strong hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-focus';
+
+/** A note opens at its first matching line; a source passage at its page, slide or section. */
+function ResultLink({ result }: { result: SearchResult }) {
+  const snippet = result.snippet.length > 0 && (
+    <Highlighted parts={result.snippet} className="mt-1.5 line-clamp-2 block text-sm text-muted" />
+  );
+  if (result.kind === 'note') {
+    return (
+      <Link
+        to="/notes/$noteId"
+        params={{ noteId: result.note.id }}
+        search={result.line ? { line: result.line } : {}}
+        className={resultClasses}
+      >
+        <span className="flex items-center gap-2">
+          <FileText aria-hidden="true" size={15} className="shrink-0 text-muted" />
+          <Highlighted parts={result.title} className="truncate font-medium" />
+          {result.note.type && <Badge>{result.note.type}</Badge>}
+        </span>
+        <span className="mt-0.5 block truncate text-xs text-muted">{result.note.path}</span>
+        {snippet}
+      </Link>
+    );
+  }
+  return (
+    <Link
+      to="/library/$sourceId"
+      params={{ sourceId: result.source.id }}
+      search={viewerSearchFor(result.locator, result.section.ordinal)}
+      className={resultClasses}
+    >
+      <span className="flex items-center gap-2">
+        <span aria-hidden="true" className="flex shrink-0 text-muted [&_svg]:size-[15px]">
+          <SourceIcon kind={result.source.kind} />
+        </span>
+        <Highlighted parts={result.title} className="truncate font-medium" />
+        <Badge tone="info">{KIND_LABELS[result.source.kind]}</Badge>
+      </span>
+      <span className="mt-0.5 block truncate text-xs text-muted">
+        {result.section.label} · {result.source.path}
+      </span>
+      {snippet}
+    </Link>
   );
 }
 
@@ -278,14 +318,18 @@ function FilterSelect({
 }
 
 const SYNTAX: [string, string][] = [
-  ['leader election', 'notes containing both words (and longer words starting with them)'],
+  [
+    'leader election',
+    'notes and sources containing both words (and longer words starting with them)',
+  ],
   ['"leader election"', 'the exact phrase'],
   ['paxos OR raft', 'either word'],
-  ['-draft', 'leave out notes containing a word'],
+  ['-draft', 'leave out notes (and source passages) containing a word'],
   ['tag:exam or #exam', 'notes with a tag (and its sub-tags, such as exam/week-3)'],
   ['type:summary', 'notes of a type'],
   ['folder:"Week 1"', 'notes in a folder and its sub-folders'],
-  ['module:COC251', 'notes for a module'],
+  ['module:COC251', 'notes and sources for a module'],
+  ['kind:pdf', 'one kind of result: note, source, pdf, slides, docx or text'],
   ['-tag:draft', 'any filter can be turned round with a minus'],
 ];
 

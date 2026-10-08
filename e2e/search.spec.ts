@@ -34,7 +34,7 @@ test('search finds text, filters narrow the results and a result opens at the ma
 
   await page.keyboard.press('Control+Shift+F');
   await expect(page.getByRole('heading', { level: 1, name: 'Search' })).toBeVisible();
-  const input = page.getByRole('searchbox', { name: 'Search notes' });
+  const input = page.getByRole('searchbox', { name: 'Search notes and sources' });
   await expect(input).toBeFocused();
   await input.fill('zephyrquorum');
   const results = page.getByRole('list', { name: 'Search results' });
@@ -111,7 +111,7 @@ test('the command palette searches notes', async ({ page }) => {
   await page.keyboard.press('Control+k');
   const palette = page.getByRole('dialog', { name: 'Command palette' });
   await page.keyboard.type('zephyrquorum');
-  await palette.getByRole('option', { name: 'Search notes for “zephyrquorum”' }).click();
+  await palette.getByRole('option', { name: 'Search for “zephyrquorum”' }).click();
   await expect(page).toHaveURL(/\/search\?q=zephyrquorum/);
   await expect(
     page.getByRole('list', { name: 'Search results' }).getByRole('link').first(),

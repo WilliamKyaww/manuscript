@@ -1,0 +1,81 @@
+/*
+ * Text layer for rendered PDF pages: transparent, selectable text positioned over the canvas.
+ * Adapted from pdf.js (`web/pdf_viewer.css`, the `.textLayer` rules), Copyright Mozilla Foundation,
+ * licensed under the Apache License, Version 2.0 — see THIRD_PARTY_NOTICES.md. Only the rules the
+ * text layer needs are kept; highlighting and editor rules are left out.
+ */
+
+.skb-pdf-page {
+  /* pdf.js sizes the text layer from these (it sets --min-font-size itself). */
+  --scale-round-x: 1px;
+  --scale-round-y: 1px;
+}
+
+.skb-pdf-page .textLayer {
+  position: absolute;
+  text-align: initial;
+  inset: 0;
+  overflow: clip;
+  opacity: 1;
+  line-height: 1;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  caret-color: CanvasText;
+  z-index: 0;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+
+.skb-pdf-page .textLayer :is(span, br) {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+  user-select: text;
+}
+
+.skb-pdf-page .textLayer > :not(.markedContent),
+.skb-pdf-page .textLayer .markedContent span:not(.markedContent) {
+  z-index: 1;
+  --font-height: 0;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  --scale-x: 1;
+  --rotate: 0deg;
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+
+.skb-pdf-page .textLayer .markedContent {
+  display: contents;
+}
+
+.skb-pdf-page .textLayer span[role="img"] {
+  user-select: none;
+  cursor: default;
+}
+
+.skb-pdf-page .textLayer ::selection {
+  background: color-mix(in srgb, AccentColor, transparent 50%);
+  color: transparent;
+}
+
+.skb-pdf-page .textLayer br::selection {
+  background: transparent;
+}
+
+.skb-pdf-page .textLayer .endOfContent {
+  display: block;
+  position: absolute;
+  inset: 100% 0 0;
+  z-index: 0;
+  cursor: default;
+  user-select: none;
+}
+
+.skb-pdf-page .textLayer.selecting .endOfContent {
+  top: 0;
+}
