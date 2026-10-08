@@ -6,6 +6,7 @@ import {
   type LinkResolver,
   noteNameFromPath,
 } from '@skb/core/markdown';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Columns2, Eye, PenLine } from 'lucide-react';
 import { ToggleGroup } from 'radix-ui';
@@ -14,8 +15,11 @@ import { Group, Panel, Separator } from 'react-resizable-panels';
 import { Pane } from '../../components/Pane';
 import { LoadingState } from '../../components/States';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/Tabs';
+import { useApi } from '../../lib/api/context';
 import { cn } from '../../lib/cn';
 import { notifyError } from '../../lib/notify';
+import { conceptsQuery } from '../concepts/api';
+import { ConceptDialog } from '../concepts/ConceptDialog';
 import { useUploadAttachment } from './api';
 import { ConflictBanner } from './editor/ConflictBanner';
 import { MarkdownEditor, type MarkdownEditorHandle } from './editor/MarkdownEditor';
@@ -92,20 +96,37 @@ export function NoteWorkspace({
         const mediaType = mediaTypes.get(result.path) ?? 'application/octet-stream';
         return { kind: 'attachment', path: result.path, mediaType };
       }
+      if (result.kind === 'concept')
+        return { kind: 'concept', id: result.conceptId, name: result.name };
       return { kind: 'unresolved' };
     },
     [resolver, note.path, mediaTypes],
   );
 
+  const api = useApi();
+  const concepts = useQuery(conceptsQuery(api));
+  const [newConcept, setNewConcept] = useState<string | null>(null);
   const completions = useMemo(
     () => ({
-      notes: () =>
-        (tree?.notes ?? []).map((entry) => ({
+      notes: () => {
+        const notes = (tree?.notes ?? []).map((entry) => ({
           name: noteNameFromPath(entry.path),
           title: entry.title,
           folder: folderOf(entry.path),
           aliases: entry.aliases,
-        })),
+        }));
+        // Concepts complete like notes; a note of the same name would win the link anyway.
+        const noteNames = new Set(notes.map((entry) => entry.name.toLowerCase()));
+        const conceptEntries = (concepts.data?.concepts ?? [])
+          .filter((concept) => !noteNames.has(concept.name.toLowerCase()))
+          .map((concept) => ({
+            name: concept.name,
+            title: concept.name,
+            folder: '',
+            aliases: concept.aliases,
+          }));
+        return [...notes, ...conceptEntries];
+      },
       attachments: () =>
         (tree?.attachments ?? []).map((attachment) => ({
           name: attachment.path.slice(attachment.path.lastIndexOf('/') + 1),
@@ -113,7 +134,7 @@ export function NoteWorkspace({
         })),
       tags: () => [] as string[],
     }),
-    [tree],
+    [tree, concepts.data],
   );
 
   const onChange = (text: string) => {
@@ -126,6 +147,8 @@ export function NoteWorkspace({
     const resolved = resolve(target);
     if (resolved.kind === 'note')
       void navigate({ to: '/notes/$noteId', params: { noteId: resolved.id } });
+    else if (resolved.kind === 'concept')
+      void navigate({ to: '/concepts/$conceptId', params: { conceptId: resolved.id } });
     else if (resolved.kind === 'unresolved' && target.trim())
       onCreateFromLink(target.trim(), folder);
   };
@@ -222,8 +245,12 @@ export function NoteWorkspace({
                     resolve={resolve}
                     noteId={note.id}
                     onCreateNote={(title) => onCreateFromLink(title, folder)}
+                    onCreateConcept={setNewConcept}
                   />
                 </Suspense>
+                {newConcept !== null && (
+                  <ConceptDialog initialName={newConcept} onClose={() => setNewConcept(null)} />
+                )}
               </div>
             </div>
           )}

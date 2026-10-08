@@ -13,6 +13,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/States';
 import { ApiError } from '../../lib/api/client';
 import { useApi } from '../../lib/api/context';
 import { onServerEvent } from '../../lib/events';
+import { conceptsQuery } from '../concepts/api';
 import { recordOpened } from '../search/api';
 import { noteQuery, treeQuery } from './api';
 import { TrashView } from './dialogs/TrashView';
@@ -46,9 +47,15 @@ export function NotesPage() {
     () => (tree.data ? buildTree(tree.data, { attachments: showAttachments }) : null),
     [tree.data, showAttachments],
   );
+  const concepts = useQuery(conceptsQuery(api));
   const resolver = useMemo(
-    () => new LinkResolver(tree.data?.notes ?? [], tree.data?.attachments ?? []),
-    [tree.data],
+    () =>
+      new LinkResolver(
+        tree.data?.notes ?? [],
+        tree.data?.attachments ?? [],
+        concepts.data?.concepts ?? [],
+      ),
+    [tree.data, concepts.data],
   );
   const current = noteId !== undefined && note.data?.id === noteId ? note.data : undefined;
   const activePath = current?.path ?? null;

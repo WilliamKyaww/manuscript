@@ -3,6 +3,7 @@ import './preview.css';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import type { Element, ElementContent } from 'hast';
+import { FilePlus, Lightbulb } from 'lucide-react';
 import { createContext, type ReactNode, useContext, useMemo } from 'react';
 import Markdown, { type Components, type Options as MarkdownOptions } from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
@@ -12,6 +13,12 @@ import rehypeSanitize from 'rehype-sanitize';
 import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../../components/DropdownMenu';
 import { useApi } from '../../../lib/api/context';
 import { cn } from '../../../lib/cn';
 import { noteQuery } from '../api';
@@ -34,6 +41,8 @@ export interface MarkdownPreviewProps {
   noteId: string;
   /** Offered for links to notes that do not exist yet. */
   onCreateNote?(title: string): void;
+  /** Offered beside "Create note" for unresolved links (Phase 6). */
+  onCreateConcept?(name: string): void;
   className?: string;
   /** Nesting level of embedded notes (they stop at three levels). */
   depth?: number;
@@ -43,6 +52,7 @@ interface PreviewContextValue {
   resolve(target: string): PreviewTarget;
   noteId: string;
   onCreateNote?(title: string): void;
+  onCreateConcept?(name: string): void;
   depth: number;
   /** Notes already being shown in this chain of embeds (to stop loops). */
   chain: readonly string[];
@@ -81,6 +91,7 @@ function PreviewLink({
   const navigate = useNavigate();
   const className = typeof props.className === 'string' ? props.className : undefined;
   const noteId = attribute(props, 'data-note-id');
+  const conceptId = attribute(props, 'data-concept-id');
   const unresolved = attribute(props, 'data-unresolved');
   if (noteId) {
     const hash = href?.includes('#') ? href.slice(href.indexOf('#') + 1) : undefined;
@@ -90,17 +101,50 @@ function PreviewLink({
       </Link>
     );
   }
-  if (unresolved) {
-    // Not a link to anywhere yet: an action that creates the note.
+  if (conceptId) {
     return (
-      <button
-        type="button"
-        className={className}
-        title={`“${unresolved}” does not exist yet — select to create it`}
-        onClick={() => context?.onCreateNote?.(unresolved)}
-      >
+      <Link to="/concepts/$conceptId" params={{ conceptId }} className={className}>
         {children}
-      </button>
+      </Link>
+    );
+  }
+  if (unresolved) {
+    // Not a link to anywhere yet: an action that creates the note (or, where offered, a concept).
+    const label = `“${unresolved}” does not exist yet — select to create it`;
+    if (!context?.onCreateConcept) {
+      return (
+        <button
+          type="button"
+          className={className}
+          title={label}
+          onClick={() => context?.onCreateNote?.(unresolved)}
+        >
+          {children}
+        </button>
+      );
+    }
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button type="button" className={className} title={label}>
+            {children}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem
+            icon={<FilePlus size={14} />}
+            onSelect={() => context.onCreateNote?.(unresolved)}
+          >
+            Create note “{unresolved}”
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            icon={<Lightbulb size={14} />}
+            onSelect={() => context.onCreateConcept?.(unresolved)}
+          >
+            Create concept “{unresolved}”
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   }
   if (href?.startsWith('#')) {
@@ -271,12 +315,13 @@ export function MarkdownPreview({
   resolve,
   noteId,
   onCreateNote,
+  onCreateConcept,
   className,
   depth = 0,
 }: MarkdownPreviewProps) {
   const value = useMemo<PreviewContextValue>(
-    () => ({ resolve, noteId, onCreateNote, depth, chain: [noteId] }),
-    [resolve, noteId, onCreateNote, depth],
+    () => ({ resolve, noteId, onCreateNote, onCreateConcept, depth, chain: [noteId] }),
+    [resolve, noteId, onCreateNote, onCreateConcept, depth],
   );
   return (
     <PreviewContext.Provider value={value}>

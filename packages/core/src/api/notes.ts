@@ -63,6 +63,8 @@ export const LinkResolutionSchema = z.discriminatedUnion('kind', [
     ambiguous: z.boolean(),
   }),
   z.object({ kind: z.literal('attachment'), path: z.string(), ambiguous: z.boolean() }),
+  /** Phase 6: no note has the name, but a concept has it as its name or an alias. */
+  z.object({ kind: z.literal('concept'), conceptId: idSchema('concept'), name: z.string() }),
   z.object({ kind: z.literal('unresolved') }),
 ]);
 export type LinkResolutionDto = z.infer<typeof LinkResolutionSchema>;

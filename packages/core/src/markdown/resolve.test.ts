@@ -111,6 +111,42 @@ describe('LinkResolver', () => {
     expect(resolver.resolve('../../../Paxos', 'Modules/Index.md')).toEqual({ kind: 'unresolved' });
   });
 
+  it('resolves concepts after notes and before attachments', () => {
+    const resolver = new LinkResolver(
+      [note('n1', 'Modules/Raft.md')],
+      [{ path: 'Attachments/CAP.png' }, { path: 'Attachments/Quorum' }],
+      [
+        { id: 'c1', name: 'Raft', aliases: [] },
+        { id: 'c2', name: 'CAP theorem', aliases: ['CAP', 'Brewer’s theorem'] },
+        { id: 'c3', name: 'Quorum', aliases: [] },
+      ],
+    );
+    expect(resolver.conceptCount).toBe(3);
+    // A note of the same name wins.
+    expect(resolver.resolve('raft')).toMatchObject({ kind: 'note', noteId: 'n1' });
+    expect(resolver.resolve('cap THEOREM')).toEqual({
+      kind: 'concept',
+      conceptId: 'c2',
+      name: 'CAP theorem',
+    });
+    expect(resolver.resolve('Brewer’s theorem')).toMatchObject({
+      kind: 'concept',
+      conceptId: 'c2',
+    });
+    // Concepts come before attachments with the same name, but never match folder paths.
+    expect(resolver.resolve('Quorum')).toMatchObject({ kind: 'concept', conceptId: 'c3' });
+    expect(resolver.resolve('Attachments/Quorum')).toMatchObject({ kind: 'attachment' });
+    expect(resolver.resolve('Modules/CAP theorem')).toEqual({ kind: 'unresolved' });
+
+    resolver.setConcept({ id: 'c2', name: 'CAP', aliases: [] });
+    expect(resolver.resolve('CAP theorem')).toEqual({ kind: 'unresolved' });
+    resolver.removeConcept('c3');
+    expect(resolver.resolve('Quorum')).toMatchObject({
+      kind: 'attachment',
+      path: 'Attachments/Quorum',
+    });
+  });
+
   it('can be updated in place', () => {
     const live = new LinkResolver([note('note_x', 'A/Topic.md')]);
     expect(live.resolve('Topic')).toMatchObject({ noteId: 'note_x' });

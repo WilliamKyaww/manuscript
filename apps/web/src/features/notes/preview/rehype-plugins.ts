@@ -30,6 +30,7 @@ function withClasses(list: AttributeList | undefined): AttributeList {
 
 const OUR_DATA_ATTRIBUTES = [
   'dataNoteId',
+  'dataConceptId',
   'dataUnresolved',
   'dataFile',
   'dataTag',

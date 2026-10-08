@@ -1,5 +1,4 @@
 import {
-  CalendarClock,
   CalendarRange,
   Keyboard,
   Layers,
@@ -13,6 +12,7 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Page, StickySection } from '../../components/Page';
 import { formatLongDate, greeting } from '../../lib/format';
+import { DeadlinesWidget, TargetWidget } from './LearningWidgets';
 
 interface UpcomingWidget {
   title: string;
@@ -37,12 +37,6 @@ const WIDGETS: UpcomingWidget[] = [
     icon: CalendarRange,
   },
   {
-    title: 'Upcoming deadlines',
-    description: 'Coursework and exams in the next fortnight, and the marks they carry.',
-    phase: 6,
-    icon: CalendarClock,
-  },
-  {
     title: 'Weak areas',
     description:
       'Concepts that are slipping or have never been practised, with one-click practice.',
@@ -58,6 +52,8 @@ export function TodayPage({ now = new Date() }: { now?: Date }) {
   return (
     <Page title="Today" description={`${greeting(now)} — ${formatLongDate(now)}`}>
       <div className="grid gap-4 md:grid-cols-2">
+        <DeadlinesWidget now={now} />
+        <TargetWidget now={now} />
         {WIDGETS.map((widget) => (
           <Card key={widget.title} className="p-5">
             <div className="flex items-start justify-between gap-3">

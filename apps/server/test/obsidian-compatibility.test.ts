@@ -102,7 +102,9 @@ describe('Obsidian compatibility', () => {
     const resolved = Object.fromEntries(
       detail.links.map((link) => [
         link.target,
-        link.resolution.kind === 'unresolved' ? null : link.resolution.path,
+        link.resolution.kind === 'unresolved' || link.resolution.kind === 'concept'
+          ? null
+          : link.resolution.path,
       ]),
     );
     for (const [target, expected] of Object.entries(OBSIDIAN_RESOLUTION)) {

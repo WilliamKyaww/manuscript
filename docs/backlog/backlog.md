@@ -1,6 +1,6 @@
 # Backlog items
 
-_Last reviewed: 8 October 2026 (Phase 5)._
+_Last reviewed: 9 October 2026 (Phase 6)._
 
 ## Knowledge (KM)
 
@@ -46,6 +46,13 @@ _Last reviewed: 8 October 2026 (Phase 5)._
 | B-LE-08 | Focus timer integrated with study sessions | Time-on-task measurement | — |
 | B-LE-09 | Podcast-style audio overviews | Review while commuting (low priority) | Research: NotebookLM, Turbo, Quizlet |
 | B-LE-10 | Per-user FSRS parameter optimisation (≥ 1,000 reviews) | Fewer reviews for the same retention | Research: Anki manual |
+| B-LE-11 | Rename a module code everywhere in one undoable step: move `Sources/<code>/` and `Modules/<code>/`, rewrite the notes' `module` and `lecture` properties | The code is locked while files use it (ADR-0029) | Phase 6 |
+| B-LE-12 | Rename a lecture key with its notes' `lecture` properties rewritten | Keys are locked the same way | Phase 6 |
+| B-LE-13 | Drag to reorder topics and lectures; rename topics in place | The API takes an `ordinal`; the module page only adds and deletes topics | Phase 6 |
+| B-LE-14 | Delete a course from the Modules page | The API can; modules keep working without a course | Phase 6 |
+| B-LE-15 | Degree classification across years (e.g. Year 2 : Year 3 weighted 1 : 3) with UK boundaries | The classification, not one year's average, is what finally counts | Phase 6 |
+| B-LE-16 | Exam duration and room in the assessment dialog | The API stores `durationMinutes`; the dialog does not ask for it | Phase 6 |
+| B-LE-17 | Lecture list grouped by week with a marker for the current week | Easier to see where the term is | Phase 6 |
 
 ## AI (AI)
 

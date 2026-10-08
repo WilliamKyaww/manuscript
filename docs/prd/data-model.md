@@ -125,8 +125,9 @@ case-insensitive link resolution.
 **note_links** (derived)
 `link_id` · `source_doc`† · `ordinal` · `syntax` (`wikilink` | `markdown`) · `embed` · `target_raw` (as
 written) · `target_name_key`† (last path segment, for re-resolution) · `heading` · `block_ref` · `alias` ·
-`target_kind` (`note` | `attachment` | `unresolved`; `concept` from Phase 6) · `target_doc`† ·
-`target_path` · `ambiguous` · `line` · `col` · `context` (the source line, for backlinks)
+`target_kind` (`note` | `attachment` | `concept` | `unresolved`) · `target_doc`† · `target_path` ·
+`target_concept`† (migration `0006`, which rebuilt the table) · `ambiguous` · `line` · `col` · `context`
+(the source line, for backlinks). Notes resolve before concepts, concepts before attachments (ADR-0029).
 
 **note_tags** (derived) `doc_id`† · `tag`† (normalised lower-case, `/` hierarchy allowed)
 
@@ -143,8 +144,8 @@ written) · `target_name_key`† (last path segment, for re-resolution) · `head
 `image`) · `title` (the file name without extension) · `path` (vault-relative original; unique among
 live sources) · `original_name` · `media_type` · `sha256`† · `size_bytes` · `mtime_ms` (lets
 reconciliation skip unchanged files) · `page_count` · `status` (`pending` | `processing` | `ready` |
-`failed`) · `error` · `module_code`† (the `Sources/<module>/` folder; `NULL` for the inbox — Phase 6
-maps codes onto module entities) · `url` · `metadata_json` · `warnings_json` · `parser_version` and
+`failed`) · `error` · `module_code`† (the `Sources/<module>/` folder; `NULL` for the inbox; matched to
+`modules.code_key` case-insensitively, ADR-0029) · `url` · `metadata_json` · `warnings_json` · `parser_version` and
 `ingested_sha256` (what the current sections were produced from; ingestion is a no-op when both
 match) · `created_at` · `ingested_at` · `missing_at` (the original disappeared; cleared when the same
 content reappears) · `deleted_at` (moved to the trash through the app)
@@ -176,30 +177,53 @@ section (its best chunk).
 
 ### 5.4 Course structure
 
-**courses** `id` · `title` ("BSc Computer Science and AI — Year 3") · `start_date` · `end_date` · `notes`
+Canonical (migration `0006`; export required, §6). Modules are tied to files by their **code**, and
+which notes belong to a module or lecture is read from the notes' own properties — never copied into
+these tables (ADR-0029).
 
-**modules** `id` · `course_id`† · `code`† (unique, e.g. `COC251`) · `title` · `credits` · `semester` ·
-`colour` · `target_mark` · `archived`
+**courses** `id` (`crs_…`) · `title` ("BSc Computer Science and AI — Year 3") · `start_date` ·
+`end_date` · `target_average` (0–100, the credit-weighted average aimed for) · `notes`
 
-**lectures** `id` · `module_id`† · `key` (unique per module, e.g. `L03`) · `title` · `kind`
-(`lecture` | `lab` | `tutorial` | `workshop` | `seminar`) · `week` · `held_on` · `ordinal`
+**modules** `id` (`mod_…`) · `course_id`† · `code` (as written; also the `Sources/<code>/` folder name) ·
+`code_key`† (lower case, unique; joined to `notes.module_code` and `sources.module_code` with
+`lower()`) · `title` · `credits` · `semester` · `colour` · `target_mark` · `archived` (archived
+modules still count towards their course's average). The code cannot change while notes or sources
+refer to it.
 
-**lecture_sources** `lecture_id` · `source_id` · **lecture_notes** `lecture_id` · `note_id` (mirrors
-note frontmatter `lecture:`; frontmatter wins on conflict)
+**lectures** `id` (`lec_…`) · `module_id` · `key` (e.g. `L03`) · `key_norm` (unique per module) · `title` ·
+`kind` (`lecture` | `lab` | `tutorial` | `workshop` | `seminar`) · `week` · `held_on` · `ordinal`
 
-**topics** `id` · `module_id`† · `parent_id` · `title` · `ordinal`
+**lecture_sources** `lecture_id` · `source_id` (recorded by the app; the file does not say which
+lecture it belongs to)
 
-**assessments** `id` · `module_id`† · `title` · `kind` (`exam` | `coursework` | `test` | `presentation`
-| `project`) · `weight` (fraction of module mark) · `due_at`† · `duration_minutes` · `status` ·
-`mark_achieved` · `notes`
+*Lecture notes are not stored.* A note belongs to a lecture when its frontmatter says
+`lecture: COC251/L03`, or `lecture: L03` with `module: COC251` (the `notes.module_code` and
+`notes.lecture_key` columns, case-insensitive). Attaching a note through the app writes those
+properties; detaching removes `lecture`. A lecture's key cannot change while notes refer to it.
+
+**topics** `id` (`top_…`) · `module_id`† · `parent_id` (same module; no cycles; deleting a topic
+deletes its subtopics) · `title` · `ordinal`
+
+**assessments** `id` (`asm_…`) · `module_id`† · `title` · `kind` (`exam` | `coursework` | `test` |
+`presentation` | `project`) · `weight` (fraction of the module mark, > 0 and ≤ 1; a module's weights total
+at most 1) · `due_at`† (`YYYY-MM-DD` or `YYYY-MM-DDTHH:MM`, local time) · `duration_minutes` · `status`
+(`planned` | `submitted` | `marked`; a mark sets `marked`, clearing it reopens to `planned`; only
+`planned` work is an upcoming deadline) · `mark_achieved` (0–100) · `notes`
+
+The mark calculator (`@skb/core` `learning/marks.ts`) works from these rows alone: secured =
+Σ weight × mark; weight not yet given to an assessment counts as still to come; a course weights
+each module by credits.
 
 ### 5.5 Concepts and relations
 
-**concepts** `id` · `name`† · `slug`† · `summary` (1–3 sentences, Markdown) · `note_id` (optional
-backing note) · `status` (`proposed` | `active` | `merged` | `rejected`) · `merged_into` · `importance`
-(0.5–2, default 1) · `created_by` (`user` | `ai`) · `created_at` · `updated_at`
+**concepts** (canonical, migration `0006`) `id` (`con_…`) · `name` · `name_key` (case-folded, unique) ·
+`slug` (unique) · `summary` (1–3 sentences, Markdown) · `note_id` (optional backing note, by note id,
+which is then written into the note) · `status` (`proposed` | `active` | `merged` | `rejected`) ·
+`merged_into` · `importance` (0.5–2, default 1) · `created_by` (`user` | `ai`) · `created_at` ·
+`updated_at`
 
-**concept_aliases** `concept_id`† · `alias`† (case-folded unique)
+**concept_aliases** `concept_id` · `alias` · `alias_key` (case-folded, unique). Names and aliases share
+one namespace: no alias may equal another concept's name.
 
 **concept_topics** `concept_id` · `topic_id` · **concept_modules** `concept_id` · `module_id`
 (a concept may span modules — this is what makes cross-module connections visible)

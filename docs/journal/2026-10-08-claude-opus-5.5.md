@@ -270,3 +270,95 @@ Phase 5 — source library and ingestion pipeline (`phase/05-sources`).
 ### Next steps
 
 Phase 6 — course structure and concepts (`phase/06-course-structure`).
+
+## Session 9 — Phase 6: course structure and concepts
+
+- **Date:** Thursday 8 October 2026, into the early hours of Friday 9 October
+- **Time:** about 17:45–00:30
+- **Agent model:** Claude Opus 5.5 (`claude-opus-5-5`)
+- **Phase:** 6 — Course structure and concepts (branch `phase/06-course-structure`)
+- **Work performed:** built and verified Phase 6 end to end and merged it.
+
+### What was done
+
+1. **Mark calculator (6.06).** `@skb/core` `learning/marks.ts`: secured points, the average so far,
+   the best still possible, weight not yet given to an assessment counted as still to come, what the
+   rest must average for a target (or *secured* / *out of reach* / *missed*), and the credit-weighted
+   course average; checked against hand calculations.
+2. **Schema and links (6.01, 6.08).** Migration `0006`: courses, modules (unique case-folded code),
+   lectures, lecture sources, topics, assessments, concepts with aliases, modules and topics;
+   `note_links` rebuilt with `target_concept`. `LinkResolver` resolves notes, then concepts, then
+   attachments; the indexer re-resolves affected links when concepts change; moves never rewrite
+   concept links.
+3. **Services and API (6.02–6.05, 6.07, 6.09).** Courses and modules (a code change refused while files
+   use it), lectures (attach sources; attaching a note writes its `module` and `lecture` properties,
+   detaching removes `lecture`), topics (same module, no cycles, ordinal order), assessments (weights
+   at most 100 %, a mark sets *marked*), deadlines, concepts (one namespace for names and aliases,
+   slugs, backing notes, mentions, source passages via search).
+4. **Web (6.10–6.14).** Modules page grouped by course with the course average; module page
+   (calculator, assessments with inline marks and an edit dialogue, lectures, topic tree, the module's
+   sources, notes and concepts); lecture page (attach sources and notes, new lecture notes from
+   templates); concepts index and concept page; concept links in the preview and editor completion; a
+   Create note / Create concept menu on unresolved links; Today's deadline and target widgets.
+5. **Review fixes.** Counts pluralised ("1 note"); selects that ignored their width (`cn()` merges
+   Tailwind classes); submitted work left out of the deadlines; assessments editable; **archived
+   modules kept in their course's average** (they had been dropped from it, which would understate a
+   year with finished semester-one modules).
+6. **Verification (6.15).** `e2e/course.spec.ts`; the notes E2E updated for the new link menu.
+7. **Docs (6.16).** `docs/guide/course.md`; the Markdown and sources guides; data model §5.1, §5.2,
+   §5.4, §5.5; ADR-0029; backlog B-LE-11…17; FEATURES, STATE, README, the checklist.
+
+### Important decisions
+
+- **ADR-0029:** the course structure lives in the database and is tied to files by the module code and
+  lecture key; which notes belong to a lecture is read from their frontmatter, so the planned
+  `lecture_notes` table was not created (task 6.01 records why). Notes win over concepts in link
+  resolution.
+- Archived modules still count towards their course; a dropped module is taken out of its course.
+- Only *planned* assessments are deadlines; submitted work still counts as pending in the calculator.
+
+### Files changed
+
+- `packages/core/src/learning/marks.ts`, `packages/core/src/api/{course,concepts,notes}.ts`,
+  `packages/core/src/markdown/resolve.ts`
+- `apps/server/src/db/migrations/0006_course_structure.sql`, `apps/server/src/modules/learning/**`,
+  `apps/server/src/modules/concepts/**`, `apps/server/src/modules/notes/{indexer,moves,repository,service}.ts`,
+  `apps/server/src/modules/search/service.ts`, `apps/server/src/modules/index.ts`, `apps/server/src/app.ts`,
+  `apps/server/test/api-helpers.ts`
+- `apps/web/src/features/{learning,concepts}/**`, `apps/web/src/features/today/LearningWidgets.tsx`,
+  `apps/web/src/features/notes/{NotesPage,NoteWorkspace}.tsx`, `apps/web/src/features/notes/preview/**`,
+  `apps/web/src/lib/{events,format}.ts`, `apps/web/src/router.tsx`
+- `e2e/course.spec.ts`, `e2e/notes.spec.ts`
+- Docs listed above.
+
+### Tests run
+
+| Command | Result |
+|---|---|
+| `npm run verify` | **Pass** — type-check, Biome, **452** Vitest tests, build, smoke |
+| `npx playwright test` | **Pass** — **73/73** after updating the notes test for the link menu (the first run failed it: the preview now asks whether to create a note or a concept) |
+| `npm run test:perf` | **Over budget, but not a regression.** Search with 10,000 PDF pages p95 **303 ms** (budget 150 ms; notes alone 92 ms, full index 43 s, start-up 2.4 s, all others within budget). The laptop was **on battery**; a worktree of `main` (the Phase 5 gate) measured straight afterwards gave 320 ms and 91 ms, so Phase 6 changed nothing here. At the Phase 5 gate, on mains power, the same code measured 105 ms. To be re-measured on mains power |
+| Manual | Screenshots of the Modules, module, concept and Today pages with a seeded two-module course; the counts and topic form fixed after the first look |
+
+### Problems encountered
+
+- **The notes E2E broke** when unresolved links gained the note-or-concept menu; the component tests
+  had been updated but not the end-to-end test. Caught by the full Playwright run before the gate.
+- **Class merging.** `selectClasses` includes `w-full`, so a width appended by string concatenation
+  lost to it; `cn()` (tailwind-merge) resolves the conflict.
+- **The performance test failed its search budget** at about midnight. Measuring `main` straight
+  afterwards gave the same figures, and the laptop turned out to be on battery, which throttles it
+  about three-fold (now in AGENTS.md, with how to remove the worktree's junctions safely).
+- Tooling: a PowerShell replacement swallowed `${…}` inside a template literal, and a Node script
+  written with `Out-File -Encoding ascii` lost `·` and `—`; such edits now go through the editor tools.
+
+### Unresolved issues
+
+- Renaming a module code or lecture key while files use them is refused (B-LE-11/12); topics cannot be
+  reordered or renamed in the UI (B-LE-13).
+- Course structure and concepts are only in `.skb/skb.db` until Phase 16's export.
+- The performance budgets need re-measuring on mains power (search code unchanged since Phase 5).
+
+### Next steps
+
+Phase 7 — knowledge graph (`phase/07-graph`).

@@ -37,9 +37,11 @@ export interface FtsData {
 }
 
 export interface LinkResolutionRow {
-  targetKind: 'note' | 'attachment' | 'unresolved';
+  targetKind: 'note' | 'attachment' | 'concept' | 'unresolved';
   targetDoc: number | null;
   targetPath: string | null;
+  /** The concept a link resolves to (when no note has the name). */
+  targetConcept: string | null;
   ambiguous: boolean;
 }
 
@@ -119,8 +121,8 @@ function toNoteRow(raw: Raw): NoteRow {
 }
 
 const LINK_COLUMNS = `l.link_id, l.source_doc, s.path AS source_path, l.ordinal, l.syntax, l.embed, l.target_raw,
-  l.target_name_key, l.heading, l.block_ref, l.alias, l.target_kind, l.target_doc, l.target_path, l.ambiguous,
-  l.line, l.col, l.context`;
+  l.target_name_key, l.heading, l.block_ref, l.alias, l.target_kind, l.target_doc, l.target_path, l.target_concept,
+  l.ambiguous, l.line, l.col, l.context`;
 
 function toLinkRow(raw: Raw): LinkRow {
   return {
@@ -138,6 +140,7 @@ function toLinkRow(raw: Raw): LinkRow {
     targetKind: raw.target_kind as LinkRow['targetKind'],
     targetDoc: raw.target_doc === null ? null : Number(raw.target_doc),
     targetPath: (raw.target_path as string | null) ?? null,
+    targetConcept: (raw.target_concept as string | null) ?? null,
     ambiguous: raw.ambiguous === 1,
     line: Number(raw.line),
     column: Number(raw.col),
@@ -345,8 +348,8 @@ export function createNotesRepository(db: SqlDatabase) {
       for (const link of links) {
         db.run(
           `INSERT INTO note_links (source_doc, ordinal, syntax, embed, target_raw, target_name_key, heading, block_ref,
-             alias, target_kind, target_doc, target_path, ambiguous, line, col, context)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             alias, target_kind, target_doc, target_path, target_concept, ambiguous, line, col, context)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             docId,
             link.ordinal,
@@ -360,6 +363,7 @@ export function createNotesRepository(db: SqlDatabase) {
             link.targetKind,
             link.targetDoc,
             link.targetPath,
+            link.targetConcept,
             link.ambiguous ? 1 : 0,
             link.line,
             link.column,
@@ -427,11 +431,13 @@ export function createNotesRepository(db: SqlDatabase) {
 
     updateLinkResolution(linkId: number, resolution: LinkResolutionRow): void {
       db.run(
-        'UPDATE note_links SET target_kind = ?, target_doc = ?, target_path = ?, ambiguous = ? WHERE link_id = ?',
+        `UPDATE note_links SET target_kind = ?, target_doc = ?, target_path = ?, target_concept = ?,
+           ambiguous = ? WHERE link_id = ?`,
         [
           resolution.targetKind,
           resolution.targetDoc,
           resolution.targetPath,
+          resolution.targetConcept,
           resolution.ambiguous ? 1 : 0,
           linkId,
         ],

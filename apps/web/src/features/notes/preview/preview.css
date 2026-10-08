@@ -69,6 +69,11 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+/* Concept links: the same colour as links, told apart by a dotted underline (not by colour alone). */
+.markdown-body .wikilink-concept {
+  text-decoration-style: dotted;
+  text-decoration-thickness: 2px;
+}
 .markdown-body .wikilink-unresolved {
   padding: 0;
   border: 0;

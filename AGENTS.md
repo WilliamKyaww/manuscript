@@ -100,6 +100,9 @@ All verified on 4 October 2026 (Phase 1):
 - Timings on this machine vary two- to three-fold with background load (chat, music, browsers). When a
   performance budget looks broken, measure the previous gate's code at the same time (a temporary
   `git worktree` of the last merge, sharing `node_modules` through a junction) before optimising.
+  On battery the laptop throttles about three-fold (`Get-CimInstance Win32_Battery`: `BatteryStatus`
+  1 means discharging), so judge budgets on mains power. Remove the junctions with `cmd /c rmdir`
+  before `git worktree remove`, so that nothing deletes the shared `node_modules` through them.
 
 ## 6. The phase and gate workflow
 

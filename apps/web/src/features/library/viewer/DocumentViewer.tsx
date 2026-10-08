@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Pane } from '../../../components/Pane';
 import { useApi } from '../../../lib/api/context';
 import { cn } from '../../../lib/cn';
+import { conceptsQuery } from '../../concepts/api';
 import { treeQuery } from '../../notes/api';
 import { MarkdownPreview } from '../../notes/preview/MarkdownPreview';
 import type { PreviewTarget } from '../../notes/preview/remark-obsidian';
@@ -28,10 +29,16 @@ export function DocumentViewer({
 }) {
   const api = useApi();
   const tree = useQuery(treeQuery(api));
+  const concepts = useQuery(conceptsQuery(api));
   const main = useRef<HTMLDivElement>(null);
   const resolver = useMemo(
-    () => new LinkResolver(tree.data?.notes ?? [], tree.data?.attachments ?? []),
-    [tree.data],
+    () =>
+      new LinkResolver(
+        tree.data?.notes ?? [],
+        tree.data?.attachments ?? [],
+        concepts.data?.concepts ?? [],
+      ),
+    [tree.data, concepts.data],
   );
   const mediaTypes = useMemo(
     () => new Map((tree.data?.attachments ?? []).map((file) => [file.path, file.mediaType])),
@@ -48,6 +55,8 @@ export function DocumentViewer({
           mediaType: mediaTypes.get(result.path) ?? 'application/octet-stream',
         };
       }
+      if (result.kind === 'concept')
+        return { kind: 'concept', id: result.conceptId, name: result.name };
       return { kind: 'unresolved' };
     },
     [resolver, mediaTypes, source.path],

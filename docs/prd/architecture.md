@@ -115,8 +115,8 @@ apps/web/src/
 ├── main.tsx  router.tsx  queryClient.ts
 ├── app/           AppShell, sidebar, command palette, keyboard shortcuts, theme
 ├── components/    design-system primitives (Button, Dialog, Page, PageHeader, EmptyState, …)
-├── features/      one folder per domain: notes, search, library, learning, graph, review, practice,
-│                  mastery, plan, chat, settings, inbox
+├── features/      one folder per domain: notes, search, library, learning, concepts, today, graph,
+│                  review, practice, mastery, plan, chat, settings, inbox
 ├── lib/           API client (typed), formatting, hooks
 └── styles/        tokens.css (design tokens), globals
 ```

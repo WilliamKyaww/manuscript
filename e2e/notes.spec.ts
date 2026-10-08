@@ -66,9 +66,10 @@ test('a link to a new note shows up as a backlink there', async ({ page }) => {
     .toBe('Paxos is safe. See [[Leader election]] for details.');
   await expect(page.locator('[aria-live="polite"]').filter({ hasText: /^Saved/ })).toBeVisible();
 
-  // The link points nowhere yet: create the note from the preview.
+  // The link points nowhere yet: create the note from the preview (the menu also offers a concept).
   await page.getByLabel('Preview', { exact: true }).click();
   await page.getByRole('button', { name: 'Leader election' }).click();
+  await page.getByRole('menuitem', { name: /Create note/ }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Leader election' })).toBeVisible();
 
   await page.getByRole('tab', { name: 'Backlinks' }).click();

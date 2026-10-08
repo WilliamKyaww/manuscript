@@ -41,10 +41,11 @@ Resolution order for `[[X]]` (case-insensitive, Unicode-normalised; implemented 
 1. A note whose file name (without `.md`) equals X; then one whose frontmatter `title` equals X; then
    a note alias equal to X. Ambiguity (two notes named X) prefers a note in the linking note's own
    folder, then the shortest vault path (as Obsidian does), and is reported.
-2. A **concept** whose name or alias equals X → links to the concept page (Phase 6).
+2. A **concept** whose name or alias equals X → links to the concept page (Phase 6; names and aliases
+   share one case-folded namespace, so this is never ambiguous — ADR-0029).
 3. An attachment whose file name equals X.
-4. Otherwise **unresolved** — shown distinctly; selecting it creates the note ("Create concept" from
-   Phase 6).
+4. Otherwise **unresolved** — shown distinctly; selecting it in the preview offers **Create note**
+   (next to the linking note) or **Create concept** (named after the link).
 
 Targets with a folder (`[[Folder/X]]`, Markdown links such as `[t](../X.md)`) resolve relative to the
 linking note, then from the vault root (`/X` means only this), then by path suffix. The user-facing
@@ -76,7 +77,7 @@ import (upload / path / URL)
   → store original in Sources/<module or Inbox>/ (sha256; de-duplicate identical files)
   → detect type (extension + magic bytes)
   → parser → NormalisedDocument { title, sections[] (page/slide/heading/segment), metadata }
-  → chunker (section-aware, ~300–800 tokens, small overlap, context prefix "Doc › Section")
+  → chunker (section-aware, ~300 estimated tokens, small overlap, context prefix "Doc › Section")
   → index: chunks_fts (+ embeddings if enabled)
   → (AI, optional) summary, concept extraction, proposals            ← Phase 11/15
 ```
@@ -91,7 +92,7 @@ re-processed (Graphify's cache lesson) and a parser upgrade can re-run selective
 | Markdown, plain text | 5 | headings / paragraphs | |
 | PDF | 5 | one per page | pdf.js text layer; scanned PDFs flagged "no text layer" until OCR (Phase 11) |
 | PPTX | 5 | one per slide (+ speaker notes part) | In-house zip/XML parser |
-| DOCX | 5 | headings | mammoth → HTML → Markdown |
+| DOCX | 5 | headings | In-house `word/document.xml` reader → Markdown-style blocks (ADR-0019 "DOCX change") |
 | Web page (URL) | 5 (optional) | headings | http(s) only, size cap, timeout, no `file://` redirects |
 | Images | 11 | one segment | OCR or vision-model description |
 | Audio / video | 11 | timed segments | Transcription provider; timestamps become locators |
@@ -102,6 +103,8 @@ re-processed (Graphify's cache lesson) and a parser upgrade can re-run selective
 PDF viewer (pdf.js) with page thumbnails, text selection, "make card/question from selection",
 jump-to-locator from citations; slide viewer showing slide text + speaker notes; Markdown/DOCX rendered
 view. Every view shows which concepts, notes and cards derive from the current page/slide.
+Implemented in Phase 5: the viewers, thumbnails, selection and deep links (`docs/guide/sources.md`);
+selection actions arrive with cards and questions (Phases 8–9), derived-artefact panels with them.
 
 ## 6. Concepts
 
