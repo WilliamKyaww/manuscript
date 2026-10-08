@@ -15,6 +15,9 @@
     "chokidar": "5.0.0",
     "fast-xml-parser": "5.11.2",
     "fflate": "0.8.3",
+    "graphology": "0.26.0",
+    "graphology-communities-louvain": "2.0.2",
+    "graphology-types": "0.24.8",
     "hono": "4.13.13",
     "pdfjs-dist": "6.4.299",
     "zod": "4.6.5"
