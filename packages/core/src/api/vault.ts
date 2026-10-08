@@ -195,6 +195,11 @@ export const ServerEventSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('sources.changed'), ids: z.array(z.string()) }),
   /** A background job progressed or changed state (throttled while running). */
   z.object({ type: z.literal('job.updated'), job: JobSummarySchema }),
+  /** Data kept only in the database changed: the course structure, concepts or relations. */
+  z.object({
+    type: z.literal('data.changed'),
+    area: z.enum(['course', 'concepts', 'relations']),
+  }),
 ]);
 export type ServerEvent = z.infer<typeof ServerEventSchema>;
 

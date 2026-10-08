@@ -1,6 +1,7 @@
 export * from './api/concepts';
 export * from './api/contract';
 export * from './api/course';
+export * from './api/graph';
 export * from './api/jobs';
 export * from './api/notes';
 export * from './api/search';
@@ -9,6 +10,7 @@ export * from './api/system';
 export * from './api/vault';
 export * from './app';
 export * from './errors';
+export * from './graph/vocabulary';
 export * from './ids';
 export * from './learning/marks';
 export * from './search/fuzzy';
