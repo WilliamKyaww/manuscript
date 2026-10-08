@@ -19,6 +19,9 @@ _Last reviewed: 4 October 2026 (Phase 0)._
 | B-KM-11 | Toggle task-list checkboxes in the preview | Quicker revision checklists | Phase 3 |
 | B-KM-12 | Scroll synchronisation between editor and preview in split view | Long notes are easier to proof-read | Phase 3 |
 | B-KM-13 | Restore an id removed by hand from a note that other data refers to (warn in the editor first) | Ids are app-owned (ADR-0025); removing one by hand is the only way to lose it | Phase 3 |
+| B-SE-01 | Date filters in search (`created:`, `updated:` before/after) | Listed in knowledge-system.md §4; not needed for the Phase 4 gate | Phase 4 |
+| B-SE-02 | Highlight the search terms inside the opened note | Results open at the matching line; marking every occurrence would help scanning | Phase 4 |
+| B-SE-03 | Search operators for a single field (`title:`, `heading:`) | Narrower searches in large vaults | Phase 4 |
 
 ## Learning (LE)
 

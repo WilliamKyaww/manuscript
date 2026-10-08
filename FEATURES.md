@@ -6,7 +6,7 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 8 October 2026 (end of Phase 3)._
+_Last updated: 8 October 2026 (end of Phase 4)._
 
 ## Platform and architecture
 
@@ -43,8 +43,8 @@ _Last updated: 8 October 2026 (end of Phase 3)._
 
 | ID | Feature | Status | Phase |
 |---|---|---|---|
-| F-SE-01 | Full-text search (FTS5) with filters and operators | Planned | 4 |
-| F-SE-02 | Quick switcher | Planned | 4 |
+| F-SE-01 | Full-text search (FTS5) with filters and operators | Complete (date filters: B-SE-01) | 4 |
+| F-SE-02 | Quick switcher (with recent notes) and notes in the command palette | Complete | 4 |
 | F-SE-03 | Search across source chunks with locators | Planned | 5 |
 | F-SE-04 | Semantic search and hybrid fusion (optional embeddings) | Planned | 10 |
 | F-SE-05 | Related notes panel | Planned | 10 |

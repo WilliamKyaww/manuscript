@@ -114,3 +114,61 @@ package manifests and lockfile; `DECISIONS.md`, `README.md`, `AGENTS.md`, `STATE
 ### Next steps
 
 Phase 4 — lexical search and quick navigation.
+
+## Session 7 — Phase 4: lexical search and quick navigation
+
+- **Date:** Thursday 8 October 2026
+- **Time:** afternoon (after the rename)
+- **Agent model:** Claude Opus 5.5 (`claude-opus-5-5`)
+- **Phase:** 4 — Lexical search and quick navigation (branch `phase/04-search`)
+- **Work performed:** built and verified Phase 4 end to end and merged it.
+
+### What was done
+
+1. **Core (4.01, 4.04).** `search/query.ts`: the search syntax → a safe FTS5 expression plus filters
+   (every term quoted; input and terms capped); `withFilter`/`withoutFilter`. `search/fuzzy.ts`: quick-
+   switcher ranking (exact > prefix > word prefix > substring > subsequence, accents and case ignored,
+   recency boost, highlight ranges). Contracts for search and recent items.
+2. **Server (4.02, 4.03, 4.05).** `modules/search`: BM25 with column weights set as the FTS5 rank
+   (migration `0004`), text-part highlights and snippets, composable and negatable filters, filter-only
+   searches, paging, counts capped at 1,000, the first matching line; recent items (migration `0003`).
+3. **Web (4.06–4.08).** Search section with the query in the address, filter menus and chips, syntax
+   help; quick switcher (`Ctrl+O`) with recent notes and note creation; notes and "Search notes for …"
+   in the command palette; pages can name the control to focus after navigation (`data-autofocus`).
+4. **Verification (4.09, 4.10).** Search added to `npm run test:perf`; `e2e/search.spec.ts`.
+5. **Docs (4.11).** `docs/guide/search.md`, the checklist, FEATURES, STATE, README, PRD (search and
+   data model), backlog B-SE-01…03.
+
+### Important decisions
+
+- Results carry highlighted text as parts (`{ text, match }`), never HTML.
+- Several `tag:` filters must all apply; several `type:`, `folder:` or `module:` filters are
+  alternatives (a note has one of each).
+- Counting stops at 1,000 matches: exact totals of very common words are not worth a full count.
+
+### Tests run
+
+| Command | Result |
+|---|---|
+| `npm run verify` | **Pass** — type-check, Biome, **357** Vitest tests, build, smoke |
+| `npx playwright test` | **Pass** — **70/70** (4 new search tests; `/search` in the sticky-header and axe checks) |
+| `npm run test:perf` | **Pass** — search p95 **47 ms** over 200 mixed queries at 10,000 notes (budget 150 ms) |
+
+### Problems encountered
+
+- **Slow tag-filtered searches.** With `tag:` the planner looped over the tagged notes and ran the FTS
+  MATCH once per note (330 ms at 10,000 notes). `CROSS JOIN` keeps the FTS table as the outer loop
+  (21 ms); configuring the rank in FTS5 removed the temporary sort.
+- **Command palette ordering.** "Search notes for …" outranked sections, so typing "settings" and
+  pressing Enter searched instead of navigating. Notes and search now rank after sections and commands.
+- **Focus after navigation** moved to the page title, taking it away from the search box; pages can now
+  mark the control to focus.
+- Test-only: a miscounted line number, and a keyboard shortcut pressed before the app had loaded.
+
+### Unresolved issues
+
+- B-SE-01 date filters, B-SE-02 highlight terms in the opened note, B-SE-03 field operators.
+
+### Next steps
+
+Phase 5 — source library and ingestion pipeline (`phase/05-sources`).
