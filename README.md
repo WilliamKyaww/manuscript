@@ -1,4 +1,4 @@
-# Study Knowledge Base
+# Manuscript
 
 A personal **Knowledge & Learning OS**: a Markdown knowledge base, a lecture/source library, a concept
 graph and a spaced-repetition learning system that share one data model — with an AI agent that can
@@ -52,8 +52,8 @@ Details: [`docs/prd/architecture.md`](./docs/prd/architecture.md).
 Requirements: **Windows 10/11** (macOS/Linux work for development), **Node.js 24+** with npm 11+, Git.
 
 ```powershell
-git clone https://github.com/WilliamKyaww/study-knowledge-base.git
-cd study-knowledge-base
+git clone https://github.com/WilliamKyaww/manuscript.git
+cd manuscript
 npm install
 ```
 
@@ -68,8 +68,10 @@ npm install
 | Windows installer | `npm run desktop:dist` | Phase 19 |
 
 **Where data lives (web and desktop):** the vault (your notes and sources) defaults to
-`Documents\Study Knowledge Base`; settings and the local sign-in token live in
-`%APPDATA%\StudyKnowledgeBase` (never inside the vault).
+`Documents\Manuscript`; settings and the local sign-in token live in
+`%APPDATA%\Manuscript` (never inside the vault). The project used to be called "Study Knowledge
+Base": if only the old folders (`Documents\Study Knowledge Base`, `%APPDATA%\StudyKnowledgeBase`)
+exist, they keep being used. To switch to the new names, close the app and rename the folders.
 
 **Configuration** (flags override environment variables): `--port` / `SKB_PORT`, `--vault` /
 `SKB_VAULT`, `--data-dir` / `SKB_DATA_DIR`, `--log-level` / `SKB_LOG_LEVEL` (`debug`, `info`, `warn`,

@@ -1,4 +1,4 @@
-# State
+# State — Manuscript
 
 _Last updated: 8 October 2026 — Claude Opus 5.5._
 
@@ -56,7 +56,8 @@ _Last updated: 8 October 2026 — Claude Opus 5.5._
 ADR-0004 hybrid storage (Markdown canonical) · ADR-0005 localhost security · ADR-0006 `node:sqlite` ·
 ADR-0007 plain SQL + prefixed ULIDs · ADR-0009 CodeMirror 6 + unified · ADR-0018 frontend stack ·
 ADR-0023 git workflow (no AI trailers) · ADR-0024 shared Zod API contracts · **ADR-0025** note ids
-written only when needed · **ADR-0026** Obsidian-compatible dialect with recorded differences.
+written only when needed · **ADR-0026** Obsidian-compatible dialect with recorded differences · **ADR-0027** the product is called
+Manuscript (internal identifiers keep `skb`).
 
 ## Technical debt
 
@@ -70,6 +71,13 @@ environment; another local project uses port 5173 (see `AGENTS.md` §5). axe che
 only inside the viewport (`fitViewportToContent` in `e2e/shell.spec.ts`). Scripts that write files on
 Windows must write LF line endings, and shell here-documents may swallow backslashes — prefer the
 editor tools for code containing escapes (`AGENTS.md` §5).
+
+## Pending for the user
+
+- Rename the local project folder `study-knowledge-base` to `manuscript` (GitHub is already renamed;
+  `origin` points at `WilliamKyaww/manuscript`).
+- Optional: rename `Documents\Study Knowledge Base` and `%APPDATA%\StudyKnowledgeBase` to `Manuscript`
+  while the app is closed (`docs/guide/README.md`).
 
 ## Open questions for the user
 

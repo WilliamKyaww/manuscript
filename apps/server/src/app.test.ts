@@ -22,7 +22,7 @@ describe('app integration', () => {
     const response = await request('/api/ping', { auth: 'none' });
     expect(response.status).toBe(200);
     expect(PingResponseSchema.parse(await response.json())).toEqual({
-      app: 'study-knowledge-base',
+      app: 'manuscript',
       ok: true,
     });
   });

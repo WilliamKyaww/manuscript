@@ -7,7 +7,7 @@ export function describeError(error: unknown): { title: string; description: str
     if (error.code === 'unreachable') {
       return {
         title: 'Cannot reach the local server',
-        description: 'Check that Study Knowledge Base is still running.',
+        description: 'Check that Manuscript is still running.',
       };
     }
     if (error.isUnauthenticated) {

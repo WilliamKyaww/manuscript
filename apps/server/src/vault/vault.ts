@@ -11,6 +11,8 @@ import {
 import { hostname as osHostname } from 'node:os';
 import path from 'node:path';
 import {
+  APP_ID,
+  APP_NAME,
   ConflictError,
   type Id,
   type IdFactory,
@@ -154,7 +156,7 @@ function loadOrCreateVaultFile(file: string, options: OpenVaultOptions): VaultFi
     id: options.ids('vault'),
     layoutVersion: VAULT_LAYOUT_VERSION,
     createdAt: options.clock.now().toISOString(),
-    createdBy: `study-knowledge-base@${options.appVersion}`,
+    createdBy: `${APP_ID}@${options.appVersion}`,
   };
   writeFileAtomic(file, `${JSON.stringify(created, null, 2)}\n`);
   return created;
@@ -199,7 +201,7 @@ function acquireLock(lockPath: string, options: OpenVaultOptions): () => void {
       const holder = readLock(lockPath);
       if (holder && holder.hostname === hostname && holder.pid !== pid && alive(holder.pid)) {
         throw new VaultLockedError(
-          `This vault is already open in another Study Knowledge Base process (PID ${holder.pid}). ` +
+          `This vault is already open in another ${APP_NAME} process (PID ${holder.pid}). ` +
             `Close it first, or delete ${lockPath} if you are sure it is not running.`,
           { pid: holder.pid, lockPath },
         );

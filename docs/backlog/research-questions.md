@@ -15,5 +15,5 @@ Open questions that change design choices. **For the user** = only you can answe
 | RQ-08 | What exam formats do your modules use (MCQ, written, coding, proofs)? | User | Question kinds priority (Phase 9) | Phase 9 |
 | RQ-09 | How much daily study time can reviews take, and what desired retention do you want (default 0.90)? | User | FSRS and planner defaults | Phase 8 |
 | RQ-10 | Embeddings: API (cost) or local (installer size, speed)? | Research | Phase 10 | Phase 10 |
-| RQ-11 | Product name: keep "Study Knowledge Base" or choose another? | User | Display strings, installer | Phase 19 |
+| ~~RQ-11~~ | ~~Product name: keep "Study Knowledge Base" or choose another?~~ **Answered 8 October 2026: "Manuscript"** (ADR-0027) | User | Display strings, installer | Phase 19 |
 | RQ-12 | Is pdf.js text extraction reliable on your lecture PDFs (ligatures, maths, columns)? | Research | Parser choice (ADR-0019) | Phase 5 |

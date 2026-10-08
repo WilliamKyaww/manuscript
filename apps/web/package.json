@@ -2,7 +2,7 @@
   "name": "@skb/web",
   "version": "0.1.0",
   "private": true,
-  "description": "React single-page application for Study Knowledge Base.",
+  "description": "React single-page application for Manuscript.",
   "type": "module",
   "scripts": {
     "dev": "vite",

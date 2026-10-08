@@ -17,7 +17,7 @@ None.
 ## Atomic tasks
 
 ### Inspection
-- [x] **0.01** Inspect the target repository (empty: `.git` only, no commits; remote `WilliamKyaww/study-knowledge-base`)
+- [x] **0.01** Inspect the target repository (empty: `.git` only, no commits; remote `WilliamKyaww/study-knowledge-base`, renamed `WilliamKyaww/manuscript` on 8 October 2026)
 - [x] **0.02** Inspect the local Graphify repository: architecture, data model, algorithms, visualisation, MCP server, licence
 - [x] **0.03** Verify the development toolchain (Node 24.14, npm 11.9, no pnpm/Bun, VS 2022 present) and test `node:sqlite` FTS5 support
 

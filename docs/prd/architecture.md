@@ -55,7 +55,7 @@ Explorer, app info) and secure secret storage.
 ## 2. Repository structure
 
 ```text
-study-knowledge-base/
+manuscript/
 ├── apps/
 │   ├── server/          @skb/server  — Hono API, domain modules, agent, jobs (Node)
 │   ├── web/             @skb/web     — React SPA (Vite)
@@ -135,7 +135,7 @@ apps/web/src/
 | `<vault>/.skb/skb.db` | Courses, concepts, relations, cards, schedules, review logs, questions, attempts, plans, chats, agent actions, jobs (**canonical**) + note/chunk index, FTS, embeddings (**derived, rebuildable**) | Mixed, documented per table |
 | `<vault>/.skb/trash/`, `history/` | Soft-deleted notes; pre-change snapshots for undo | Yes (retention policy) |
 | `<vault>/.skb/cache/` | Thumbnails, extracted text caches | No (rebuildable) |
-| `%APPDATA%/StudyKnowledgeBase/` | App settings (recent vaults, window state), **secrets** (API keys) | Yes — never inside the vault |
+| `%APPDATA%/Manuscript/` | App settings (recent vaults, window state), **secrets** (API keys) | Yes — never inside the vault |
 
 Writes: Markdown via write-to-temp + rename (atomic); SQLite in WAL mode with `foreign_keys=ON`; a lock
 file in `.skb/` prevents two servers opening the same vault.
@@ -193,7 +193,7 @@ working.
 ## 9. Configuration resolution
 
 `CLI flags > environment variables (SKB_*) > app settings file > defaults`. Key settings: `SKB_PORT`
-(4317), `SKB_VAULT` (vault path; default `%USERPROFILE%\Documents\Study Knowledge Base`), `SKB_DATA_DIR`
+(4317), `SKB_VAULT` (vault path; default `%USERPROFILE%\Documents\Manuscript`), `SKB_DATA_DIR`
 (app data dir), `SKB_LOG_LEVEL`. Development uses a disposable vault under `./.dev-vault/` (git-ignored).
 
 ## 10. Errors and logging

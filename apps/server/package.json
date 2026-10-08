@@ -2,7 +2,7 @@
   "name": "@skb/server",
   "version": "0.1.0",
   "private": true,
-  "description": "Local Hono server for Study Knowledge Base: API, vault, database and (later) agent.",
+  "description": "Local Hono server for Manuscript: API, vault, database and (later) agent.",
   "type": "module",
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/main.ts --dev --vault ../../.dev-vault --data-dir ../../.dev-data",

@@ -1,6 +1,7 @@
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
-import { APP_NAME, DEFAULT_PORT, type RunMode } from '@skb/core';
+import { APP_ID, APP_NAME, DEFAULT_PORT, LEGACY_APP_NAMES, type RunMode } from '@skb/core';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 const LOG_LEVELS: readonly LogLevel[] = ['debug', 'info', 'warn', 'error'];
@@ -33,6 +34,8 @@ export interface ConfigInput {
   cwd: string;
   /** Where a bundled SPA would live if present (resolved by the caller). */
   bundledWebDir: string | null;
+  /** Whether a path exists (injectable for tests; defaults to the file system). */
+  exists?: (path: string) => boolean;
 }
 
 export class ConfigError extends Error {
@@ -69,12 +72,12 @@ export function resolveConfig(input: ConfigInput): ServerConfig {
 
   const port = parsePort(values.port ?? env.SKB_PORT);
   const vaultPath = resolvePath(
-    values.vault ?? env.SKB_VAULT ?? defaultVaultPath(mode, input.homeDir, input.cwd),
+    values.vault ?? env.SKB_VAULT ?? defaultVaultPath(mode, input.homeDir, input.cwd, input.exists),
   );
   const dataDir = resolvePath(
     values['data-dir'] ??
       env.SKB_DATA_DIR ??
-      defaultDataDir(input.platform, input.env, input.homeDir),
+      defaultDataDir(input.platform, input.env, input.homeDir, input.exists),
   );
   const webDirValue = values['web-dir'] ?? env.SKB_WEB_DIR;
   const webDir =
@@ -108,25 +111,55 @@ export function resolveConfig(input: ConfigInput): ServerConfig {
   };
 }
 
-export function defaultVaultPath(mode: RunMode, homeDir: string, cwd: string): string {
-  return mode === 'development'
-    ? path.join(cwd, '.dev-vault')
-    : path.join(homeDir, 'Documents', APP_NAME);
+/** The current default, unless only the folder from before the rename exists (ADR-0027). */
+function preferExisting(
+  current: string,
+  legacy: string,
+  exists: (path: string) => boolean,
+): string {
+  return !exists(current) && exists(legacy) ? legacy : current;
+}
+
+export function defaultVaultPath(
+  mode: RunMode,
+  homeDir: string,
+  cwd: string,
+  exists: (path: string) => boolean = existsSync,
+): string {
+  if (mode === 'development') return path.join(cwd, '.dev-vault');
+  const documents = path.join(homeDir, 'Documents');
+  return preferExisting(
+    path.join(documents, APP_NAME),
+    path.join(documents, LEGACY_APP_NAMES.display),
+    exists,
+  );
 }
 
 export function defaultDataDir(
   platform: NodeJS.Platform,
   env: Readonly<Record<string, string | undefined>>,
   homeDir: string,
+  exists: (path: string) => boolean = existsSync,
 ): string {
   const folder = APP_NAME.replaceAll(' ', '');
   if (platform === 'win32') {
-    return path.join(env.APPDATA ?? path.join(homeDir, 'AppData', 'Roaming'), folder);
+    const base = env.APPDATA ?? path.join(homeDir, 'AppData', 'Roaming');
+    return preferExisting(
+      path.join(base, folder),
+      path.join(base, LEGACY_APP_NAMES.folder),
+      exists,
+    );
   }
   if (platform === 'darwin') {
-    return path.join(homeDir, 'Library', 'Application Support', folder);
+    const base = path.join(homeDir, 'Library', 'Application Support');
+    return preferExisting(
+      path.join(base, folder),
+      path.join(base, LEGACY_APP_NAMES.folder),
+      exists,
+    );
   }
-  return path.join(env.XDG_CONFIG_HOME ?? path.join(homeDir, '.config'), 'study-knowledge-base');
+  const base = env.XDG_CONFIG_HOME ?? path.join(homeDir, '.config');
+  return preferExisting(path.join(base, APP_ID), path.join(base, LEGACY_APP_NAMES.id), exists);
 }
 
 function parsePort(value: string | undefined): number {

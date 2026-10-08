@@ -80,7 +80,7 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
     try {
       response = await fetchImpl(url, init);
     } catch (cause) {
-      throw new ApiError(0, null, 'Cannot reach the Study Knowledge Base server. Is it running?', {
+      throw new ApiError(0, null, 'Cannot reach the Manuscript server. Is it running?', {
         cause,
       });
     }
