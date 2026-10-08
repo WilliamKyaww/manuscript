@@ -30,6 +30,8 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 | [0022](#adr-0022--provisional-name-study-knowledge-base-scope-skb) | Provisional name "Study Knowledge Base", scope `@skb` | Accepted | 2026-10-04 |
 | [0023](#adr-0023--git-workflow-phase-branches-merged-at-gates-no-ai-trailers) | Git workflow: phase branches merged at gates; no AI trailers | Accepted | 2026-10-04 |
 | [0024](#adr-0024--shared-zod-api-contracts-instead-of-hono-rpc) | Shared Zod API contracts instead of Hono RPC | Accepted | 2026-10-04 |
+| [0025](#adr-0025--note-ids-are-written-into-files-only-when-needed) | Note ids are written into files only when needed | Accepted | 2026-10-07 |
+| [0026](#adr-0026--obsidian-compatible-dialect-with-recorded-differences) | Obsidian-compatible dialect with recorded differences | Accepted | 2026-10-07 |
 
 ---
 
@@ -310,3 +312,47 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 - **Consequences.** Paths are declared once in the contract rather than inferred from routes. An
   endpoint's status codes other than 200 will need a small extension when the first one is required.
 
+## ADR-0025 — Note ids are written into files only when needed
+
+- **Context.** ADR-0007 gives every note a prefixed ULID, and the data model said the id is added to a
+  note's frontmatter "on first index". Notes are canonical files (ADR-0004), often shared with Obsidian
+  and kept in Git or a sync folder: writing into every file when a vault is first opened would change
+  hundreds of files the user never touched. Some users already use `id` for their own scheme
+  (Zettelkasten numbers). Copied files carry their original's id.
+- **Options.** (a) Write `id` into every note on first index; (b) keep ids only in the index; (c) keep
+  ids in the index and write them into a file only when something must refer to the note durably, with
+  writing every id available as a setting.
+- **Decision.** (c). The index assigns an id at once; `ensurePersistentId` writes it into the file when
+  other canonical data (cards, concepts, plans — later phases) will refer to the note. The setting
+  `assignIds: on-index` writes it into every note. A foreign `id` value is left alone and `skb-id` used
+  instead. A file whose id belongs to another existing file is treated as a copy and gets a new id
+  written into it; a file whose id belongs to a note that disappeared is that note, moved. Without a
+  persisted id, moves are recognised by identical content (and, for moves made in the app, directly),
+  and restores from the trash reuse the recorded id. Frontmatter edits are minimal text edits: only
+  the edited key's lines change.
+- **Reason.** Opening a vault changes nothing; files gain exactly one line, and only when it buys
+  something; user data in `id` is never overwritten; references stay valid across renames.
+- **Consequences.** A note's id is stable while the index exists; if `.skb/` is deleted, notes without
+  a persisted id get new ids (nothing durable refers to them, by construction). Later phases must call
+  `ensurePersistentId` before storing a note id.
+
+## ADR-0026 — Obsidian-compatible dialect with recorded differences
+
+- **Context.** The vault must stay usable in Obsidian (knowledge-system.md §2), and the Phase 3 gate
+  asks for an ADR if the dialect deviates. The parser is our own (shared by indexer and editor), so
+  each rule is a choice.
+- **Options.** (a) Reproduce Obsidian exactly, including link resolution by file name and aliases only;
+  (b) Obsidian's syntax and resolution, plus a small number of deliberate, documented differences.
+- **Decision.** (b). Same syntax (wikilinks, embeds, tags, callouts, highlights, comments, maths with
+  Obsidian's `$` rule, Mermaid) and the same resolution order, with these differences: a frontmatter
+  `title` is also a link target (after file names, before aliases); ambiguous names prefer the linking
+  note's folder, then the shortest path; images from the internet are not loaded by the preview
+  (content security policy: the app makes no requests to other sites); block references (`#^id`) are
+  parsed and point at the note but are not yet resolved to a position; raw HTML is sanitised with an
+  allow-list. The automated compatibility test (`apps/server/test/obsidian-compatibility.test.ts`)
+  checks that opening an Obsidian vault changes no file and that links resolve as in Obsidian.
+- **Reason.** Titles are how students name notes ("Lecture 3: Consensus"); not loading remote content
+  protects privacy and works offline; everything else matches, so notes read the same in both tools.
+- **Consequences.** A link that resolves only by `title` will look unresolved in Obsidian (documented in
+  `docs/guide/markdown.md` §10). A setting to allow remote images and block-level navigation are in the
+  backlog.

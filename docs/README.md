@@ -7,7 +7,7 @@
 | [checklist/](./checklist/README.md) | Gated phase checklists — the task source of truth | `checklist/README.md` |
 | [journal/](./journal/README.md) | Engineering journal, one entry per day per agent model | latest file |
 | [backlog/](./backlog/README.md) | Backlog, technical debt, research questions | `backlog/README.md` |
-| `guide/` | User guides (added as features land) | — |
+| `guide/` | User guides (added as features land): [notes and Markdown](./guide/markdown.md) | — |
 
 Root files: `README.md` (overview), `STATE.md` (current state), `FEATURES.md` (inventory),
 `DECISIONS.md` (ADRs), `AGENTS.md` (how to work here), `THIRD_PARTY_NOTICES.md`.

@@ -32,13 +32,17 @@ Rules:
 1. **Every route renders `<Page>`**; no route may introduce its own top-level scroll container.
 2. The page header holds title, breadcrumbs, primary actions and tabs/filters for the page.
 3. Secondary headers inside the body use `<StickySection>` (sticky within `PageBody`).
-4. Split views (editor | preview | side panel) give each pane its own sticky pane header.
+4. Split views (editor | preview | side panel) use `<Page layout="panes">` with `<Pane>`s: the page
+   body no longer scrolls, and each pane has its own fixed header above its own scroll container
+   (implemented in Phase 3 for the Notes section; the editor's scroller is CodeMirror's own).
 5. **Enforcement (implemented in Phase 2):** `e2e/shell.spec.ts` visits every route in
    `apps/web/src/app/sections.ts` plus the not-found page, pads the body to force scrolling, scrolls
    `PageBody` to the bottom and asserts that exactly one page header exists, its position is unchanged,
    it and the `h1` stay in the viewport, and the window itself never scrolls. A second E2E test checks
    that `StickySection` headers stick to the top of the body; `Page.test.tsx` checks the structure.
    The check was mutation-tested: moving the header into the scroll container makes it fail.
+   For paned pages (Phase 3) it scrolls every pane's body and asserts each pane header stays put;
+   `e2e/notes.spec.ts` does the same with a long note in the editor.
 6. **Documented exceptions** (must be listed here):
    - *Focus mode* in a review session may collapse the header to a slim progress bar (user-toggled) —
      planned for Phase 8; not implemented yet. **There are currently no exceptions in the code.**

@@ -6,7 +6,7 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 4 October 2026 (end of Phase 2)._
+_Last updated: 8 October 2026 (end of Phase 3)._
 
 ## Platform and architecture
 
@@ -27,15 +27,16 @@ _Last updated: 4 October 2026 (end of Phase 2)._
 
 | ID | Feature | Status | Phase |
 |---|---|---|---|
-| F-KN-01 | Markdown notes as files with frontmatter and stable IDs | Planned | 3 |
-| F-KN-02 | CodeMirror 6 editor with preview/split modes | Planned | 3 |
-| F-KN-03 | Maths (KaTeX), code highlighting, Mermaid diagrams, callouts | Planned | 3 |
-| F-KN-04 | Wikilinks, embeds, tags (Obsidian-compatible) | Planned | 3 |
-| F-KN-05 | Backlinks and unlinked mentions | Planned | 3 |
-| F-KN-06 | Folder tree with rename/move (optional link rewriting) and trash | Planned | 3 |
-| F-KN-07 | Templates | Planned | 3 |
-| F-KN-08 | Attachments | Planned | 3 |
-| F-KN-09 | Live pick-up of external edits (VS Code, Obsidian) | Planned | 3 |
+| F-KN-01 | Markdown notes as files with frontmatter and stable IDs (written into files only when needed, ADR-0025) | Complete | 3 |
+| F-KN-02 | CodeMirror 6 editor with preview/split modes, autosave and conflict handling | Complete | 3 |
+| F-KN-03 | Maths (KaTeX), code highlighting, Mermaid diagrams, callouts | Complete | 3 |
+| F-KN-04 | Wikilinks, embeds, tags (Obsidian-compatible; differences in ADR-0026) | Complete | 3 |
+| F-KN-05 | Backlinks and unlinked mentions | Complete | 3 |
+| F-KN-06 | Folder tree with rename/move (optional link rewriting) and trash | Complete | 3 |
+| F-KN-07 | Templates | Complete | 3 |
+| F-KN-08 | Attachments (upload, embed, serve) | Complete | 3 |
+| F-KN-09 | Live pick-up of external edits (VS Code, Obsidian) | Complete | 3 |
+| F-KN-11 | Frontmatter properties panel and notes settings (ids, ignore patterns, folders, trash) | Complete | 3 |
 | F-KN-10 | Live-preview editing decorations | Planned | 20 |
 
 ## Knowledge — search
@@ -167,6 +168,7 @@ _Last updated: 4 October 2026 (end of Phase 2)._
 | F-UI-02 | Light/dark/system themes on design tokens (no flash on load) | Complete | 2 |
 | F-UI-03 | Command palette and keyboard shortcut registry with cheat sheet | Complete | 2 |
 | F-UI-04 | Accessible primitives and state components (axe-clean in both themes) | Complete | 2 |
+| F-UI-06 | Paned pages (each pane with its own fixed header) and lazily loaded routes | Complete | 3 |
 | F-UI-05 | Final visual polish across all screens | Planned | 20 |
 
 ## Deferred

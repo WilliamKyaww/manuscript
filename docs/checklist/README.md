@@ -42,7 +42,7 @@ Rules:
 | 0 | [Research & product discovery](./phase-00-research.md) | — | Complete |
 | 1 | [Foundation: repository, tooling, server and web skeletons](./phase-01-foundation.md) | 0 | Complete |
 | 2 | [Application shell and layout system](./phase-02-app-shell.md) | 1 | Complete |
-| 3 | [Notes and Markdown knowledge base](./phase-03-notes.md) | 2 | Not started |
+| 3 | [Notes and Markdown knowledge base](./phase-03-notes.md) | 2 | Complete |
 | 4 | [Lexical search and quick navigation](./phase-04-search.md) | 3 | Not started |
 | 5 | [Source library and ingestion pipeline](./phase-05-sources.md) | 4 | Not started |
 | 6 | [Course structure and concepts](./phase-06-course-structure.md) | 5 | Not started |

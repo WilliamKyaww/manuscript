@@ -146,7 +146,9 @@ file in `.skb/` prevents two servers opening the same vault.
 1. Editor sends `PUT /api/notes/:id` with content and the content hash it was based on.
 2. Service rejects with `409` if the file changed on disk since (external edit) — UI offers merge/reload.
 3. File written atomically; index updated in one transaction (note row, links, tags, FTS).
-4. Watcher sees our own write and ignores it (write-token suppression); external edits trigger re-index.
+4. The watcher sees our own write too, finds that content already indexed (same hash) and does
+   nothing; external edits are re-indexed and announced on `GET /api/events` (server-sent events),
+   so an open editor reloads quietly or, with unsaved changes, shows a conflict.
 
 ### 6.2 Importing a source
 1. `POST /api/sources` (multipart or path from the Electron picker) → original copied into
