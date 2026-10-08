@@ -77,6 +77,32 @@ if (!health.ok || body.status !== 'ok' || body.database?.ok !== true) {
   fail(`unexpected health response ${JSON.stringify(body)}`);
 }
 
+// A PDF import exercises the bundled pdf.js and its in-process worker (ADR-0019) and the job queue.
+const auth = { authorization: `Bearer ${token}` };
+const form = new FormData();
+form.append('file', new Blob([tinyPdf('Smoke test quorum page')]), 'smoke.pdf');
+const imported = await fetch(`${origin}/api/sources`, {
+  method: 'POST',
+  headers: auth,
+  body: form,
+});
+const importBody = await imported.json();
+if (imported.status !== 201)
+  fail(`PDF import answered ${imported.status}: ${JSON.stringify(importBody)}`);
+let source;
+for (let attempt = 0; attempt < 100; attempt += 1) {
+  source = await (
+    await fetch(`${origin}/api/sources/${importBody.source.id}`, { headers: auth })
+  ).json();
+  if (source.status === 'ready' || source.status === 'failed') break;
+  await new Promise((resolve) => setTimeout(resolve, 200));
+}
+if (source?.status !== 'ready')
+  fail(`the imported PDF did not become ready: ${JSON.stringify(source)}`);
+const found = await (await fetch(`${origin}/api/search?q=quorum`, { headers: auth })).json();
+if (!found.results?.some((result) => result.kind === 'source' && result.locator?.page === 1))
+  fail(`searching the imported PDF found nothing: ${JSON.stringify(found)}`);
+
 const hasWeb = existsSync(path.join(root, 'apps', 'server', 'dist', 'web', 'index.html'));
 if (hasWeb) {
   const page = await fetch(`${origin}/`);
@@ -102,5 +128,28 @@ if (existsSync(path.join(vault, '.skb', 'lock')))
 cleanup();
 console.log(
   `Smoke test passed: server ${body.version} on ${origin} (SQLite ${body.database.sqliteVersion}` +
-    `${hasWeb ? ', SPA served' : ''}, graceful shutdown released the vault).`,
+    `${hasWeb ? ', SPA served' : ''}, PDF imported and searchable, graceful shutdown released the vault).`,
 );
+
+/** A one-page PDF with one line of Helvetica text. */
+function tinyPdf(text) {
+  const stream = `BT /F1 12 Tf 72 720 Td (${text}) Tj ET`;
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+    `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
+  ];
+  let pdf = '%PDF-1.4\n';
+  const offsets = objects.map((object, index) => {
+    const offset = pdf.length;
+    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+    return offset;
+  });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  for (const offset of offsets) pdf += `${String(offset).padStart(10, '0')} 00000 n \n`;
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return new TextEncoder().encode(pdf);
+}

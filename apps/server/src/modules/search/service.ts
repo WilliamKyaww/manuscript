@@ -1,21 +1,34 @@
 import { readFileSync } from 'node:fs';
 import {
   type Id,
+  IMPORTABLE_SOURCE_KINDS,
+  LocatorSchema,
+  type ParsedQuery,
   parseSearchQuery,
   type RecentItem,
   type SearchResponse,
+  type SearchResult,
+  type SourceKind,
   type TextPart,
   ValidationError,
 } from '@skb/core';
 import type { Clock } from '../../shared/clock';
 import type { Logger } from '../../shared/logger';
+import { SOURCES_FOLDER } from '../notes/ignore';
 import { decodeNote, type NoteIndexer } from '../notes/indexer';
-import { COUNT_LIMIT, MATCH_END, MATCH_START, type SearchRepository } from './repository';
+import {
+  COUNT_LIMIT,
+  MATCH_END,
+  MATCH_START,
+  type SearchRepository,
+  type SearchScope,
+} from './repository';
 
 /**
- * Full-text search (tasks 4.01–4.03) and recently opened items (4.05). Ranking, snippets and
- * filtering happen in SQLite; this layer parses the user's query safely, shapes highlighted text as
- * parts (never HTML) and finds the first matching line so a result opens where the match is.
+ * Full-text search over notes (tasks 4.01–4.03) and source passages (5.16), and recently opened
+ * items (4.05). Ranking, snippets and filtering happen in SQLite; this layer parses the user's
+ * query safely, decides which kinds of result a query can return, shapes highlighted text as parts
+ * (never HTML) and finds the first matching line so a note opens where the match is.
  */
 
 export interface SearchService {
@@ -33,6 +46,60 @@ export interface SearchServiceDependencies {
 
 const RECENT_KEPT = 100;
 const asNoteId = (value: string) => value as Id<'note'>;
+
+/** Source kinds selected by each `kind:` filter value (core's RESULT_KINDS). */
+const SOURCE_KINDS_FOR: Readonly<Record<string, readonly SourceKind[]>> = {
+  source: IMPORTABLE_SOURCE_KINDS,
+  pdf: ['pdf'],
+  slides: ['pptx'],
+  docx: ['docx'],
+  text: ['markdown', 'text'],
+};
+
+const inSources = (folder: string) => {
+  const key = folder.toLowerCase();
+  const root = SOURCES_FOLDER.toLowerCase();
+  return key === root || key.startsWith(`${root}/`);
+};
+
+/**
+ * Which kinds of result a query can return. Tags and note types belong to notes, so filtering by
+ * them leaves sources out; modules apply to both. Folders decide too: notes never live in
+ * `Sources/` and sources always do, so a folder filter never makes either index search in vain.
+ */
+export function searchScope(parsed: Pick<ParsedQuery, 'filters' | 'excludedFilters'>): SearchScope {
+  const { filters, excludedFilters } = parsed;
+  let notes = true;
+  let kinds = new Set<SourceKind>(IMPORTABLE_SOURCE_KINDS);
+  if (filters.kind.length > 0) {
+    notes = filters.kind.includes('note');
+    kinds = new Set(filters.kind.flatMap((kind) => SOURCE_KINDS_FOR[kind] ?? []));
+  }
+  for (const kind of excludedFilters.kind) {
+    if (kind === 'note') notes = false;
+    for (const sourceKind of SOURCE_KINDS_FOR[kind] ?? []) kinds.delete(sourceKind);
+  }
+  if (filters.tag.length > 0 || filters.type.length > 0) kinds.clear();
+  if (filters.folder.length > 0) {
+    if (filters.folder.every(inSources)) notes = false;
+    if (!filters.folder.some(inSources)) kinds.clear();
+  }
+  return { notes, sourceKinds: [...kinds] };
+}
+
+/**
+ * The full-text expression for a query. Excluded terms join the FTS5 expression as `NOT`, which
+ * FTS5 evaluates while merging its lists — far cheaper than filtering every match against a
+ * subquery. A query of exclusions and filters alone keeps the subquery (there is nothing to merge).
+ */
+export function fullTextExpression(parsed: Pick<ParsedQuery, 'match' | 'exclude'>): {
+  match: string | null;
+  exclude: string | null;
+} {
+  if (parsed.match && parsed.exclude)
+    return { match: `(${parsed.match}) NOT (${parsed.exclude})`, exclude: null };
+  return { match: parsed.match, exclude: parsed.exclude };
+}
 
 /** Splits text containing match markers into parts. */
 export function toParts(marked: string): TextPart[] {
@@ -54,6 +121,7 @@ export function toParts(marked: string): TextPart[] {
 
 const fold = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const oneLine = (text: string) => text.replace(/\s+/g, ' ').trim();
 
 /** 1-based number of the first line where a term starts a word, or null. */
 export function firstMatchingLine(text: string, terms: readonly string[]): number | null {
@@ -76,65 +144,87 @@ export function createSearchService({
   clock,
   logger,
 }: SearchServiceDependencies): SearchService {
+  const lineOf = (notePath: string, highlights: readonly string[]): number | null => {
+    if (highlights.length === 0) return null;
+    try {
+      return firstMatchingLine(
+        decodeNote(readFileSync(indexer.absolute(notePath))).text,
+        highlights,
+      );
+    } catch {
+      return null;
+    }
+  };
+
   return {
     search(query, { limit, offset }) {
       const started = performance.now();
       const parsed = parseSearchQuery(query);
-      if (parsed.empty) {
-        return {
-          query,
-          total: 0,
-          totalCapped: false,
-          offset,
-          limit,
-          results: [],
-          highlights: [],
-          tookMs: 0,
-        };
-      }
-      let page: ReturnType<SearchRepository['searchNotes']>;
+      const empty: SearchResponse = {
+        query,
+        total: 0,
+        totalCapped: false,
+        offset,
+        limit,
+        results: [],
+        highlights: [],
+        tookMs: 0,
+      };
+      if (parsed.empty) return empty;
+      const scope = searchScope(parsed);
+
+      let results: SearchResult[];
+      let page: ReturnType<SearchRepository['search']>;
       try {
-        page = repo.searchNotes({ ...parsed, limit, offset });
+        page = repo.search({ ...parsed, ...fullTextExpression(parsed), scope, limit, offset });
+        results = page.rows.flatMap((row): SearchResult[] => {
+          if (row.kind === 'note') {
+            const title = row.titleHighlight
+              ? (row.titleHighlight.split('\n')[0] ?? row.title)
+              : row.title;
+            return [
+              {
+                kind: 'note',
+                note: {
+                  id: asNoteId(row.id),
+                  path: row.path,
+                  title: row.title,
+                  type: row.type,
+                  updatedAt: row.updatedAt,
+                },
+                title: toParts(title),
+                snippet: toParts(oneLine(row.snippet ?? '')),
+                line: lineOf(row.path, parsed.highlights),
+              },
+            ];
+          }
+          const locator = LocatorSchema.safeParse(JSON.parse(row.locatorJson));
+          if (!locator.success) return [];
+          return [
+            {
+              kind: 'source',
+              source: {
+                id: row.sourceId as Id<'source'>,
+                title: row.sourceTitle,
+                kind: row.sourceKind,
+                path: row.sourcePath,
+              },
+              section: { ordinal: row.sectionOrdinal, label: row.sectionLabel },
+              locator: locator.data,
+              title: toParts(row.titleHighlight),
+              snippet: toParts(oneLine(row.snippet)),
+            },
+          ];
+        });
       } catch (error) {
         // The parser quotes every term, so this should be unreachable; never show an SQL error.
         logger.warn('A search query failed', { query, error });
         throw new ValidationError('That search could not be run. Try different words.');
       }
-      const results = page.rows.map((row) => {
-        let line: number | null = null;
-        if (parsed.highlights.length > 0) {
-          try {
-            line = firstMatchingLine(
-              decodeNote(readFileSync(indexer.absolute(row.path))).text,
-              parsed.highlights,
-            );
-          } catch {
-            line = null;
-          }
-        }
-        const title = row.titleHighlight
-          ? (row.titleHighlight.split('\n')[0] ?? row.title)
-          : row.title;
-        return {
-          kind: 'note' as const,
-          note: {
-            id: asNoteId(row.id),
-            path: row.path,
-            title: row.title,
-            type: row.type,
-            updatedAt: row.updatedAt,
-          },
-          title: toParts(title),
-          snippet: toParts((row.snippet ?? '').replace(/\s+/g, ' ').trim()),
-          line,
-        };
-      });
       return {
-        query,
+        ...empty,
         total: Math.min(page.total, COUNT_LIMIT),
         totalCapped: page.capped,
-        offset,
-        limit,
         results,
         highlights: parsed.highlights,
         tookMs: Math.round((performance.now() - started) * 10) / 10,

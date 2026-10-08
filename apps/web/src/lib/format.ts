@@ -40,3 +40,16 @@ const DATE_TIME = new Intl.DateTimeFormat('en-GB', {
 export function formatDateTime(date: Date): string {
   return DATE_TIME.format(date);
 }
+
+/** File size in binary units with one decimal below ten, e.g. "840 KB", "5.2 MB". */
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ['KB', 'MB', 'GB'];
+  let value = bytes / 1024;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${value < 10 ? value.toFixed(1) : Math.round(value)} ${units[unit]}`;
+}

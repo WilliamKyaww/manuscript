@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { defineEndpoint } from './contract';
+import { JobSummarySchema } from './jobs';
 import { IndexStatusSchema, NoteIdSchema, NoteRefSchema, VaultPathSchema } from './notes';
 
 /**
@@ -190,6 +191,10 @@ export const ServerEventSchema = z.discriminatedUnion('type', [
     structure: z.boolean(),
   }),
   z.object({ type: z.literal('index.status'), status: IndexStatusSchema }),
+  /** Sources were imported, changed state, moved or were deleted: refetch them. */
+  z.object({ type: z.literal('sources.changed'), ids: z.array(z.string()) }),
+  /** A background job progressed or changed state (throttled while running). */
+  z.object({ type: z.literal('job.updated'), job: JobSummarySchema }),
 ]);
 export type ServerEvent = z.infer<typeof ServerEventSchema>;
 

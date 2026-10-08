@@ -6,7 +6,7 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 8 October 2026 (end of Phase 4)._
+_Last updated: 8 October 2026 (end of Phase 5)._
 
 ## Platform and architecture
 
@@ -19,7 +19,7 @@ _Last updated: 8 October 2026 (end of Phase 4)._
 | F-PL-05 | React SPA with typed API client (shared contracts, ADR-0024) | Complete | 1 |
 | F-PL-06 | `npm run dev`, `npm run build`, `npm start`, `npm run verify` (incl. bundle smoke test) | Complete | 1 |
 | F-PL-07 | `run-web.bat` one-click Windows launcher | Complete | 1 |
-| F-PL-08 | Persistent job queue with progress events | Planned | 5 |
+| F-PL-08 | Persistent job queue with progress events | Complete | 5 |
 | F-PL-09 | Automatic database backups and crash recovery | Planned | 17 |
 | F-PL-10 | Diagnostics page and log viewer | Planned | 17 |
 
@@ -45,7 +45,7 @@ _Last updated: 8 October 2026 (end of Phase 4)._
 |---|---|---|---|
 | F-SE-01 | Full-text search (FTS5) with filters and operators | Complete (date filters: B-SE-01) | 4 |
 | F-SE-02 | Quick switcher (with recent notes) and notes in the command palette | Complete | 4 |
-| F-SE-03 | Search across source chunks with locators | Planned | 5 |
+| F-SE-03 | Search across source chunks with locators | Complete (one hit per page, slide or section; grouping by source: B-SE-04) | 5 |
 | F-SE-04 | Semantic search and hybrid fusion (optional embeddings) | Planned | 10 |
 | F-SE-05 | Related notes panel | Planned | 10 |
 
@@ -53,11 +53,11 @@ _Last updated: 8 October 2026 (end of Phase 4)._
 
 | ID | Feature | Status | Phase |
 |---|---|---|---|
-| F-SO-01 | Source library with originals preserved | Planned | 5 |
-| F-SO-02 | PDF ingestion (per-page) and viewer | Planned | 5 |
-| F-SO-03 | PPTX ingestion (per-slide, speaker notes) | Planned | 5 |
-| F-SO-04 | DOCX, Markdown and text ingestion | Planned | 5 |
-| F-SO-05 | Web page import with safe fetch | Planned (optional) | 5 |
+| F-SO-01 | Source library with originals preserved | Complete (follows the Sources folder, ADR-0028) | 5 |
+| F-SO-02 | PDF ingestion (per-page) and viewer | Complete (scanned pages need OCR: F-SO-07) | 5 |
+| F-SO-03 | PPTX ingestion (per-slide, speaker notes) | Complete (slides shown as text; slide pictures: B-SO-02) | 5 |
+| F-SO-04 | DOCX, Markdown and text ingestion | Complete (DOCX body only; footnotes and comments: B-SO-03) | 5 |
+| F-SO-05 | Web page import with safe fetch | Deferred (B-SO-01) | 5 |
 | F-SO-06 | Audio/video transcription | Planned | 11 |
 | F-SO-07 | OCR / image understanding | Planned | 11 |
 | F-SO-08 | Graphify `graph.json` import | Planned | 16 |

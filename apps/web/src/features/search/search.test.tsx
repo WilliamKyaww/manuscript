@@ -155,7 +155,7 @@ describe('search page', () => {
     const link = within(results).getByRole('link');
     expect(link).toHaveAttribute('href', `/notes/${RAFT}?line=12`);
     expect(within(link).getByText('leader', { selector: 'mark' })).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('1 note · 3 ms');
+    expect(screen.getByRole('status')).toHaveTextContent('1 result · 3 ms');
     expect(searches).toEqual(['leader']);
   });
 
@@ -163,7 +163,7 @@ describe('search page', () => {
     const user = userEvent.setup();
     const { fetch, searches } = fakeServer();
     const { router } = renderApp('/search', fetch);
-    const input = await screen.findByRole('searchbox', { name: 'Search notes' });
+    const input = await screen.findByRole('searchbox', { name: 'Search notes and sources' });
     expect(screen.getByRole('heading', { name: 'How to search' })).toBeInTheDocument();
     await user.type(input, 'leader');
     await waitFor(() => expect(router.state.location.search).toEqual({ q: 'leader' }));
@@ -191,7 +191,7 @@ describe('command palette', () => {
     expect(
       await within(palette).findByRole('option', { name: 'Paxos made simple' }),
     ).toBeInTheDocument();
-    await user.click(within(palette).getByRole('option', { name: 'Search notes for “paxos”' }));
+    await user.click(within(palette).getByRole('option', { name: 'Search for “paxos”' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/search'));
     expect(router.state.location.search).toEqual({ q: 'paxos' });
   });

@@ -23,8 +23,8 @@
 | Rendering | **unified/remark/rehype**, KaTeX, Mermaid (lazy), lowlight | Maths, diagrams, code | 0009 |
 | Search | **SQLite FTS5** (BM25) → hybrid with embeddings (Phase 10) | Persistent, incremental | 0010 |
 | Graph | **graphology** (+ Louvain, metrics, shortest path) and **Sigma.js 3** | Same graph model on server and client; WebGL scale | 0015 |
-| PDF | **pdf.js** (`pdfjs-dist` 6) | Viewer + text layer; extraction approach confirmed in a Phase 5 spike | 0019 |
-| PPTX / DOCX | fflate + fast-xml-parser (in-house PPTX) · mammoth + turndown | Per-slide locators; structural DOCX | 0019 |
+| PDF | **pdf.js** (`pdfjs-dist` 6.4) | One dependency for both: per-page text on the server (legacy build, worker in-process) and the viewer with a text layer in the browser; chosen over `unpdf` by the Phase 5 spike | 0019 |
+| PPTX / DOCX | **fflate** + **fast-xml-parser**, in-house readers for both | Per-slide locators with speaker notes; structural DOCX (headings, lists, tables). mammoth/turndown dropped (vulnerable transitive dependency) | 0019 |
 | Spaced repetition | **ts-fsrs** (FSRS-6) | State of the art, MIT | 0011 |
 | AI | **AI SDK 7** (`ai`, `@ai-sdk/anthropic`, `@ai-sdk/openai`, `@ai-sdk/openai-compatible`, `@ai-sdk/react`) | Provider abstraction, tool loop, approvals, streaming UI | 0012 |
 | MCP | **@modelcontextprotocol/sdk** (spec 2026-07-28) | External agents use our tools | 0014 |

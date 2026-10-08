@@ -27,3 +27,15 @@ This file lists third-party code, algorithms or text that has been **adapted int
 
   Adapted modules carry a header comment naming the Graphify source file and licence, and state that
   they were modified (translated to TypeScript and changed for this application).
+
+## PDF.js
+
+- Source: <https://github.com/mozilla/pdf.js> (`pdfjs-dist` 6.4.299, file `web/pdf_viewer.css`)
+- Licence: Apache License 2.0 — Copyright Mozilla Foundation
+- Adapted: the `.textLayer` rules (transparent, selectable text over a rendered page), reduced to
+  what the source viewer needs and scoped under `.skb-pdf-page`, in
+  `apps/web/src/features/library/viewer/pdf-text-layer.css` (Phase 5, task 5.18). The file carries a
+  header naming the source and licence and stating that it was modified.
+- `pdfjs-dist` itself is an ordinary dependency. Its character maps, standard fonts and image
+  decoders are copied unchanged into the web build (`dist/pdfjs/`) together with their licence files
+  (`LICENSE_FOXIT`, `LICENSE_LIBERATION`, `LICENSE_OPENJPEG`, `LICENSE_JBIG2`, `LICENSE_QCMS`, …).

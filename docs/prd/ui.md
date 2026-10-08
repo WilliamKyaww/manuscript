@@ -34,7 +34,9 @@ Rules:
 3. Secondary headers inside the body use `<StickySection>` (sticky within `PageBody`).
 4. Split views (editor | preview | side panel) use `<Page layout="panes">` with `<Pane>`s: the page
    body no longer scrolls, and each pane has its own fixed header above its own scroll container
-   (implemented in Phase 3 for the Notes section; the editor's scroller is CodeMirror's own).
+   (implemented in Phase 3 for the Notes section — the editor's scroller is CodeMirror's own — and in
+   Phase 5 for the source viewer, whose thumbnails, pages and contents are panes; `e2e/library.spec.ts`
+   checks that the page and pane headers stay put while the pages scroll).
 5. **Enforcement (implemented in Phase 2):** `e2e/shell.spec.ts` visits every route in
    `apps/web/src/app/sections.ts` plus the not-found page, pads the body to force scrolling, scrolls
    `PageBody` to the bottom and asserts that exactly one page header exists, its position is unchanged,

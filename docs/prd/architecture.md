@@ -77,7 +77,7 @@ Further packages are split out only when two apps genuinely share code (avoid pr
 apps/server/src/
 ├── main.ts              process entry: config → vault → db → http
 ├── app.ts               Hono app composition (middleware + module routes)
-├── context.ts           AppContext: { config, vault, db, clock, logger, jobs, ai }
+├── context.ts           AppContext: { config, logger, clock, ids, vault, db, events }
 ├── config/              config resolution (env, app data dir, CLI flags)
 ├── security/            token auth, host/origin guards, path containment
 ├── db/                  node:sqlite adapter, migrations runner, transaction helper, migrations/*.sql
@@ -151,11 +151,19 @@ file in `.skb/` prevents two servers opening the same vault.
    so an open editor reloads quietly or, with unsaved changes, shows a conflict.
 
 ### 6.2 Importing a source
-1. `POST /api/sources` (multipart or path from the Electron picker) → original copied into
-   `Sources/<module>/` → row `status=pending` → job enqueued.
-2. Worker: detect type → parser → normalised sections (pages/slides/headings) → chunks with locators →
-   FTS (and embeddings if enabled) → `status=ready`; progress streamed to the UI.
-3. Failures are recorded on the row with the error and are retryable; partial results are not exposed.
+1. `POST /api/sources` (multipart) or `POST /api/sources/import-path` (a path the server can read, for
+   the desktop picker) → type checked by extension and magic bytes → de-duplicated by SHA-256 →
+   original copied byte for byte into `Sources/<module | Inbox>/` → row `status=pending` → an
+   ingestion job (`source.ingest`) enqueued.
+2. Worker: parser → normalised sections (pages/slides/headings) → chunks with locators → sections,
+   chunks and `chunks_fts` replaced in one transaction (embeddings from Phase 10) → `status=ready`;
+   progress streamed as `job.updated` events, changes as `sources.changed`. Ingestion is a no-op when
+   the content hash and parser version are unchanged.
+3. Failures are recorded on the row with a user-facing reason and are retryable; partial results are
+   never exposed (a failed re-ingestion keeps the previous sections).
+4. Files changed in `Sources/` by other programs reach the source library through the notes index's
+   attachment events: moves keep the source (matched by hash), edits re-ingest, deletions mark it
+   missing, unknown supported files are registered (ADR-0028).
 
 ### 6.3 Agent request
 1. `POST /api/chat/:threadId/messages` streams an AI SDK UI message stream.
@@ -169,7 +177,11 @@ file in `.skb/` prevents two servers opening the same vault.
 
 SQLite-backed queue (`jobs` table) with a single in-process worker loop (concurrency configurable),
 retry with back-off, cancellation, and progress events pushed to the UI over SSE. Chosen over an external
-queue because the app is single-user and local (ADR-0008).
+queue because the app is single-user and local (ADR-0008). Implemented in Phase 5 (`src/jobs/`; the
+queue is part of `AppModules`): jobs are claimed atomically, permanent errors fail at once with a
+user-facing reason, unexpected ones are retried (5 s × 2ⁿ, at most 5 min), a time limit stops runaway
+work, and jobs interrupted by a shutdown or crash run again after the next start. Parsing currently runs
+on the main thread between awaits (TD-08).
 
 ## 8. Security model (ADR-0005)
 
@@ -222,7 +234,8 @@ package contains **no native Node modules** (ADR-0006, ADR-0016).
 
 | Point | Interface | Examples |
 |---|---|---|
-| Source parsers | `SourceParser { canParse(meta); parse(file, ctx) → NormalisedDocument }` | PDF, PPTX, DOCX, Markdown, text, URL, audio |
+| Source parsers | `SourceParser { kinds; version; parse({ bytes, fileName, sourceId, signal, onProgress }) → NormalisedDocument }` (`@skb/core`) | PDF, PPTX, DOCX, Markdown, text (Phase 5); URL, audio later |
+| Background jobs | `JobHandler { kind; payload (Zod); maxAttempts; timeoutMs; run(ctx); settled(job, outcome) }` | Source ingestion (Phase 5); embeddings, generation later |
 | AI providers | Provider registry → AI SDK `LanguageModel` / `EmbeddingModel` per role | Anthropic, OpenAI, OpenAI-compatible (Ollama, LM Studio) |
 | Agent tools | `ToolDefinition { name, description, input, output, risk, execute, describe }` | Knowledge, learning, source, planning tools |
 | Exporters | `Exporter { id, run(scope) → files }` | Full vault, Anki TSV, JSON, Markdown |

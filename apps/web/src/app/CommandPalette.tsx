@@ -16,11 +16,11 @@ const groupClasses =
   '[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-subtle';
 
 /**
- * Sections and commands rank as usual; notes and "search notes" (already ranked by our own matcher)
+ * Sections and commands rank as usual; notes and "search for" (already ranked by our own matcher)
  * always come after them, so typing a section's name and pressing Enter still goes there.
  */
 function paletteFilter(value: string, search: string, keywords?: string[]): number {
-  if (value.startsWith('note ') || value.startsWith('search notes for ')) return 0.001;
+  if (value.startsWith('note ') || value.startsWith('search for ')) return 0.001;
   return defaultFilter(value, search, keywords);
 }
 
@@ -170,14 +170,14 @@ export function CommandPalette() {
                     </Command.Item>
                   ))}
                   <Command.Item
-                    value={`search notes for ${trimmed}`}
+                    value={`search for ${trimmed}`}
                     onSelect={() =>
                       run(() => void navigate({ to: '/search', search: { q: trimmed } }))
                     }
                     className={itemClasses}
                   >
                     <Search aria-hidden="true" size={16} className="text-muted" />
-                    Search notes for “{trimmed}”
+                    Search for “{trimmed}”
                   </Command.Item>
                 </Command.Group>
               )}

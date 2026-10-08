@@ -8,21 +8,47 @@
  *   tag:exam        notes tagged exam or exam/… (also #exam)
  *   type:summary    frontmatter type
  *   folder:COC251   notes in that folder or below (quote names with spaces: folder:"Week 1")
- *   module:COC251   frontmatter module
+ *   module:COC251   frontmatter module (sources: their module folder)
+ *   kind:note       only notes; kind:source only sources; kind:pdf|slides|docx|text one source kind
  *   -tag:draft …    any filter can be negated
  *
  * Every term reaches FTS5 as a quoted string, so no input can produce an FTS5 syntax error or use
  * FTS5 operators the user did not mean; text without letters or digits is ignored.
  */
 
-export type FilterKey = 'tag' | 'type' | 'folder' | 'module';
-export const FILTER_KEYS: readonly FilterKey[] = ['tag', 'type', 'folder', 'module'];
+export type FilterKey = 'tag' | 'type' | 'folder' | 'module' | 'kind';
+export const FILTER_KEYS: readonly FilterKey[] = ['tag', 'type', 'folder', 'module', 'kind'];
+
+/** Values of the `kind:` filter after normalisation. */
+export const RESULT_KINDS = ['note', 'source', 'pdf', 'slides', 'docx', 'text'] as const;
+export type ResultKind = (typeof RESULT_KINDS)[number];
+
+/** Spellings people are likely to type for each kind. */
+const KIND_SYNONYMS: Readonly<Record<string, ResultKind>> = {
+  note: 'note',
+  notes: 'note',
+  source: 'source',
+  sources: 'source',
+  pdf: 'pdf',
+  pdfs: 'pdf',
+  slides: 'slides',
+  slide: 'slides',
+  pptx: 'slides',
+  docx: 'docx',
+  word: 'docx',
+  document: 'docx',
+  text: 'text',
+  txt: 'text',
+  md: 'text',
+  markdown: 'text',
+};
 
 export interface SearchFilters {
   tag: string[];
   type: string[];
   folder: string[];
   module: string[];
+  kind: string[];
 }
 
 export interface QueryTerm {
@@ -51,7 +77,7 @@ const MAX_TERMS = 32;
 const SEARCHABLE = /[\p{L}\p{N}]/u;
 
 function emptyFilters(): SearchFilters {
-  return { tag: [], type: [], folder: [], module: [] };
+  return { tag: [], type: [], folder: [], module: [], kind: [] };
 }
 
 interface Token {
@@ -88,7 +114,7 @@ function tokenise(input: string): Token[] {
       negated = true;
       index += 1;
     }
-    const keyMatch = /^(tag|type|folder|module):/i.exec(text.slice(index));
+    const keyMatch = /^(tag|type|folder|module|kind):/i.exec(text.slice(index));
     let key: FilterKey | null = null;
     if (keyMatch?.[1]) {
       key = keyMatch[1].toLowerCase() as FilterKey;
@@ -108,6 +134,8 @@ function normaliseFilter(key: FilterKey, value: string): string | null {
   let cleaned = value.normalize('NFC').trim();
   if (key === 'tag') cleaned = cleaned.replace(/^#/, '').toLowerCase();
   if (key === 'folder') cleaned = cleaned.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  // Unknown kinds are kept as typed (lower case): they match nothing rather than everything.
+  if (key === 'kind') cleaned = KIND_SYNONYMS[cleaned.toLowerCase()] ?? cleaned.toLowerCase();
   return cleaned === '' ? null : cleaned;
 }
 

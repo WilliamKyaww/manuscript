@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDateTime, formatLongDate, formatUptime, greeting } from './format';
+import { formatBytes, formatDateTime, formatLongDate, formatUptime, greeting } from './format';
 
 describe('formatUptime', () => {
   it.each([
@@ -31,5 +31,17 @@ describe('formatLongDate', () => {
 describe('formatDateTime', () => {
   it('uses the British short format in local time', () => {
     expect(formatDateTime(new Date(2026, 9, 4, 13, 5))).toBe('4 Oct 2026, 13:05');
+  });
+});
+
+describe('formatBytes', () => {
+  it.each([
+    [512, '512 B'],
+    [2048, '2.0 KB'],
+    [860_000, '840 KB'],
+    [5_452_595, '5.2 MB'],
+    [3 * 1024 ** 3, '3.0 GB'],
+  ])('formats %d bytes as %s', (bytes, expected) => {
+    expect(formatBytes(bytes)).toBe(expected);
   });
 });

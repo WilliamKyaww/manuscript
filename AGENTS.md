@@ -64,7 +64,7 @@ All verified on 4 October 2026 (Phase 1):
 | `npm run test:smoke` | Start the built bundle on a free port and check ping, auth, health and the SPA |
 | `npm run test:e2e` | Build, then Playwright end-to-end tests (Chromium; `npx playwright install chromium` once) |
 | `npm run verify` | typecheck → lint → test → build → smoke — **run before every commit** |
-| `npm run test:perf` | Generates 10,000 notes and checks the notes performance budgets (`architecture.md` §14); run before a gate that touches indexing |
+| `npm run test:perf` | Generates 10,000 notes (and a library of 10,000 PDF pages) and checks the performance budgets (`architecture.md` §14); run before a gate that touches indexing or search |
 | `run-web.bat` | One-click Windows launcher for daily use (`SKB_NO_BROWSER=1` to suppress the browser) |
 
 ### Environment pitfalls (seen in the Claude Code / VS Code environment)
@@ -75,8 +75,8 @@ All verified on 4 October 2026 (Phase 1):
   batch files by their full path in automation (double-clicking in Explorer is unaffected).
 - Another local project may already use Vite's default port 5173 — this project's dev server uses 5317.
 - axe (`@axe-core/playwright`) only checks colour contrast for elements inside the viewport, and page
-  bodies scroll internally: grow the viewport to the page height first (see `fitViewportToContent` in
-  `e2e/shell.spec.ts`), otherwise below-the-fold content is silently skipped.
+  bodies scroll internally: grow the viewport to the page height first (`seriousViolations` and
+  `fitViewportToContent` in `e2e/axe.ts`), otherwise below-the-fold content is silently skipped.
 - Never test against the user's real vault (`Documents\Manuscript`, or the pre-rename
   `Documents\Study Knowledge Base`) or data directory (`%APPDATA%\Manuscript` or
   `%APPDATA%\StudyKnowledgeBase`): set `SKB_VAULT` and `SKB_DATA_DIR` to temporary folders.
@@ -90,6 +90,16 @@ All verified on 4 October 2026 (Phase 1):
   with the editor tools instead.
 - Notes test vaults: write CRLF, byte-order marks or non-UTF-8 bytes from code (see
   `apps/server/test/fixtures/obsidian-vault.ts`), not as committed files, which git would normalise.
+  Source fixtures (PDF, PPTX, DOCX, zip bombs) are built in code too
+  (`apps/server/test/fixtures/sources/builders.ts`).
+- Windows PowerShell 5.1: `Set-Content -Encoding utf8` writes a byte-order mark — a commit message
+  written that way starts with an invisible character. Write message files with
+  `[IO.File]::WriteAllText(path, text, (New-Object System.Text.UTF8Encoding $false))` or the editor
+  tools. PowerShell also treats curly quotes (“ ”) as string delimiters, so a script containing them
+  fails to parse: edit such text with the editor tools or a small Node script.
+- Timings on this machine vary two- to three-fold with background load (chat, music, browsers). When a
+  performance budget looks broken, measure the previous gate's code at the same time (a temporary
+  `git worktree` of the last merge, sharing `node_modules` through a junction) before optimising.
 
 ## 6. The phase and gate workflow
 
