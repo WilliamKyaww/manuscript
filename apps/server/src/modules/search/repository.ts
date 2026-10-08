@@ -1,11 +1,18 @@
-import type { SearchFilters, SourceKind } from '@skb/core';
+import type { SourceKind } from '@skb/core';
 import type { SqlDatabase, SqlValue } from '../../db/sqlite';
+import { and, type FilterInput, whereClauses } from './clauses';
+
+export type { SearchScope } from './clauses';
 
 /**
  * SQL for full-text search over notes (`notes_fts`, migration 0002) and source passages
- * (`chunks_fts`, 0005), and for recent items (0003). Search runs in two steps: one query ranks and
- * pages the hits of both kinds together (BM25 ranks from the two indexes are on the same scale), then
- * highlights and snippets are computed only for the page being shown.
+ * (`chunks_fts`, 0005), and for recent items (0003).
+ *
+ * A text query reads each index in its own rank order: FTS5 sorts by `rank` itself, so with a LIMIT
+ * it stops early, and highlights and snippets are computed only for the rows returned. The two
+ * ranked lists (BM25 scores from both indexes are on the same scale) are merged here. Ranking a
+ * UNION of both in SQL instead sorts every match first — several times slower on large vaults.
+ * CROSS JOIN keeps the full-text index as the outer loop, so filters are cheap per-row checks.
  */
 
 /** Snippet markers: control characters that cannot occur in indexed text. */
@@ -15,29 +22,14 @@ export const MATCH_END = '\u0003';
 /** Matches are counted up to this many; beyond it the total is reported as "more than". */
 export const COUNT_LIMIT = 1000;
 
-/** What a query may return: notes, and sources of these kinds (none when empty). */
-export interface SearchScope {
-  notes: boolean;
-  sourceKinds: readonly SourceKind[];
-}
-
-export interface SearchQuery {
+export interface SearchQuery extends FilterInput {
   match: string | null;
-  exclude: string | null;
-  filters: SearchFilters;
-  excludedFilters: SearchFilters;
-  scope: SearchScope;
   limit: number;
   offset: number;
 }
 
-/** A ranked hit: a note (by doc id) or a source passage (by chunk id). */
-export interface SearchHit {
-  kind: 'note' | 'source';
-  key: number;
-}
-
 export interface NoteHitRow {
+  kind: 'note';
   docId: number;
   id: string;
   path: string;
@@ -49,6 +41,7 @@ export interface NoteHitRow {
 }
 
 export interface SourceHitRow {
+  kind: 'source';
   chunkId: number;
   locatorJson: string;
   sectionOrdinal: number;
@@ -61,112 +54,124 @@ export interface SourceHitRow {
   snippet: string;
 }
 
-interface Clauses {
-  sql: string[];
-  params: SqlValue[];
-}
+export type SearchRow = NoteHitRow | SourceHitRow;
 
-/** Note filters. Several tags must all apply; several types, folders or modules are alternatives. */
-function noteClauses(filters: SearchFilters, negate: boolean, into: Clauses): void {
-  const not = negate ? 'NOT ' : '';
-  for (const tag of filters.tag) {
-    // The tag itself or any nested tag: a range ("tag/" < t < "tag0") so the index is used.
-    into.sql.push(
-      `n.doc_id ${not}IN (SELECT doc_id FROM note_tags WHERE tag = ? OR (tag > ? AND tag < ?))`,
-    );
-    into.params.push(tag, `${tag}/`, `${tag}0`);
-  }
-  anyOf(into, not, filters.type, "lower(coalesce(n.type, '')) = lower(?)", (value) => [value]);
-  anyOf(into, not, filters.module, "lower(coalesce(n.module_code, '')) = lower(?)", (value) => [
-    value,
-  ]);
-  anyOf(into, not, filters.folder, 'lower(substr(n.path, 1, ?)) = lower(?)', folderParams);
+export interface SearchPage {
+  rows: SearchRow[];
+  total: number;
+  capped: boolean;
 }
-
-/** Source filters: folders and modules apply; tags and types never match a source (see the service). */
-function sourceClauses(filters: SearchFilters, negate: boolean, into: Clauses): void {
-  const not = negate ? 'NOT ' : '';
-  anyOf(into, not, filters.module, "lower(coalesce(s.module_code, '')) = lower(?)", (value) => [
-    value,
-  ]);
-  anyOf(into, not, filters.folder, 'lower(substr(s.path, 1, ?)) = lower(?)', folderParams);
-}
-
-function folderParams(value: string): SqlValue[] {
-  return [value.length + 1, `${value}/`];
-}
-
-function anyOf(
-  into: Clauses,
-  not: string,
-  values: readonly string[],
-  clause: string,
-  toParams: (value: string) => SqlValue[],
-): void {
-  if (values.length === 0) return;
-  into.sql.push(`${not}(${values.map(() => clause).join(' OR ')})`);
-  for (const value of values) into.params.push(...toParams(value));
-}
-
-const and = (clauses: Clauses) =>
-  clauses.sql.length > 0 ? ` AND ${clauses.sql.join(' AND ')}` : '';
 
 type Raw = Record<string, unknown>;
+
+const NOTE_COLUMNS = 'n.doc_id, n.id, n.path, n.title, n.type, n.updated_at';
+const SOURCE_COLUMNS = `c.id AS chunk_id, c.section_id, c.locator_json, sec.ordinal AS section_ordinal,
+  sec.label AS section_label, s.id AS source_id, s.title AS source_title, s.kind AS source_kind,
+  s.path AS source_path`;
+const SOURCE_JOINS =
+  'JOIN source_sections sec ON sec.id = c.section_id JOIN sources s ON s.id = c.owner_id';
+
+function noteRow(raw: Raw): NoteHitRow {
+  return {
+    kind: 'note',
+    docId: Number(raw.doc_id),
+    id: String(raw.id),
+    path: String(raw.path),
+    title: String(raw.title),
+    type: (raw.type as string | null) ?? null,
+    updatedAt: String(raw.updated_at),
+    titleHighlight: (raw.title_highlight as string | null) ?? null,
+    snippet: (raw.snippet as string | null) ?? null,
+  };
+}
+
+function sourceRow(raw: Raw): SourceHitRow {
+  return {
+    kind: 'source',
+    chunkId: Number(raw.chunk_id),
+    locatorJson: String(raw.locator_json),
+    sectionOrdinal: Number(raw.section_ordinal),
+    sectionLabel: String(raw.section_label),
+    sourceId: String(raw.source_id),
+    sourceTitle: String(raw.source_title),
+    sourceKind: raw.source_kind as SourceKind,
+    sourcePath: String(raw.source_path),
+    titleHighlight: String(raw.title_highlight ?? ''),
+    snippet: String(raw.snippet ?? ''),
+  };
+}
 
 export type SearchRepository = ReturnType<typeof createSearchRepository>;
 
 export function createSearchRepository(db: SqlDatabase) {
-  /** The note and source parts of a query, each a SELECT of (kind, key, sort, tiebreak). */
-  const parts = (query: SearchQuery) => {
-    const note: Clauses = { sql: [], params: [] };
-    noteClauses(query.filters, false, note);
-    noteClauses(query.excludedFilters, true, note);
-    if (query.exclude) {
-      note.sql.push('n.doc_id NOT IN (SELECT rowid FROM notes_fts WHERE notes_fts MATCH ?)');
-      note.params.push(query.exclude);
-    }
-    const source: Clauses = {
-      sql: [
-        's.deleted_at IS NULL',
-        's.missing_at IS NULL',
-        `s.kind IN (${query.scope.sourceKinds.map(() => '?').join(', ')})`,
-      ],
-      params: [...query.scope.sourceKinds],
-    };
-    sourceClauses(query.filters, false, source);
-    sourceClauses(query.excludedFilters, true, source);
-    if (query.exclude) {
-      source.sql.push('c.id NOT IN (SELECT rowid FROM chunks_fts WHERE chunks_fts MATCH ?)');
-      source.params.push(query.exclude);
-    }
+  const count = (select: string, params: SqlValue[]) =>
+    Number(
+      db.get<{ total: number }>(
+        `SELECT count(*) AS total FROM (${select} LIMIT ${COUNT_LIMIT + 1})`,
+        params,
+      )?.total ?? 0,
+    );
 
-    const selects: { sql: string; params: SqlValue[] }[] = [];
-    if (query.match) {
-      // CROSS JOIN keeps the full-text index as the outer loop (SQLite's join-order hint): one
-      // MATCH, then cheap per-row filter checks.
-      if (query.scope.notes) {
-        selects.push({
-          sql: `SELECT 'note' AS kind, n.doc_id AS key, notes_fts.rank AS sort, n.path AS tiebreak
-                FROM notes_fts CROSS JOIN notes n ON n.doc_id = notes_fts.rowid
-                WHERE notes_fts MATCH ?${and(note)}`,
-          params: [query.match, ...note.params],
-        });
-      }
-      if (query.scope.sourceKinds.length > 0) {
-        // One hit per page, slide or section: its best-ranked chunk (SQLite returns the other
-        // columns from the row where min() was found).
-        selects.push({
-          sql: `SELECT 'source' AS kind, c.id AS key, min(chunks_fts.rank) AS sort, s.path AS tiebreak
-                FROM chunks_fts CROSS JOIN chunks c ON c.id = chunks_fts.rowid
-                JOIN sources s ON s.id = c.owner_id
-                WHERE chunks_fts MATCH ? AND c.owner_type = 'source'${and(source)}
-                GROUP BY c.section_id`,
-          params: [query.match, ...source.params],
-        });
-      }
-      return { selects, order: 'sort, tiebreak, kind, key' };
+  const ranked = (query: SearchQuery & { match: string }): SearchPage => {
+    const { note, source } = whereClauses(query);
+    const needed = query.offset + query.limit;
+    const hits: { rank: number; row: SearchRow }[] = [];
+    let total = 0;
+    if (query.scope.notes) {
+      const from = `FROM notes_fts CROSS JOIN notes n ON n.doc_id = notes_fts.rowid
+        WHERE notes_fts MATCH ?${and(note)}`;
+      const params = [query.match, ...note.params];
+      total += count(`SELECT 1 ${from}`, params);
+      const rows = db.all<Raw>(
+        `SELECT ${NOTE_COLUMNS}, notes_fts.rank AS rank,
+           highlight(notes_fts, 0, ?, ?) AS title_highlight,
+           snippet(notes_fts, 2, ?, ?, '…', 18) AS snippet
+         ${from} ORDER BY notes_fts.rank LIMIT ?`,
+        [MATCH_START, MATCH_END, MATCH_START, MATCH_END, ...params, needed],
+      );
+      for (const raw of rows) hits.push({ rank: Number(raw.rank), row: noteRow(raw) });
     }
-    // Filters only: newest first; a source is represented by its first passage.
+    if (query.scope.sourceKinds.length > 0) {
+      const from = `FROM chunks_fts CROSS JOIN chunks c ON c.id = chunks_fts.rowid ${SOURCE_JOINS}
+        WHERE chunks_fts MATCH ? AND c.owner_type = 'source'${and(source)}`;
+      const params = [query.match, ...source.params];
+      total += count(`SELECT DISTINCT c.section_id ${from}`, params);
+      // One hit per page, slide or section: its best chunk. Chunks arrive best first, so the first
+      // one seen for a section is kept; more are fetched only when too few sections were found.
+      for (let fetch = needed * 3 + 20; ; fetch *= 4) {
+        const rows = db.all<Raw>(
+          `SELECT ${SOURCE_COLUMNS}, chunks_fts.rank AS rank,
+             highlight(chunks_fts, 0, ?, ?) AS title_highlight,
+             snippet(chunks_fts, 1, ?, ?, '…', 24) AS snippet
+           ${from} ORDER BY chunks_fts.rank LIMIT ?`,
+          [MATCH_START, MATCH_END, MATCH_START, MATCH_END, ...params, fetch],
+        );
+        const seen = new Set<number>();
+        const best = rows.filter((raw) => {
+          const section = Number(raw.section_id);
+          if (seen.has(section)) return false;
+          seen.add(section);
+          return true;
+        });
+        if (best.length >= needed || rows.length < fetch) {
+          for (const raw of best.slice(0, needed))
+            hits.push({ rank: Number(raw.rank), row: sourceRow(raw) });
+          break;
+        }
+      }
+    }
+    hits.sort((a, b) => a.rank - b.rank || (a.row.kind < b.row.kind ? -1 : 1));
+    return {
+      rows: hits.slice(query.offset, needed).map((hit) => hit.row),
+      total,
+      capped: total > COUNT_LIMIT,
+    };
+  };
+
+  /** Filters only: notes and sources (by their first passage) together, newest first. */
+  const listing = (query: SearchQuery): SearchPage => {
+    const { note, source } = whereClauses(query);
+    const selects: { sql: string; params: SqlValue[] }[] = [];
     if (query.scope.notes) {
       selects.push({
         sql: `SELECT 'note' AS kind, n.doc_id AS key, n.updated_at AS sort, n.path AS tiebreak
@@ -182,107 +187,45 @@ export function createSearchRepository(db: SqlDatabase) {
         params: source.params,
       });
     }
-    return { selects, order: 'sort DESC, tiebreak, kind, key' };
+    if (selects.length === 0) return { rows: [], total: 0, capped: false };
+    const total = selects.reduce((sum, select) => sum + count(select.sql, select.params), 0);
+    const hits = db.all<Raw>(
+      `SELECT kind, key FROM (${selects.map((select) => select.sql).join(' UNION ALL ')})
+       ORDER BY sort DESC, tiebreak, kind, key LIMIT ? OFFSET ?`,
+      [...selects.flatMap((select) => select.params), query.limit, query.offset],
+    );
+    const ids = (kind: string) =>
+      JSON.stringify(hits.filter((hit) => hit.kind === kind).map((hit) => Number(hit.key)));
+    const notes = new Map(
+      db
+        .all<Raw>(
+          `SELECT ${NOTE_COLUMNS}, NULL AS title_highlight,
+             (SELECT substr(body, 1, 200) FROM notes_fts WHERE rowid = n.doc_id) AS snippet
+           FROM notes n WHERE n.doc_id IN (SELECT value FROM json_each(?))`,
+          [ids('note')],
+        )
+        .map((raw) => [Number(raw.doc_id), noteRow(raw)]),
+    );
+    const sources = new Map(
+      db
+        .all<Raw>(
+          `SELECT ${SOURCE_COLUMNS}, c.context_prefix AS title_highlight, substr(c.text, 1, 200) AS snippet
+           FROM chunks c ${SOURCE_JOINS} WHERE c.id IN (SELECT value FROM json_each(?))`,
+          [ids('source')],
+        )
+        .map((raw) => [Number(raw.chunk_id), sourceRow(raw)]),
+    );
+    const rows = hits.flatMap((hit): SearchRow[] => {
+      const row = (hit.kind === 'note' ? notes : sources).get(Number(hit.key));
+      return row ? [row] : [];
+    });
+    return { rows, total, capped: total > COUNT_LIMIT };
   };
 
   return {
-    /** One page of ranked hits and the number of hits (capped just above COUNT_LIMIT). */
-    search(query: SearchQuery): { hits: SearchHit[]; total: number; capped: boolean } {
-      const { selects, order } = parts(query);
-      if (selects.length === 0) return { hits: [], total: 0, capped: false };
-      let total = 0;
-      for (const select of selects) {
-        total += Number(
-          db.get<{ total: number }>(
-            `SELECT count(*) AS total FROM (${select.sql} LIMIT ${COUNT_LIMIT + 1})`,
-            select.params,
-          )?.total ?? 0,
-        );
-      }
-      const union = selects.map((select) => select.sql).join(' UNION ALL ');
-      const hits = db
-        .all<Raw>(`SELECT kind, key FROM (${union}) ORDER BY ${order} LIMIT ? OFFSET ?`, [
-          ...selects.flatMap((select) => select.params),
-          query.limit,
-          query.offset,
-        ])
-        .map((raw) => ({ kind: raw.kind as SearchHit['kind'], key: Number(raw.key) }));
-      return { hits, total, capped: total > COUNT_LIMIT };
-    },
-
-    /** Titles and snippets of notes on the page (highlighted when there is a text query). */
-    noteHits(match: string | null, docIds: readonly number[]): Map<number, NoteHitRow> {
-      if (docIds.length === 0) return new Map();
-      const ids = JSON.stringify(docIds);
-      const rows = match
-        ? db.all<Raw>(
-            `SELECT n.doc_id, n.id, n.path, n.title, n.type, n.updated_at,
-               highlight(notes_fts, 0, ?, ?) AS title_highlight,
-               snippet(notes_fts, 2, ?, ?, '…', 18) AS snippet
-             FROM notes_fts CROSS JOIN notes n ON n.doc_id = notes_fts.rowid
-             WHERE notes_fts MATCH ? AND notes_fts.rowid IN (SELECT value FROM json_each(?))`,
-            [MATCH_START, MATCH_END, MATCH_START, MATCH_END, match, ids],
-          )
-        : db.all<Raw>(
-            `SELECT n.doc_id, n.id, n.path, n.title, n.type, n.updated_at, NULL AS title_highlight,
-               (SELECT substr(body, 1, 200) FROM notes_fts WHERE rowid = n.doc_id) AS snippet
-             FROM notes n WHERE n.doc_id IN (SELECT value FROM json_each(?))`,
-            [ids],
-          );
-      return new Map(
-        rows.map((raw) => [
-          Number(raw.doc_id),
-          {
-            docId: Number(raw.doc_id),
-            id: String(raw.id),
-            path: String(raw.path),
-            title: String(raw.title),
-            type: (raw.type as string | null) ?? null,
-            updatedAt: String(raw.updated_at),
-            titleHighlight: (raw.title_highlight as string | null) ?? null,
-            snippet: (raw.snippet as string | null) ?? null,
-          },
-        ]),
-      );
-    },
-
-    /** Source passages on the page, with their section and source. */
-    sourceHits(match: string | null, chunkIds: readonly number[]): Map<number, SourceHitRow> {
-      if (chunkIds.length === 0) return new Map();
-      const ids = JSON.stringify(chunkIds);
-      const columns = `c.id, c.locator_json, sec.ordinal AS section_ordinal, sec.label AS section_label,
-        s.id AS source_id, s.title AS source_title, s.kind AS source_kind, s.path AS source_path`;
-      const joins = `JOIN source_sections sec ON sec.id = c.section_id JOIN sources s ON s.id = c.owner_id`;
-      const rows = match
-        ? db.all<Raw>(
-            `SELECT ${columns}, highlight(chunks_fts, 0, ?, ?) AS title_highlight,
-               snippet(chunks_fts, 1, ?, ?, '…', 24) AS snippet
-             FROM chunks_fts CROSS JOIN chunks c ON c.id = chunks_fts.rowid ${joins}
-             WHERE chunks_fts MATCH ? AND chunks_fts.rowid IN (SELECT value FROM json_each(?))`,
-            [MATCH_START, MATCH_END, MATCH_START, MATCH_END, match, ids],
-          )
-        : db.all<Raw>(
-            `SELECT ${columns}, c.context_prefix AS title_highlight, substr(c.text, 1, 200) AS snippet
-             FROM chunks c ${joins} WHERE c.id IN (SELECT value FROM json_each(?))`,
-            [ids],
-          );
-      return new Map(
-        rows.map((raw) => [
-          Number(raw.id),
-          {
-            chunkId: Number(raw.id),
-            locatorJson: String(raw.locator_json),
-            sectionOrdinal: Number(raw.section_ordinal),
-            sectionLabel: String(raw.section_label),
-            sourceId: String(raw.source_id),
-            sourceTitle: String(raw.source_title),
-            sourceKind: raw.source_kind as SourceKind,
-            sourcePath: String(raw.source_path),
-            titleHighlight: String(raw.title_highlight ?? ''),
-            snippet: String(raw.snippet ?? ''),
-          },
-        ]),
-      );
+    /** One page of results and the number of matches (capped just above COUNT_LIMIT). */
+    search(query: SearchQuery): SearchPage {
+      return query.match ? ranked({ ...query, match: query.match }) : listing(query);
     },
 
     recordRecent(kind: string, itemId: string, openedAt: string, keep: number): void {

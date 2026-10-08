@@ -14,6 +14,7 @@ import {
 } from '@skb/core';
 import type { Clock } from '../../shared/clock';
 import type { Logger } from '../../shared/logger';
+import { SOURCES_FOLDER } from '../notes/ignore';
 import { decodeNote, type NoteIndexer } from '../notes/indexer';
 import {
   COUNT_LIMIT,
@@ -55,9 +56,16 @@ const SOURCE_KINDS_FOR: Readonly<Record<string, readonly SourceKind[]>> = {
   text: ['markdown', 'text'],
 };
 
+const inSources = (folder: string) => {
+  const key = folder.toLowerCase();
+  const root = SOURCES_FOLDER.toLowerCase();
+  return key === root || key.startsWith(`${root}/`);
+};
+
 /**
  * Which kinds of result a query can return. Tags and note types belong to notes, so filtering by
- * them leaves sources out; folders and modules apply to both.
+ * them leaves sources out; modules apply to both. Folders decide too: notes never live in
+ * `Sources/` and sources always do, so a folder filter never makes either index search in vain.
  */
 export function searchScope(parsed: Pick<ParsedQuery, 'filters' | 'excludedFilters'>): SearchScope {
   const { filters, excludedFilters } = parsed;
@@ -72,7 +80,25 @@ export function searchScope(parsed: Pick<ParsedQuery, 'filters' | 'excludedFilte
     for (const sourceKind of SOURCE_KINDS_FOR[kind] ?? []) kinds.delete(sourceKind);
   }
   if (filters.tag.length > 0 || filters.type.length > 0) kinds.clear();
+  if (filters.folder.length > 0) {
+    if (filters.folder.every(inSources)) notes = false;
+    if (!filters.folder.some(inSources)) kinds.clear();
+  }
   return { notes, sourceKinds: [...kinds] };
+}
+
+/**
+ * The full-text expression for a query. Excluded terms join the FTS5 expression as `NOT`, which
+ * FTS5 evaluates while merging its lists — far cheaper than filtering every match against a
+ * subquery. A query of exclusions and filters alone keeps the subquery (there is nothing to merge).
+ */
+export function fullTextExpression(parsed: Pick<ParsedQuery, 'match' | 'exclude'>): {
+  match: string | null;
+  exclude: string | null;
+} {
+  if (parsed.match && parsed.exclude)
+    return { match: `(${parsed.match}) NOT (${parsed.exclude})`, exclude: null };
+  return { match: parsed.match, exclude: parsed.exclude };
 }
 
 /** Splits text containing match markers into parts. */
@@ -150,19 +176,9 @@ export function createSearchService({
       let results: SearchResult[];
       let page: ReturnType<SearchRepository['search']>;
       try {
-        page = repo.search({ ...parsed, scope, limit, offset });
-        const notes = repo.noteHits(
-          parsed.match,
-          page.hits.filter((hit) => hit.kind === 'note').map((hit) => hit.key),
-        );
-        const sources = repo.sourceHits(
-          parsed.match,
-          page.hits.filter((hit) => hit.kind === 'source').map((hit) => hit.key),
-        );
-        results = page.hits.flatMap((hit): SearchResult[] => {
-          if (hit.kind === 'note') {
-            const row = notes.get(hit.key);
-            if (!row) return [];
+        page = repo.search({ ...parsed, ...fullTextExpression(parsed), scope, limit, offset });
+        results = page.rows.flatMap((row): SearchResult[] => {
+          if (row.kind === 'note') {
             const title = row.titleHighlight
               ? (row.titleHighlight.split('\n')[0] ?? row.title)
               : row.title;
@@ -182,9 +198,8 @@ export function createSearchService({
               },
             ];
           }
-          const row = sources.get(hit.key);
-          const locator = row ? LocatorSchema.safeParse(JSON.parse(row.locatorJson)) : null;
-          if (!row || !locator?.success) return [];
+          const locator = LocatorSchema.safeParse(JSON.parse(row.locatorJson));
+          if (!locator.success) return [];
           return [
             {
               kind: 'source',

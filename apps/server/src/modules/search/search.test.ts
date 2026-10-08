@@ -2,6 +2,7 @@ import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import {
   ProblemDetailsSchema,
+  parseSearchQuery,
   type SearchResponse,
   SearchResponseSchema,
   type SearchResult,
@@ -9,7 +10,7 @@ import {
 import { afterEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createTestApp } from '../../../test/helpers';
-import { firstMatchingLine, toParts } from './service';
+import { firstMatchingLine, fullTextExpression, searchScope, toParts } from './service';
 
 let harness: ReturnType<typeof createTestApp>;
 afterEach(() => harness?.cleanup());
@@ -234,6 +235,30 @@ describe('recent items', () => {
 });
 
 describe('helpers', () => {
+  it('limits a query to the kinds of result its filters allow', () => {
+    const scope = (query: string) => searchScope(parseSearchQuery(query));
+    expect(scope('raft')).toEqual({
+      notes: true,
+      sourceKinds: ['pdf', 'pptx', 'docx', 'markdown', 'text'],
+    });
+    expect(scope('raft tag:exam')).toEqual({ notes: true, sourceKinds: [] });
+    expect(scope('raft folder:Modules')).toEqual({ notes: true, sourceKinds: [] });
+    expect(scope('raft folder:sources/COC251').notes).toBe(false);
+    expect(scope('raft folder:Modules folder:Sources').sourceKinds).toHaveLength(5);
+    expect(scope('raft kind:slides -kind:note')).toEqual({ notes: false, sourceKinds: ['pptx'] });
+  });
+
+  it('folds exclusions into the full-text expression when there is one', () => {
+    expect(fullTextExpression(parseSearchQuery('lock -deadlock'))).toEqual({
+      match: '("lock"*) NOT ("deadlock"*)',
+      exclude: null,
+    });
+    expect(fullTextExpression(parseSearchQuery('tag:exam -draft'))).toEqual({
+      match: null,
+      exclude: '"draft"*',
+    });
+  });
+
   it('splits marked text into parts', () => {
     expect(toParts('a \u0002b\u0003 c')).toEqual([
       { text: 'a ', match: false },

@@ -1,13 +1,14 @@
 /**
  * Notes performance check (task 3.22, budgets from architecture.md §14). Generates a vault of
  * 10,000 interlinked notes and measures indexing, start-up reconciliation, note opening and other
- * operations through the real modules. Run with `npm run test:perf` (add a number to change the
+ * operations through the real modules; search is measured again with a library of 10,000 PDF pages
+ * (task 5.16), whose sections and chunks are written straight to the database. Run with `npm run test:perf` (add a number to change the
  * note count). Exits with code 1 if a budget is exceeded.
  */
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { createIdFactory } from '@skb/core';
+import { chunkDocument, createIdFactory, type IdFactory, type NormalisedDocument } from '@skb/core';
 import type { ServerConfig } from '../../src/config/config';
 import type { AppContext } from '../../src/context';
 import { loadMigrations, migrate } from '../../src/db/migrate';
@@ -82,6 +83,63 @@ function generateVault(root: string): void {
   }
 }
 
+const LIBRARY = { sources: 250, pages: 40, wordsPerPage: 250 };
+
+/** A library of lecture PDFs as ingestion would leave it (no files: only search reads it here). */
+function seedLibrary(modules: ReturnType<typeof createModules>, ids: IdFactory): number {
+  const next = random(99);
+  const pick = <T>(items: readonly T[]) => items[Math.floor(next() * items.length)] as T;
+  const repo = modules.sources.repo;
+  let chunks = 0;
+  repo.transaction(() => {
+    for (let index = 0; index < LIBRARY.sources; index += 1) {
+      const id = ids('source');
+      const title = `Lecture ${index}`;
+      const moduleCode = `COC${200 + (index % FOLDERS)}`;
+      const now = new Date().toISOString();
+      repo.insert({
+        id,
+        kind: 'pdf',
+        title,
+        path: `Sources/${moduleCode}/${title}.pdf`,
+        originalName: `${title}.pdf`,
+        mediaType: 'application/pdf',
+        sha256: id,
+        sizeBytes: 1,
+        mtimeMs: 0,
+        pageCount: LIBRARY.pages,
+        status: 'ready',
+        error: null,
+        moduleCode,
+        metadataJson: '{}',
+        warningsJson: '[]',
+        parserVersion: 'pdf-1',
+        ingestedSha256: id,
+        createdAt: now,
+        ingestedAt: now,
+      });
+      const document: NormalisedDocument = {
+        title: null,
+        pageCount: LIBRARY.pages,
+        warnings: [],
+        metadata: {},
+        sections: Array.from({ length: LIBRARY.pages }, (_, page) => ({
+          kind: 'page' as const,
+          label: `p. ${page + 1}`,
+          text: Array.from({ length: LIBRARY.wordsPerPage }, () => pick(WORDS)).join(' '),
+          notes: null,
+          headingPath: [],
+          locator: { kind: 'pdf' as const, sourceId: id, page: page + 1 },
+        })),
+      };
+      const drafts = chunkDocument(document, title);
+      chunks += drafts.length;
+      repo.replaceContent(id, document.sections, drafts);
+    }
+  });
+  return chunks;
+}
+
 function open(root: string, dataDir: string) {
   const ids = createIdFactory();
   const vault = openVault(root, { create: true, clock: systemClock, ids, appVersion: 'perf' });
@@ -113,6 +171,7 @@ function open(root: string, dataDir: string) {
   const modules = createModules(ctx);
   return {
     modules,
+    ids,
     close: async () => {
       await modules.close();
       db.close();
@@ -230,6 +289,46 @@ async function main() {
         );
       }
     }
+    // The same searches with a library of lecture PDFs (task 5.16), plus source-only queries.
+    started = performance.now();
+    const chunkCount = seedLibrary(session.modules, session.ids);
+    const pages = LIBRARY.sources * LIBRARY.pages;
+    record(
+      `Writing ${pages} PDF pages (${chunkCount} chunks) to the index`,
+      performance.now() - started,
+    );
+    const libraryQueries = [
+      ...queries,
+      'kind:pdf attention',
+      'quorum kind:source',
+      'module:COC210 kernel',
+    ];
+    const libraryTimings: number[] = [];
+    let libraryFound = 0;
+    for (let round = 0; round < 15; round += 1) {
+      for (const query of libraryQueries) {
+        const before = performance.now();
+        libraryFound += session.modules.search.search(query, { limit: 20, offset: 0 }).results
+          .length;
+        libraryTimings.push(performance.now() - before);
+      }
+    }
+    record(
+      `Search with ${pages} PDF pages too, p95 (${libraryTimings.length} queries, ${libraryFound} results)`,
+      percentile(libraryTimings, 0.95),
+      BUDGETS.searchP95Ms,
+    );
+    record('Search with PDF pages too, median', percentile(libraryTimings, 0.5));
+    if (process.env.SKB_PERF_DETAIL) {
+      for (const query of libraryQueries) {
+        const before = performance.now();
+        const response = session.modules.search.search(query, { limit: 20, offset: 0 });
+        console.log(
+          `${Math.round(performance.now() - before)} ms  total ${response.total}  ${query}`,
+        );
+      }
+    }
+
     const changed = notePath(1);
     writeFileSync(
       path.join(root, ...changed.split('/')),
