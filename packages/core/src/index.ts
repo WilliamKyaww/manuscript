@@ -8,6 +8,7 @@ export * from './api/vault';
 export * from './app';
 export * from './errors';
 export * from './ids';
+export * from './learning/marks';
 export * from './search/fuzzy';
 export * from './search/query';
 export * from './sources/index';
