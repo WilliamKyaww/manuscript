@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { ProblemDetailsSchema } from '@skb/core';
+import { MAX_SOURCE_BYTES, ProblemDetailsSchema } from '@skb/core';
 import { afterEach, describe, expect, it } from 'vitest';
 import { makePdf, makeZipBomb } from '../../../test/fixtures/sources/builders';
 import { createSourcesTestbed, type SourcesTestbed } from '../../../test/sources-helpers';
@@ -77,6 +77,29 @@ describe('source security', () => {
       status: 'failed',
       error: expect.stringContaining('at most 3,000'),
     });
+  });
+
+  it('refuses files over the size limit before reading them', async () => {
+    bed = createSourcesTestbed();
+    await bed.start();
+    // Zero-filled memory is only reserved, so this does not use 200 MB of RAM.
+    expect(() =>
+      bed.modules.sources.service.importFile({
+        fileName: 'huge.pdf',
+        bytes: new Uint8Array(MAX_SOURCE_BYTES + 1),
+      }),
+    ).toThrow('at most 200 MB');
+    // Over HTTP the declared length is enough to refuse the upload.
+    const response = await bed.request('/api/sources', {
+      method: 'POST',
+      body: 'x',
+      headers: {
+        'content-type': 'multipart/form-data; boundary=x',
+        'content-length': String(MAX_SOURCE_BYTES + 1024 * 1024),
+      },
+    });
+    expect((await problem(response, 400)).detail).toContain('at most 200 MB');
+    expect(await bed.list()).toEqual([]);
   });
 
   it('imports by path only from real files outside the application folder', async () => {
