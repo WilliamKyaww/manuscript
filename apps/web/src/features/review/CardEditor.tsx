@@ -58,6 +58,7 @@ export function CardEditor({
   const actions = useCardActions();
   const frontRef = useRef<HTMLTextAreaElement>(null);
   const conceptListId = useId();
+  const formId = useId();
   const [setId, setSetId] = useState(card?.setId ?? draft?.setId ?? readPreference(LAST_SET) ?? '');
   const [newSetTitle, setNewSetTitle] = useState('');
   const [kind, setKind] = useState<CardKind>(card?.kind ?? draft?.kind ?? 'basic');
@@ -147,8 +148,25 @@ export function CardEditor({
       onOpenChange={(next) => !next && onClose()}
       title={card ? 'Edit card' : 'New card'}
       size="lg"
+      footer={
+        // In the footer, so saving is always in view however long the card is.
+        <div className="flex w-full flex-wrap items-center justify-between gap-2">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={draftOnly} onChange={() => setDraftOnly(!draftOnly)} />
+            Keep as a draft (not reviewed yet)
+          </label>
+          <div className="flex gap-2">
+            <Button type="button" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" form={formId} variant="primary" loading={saving}>
+              {card ? 'Save' : 'Add card'}
+            </Button>
+          </div>
+        </div>
+      }
     >
-      <form className="space-y-4" onSubmit={submit}>
+      <form id={formId} className="space-y-4" onSubmit={submit}>
         <div className="flex flex-wrap items-end gap-3">
           {allSets.length > 0 ? (
             <Field label="Set" className="min-w-56 flex-1">
@@ -331,20 +349,6 @@ export function CardEditor({
           </ul>
         )}
         <FormError error={error} />
-        <div className="flex items-center justify-between gap-2">
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={draftOnly} onChange={() => setDraftOnly(!draftOnly)} />
-            Keep as a draft (not reviewed yet)
-          </label>
-          <div className="flex gap-2">
-            <Button type="button" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" loading={saving}>
-              {card ? 'Save' : 'Add card'}
-            </Button>
-          </div>
-        </div>
       </form>
     </Dialog>
   );
