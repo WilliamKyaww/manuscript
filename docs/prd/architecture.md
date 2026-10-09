@@ -262,5 +262,7 @@ package contains **no native Node modules** (ADR-0006, ADR-0016).
 | Full re-index of 10k notes | < 60 s, in a background job |
 | Lexical search | < 150 ms p95 |
 | Note open | < 100 ms p95 |
-| Graph payload (5k nodes) | < 500 ms server time |
+| Graph payload (5k nodes) | < 500 ms server time (from the cached graph) |
+| Graph built from scratch (10k notes, 1k concepts, ~11k nodes) | < 3 s (first open, or after a link, name or relation changes) |
+| Graph after a note edit that changes no link | < 1 s (the analytics are reused) |
 | Review: next card | < 50 ms |

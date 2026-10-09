@@ -31,16 +31,51 @@ export interface GraphDependencies {
 }
 
 const DEFAULT_TYPES: GraphNodeType[] = NODE_TYPES.filter((type) => type !== 'topic');
-const TYPE_ORDER = new Map(NODE_TYPES.map((type, index) => [type, index]));
+/** What a size-limited graph keeps first: the ideas and the course, then the best-linked rest. */
+const KEEP_FIRST: Record<GraphNodeType, number> = {
+  concept: 0,
+  module: 1,
+  lecture: 2,
+  topic: 3,
+  source: 4,
+  note: 5,
+};
 
 interface Built {
   version: number;
   graph: KnowledgeGraph;
+  /** Fingerprint of everything the analytics depend on. */
+  signature: string;
   analysis: Analysis;
 }
 
 const sameAssignment = (a: ReadonlyMap<string, number>, b: ReadonlyMap<string, number>) =>
   a.size === b.size && [...a].every(([node, community]) => b.get(node) === community);
+
+/**
+ * A fingerprint (FNV-1a) of the nodes, their names and modules, and the edges. Saving a note
+ * changes the version but usually not this, so the expensive analytics can be kept.
+ */
+export function graphSignature(graph: KnowledgeGraph): string {
+  let hash = 0x811c9dc5;
+  const mix = (text: string) => {
+    for (let i = 0; i < text.length; i += 1) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, 0x01000193);
+    }
+    hash ^= 0x1f;
+  };
+  graph.forEachNode((node, attributes) => {
+    mix(node);
+    mix(attributes.label);
+    mix(attributes.modules.join(','));
+  });
+  graph.forEachEdge((edge, attributes) => {
+    mix(edge);
+    mix(`${attributes.status}${attributes.confidence}${attributes.weight}`);
+  });
+  return `${graph.order}:${graph.size}:${hash >>> 0}`;
+}
 
 export function createGraphService(deps: GraphDependencies) {
   const { repo, events } = deps;
@@ -60,10 +95,15 @@ export function createGraphService(deps: GraphDependencies) {
     if (built?.version === version) return built;
     const at = version;
     const graph = assembleGraph(repo.read());
+    const signature = graphSignature(graph);
+    if (built?.signature === signature) {
+      built = { ...built, version: at, graph };
+      return built;
+    }
     const previous = repo.previousCommunities();
     const analysis = analyseGraph(graph, previous);
     if (!sameAssignment(previous, analysis.communityOf)) repo.saveCommunities(analysis.communityOf);
-    built = { version: at, graph, analysis };
+    built = { version: at, graph, signature, analysis };
     return built;
   };
 
@@ -160,9 +200,9 @@ export function createGraphService(deps: GraphDependencies) {
       const ranked = [...nodes].sort(
         (a, b) =>
           Number(b === options.keep) - Number(a === options.keep) ||
+          KEEP_FIRST[graph.getNodeAttribute(a, 'type')] -
+            KEEP_FIRST[graph.getNodeAttribute(b, 'type')] ||
           (analysis.degree.get(b) ?? 0) - (analysis.degree.get(a) ?? 0) ||
-          (TYPE_ORDER.get(graph.getNodeAttribute(a, 'type')) ?? 0) -
-            (TYPE_ORDER.get(graph.getNodeAttribute(b, 'type')) ?? 0) ||
           compareIds(a, b),
       );
       nodes = new Set(ranked.slice(0, filter.limit));

@@ -4,7 +4,7 @@ import { createEventBus } from '../../shared/events';
 import { assembleGraph } from './assemble';
 import type { GraphData, GraphRepository } from './graph-repository';
 import type { RelationRow } from './relations-repository';
-import { createGraphService } from './service';
+import { createGraphService, graphSignature } from './service';
 
 /**
  * A small course: Distributed Systems (COC251) with a lecture, a topic, concepts, notes and slides;
@@ -224,6 +224,37 @@ describe('graph service', () => {
     expect(second.nodes.map((node) => node.community)).toEqual(
       first.nodes.map((node) => node.community),
     );
+  });
+
+  it('keeps the analytics while only note text changes, and redoes them when names change', () => {
+    const data = course();
+    expect(graphSignature(assembleGraph(data))).toBe(graphSignature(assembleGraph(course())));
+    const { graph, events, filter } = service(data);
+    const before = graph.report();
+    events.publish({ type: 'vault.changed', notes: [], structure: false });
+    expect(graph.report()).toEqual({ ...before, version: before.version + 1 });
+
+    const raft = data.concepts.find((concept) => concept.id === 'con_raft');
+    if (raft) raft.name = 'Raft algorithm';
+    events.publish({ type: 'data.changed', area: 'concepts' });
+    expect(graphSignature(assembleGraph(data))).not.toBe(graphSignature(assembleGraph(course())));
+    expect(graph.report().coreConcepts[0]?.node.label).toBe('Raft algorithm');
+    expect(graph.graph(filter()).nodes.find((node) => node.id === 'con_raft')?.label).toBe(
+      'Raft algorithm',
+    );
+  });
+
+  it('keeps concepts and the course first when the graph is cut to size', () => {
+    const { graph, filter } = service();
+    const limited = graph.graph(filter({ limit: 6 }));
+    expect(limited.nodes.map((node) => node.type).sort()).toEqual([
+      'concept',
+      'concept',
+      'concept',
+      'concept',
+      'concept',
+      'concept',
+    ]);
   });
 
   it('filters by type, module, status and confidence, and leaves unlinked notes out', () => {
