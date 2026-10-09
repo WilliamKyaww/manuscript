@@ -68,6 +68,7 @@ export function createAttemptsService(deps: AttemptsDependencies) {
     response: answer.response,
     score: answer.score,
     gradedBy: answer.gradedBy,
+    feedback: answer.feedback,
     confidence: answer.confidence,
     assisted: answer.assisted,
     answeredAt: answer.answeredAt,
@@ -163,6 +164,7 @@ export function createAttemptsService(deps: AttemptsDependencies) {
       score,
       gradedBy: score === null ? null : 'auto',
       gradedAt: score === null ? null : at,
+      feedback: '',
       confidence: extra.confidence ?? null,
       assisted: extra.assisted ?? false,
       durationMs: extra.durationMs ?? null,
@@ -298,11 +300,20 @@ export function createAttemptsService(deps: AttemptsDependencies) {
       return view(requireAttempt(attemptId));
     },
 
-    grade(answerId: string, score: number): AnswerResult {
+    /**
+     * Gives a pending answer its grade: the student's own, or a model's suggestion the student
+     * accepted (with the model's feedback kept beside it).
+     */
+    grade(
+      answerId: string,
+      score: number,
+      gradedBy: 'self' | 'ai' = 'self',
+      feedback = '',
+    ): AnswerResult {
       const answer = repo.answer(answerId);
       if (!answer) throw new NotFoundError('That answer does not exist.');
       if (answer.score !== null) throw new ConflictError('That answer has already been graded.');
-      repo.grade(answerId, score, 'self', now());
+      repo.grade(answerId, score, gradedBy, now(), gradedBy === 'ai' ? feedback : '');
       const attempt = requireAttempt(answer.attemptId);
       // A finished attempt's score includes answers graded afterwards.
       if (attempt.finishedAt) repo.setScore(attempt.id, scoreOf(repo.answersOf([attempt.id])));

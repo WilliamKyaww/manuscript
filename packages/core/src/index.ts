@@ -1,4 +1,6 @@
+export * from './ai/dedup';
 export * from './ai/fusion';
+export * from './ai/generation';
 export * from './ai/grounding';
 export * from './ai/terms';
 export * from './ai/untrusted';
@@ -7,6 +9,7 @@ export * from './api/cards';
 export * from './api/concepts';
 export * from './api/contract';
 export * from './api/course';
+export * from './api/generation';
 export * from './api/graph';
 export * from './api/jobs';
 export * from './api/mastery';

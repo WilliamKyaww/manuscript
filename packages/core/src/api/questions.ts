@@ -198,6 +198,8 @@ export const AnswerResultSchema = z.object({
   /** 0–1; null while waiting for the student's own grade. */
   score: z.number().nullable(),
   gradedBy: z.enum(['auto', 'self', 'ai']).nullable(),
+  /** A grader's comments: the model's, when its suggested grade was accepted. */
+  feedback: z.string(),
   confidence: z.number().int().min(1).max(3).nullable(),
   assisted: z.boolean(),
   answeredAt: z.string(),
@@ -430,7 +432,12 @@ export const gradeAnswerEndpoint = defineEndpoint({
   method: 'POST',
   path: '/api/answers/:id/grade',
   params: AnswerParams,
-  body: z.object({ score: SelfScoreSchema }),
+  body: z.object({
+    score: SelfScoreSchema,
+    /** "ai" when the student accepts the model's suggested grade, with its feedback. */
+    gradedBy: z.enum(['self', 'ai']).default('self'),
+    feedback: z.string().max(4_000).default(''),
+  }),
   response: AnswerResultSchema,
 });
 
