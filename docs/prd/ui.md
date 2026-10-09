@@ -46,8 +46,9 @@ Rules:
    For paned pages (Phase 3) it scrolls every pane's body and asserts each pane header stays put;
    `e2e/notes.spec.ts` does the same with a long note in the editor.
 6. **Documented exceptions** (must be listed here):
-   - *Focus mode* in a review session may collapse the header to a slim progress bar (user-toggled) —
-     planned for Phase 8; not implemented yet. **There are currently no exceptions in the code.**
+   - None. *Focus mode* in a review session (Phase 8) was planned as one, but it keeps the header and
+     only hides the description, actions and secondary buttons. **There are currently no exceptions
+     in the code.**
 
 ## 3. Information architecture
 
