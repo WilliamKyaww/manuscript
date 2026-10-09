@@ -6,6 +6,8 @@ import { ROLE_TEXT } from './RoleForm';
 
 const money = (value: number) => `$${value.toFixed(value < 1 ? 3 : 2)}`;
 const count = (value: number) => value.toLocaleString('en-GB');
+const monthName = (month: string) =>
+  new Date(`${month}-01T12:00:00`).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
 
 /** What AI cost this month, by model, and the latest requests (task 10.03). */
 export function UsagePanel() {
@@ -15,7 +17,7 @@ export function UsagePanel() {
   if (!data) return null;
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold">Usage in {data.month}</h3>
+      <h3 className="text-sm font-semibold">Usage in {monthName(data.month)}</h3>
       <p className="text-sm">
         {count(data.totals.requests)} requests · {count(data.totals.inputTokens)} tokens in ·{' '}
         {count(data.totals.outputTokens)} out · about {money(data.totals.cost)}
