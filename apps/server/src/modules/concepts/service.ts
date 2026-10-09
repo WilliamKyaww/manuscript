@@ -14,6 +14,7 @@ import type { Clock } from '../../shared/clock';
 import type { NoteIndexer } from '../notes/indexer';
 import type { NotesRepository } from '../notes/repository';
 import type { SearchService } from '../search/service';
+import type { ConceptMergeRepository, MergeSnapshot } from './merge-repository';
 import type { ConceptListRow, ConceptRow, ConceptsRepository } from './repository';
 
 /**
@@ -26,6 +27,7 @@ type ConceptInput = z.infer<typeof ConceptInputSchema>;
 
 export interface ConceptsDependencies {
   repo: ConceptsRepository;
+  merges: ConceptMergeRepository;
   notesRepo: NotesRepository;
   indexer: NoteIndexer;
   search: SearchService;
@@ -47,7 +49,7 @@ export function slugify(name: string): string {
 }
 
 export function createConceptsService(deps: ConceptsDependencies) {
-  const { repo, notesRepo, indexer, search, clock, ids } = deps;
+  const { repo, merges, notesRepo, indexer, search, clock, ids } = deps;
   const now = () => clock.now().toISOString();
 
   const sync = () =>
@@ -216,6 +218,30 @@ export function createConceptsService(deps: ConceptsDependencies) {
       listRow(id);
       repo.remove(id);
       sync();
+    },
+
+    /**
+     * Merges a concept into another: its references move to the kept concept, its name and aliases
+     * become aliases of it (so links keep resolving) and it is deleted. The snapshot restores it.
+     */
+    merge(keepId: string, mergeId: string): { snapshot: MergeSnapshot; concept: ConceptSummary } {
+      if (keepId === mergeId) throw new ValidationError('A concept cannot be merged into itself.');
+      listRow(keepId);
+      listRow(mergeId);
+      const snapshot = repo.transaction(() => merges.merge(mergeId, keepId, now()));
+      sync();
+      return { snapshot, concept: summaryOf(listRow(keepId)) };
+    },
+
+    /** Undoes a merge from its snapshot; refuses if the merged name has been taken since. */
+    unmerge(snapshot: MergeSnapshot): ConceptSummary {
+      const name = String(snapshot.concept.name);
+      const owner = repo.keyOwner(String(snapshot.concept.name_key));
+      if (owner && owner.id !== snapshot.keepId)
+        throw new ConflictError(`“${name}” has been given to the concept “${owner.name}” since.`);
+      repo.transaction(() => merges.restore(snapshot, now()));
+      sync();
+      return summaryOf(listRow(String(snapshot.concept.id)));
     },
   };
 }

@@ -282,6 +282,18 @@ export function createProposalsService(deps: ProposalsDependencies) {
         repo.decide(relation.id, 'superseded', now());
   }
 
+  function supersede(proposalIds: readonly string[]): number {
+    let withdrawn = 0;
+    for (const id of proposalIds) {
+      const row = repo.byId(id);
+      if (row?.status !== 'pending') continue;
+      repo.decide(id, 'superseded', now());
+      withdrawn += 1;
+    }
+    if (withdrawn > 0) changed();
+    return withdrawn;
+  }
+
   return {
     /** Records new proposals, skipping any already pending (returned instead) or once rejected. */
     propose(proposal: NewProposal): ProposalRow | null {
@@ -317,6 +329,18 @@ export function createProposalsService(deps: ProposalsDependencies) {
       changed();
       return view(repo.byId(id) as ProposalRow);
     },
+
+    /** Withdraws what a generation job proposed and nobody has decided yet. */
+    supersedeJob: (jobId: string): number =>
+      supersede(repo.pendingOfJob(jobId).map((row) => row.id)),
+
+    /** How many of these are still waiting for a decision. */
+    pendingAmong(proposalIds: readonly string[]): number {
+      return proposalIds.filter((id) => repo.byId(id)?.status === 'pending').length;
+    },
+
+    /** Withdraws the proposals still waiting (undoing the agent that made them); returns how many. */
+    supersede,
 
     bulk(proposalIds: readonly string[], action: 'accept' | 'reject') {
       const rows = proposalIds

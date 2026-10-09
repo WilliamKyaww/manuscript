@@ -132,6 +132,16 @@ export function createProposalsRepository(db: SqlDatabase) {
       db.run(`UPDATE proposals SET payload_json = ? WHERE id = ?`, [JSON.stringify(payload), id]);
     },
 
+    /** Pending proposals made by one generation job. */
+    pendingOfJob(jobId: string): ProposalRow[] {
+      return db
+        .all<Raw>(
+          `SELECT * FROM proposals WHERE status = 'pending' AND json_extract(origin_json, '$.jobId') = ?`,
+          [jobId],
+        )
+        .map(toRow);
+    },
+
     /** Pending relation proposals with an end that is the given (concept) proposal. */
     relationsReferring(proposalId: string): ProposalRow[] {
       return db

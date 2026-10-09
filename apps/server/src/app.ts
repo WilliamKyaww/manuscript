@@ -5,6 +5,7 @@ import type { ApiRegistry } from './http/endpoint';
 import { securityHeaders } from './http/headers';
 import { errorHandler, problemResponse, toProblem } from './http/problem';
 import { staticSite } from './http/static';
+import { registerAgentRoutes } from './modules/agent/routes';
 import { registerAiRoutes } from './modules/ai/routes';
 import { registerCardRoutes } from './modules/cards/routes';
 import { registerConceptRoutes } from './modules/concepts/routes';
@@ -70,6 +71,7 @@ export function createApp(ctx: AppContext, modules: AppModules, auth: AuthOption
   registerPracticeRoutes(registry, modules);
   registerAiRoutes(registry, { ...modules, logger: ctx.logger });
   registerGenerationRoutes(registry, modules);
+  registerAgentRoutes(registry, modules.agent);
   registerEventRoutes(registry, ctx);
 
   // Unknown API routes are problem-details 404s, never the SPA.
