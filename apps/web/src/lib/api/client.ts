@@ -48,6 +48,17 @@ export interface ApiClient {
   request<E extends Endpoint>(endpoint: E, ...args: InputArgs<E>): Promise<EndpointOutput<E>>;
   /** Multipart upload (attachments): POSTs `form` to `path` and validates the reply with `schema`. */
   upload<T extends z.ZodType>(path: string, form: FormData, schema: T): Promise<z.output<T>>;
+  /**
+   * POSTs `body` as JSON and reads a stream of JSON lines (application/x-ndjson), validating each
+   * with `schema` and handing it to `onEvent` as it arrives. Resolves when the stream ends.
+   */
+  stream<T extends z.ZodType>(
+    path: string,
+    body: unknown,
+    schema: T,
+    onEvent: (event: z.output<T>) => void,
+    signal?: AbortSignal,
+  ): Promise<void>;
 }
 
 export interface ApiClientOptions {
@@ -140,6 +151,53 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
         },
         schema,
       );
+    },
+    async stream(path, body, schema, onEvent, signal) {
+      let response: Response;
+      try {
+        response = await fetchImpl(`${baseUrl}${path}`, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { Accept: 'application/x-ndjson', 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal,
+        });
+      } catch (cause) {
+        if (signal?.aborted) throw cause;
+        throw new ApiError(0, null, 'Cannot reach the Manuscript server. Is it running?', {
+          cause,
+        });
+      }
+      if (!response.ok) {
+        const problem = await readProblem(response);
+        throw new ApiError(
+          response.status,
+          problem,
+          problem?.detail ?? `Request failed with status ${response.status}.`,
+        );
+      }
+      const emit = (line: string) => {
+        if (line.trim()) onEvent(schema.parse(JSON.parse(line)));
+      };
+      const reader = response.body?.getReader();
+      if (!reader) {
+        for (const line of (await response.text()).split('\n')) emit(line);
+        return;
+      }
+      const decoder = new TextDecoder();
+      let buffer = '';
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let end = buffer.indexOf('\n');
+        while (end >= 0) {
+          emit(buffer.slice(0, end));
+          buffer = buffer.slice(end + 1);
+          end = buffer.indexOf('\n');
+        }
+      }
+      emit(buffer + decoder.decode());
     },
   };
 }

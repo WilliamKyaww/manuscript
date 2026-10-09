@@ -7,7 +7,11 @@ import { E2E_TOKEN } from './constants';
  * across restarts). The shared Playwright server is left alone.
  */
 
-export function startServer(dir: string, port: number): Promise<ChildProcess> {
+export function startServer(
+  dir: string,
+  port: number,
+  env: Record<string, string> = {},
+): Promise<ChildProcess> {
   const child = fork(path.resolve('apps/server/dist/server.mjs'), ['--port', String(port)], {
     env: {
       ...process.env,
@@ -16,6 +20,7 @@ export function startServer(dir: string, port: number): Promise<ChildProcess> {
       SKB_AUTH_TOKEN: E2E_TOKEN,
       SKB_LOG_LEVEL: 'warn',
       SKB_NO_BROWSER: '1',
+      ...env,
     },
     stdio: ['ignore', 'ignore', 'inherit', 'ipc'],
   });

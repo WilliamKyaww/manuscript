@@ -87,6 +87,11 @@ _Last reviewed: 9 October 2026 (Phase 8)._
 | B-AI-05 | Consume external MCP servers in the in-app agent | Timetable, library, calendar data | Research: MCP |
 | B-AI-06 | Voice tutoring | Hands-free practice | Research: StudyFetch |
 | B-AI-07 | Durable agent runs (AI SDK WorkflowAgent) | Very long tasks surviving restarts | Research: AI SDK 7 |
+| B-AI-08 | Semantic results on the Search page (fused like Ask's retrieval, with a "by meaning" label) | Search finds only words today; Ask already fuses meaning | Phase 10 |
+| B-AI-09 | Google (Gemini) provider | Free tiers and long contexts | Phase 10 |
+| B-AI-10 | Price presets for well-known models, updated with the app | Typing prices per role is error-prone | Phase 10 |
+| B-AI-11 | Bring retrieval's p95 down (404 ms at 10,000 notes: questions of common words make the OR query score most of the library) — e.g. try all words first and widen only when few match — and measure the first answer token with a real provider | Phase 10 measured retrieval only; the first token depends on the provider | Phase 10 |
+| B-AI-12 | Keep the Ask panel's past questions (until the Phase 13 chat threads replace it) | Only the last answer is kept | Phase 10 |
 
 ## Platform (PL)
 

@@ -98,6 +98,14 @@ export function createJobsRepository(db: SqlDatabase) {
       return raw ? toRow(raw) : null;
     },
 
+    /** Moves a queued job's start earlier (never later). */
+    bringForward(id: string, runAfter: string, now: string): void {
+      db.run(
+        `UPDATE jobs SET run_after = ?, updated_at = ? WHERE id = ? AND status = 'queued' AND run_after > ?`,
+        [runAfter, now, id, runAfter],
+      );
+    },
+
     /** The newest job for each of these subjects that is queued or running. */
     activeFor(subjects: readonly string[]): Map<string, JobRow> {
       const result = new Map<string, JobRow>();

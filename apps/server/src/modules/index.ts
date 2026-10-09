@@ -2,6 +2,15 @@ import type { AppContext } from '../context';
 import { createJobQueue, type JobQueue } from '../jobs/queue';
 import { createJobsRepository } from '../jobs/repository';
 import { notifyingAfter } from '../shared/change-events';
+import { type AskService, createAskService } from './ai/ask';
+import { createEmbeddingsRepository } from './ai/embeddings/repository';
+import { createEmbeddingService, type EmbeddingService } from './ai/embeddings/service';
+import { createModelRegistry } from './ai/registry';
+import { createRetrievalService } from './ai/retrieval';
+import { createRetrievalRepository, type RetrievalRepository } from './ai/retrieval-repository';
+import { type AiService, createAiService } from './ai/service';
+import { createFileConfigStore, createFileSecretStore } from './ai/store';
+import { createUsageRepository } from './ai/usage';
 import { createCardsRepository } from './cards/repository';
 import { createReviewService, type ReviewService } from './cards/reviews';
 import { type CardsService, createCardsService } from './cards/service';
@@ -51,12 +60,33 @@ export interface AppModules {
   readonly attempts: AttemptsService;
   readonly learn: LearnService;
   readonly mastery: MasteryService;
+  readonly ai: AiService;
+  readonly embeddings: EmbeddingService;
+  readonly ask: AskService;
+  readonly retrievalRepo: RetrievalRepository;
   start(options: { watch: boolean }): Promise<void>;
   close(): Promise<void>;
 }
 
 export function createModules(ctx: AppContext): AppModules {
   const settings = createSettingsService(ctx);
+  // AI configuration and keys live in the per-user data directory, never in the vault.
+  const aiStore = createFileConfigStore(ctx.config.dataDir, ctx.logger);
+  const aiSecrets = createFileSecretStore(ctx.config.dataDir, ctx.logger);
+  const aiCore = createAiService({
+    store: aiStore,
+    secrets: aiSecrets,
+    registry: createModelRegistry({
+      store: aiStore,
+      secrets: aiSecrets,
+      mock: ctx.config.aiMock,
+    }),
+    usage: createUsageRepository(ctx.db),
+    mock: ctx.config.aiMock,
+    clock: ctx.clock,
+    ids: ctx.ids,
+    logger: ctx.logger,
+  });
   const notes = createNotesModule(ctx, settings);
   const jobs = createJobQueue({
     repo: createJobsRepository(ctx.db),
@@ -205,6 +235,33 @@ export function createModules(ctx: AppContext): AppModules {
     clock: ctx.clock,
     ids: ctx.ids,
   });
+  const embeddings = createEmbeddingService({
+    repo: createEmbeddingsRepository(ctx.db),
+    ai: aiCore,
+    queue: jobs,
+    events: ctx.events,
+    clock: ctx.clock,
+    logger: ctx.logger,
+  });
+  // A new embedding model or provider means embedding again (the job does nothing otherwise).
+  const ai = notifyingAfter(
+    aiCore,
+    ['updatePreferences', 'createProvider', 'updateProvider', 'deleteProvider'],
+    () => embeddings.schedule(0),
+  );
+  const retrievalRepo = createRetrievalRepository(ctx.db);
+  const ask = createAskService({
+    ai: aiCore,
+    retrieval: createRetrievalService({
+      repo: retrievalRepo,
+      learning: learningRepo,
+      embeddings,
+      notes: notes.notes,
+      logger: ctx.logger,
+    }),
+    logger: ctx.logger,
+  });
+
   return {
     settings,
     notes,
@@ -223,13 +280,20 @@ export function createModules(ctx: AppContext): AppModules {
     attempts,
     learn,
     mastery,
+    ai,
+    embeddings,
+    ask,
+    retrievalRepo,
     async start(options) {
       await notes.start(options);
       jobs.start();
       await sources.start();
+      // Catch up with anything imported or edited while the app was closed.
+      embeddings.schedule(10_000);
     },
     async close() {
       graph.close();
+      embeddings.close();
       mastery.close();
       await sources.close();
       await jobs.close();

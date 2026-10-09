@@ -6,12 +6,13 @@ import { Button } from '../../../components/Button';
 import { EmptyState, ErrorState, LoadingState } from '../../../components/States';
 import { useApi } from '../../../lib/api/context';
 import { notifySuccess } from '../../../lib/notify';
+import { RelatedNotes } from '../../ai/RelatedNotes';
 import { backlinksQuery, mentionsQuery, useLinkMention } from '../api';
 
 /**
  * Backlinks (task 3.18): notes linking here, with the line containing each link, and — on request,
  * because it reads files — unlinked mentions of this note's name, title or aliases, each with a
- * one-step "Link" action.
+ * one-step "Link" action — and, with semantic search set up, notes similar in meaning.
  */
 export function BacklinksPanel({ noteId }: { noteId: string }) {
   const api = useApi();
@@ -149,6 +150,7 @@ export function BacklinksPanel({ noteId }: { noteId: string }) {
           <p className="mt-2 text-xs text-muted">Showing the first 50 notes with mentions.</p>
         )}
       </section>
+      <RelatedNotes noteId={noteId} />
     </div>
   );
 }

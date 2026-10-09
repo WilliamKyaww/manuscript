@@ -49,7 +49,7 @@ Rules:
 | 7 | [Knowledge graph](./phase-07-graph.md) | 6 | Complete |
 | 8 | [Flashcards and spaced repetition](./phase-08-flashcards.md) | 6 | Complete |
 | 9 | [Questions, quizzes and mastery](./phase-09-quizzes-mastery.md) | 8 | Complete |
-| 10 | [AI foundation: providers, retrieval and grounded Q&A](./phase-10-ai-foundation.md) | 7, 9 | Not started |
+| 10 | [AI foundation: providers, retrieval and grounded Q&A](./phase-10-ai-foundation.md) | 7, 9 | Complete |
 | 11 | [AI generation and knowledge extraction](./phase-11-ai-generation.md) | 10 | Not started |
 | 12 | [Agent runtime, tool layer and MCP](./phase-12-agent-tools.md) | 11 | Not started |
 | 13 | [Agentic chat interface](./phase-13-chat.md) | 12 | Not started |

@@ -1,4 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
+import { useAsk } from '../features/ai/ask-store';
 import { useQuickAdd } from '../features/review/quick-add';
 import { SEARCH_INPUT_ID } from '../features/search/search-ids';
 import { useLayoutStore } from './layout-store';
@@ -47,6 +48,18 @@ export function GlobalShortcuts() {
       event.preventDefault();
       const { draft, open } = useQuickAdd.getState();
       if (!draft) open();
+    },
+  });
+  useShortcut({
+    id: 'app.ask',
+    keys: 'mod+j',
+    description: 'Ask about your material',
+    group: 'General',
+    allowInInputs: true,
+    handler: (event) => {
+      event.preventDefault();
+      const { open, setOpen } = useAsk.getState();
+      setOpen(!open);
     },
   });
   useShortcut({

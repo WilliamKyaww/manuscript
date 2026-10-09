@@ -6,7 +6,7 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 9 October 2026 (end of Phase 9)._
+_Last updated: 9 October 2026 (end of Phase 10)._
 
 ## Platform and architecture
 
@@ -46,8 +46,8 @@ _Last updated: 9 October 2026 (end of Phase 9)._
 | F-SE-01 | Full-text search (FTS5) with filters and operators | Complete (date filters: B-SE-01) | 4 |
 | F-SE-02 | Quick switcher (with recent notes) and notes in the command palette | Complete | 4 |
 | F-SE-03 | Search across source chunks with locators | Complete (one hit per page, slide or section; grouping by source: B-SE-04) | 5 |
-| F-SE-04 | Semantic search and hybrid fusion (optional embeddings) | Planned | 10 |
-| F-SE-05 | Related notes panel | Planned | 10 |
+| F-SE-04 | Semantic search and hybrid fusion (optional embeddings) | Partial — embeddings, brute-force vector search and reciprocal rank fusion serve Ask; the Search page stays full-text (B-AI-08) | 10 |
+| F-SE-05 | Related notes panel | Complete — "Similar notes" in a note's Backlinks tab when semantic search is set up | 10 |
 
 ## Knowledge — sources and ingestion
 
@@ -122,10 +122,10 @@ _Last updated: 9 October 2026 (end of Phase 9)._
 
 | ID | Feature | Status | Phase |
 |---|---|---|---|
-| F-AI-01 | Role-based provider registry (Anthropic, OpenAI, OpenAI-compatible, mock) | Planned | 10 |
-| F-AI-02 | Secure key storage, usage tracking and spend caps | Planned | 10 |
-| F-AI-03 | Grounded Q&A with citations and grounding badges | Planned | 10 |
-| F-AI-04 | Prompt-injection defences for source content | Planned | 10 |
+| F-AI-01 | Role-based provider registry (Anthropic, OpenAI, OpenAI-compatible, mock) | Complete | 10 |
+| F-AI-02 | Secure key storage, usage tracking and spend caps | Complete — keys in the data directory (mode 0600); Electron safeStorage arrives with the desktop app (Phase 18) | 10 |
+| F-AI-03 | Grounded Q&A with citations and grounding badges | Complete — the Ask panel (Ctrl+J) | 10 |
+| F-AI-04 | Prompt-injection defences for source content | Complete | 10 |
 | F-AI-05 | Generation of notes, summaries, cards and questions | Planned | 11 |
 | F-AI-06 | Proposals Inbox (AI proposes, user decides) | Planned | 11 |
 | F-AI-07 | Typed tool registry with risk levels and approvals | Planned | 12 |

@@ -20,7 +20,10 @@ import type { ServerConfig } from '../../src/config/config';
 import type { AppContext } from '../../src/context';
 import { loadMigrations, migrate } from '../../src/db/migrate';
 import { openDatabase } from '../../src/db/sqlite';
+import { createRetrievalService } from '../../src/modules/ai/retrieval';
+import { createRetrievalRepository } from '../../src/modules/ai/retrieval-repository';
 import { createModules } from '../../src/modules/index';
+import { createLearningRepository } from '../../src/modules/learning/repository';
 import { systemClock } from '../../src/shared/clock';
 import { createEventBus } from '../../src/shared/events';
 import { silentLogger } from '../../src/shared/logger';
@@ -37,6 +40,8 @@ const BUDGETS = {
   graphPayloadMs: 500,
   graphColdMs: 3_000,
   graphAfterEditMs: 1_000,
+  // Provisional (Phase 10): the server's share of a grounded answer, before the model.
+  retrievalP95Ms: 500,
 };
 
 /** Small deterministic PRNG (mulberry32) so every run generates the same vault. */
@@ -201,6 +206,7 @@ function open(root: string, dataDir: string) {
     openBrowser: false,
     devWebOrigin: null,
     authTokenOverride: 'perf',
+    aiMock: false,
   };
   const ctx: AppContext = {
     config,
@@ -217,6 +223,7 @@ function open(root: string, dataDir: string) {
   return {
     modules,
     ids,
+    db,
     close: async () => {
       await modules.close();
       db.close();
@@ -423,6 +430,43 @@ async function main() {
       `Graph: report (${report.communities.length} clusters, ${report.prompts.length} prompts)`,
       performance.now() - started,
     );
+
+    // Grounding (task 10.07): the passages for a question — full-text over notes and the library,
+    // concepts and their neighbours, fused and packed — before any model is asked.
+    const retrieval = createRetrievalService({
+      repo: createRetrievalRepository(session.db),
+      learning: createLearningRepository(session.db),
+      embeddings: session.modules.embeddings,
+      notes: session.modules.notes.notes,
+      logger: silentLogger,
+    });
+    const questions = [
+      'How does the consensus quorum keep the log safe?',
+      'Explain gradient descent and the loss function',
+      'What causes a deadlock in transaction isolation?',
+      'Why does attention help a transformer embedding?',
+    ];
+    const retrievalTimings: number[] = [];
+    let passagesFound = 0;
+    for (let round = 0; round < 5; round += 1) {
+      for (const question of questions) {
+        const before = performance.now();
+        const { passages } = await retrieval.retrieve({
+          question,
+          scope: 'knowledge',
+          filter: {},
+          budgetTokens: 11_000,
+        });
+        retrievalTimings.push(performance.now() - before);
+        passagesFound += passages.length;
+      }
+    }
+    record(
+      `Retrieval for a grounded answer, p95 (${retrievalTimings.length} questions, ${passagesFound} passages)`,
+      percentile(retrievalTimings, 0.95),
+      BUDGETS.retrievalP95Ms,
+    );
+    record('Retrieval, median', percentile(retrievalTimings, 0.5));
 
     const changed = notePath(1);
     writeFileSync(
