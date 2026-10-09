@@ -231,8 +231,8 @@ Phase 9 — questions, quizzes and mastery (`phase/09-quizzes-mastery`).
 
 | Command | Result |
 |---|---|
-| `npm run verify` | **Pass** — type-check, Biome, **574** Vitest tests (core 162, server 273, web 139), build, smoke |
-| `npx playwright test` | **Pass** — **76/76** (the practice flow on its own server) |
+| `npm run verify` | **Pass** — type-check, Biome, **575** Vitest tests (core 162, server 273, web 140), build, smoke |
+| `npx playwright test` | **Pass** — **79/79** (the practice flow on its own server; the question bank in the shell checks) |
 | `npm run test:perf:mastery` | **Pass** — mastery pass over 1,000 concepts, 5,000 reviewed cards and 20,000 answers: 201 ms median (budget 500 ms; 324 ms before restricting the fortnight-ago lookup), mains power |
 | Manual | Screenshots of Practice, the question editor, a practice attempt waiting for a self-grade, a mock exam, Progress, a concept's mastery panel and Today |
 
@@ -249,6 +249,13 @@ Phase 9 — questions, quizzes and mastery (`phase/09-quizzes-mastery`).
   days fall from 0.85 to below 0.70 in a fortnight. Documented; B-LE-32 revisits the rule.
 - Answer options rendered with a paragraph's bottom margin; rendered Markdown now has no trailing
   margin.
+- **Running the shell checks alone found an older bug:** an empty vault's Notes tree had
+  `role="tree"` with no items (axe: aria-required-children); the full run hid it because earlier
+  tests create notes. Test first, then fixed — but the first fix (a conditional role) failed Biome and
+  was committed before lint was checked; a follow-up commit renders the empty state as a plain
+  message. Lint output is now read before every commit, not just the exit code.
+- **The Phase 6 course E2E failed once on timing:** an empty Modules page has two New module
+  buttons; the test now uses the header's.
 
 ### Unresolved issues
 

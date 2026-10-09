@@ -37,7 +37,7 @@ Phase 8.
 - [x] Weak areas link to practice — Practise on Today, Progress and concept pages starts a Learn session for the concept; concepts without material offer to write a question
 
 ## Gate
-- [x] All tasks `[x]` · [x] verify (574 Vitest tests) + E2E (76 Playwright tests) green · [x] docs updated · [x] merged
+- [x] All tasks `[x]` · [x] verify (575 Vitest tests) + E2E (79 Playwright tests) green · [x] docs updated · [x] merged
 
 ## Recommended commit messages
 ```text

@@ -64,7 +64,7 @@ complete and merged into `main`.
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 574 Vitest tests and 76 Playwright tests (sticky headers on every route and pane,
+- **Tests:** 575 Vitest tests and 79 Playwright tests (sticky headers on every route and pane,
   axe in both themes, the library, the course, the graph, reviewing and practice) — all green.
   Reviewing: 7 ms median between cards over 100 (budget 50 ms). Mastery pass over a year of learning
   (1,000 concepts, 5,000 reviewed cards, 20,000 answers): 201 ms (budget 500 ms). On mains power at 10,000
