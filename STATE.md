@@ -4,17 +4,17 @@ _Last updated: 9 October 2026 — Claude Opus 5.5._
 
 ## Current phase
 
-**Phase 8 — Flashcards and spaced repetition: next.** Phases 0 (research), 1 (foundation), 2
+**Phase 9 — Questions, quizzes and mastery: next.** Phases 0 (research), 1 (foundation), 2
 (application shell), 3 (notes and Markdown knowledge base), 4 (lexical search and quick navigation),
-5 (source library and ingestion pipeline), 6 (course structure and concepts) and 7 (knowledge graph)
-are complete and merged into `main`.
+5 (source library and ingestion pipeline), 6 (course structure and concepts), 7 (knowledge graph) and
+8 (flashcards and spaced repetition) are complete and merged into `main`.
 
 ## What works
 
 - **Local server** (`apps/server`): Hono on `127.0.0.1` with token (cookie or bearer), Host allowlist,
   Origin and Fetch-Metadata checks; `/auth` sign-in link; RFC 9457 problem details (with `details`);
   CSP and security headers; production SPA serving; server-sent events at `/api/events`.
-- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0007`), vault (`.skb/` layout,
+- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0008`), vault (`.skb/` layout,
   lock with crash recovery, strict path containment), atomic writes, vault-scoped settings.
 - **Notes** (Phase 3): Markdown files are canonical; the index (notes, aliases, tags, links,
   attachments, FTS5) is rebuilt from the files and follows edits made in other programs. Ids are
@@ -45,24 +45,33 @@ are complete and merged into `main`.
   worker, dashed and dotted edges for inferred and ambiguous relations, search-to-focus, filters and
   a details/insights panel; local graphs on concept pages and in the Notes **Graph** tab; relations
   added, accepted and rejected on concept pages.
+- **Flashcards** (Phase 8, `/review`): card sets per module or lecture; basic, reversed and cloze
+  cards in Markdown with concepts, hints and drafts; quick add (Ctrl+Shift+A) and cards from a
+  selection in notes and sources; FSRS-6 (ts-fsrs) with one schedule per face and append-only review
+  logs (ADR-0031); a keyboard review session (Space, 1–4, Ctrl+Z, E, S, B, O, F) with a summary;
+  statistics; review settings; Anki import and export; Today's reviews widget.
 - **Application shell:** sidebar, sticky page headers (per pane on paned pages), themes, command
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 483 Vitest tests and 74 Playwright tests (sticky headers on every route and pane,
-  axe in both themes, the library, the course and the graph) — all green. On mains power at 10,000
+- **Tests:** 523 Vitest tests and 75 Playwright tests (sticky headers on every route and pane,
+  axe in both themes, the library, the course, the graph and reviewing) — all green. Reviewing: 7 ms
+  median between cards over 100 (budget 50 ms). On mains power at 10,000
   notes: search p95 28 ms (100 ms with 10,000 PDF pages; budget 150 ms); graph payload of 5,000 nodes
   97 ms from the cache (budget 500 ms), 2.1 s for a first build (budget 3 s), 674 ms after a note
   edit (budget 1 s).
 
 ## In progress
 
-- Nothing; Phase 8 not yet started.
+- Nothing; Phase 9 not yet started.
 
 ## Incomplete / not started
 
-- Phases 8–22: flashcards, quizzes, mastery and AI features do not exist yet; their sections show
-  placeholders. The assistant does not propose relations yet (Phase 11).
+- Phases 9–22: questions, quizzes, mastery and AI features do not exist yet; their sections show
+  placeholders. The assistant does not propose relations or cards yet (Phase 11).
+- Not in Phase 8 (backlog): card tags and filters (B-LE-18), per-module new-card limits (B-LE-19),
+  cards on concept pages (B-LE-20), personal time estimates (B-LE-21), Anki packages (B-LE-22), a
+  large-backlog warning (B-LE-23); per-user FSRS optimisation (B-LE-10).
 - Not in Phase 7 (backlog): cluster hulls (B-KM-14), keyboard navigation of the canvas (B-KM-15),
   relation names on edges (B-KM-16), relations to notes and sources in the UI (B-KM-17), rebuilding
   only when links change (B-KM-18), dismissing prompts (B-KM-19), Sigma 4 (B-KM-20).
@@ -79,10 +88,9 @@ are complete and merged into `main`.
 
 ## Next steps
 
-1. Create `phase/08-flashcards` from `main`.
-2. Phase 8: card sets and cards (basic, reversed, cloze) linked to concepts and sources, FSRS-6
-   scheduling through ts-fsrs, the review queue and keyboard review session, statistics, Anki TSV
-   import and export.
+1. Create `phase/09-quizzes-mastery` from `main`.
+2. Phase 9: the question bank (multiple choice, numeric, short answer…), quizzes and mock exams,
+   attempts and grading, the transparent mastery model per concept, and weak-area detection.
 
 ## Relevant decisions
 
@@ -90,15 +98,15 @@ ADR-0004 hybrid storage · ADR-0007 plain SQL + prefixed ULIDs · ADR-0010 FTS5 
 ADR-0015 graphology + Sigma.js, Graphify ideas ported with attribution · ADR-0020 concepts are entities;
 relations carry provenance · ADR-0024 shared Zod contracts · ADR-0025 note ids written only when needed
 · ADR-0026 Obsidian-compatible dialect · ADR-0027 Manuscript · ADR-0028 the library follows `Sources` ·
-ADR-0029 course structure in the database, tied to files by module code · **ADR-0030** the
-knowledge graph is computed; only relations are stored (ADR-0015 implementation note: Sigma 3 with
-our own wrapper).
+ADR-0029 course structure in the database, tied to files by module code · ADR-0030 the
+knowledge graph is computed; only relations are stored · ADR-0011 FSRS-6 via ts-fsrs · **ADR-0031**
+flashcards are scheduled by face, and review logs are never changed.
 
 ## Technical debt
 
 TD-01 launcher duplicates the data-directory logic · TD-05 KaTeX override · TD-06 file tree not
 virtualised · TD-07 `shell-quote` override (for `concurrently`) · TD-08 parsing on the main thread ·
-TD-09 PDF viewer estimates page sizes from page 1. No new debt in Phases 6–7.
+TD-09 PDF viewer estimates page sizes from page 1. No new debt in Phases 6–8.
 
 ## Environment notes for agents
 
@@ -116,7 +124,8 @@ background load — compare against a worktree of the previous gate (`AGENTS.md`
   while the app is closed (`docs/guide/README.md`).
 - Push `main` and the phase branches when convenient (the agent never pushes).
 - Try entering this semester's modules and assessments (`docs/guide/course.md`); RQ-02 asks how your
-  modules are assessed. Then relate a few concepts and look at the graph (`docs/guide/graph.md`).
+  modules are assessed. Then relate a few concepts and look at the graph (`docs/guide/graph.md`), and make the first
+  flashcards (`docs/guide/flashcards.md`).
 
 ## Open questions for the user
 

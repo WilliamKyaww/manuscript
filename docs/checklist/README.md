@@ -47,7 +47,7 @@ Rules:
 | 5 | [Source library and ingestion pipeline](./phase-05-sources.md) | 4 | Complete |
 | 6 | [Course structure and concepts](./phase-06-course-structure.md) | 5 | Complete |
 | 7 | [Knowledge graph](./phase-07-graph.md) | 6 | Complete |
-| 8 | [Flashcards and spaced repetition](./phase-08-flashcards.md) | 6 | Not started |
+| 8 | [Flashcards and spaced repetition](./phase-08-flashcards.md) | 6 | Complete |
 | 9 | [Questions, quizzes and mastery](./phase-09-quizzes-mastery.md) | 8 | Not started |
 | 10 | [AI foundation: providers, retrieval and grounded Q&A](./phase-10-ai-foundation.md) | 7, 9 | Not started |
 | 11 | [AI generation and knowledge extraction](./phase-11-ai-generation.md) | 10 | Not started |

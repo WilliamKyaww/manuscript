@@ -1,6 +1,6 @@
 # Backlog items
 
-_Last reviewed: 9 October 2026 (Phase 7)._
+_Last reviewed: 9 October 2026 (Phase 8)._
 
 ## Knowledge (KM)
 
@@ -60,6 +60,12 @@ _Last reviewed: 9 October 2026 (Phase 7)._
 | B-LE-15 | Degree classification across years (e.g. Year 2 : Year 3 weighted 1 : 3) with UK boundaries | The classification, not one year's average, is what finally counts | Phase 6 |
 | B-LE-16 | Exam duration and room in the assessment dialog | The API stores `durationMinutes`; the dialog does not ask for it | Phase 6 |
 | B-LE-17 | Lecture list grouped by week with a marker for the current week | Easier to see where the term is | Phase 6 |
+| B-LE-18 | Tags on cards, and filtering a set's cards by tag, status or text | Large sets are hard to scan | Phase 8 |
+| B-LE-19 | New-card limits per module or set | One module's new cards can crowd out another's | Phase 8 |
+| B-LE-20 | A concept's cards (and later questions) on its page, with a "Make card" action | Concepts are the unit of learning; their practice should be one click away | Phase 8 |
+| B-LE-21 | Estimate review time from the student's own durations | Today's estimate uses fixed times per card | Phase 8 |
+| B-LE-22 | Import Anki packages (.apkg) with their scheduling history | Moving an existing Anki collection over without starting again | Phase 8 |
+| B-LE-23 | Warn when many reviews are due (e.g. more than 200) and suggest catching up gradually | After a break, a huge queue discourages | Phase 8 |
 
 ## AI (AI)
 
