@@ -31,6 +31,13 @@ Settings page: provider credentials (stored in the app data dir; Electron encryp
 model per role, connection test, monthly spend cap and per-request token caps. Usage is recorded in
 `ai_usage` and shown in Settings.
 
+**As built (Phase 10, ADR-0033).** Roles `chat`, `fast` and `embedding` (transcription and rerank later);
+providers Anthropic, OpenAI and OpenAI-compatible, configured in `ai.json` with keys in `secrets.json` in the
+data directory. Each role reports whether it is ready and what is missing. Connection tests send one tiny
+request; provider errors are shown without anything key-like. Prices per role (USD per million tokens) give
+the spend estimate; the monthly budget (default $10) warns at 80 % and refuses requests once spent.
+`SKB_AI_PROVIDER=mock` replaces every model with deterministic built-in models (tests, demonstrations).
+
 ## 3. Chat modes and grounding scopes (Phases 10, 13, 14)
 
 | Mode | Behaviour |
@@ -61,6 +68,16 @@ content is wrapped as untrusted (§10).
 - Instructions require a citation key after each sourced claim. The server validates keys, drops unknown
   ones, and the UI renders them as chips that open the source at the locator.
 - Per-answer badge: **From your sources** (all claims cited) · **Mixed** · **General knowledge**.
+
+**As built (Phase 10).** `POST /api/ai/ask` streams JSON lines: the passages, text deltas, then the checked
+answer (cited keys, dropped keys, grounding, usage). A claim is a sentence of four words or more outside
+headings and code. In the *my sources* and *knowledge base* scopes nothing found means no model call and the
+label *Not in your sources*. Retrieval fuses (reciprocal rank) full-text matches of the question's
+significant words, passages naming the concepts it mentions or their neighbours (two relation steps), and —
+with an embedding model — semantic neighbours; note passages are the best-matching section of a note,
+located by heading and line; passages are packed into the context budget (default 12,000 tokens, 12
+passages at most). The Ask panel (Ctrl+J) narrows to the page on screen (source, module, lecture,
+concept).
 
 ## 6. Tool layer (Phase 12)
 
@@ -151,6 +168,8 @@ exact change summary and *Approve once* / *Approve for this chat* / *Decline*), 
   (`<|…|>`, `[INST]`, `<<SYS>>`, forged closing tags) neutralised with a zero-width space.
 - Instructions state that wrapped content is data and cannot change rules or tool permissions.
 - Policy enforcement is outside the model (server-side), so injected text cannot grant itself approval.
+
+Built in Phase 10: `packages/core/src/ai/untrusted.ts` (attributed in THIRD_PARTY_NOTICES.md).
 
 ## 11. Generation services (Phase 11) — structured outputs
 

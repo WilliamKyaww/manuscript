@@ -94,7 +94,8 @@ apps/server/src/
 │   ├── practice/        questions, quizzes, attempts, grading, Learn sessions (Phase 9)
 │   ├── mastery/         evidence aggregation, roll-ups, weak areas, priority, mastery_cache
 │   ├── planning/        study plans, sessions
-│   ├── ai/              providers, model roles, retrieval, generation services
+│   ├── ai/              store (ai.json, secrets.json), registry, mock models, usage, embeddings/,
+│   │                    retrieval (fusion), ask (grounded answers, JSON-line stream); generation later
 │   ├── agent/           tool registry, policy, runner, action log, MCP adapter
 │   └── chat/            threads, messages, streaming endpoints
 └── shared/              errors, logger, ids, time, result helpers
@@ -135,7 +136,7 @@ apps/web/src/
 | `<vault>/.skb/skb.db` | Courses, concepts, relations, cards, schedules, review logs, questions, attempts, plans, chats, agent actions, jobs (**canonical**) + note/chunk index, FTS, embeddings (**derived, rebuildable**) | Mixed, documented per table |
 | `<vault>/.skb/trash/`, `history/` | Soft-deleted notes; pre-change snapshots for undo | Yes (retention policy) |
 | `<vault>/.skb/cache/` | Thumbnails, extracted text caches | No (rebuildable) |
-| `%APPDATA%/Manuscript/` | App settings (recent vaults, window state), **secrets** (API keys) | Yes — never inside the vault |
+| `%APPDATA%/Manuscript/` | App settings (recent vaults, window state), the auth token, `ai.json` (AI providers and preferences) and **`secrets.json`** (API keys, mode 0600) | Yes — never inside the vault |
 
 Writes: Markdown via write-to-temp + rename (atomic); SQLite in WAL mode with `foreign_keys=ON`; a lock
 file in `.skb/` prevents two servers opening the same vault.
@@ -266,4 +267,5 @@ package contains **no native Node modules** (ADR-0006, ADR-0016).
 | Graph built from scratch (10k notes, 1k concepts, ~11k nodes) | < 3 s (first open, or after a link, name or relation changes) |
 | Graph after a note edit that changes no link | < 1 s (the analytics are reused) |
 | Review: next card | < 50 ms (measured at Phase 8: median 7 ms, p95 10 ms over 100 cards) |
+| Retrieval for a grounded answer (10k notes, 10k PDF pages, 1k concepts; before the model) | < 500 ms p95, provisional (measured at Phase 10: p95 404 ms, median 51 ms) |
 | Mastery pass (1k concepts, 5k reviewed cards, 20k answers; ADR-0032) | < 500 ms (measured at Phase 9: 201 ms, `npm run test:perf:mastery`) |

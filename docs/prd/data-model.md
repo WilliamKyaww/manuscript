@@ -163,7 +163,7 @@ little overlap (`@skb/core` `chunkDocument`).
 `text` — same tokenizer as `notes_fts`; rank configured as `bm25(2, 1)`. Search shows one hit per
 section (its best chunk).
 
-**embeddings** (derived, P1) `chunk_id` · `model` · `dims` · `vector` (BLOB float32) — PK (`chunk_id`, `model`)
+**embeddings** (derived, migration `0010`) `owner_type` (`chunk` | `note`) · `owner_id` (chunk id as text, or note id) · `model` (`provider/model`) · `content_hash` (of the text embedded: a chunk with its context, or a note's title and first 6,000 characters) · `dims` · `vector` (BLOB, little-endian float32) · `created_at` — PK (`owner_type`, `owner_id`, `model`). Rows of other models and of removed owners are pruned before each embedding run.
 
 ### 5.3 Locator format (shared by chunks, cards, questions, relations, citations)
 
@@ -351,8 +351,10 @@ directly.
 
 ### 5.9 AI, agent and operations
 
-**ai_usage** `id` · `provider` · `model` · `role` · `input_tokens` · `output_tokens` · `cost_estimate` ·
-`purpose` · `created_at`
+**ai_usage** (canonical, migration `0010`) `id` (`use_…`) · `role` (`chat` | `fast` | `embedding`) · `provider` (the
+provider id in the settings, or `mock`) · `model` · `purpose` (`ask`, `embed`, `connection test`) · `input_tokens` ·
+`output_tokens` · `cost_estimate` (US dollars at the role's prices when the request was made) · `created_at`. Providers,
+preferences and keys are not in the vault: `ai.json` and `secrets.json` in the data directory (ADR-0033).
 
 **proposals** `id` · `kind` (`concept` | `relation` | `card` | `question` | `link` | `note_edit`) ·
 `payload_json` · `origin_json` (job/thread, source locators) · `status` (`pending` | `accepted` |

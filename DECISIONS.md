@@ -571,3 +571,33 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   be practised in Learn yet; their "Practise" action explains why. Priority defaults (no credits, no
   dated assessment, no module) are documented in learning-system.md §9.
 - **Date.** 9 October 2026.
+
+## ADR-0033 — AI configuration outside the vault; answers streamed as JSON lines; fusion in retrieval
+
+- **Context.** Phase 10 adds the AI layer (ADR-0012): providers, a model per role, keys, spend
+  limits, embeddings and grounded answers. Keys must never enter the vault, logs or client
+  responses; the app must work without AI; answers must cite real passages; tests must not need a
+  network or a paid provider.
+- **Options.** Configuration in the vault's settings table, or in the per-user data directory. The
+  answer stream as the AI SDK's UI message stream (consumed with `@ai-sdk/react`), as server-sent
+  events, or as JSON lines. Fusing lexical and semantic results in the search service, or in a
+  retrieval service of the AI module. Vectors in `sqlite-vec`, or brute force in memory.
+- **Decision.** Providers and preferences live in `ai.json` and keys in `secrets.json` in the data
+  directory (mode 0600; Electron `safeStorage` behind the same interface later); usage records
+  (`ai_usage`) and derived `embeddings` live in the vault database. One registry builds every
+  provider client. `POST /api/ai/ask` streams one JSON event per line (passages, text deltas, then
+  the checked answer), read by the shared API client. Reciprocal rank fusion of full-text,
+  concept-neighbourhood and semantic rankings happens in the AI module's retrieval service; search
+  itself stays lexical. Vectors are normalised and kept in memory as 8-bit integers and searched by
+  brute force. `SKB_AI_PROVIDER=mock` swaps every model for deterministic built-in models.
+- **Reason.** Keys and provider choices belong to the machine and the user, not to a vault that may
+  be synced or shared. JSON lines keep the browser free of AI SDK code (ADR-0012 confines it to
+  the server) and carry exactly what the UI needs, validated by shared Zod schemas; the Phase 13
+  chat can still adopt UI message streams. Search must keep working with AI off, so it cannot
+  depend on embeddings. Brute force over int8 vectors is fast enough for a student's library
+  (tens of thousands of passages) without a native extension.
+- **Consequences.** A vault opened on another computer has no AI settings until they are entered
+  there. Spend is counted per vault database. Memory grows with the library (about 46 MB for 30,000
+  vectors of 1,536 numbers). Changing the embedding model re-embeds everything. Costs are estimates
+  from prices the user enters.
+- **Date.** 9 October 2026.
