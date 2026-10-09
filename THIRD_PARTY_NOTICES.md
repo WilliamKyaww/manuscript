@@ -28,9 +28,12 @@ This file lists third-party code, algorithms or text that has been **adapted int
     (`suggest_questions`);
   - `packages/core/src/graph/vocabulary.ts` — the edge confidence rubric (`EXTRACTED`, `INFERRED`,
     `AMBIGUOUS`; `USER` added), from Graphify's `docs/how-it-works.md`.
+- Adapted (Phase 10, from release 0.9.75):
+  - `packages/core/src/ai/untrusted.ts` — untrusted-source wrapping and chat-template sentinel
+    neutralisation with a zero-width space, from `graphify/llm.py` (`_EXTRACTION_SYSTEM`,
+    `_neutralise_injection_sentinels`), with this application's tag names and sentinel list.
 - Still planned, each to be listed here with its file when implemented:
-  - entity de-duplication guards (`dedup.py`) — Phase 11;
-  - untrusted-source wrapping and sentinel neutralisation (`llm.py`) — Phase 10.
+  - entity de-duplication guards (`dedup.py`) — Phase 11.
 
   Adapted modules carry a header comment naming the Graphify source file and licence, and state that
   they were modified (translated to TypeScript and changed for this application).
