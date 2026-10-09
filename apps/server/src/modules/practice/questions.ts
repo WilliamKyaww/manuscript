@@ -121,7 +121,7 @@ export function createQuestionsService(deps: QuestionsDependencies) {
 
     get: (id: string): Question => one(requireRow(id)),
 
-    create(input: QuestionInput): Question {
+    create(input: QuestionInput, createdBy: QuestionRow['createdBy'] = 'user'): Question {
       const at = now();
       const row: QuestionRow = {
         id: ids('question'),
@@ -137,7 +137,7 @@ export function createQuestionsService(deps: QuestionsDependencies) {
         lectureId: input.lectureId ?? null,
         tags: [...new Set(input.tags ?? [])],
         locatorJson: input.locator ? JSON.stringify(input.locator) : null,
-        createdBy: 'user',
+        createdBy,
         createdAt: at,
         updatedAt: at,
       };

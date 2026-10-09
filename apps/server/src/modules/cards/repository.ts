@@ -194,6 +194,14 @@ export function createCardsRepository(db: SqlDatabase) {
       const raw = db.get<Raw>(`SELECT * FROM cards WHERE id = ? AND status <> 'deleted'`, [id]);
       return raw ? toCard(raw) : null;
     },
+    /** Cards awaiting review (generated drafts), oldest first. */
+    drafts: (): CardRow[] =>
+      db.all<Raw>(`SELECT * FROM cards WHERE status = 'draft' ORDER BY created_at, id`).map(toCard),
+    /** The text of every card in use, for duplicate checks. */
+    texts: (): { id: string; text: string }[] =>
+      db
+        .all<Raw>(`SELECT id, front, back FROM cards WHERE status IN ('active', 'suspended')`)
+        .map((raw) => ({ id: String(raw.id), text: `${String(raw.front)} ${String(raw.back)}` })),
     cardsByIds: (ids: readonly string[]): CardRow[] =>
       db
         .all<Raw>(

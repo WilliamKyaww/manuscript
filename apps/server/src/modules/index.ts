@@ -16,6 +16,15 @@ import { createReviewService, type ReviewService } from './cards/reviews';
 import { type CardsService, createCardsService } from './cards/service';
 import { createConceptsRepository } from './concepts/repository';
 import { type ConceptsService, createConceptsService } from './concepts/service';
+import { createDraftsService, type DraftsService } from './generation/drafts';
+import { createExtractor } from './generation/extract';
+import { createGradingService, type GradingService } from './generation/grading';
+import { createLinkSuggester, type LinkSuggester } from './generation/links';
+import { createMaterialService } from './generation/material';
+import { createProposalsService, type ProposalsService } from './generation/proposals';
+import { createProposalsRepository } from './generation/proposals-repository';
+import { createGenerationService, type GenerationService } from './generation/service';
+import { createTaskRunners } from './generation/tasks';
 import { createGraphRepository } from './graph/graph-repository';
 import { createRelationsService, type RelationsService } from './graph/relations';
 import { createRelationsRepository } from './graph/relations-repository';
@@ -64,6 +73,11 @@ export interface AppModules {
   readonly embeddings: EmbeddingService;
   readonly ask: AskService;
   readonly retrievalRepo: RetrievalRepository;
+  readonly generation: GenerationService;
+  readonly drafts: DraftsService;
+  readonly proposals: ProposalsService;
+  readonly grading: GradingService;
+  readonly links: LinkSuggester;
   start(options: { watch: boolean }): Promise<void>;
   close(): Promise<void>;
 }
@@ -262,6 +276,63 @@ export function createModules(ctx: AppContext): AppModules {
     logger: ctx.logger,
   });
 
+  // Generation and the Inbox (Phase 11): drafts and proposals enter only when accepted.
+  const proposalsRepo = createProposalsRepository(ctx.db);
+  const proposals = createProposalsService({
+    repo: proposalsRepo,
+    concepts,
+    relations,
+    notes: notes.notes,
+    learning: learningRepo,
+    events: ctx.events,
+    clock: ctx.clock,
+    ids: ctx.ids,
+    logger: ctx.logger,
+  });
+  const runners = createTaskRunners({
+    ai: aiCore,
+    cards,
+    questions,
+    concepts,
+    proposals,
+    learning: learningRepo,
+  });
+  const generation = createGenerationService({
+    ai: aiCore,
+    material: createMaterialService({
+      learning: learningRepo,
+      sources: sources.repo,
+      notes: notes.notes,
+    }),
+    jobs,
+    runners,
+    extractor: createExtractor({
+      ai: aiCore,
+      proposals,
+      relationsRepo,
+      runners,
+      logger: ctx.logger,
+    }),
+    events: ctx.events,
+    logger: ctx.logger,
+  });
+  const drafts = createDraftsService({
+    cards,
+    cardsRepo,
+    questions,
+    questionsRepo,
+    events: ctx.events,
+  });
+  const grading = createGradingService({ ai: aiCore, attemptsRepo, questions });
+  const links = createLinkSuggester({
+    notes: notes.notes,
+    notesRepo: notes.repo,
+    concepts,
+    embeddings,
+    proposals,
+    proposalsRepo,
+  });
+
   return {
     settings,
     notes,
@@ -284,6 +355,11 @@ export function createModules(ctx: AppContext): AppModules {
     embeddings,
     ask,
     retrievalRepo,
+    generation,
+    drafts,
+    proposals,
+    grading,
+    links,
     async start(options) {
       await notes.start(options);
       jobs.start();

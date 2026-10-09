@@ -112,6 +112,11 @@ export function createQuestionsRepository(db: SqlDatabase) {
         )
         .map(toQuestion);
     },
+    /** The stem of every question in use, for duplicate checks. */
+    stems: (): { id: string; text: string }[] =>
+      db
+        .all<Raw>(`SELECT id, stem FROM questions WHERE status IN ('active', 'suspended')`)
+        .map((raw) => ({ id: String(raw.id), text: String(raw.stem) })),
     get(id: string): QuestionRow | null {
       const raw = db.get<Raw>(`SELECT * FROM questions WHERE id = ? AND status != 'deleted'`, [id]);
       return raw ? toQuestion(raw) : null;

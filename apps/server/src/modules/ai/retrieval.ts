@@ -63,7 +63,7 @@ function truncate(text: string, chars: number): string {
 }
 
 /** A note's sections by heading (the opening before the first heading counts as one). */
-function sections(content: string, headings: readonly NoteHeading[]) {
+export function noteSections(content: string, headings: readonly NoteHeading[]) {
   const lines = content.split('\n');
   // Skip frontmatter: its fields are not prose to cite.
   let first = 0;
@@ -142,7 +142,7 @@ export function createRetrievalService(deps: RetrievalDependencies) {
     } catch {
       return null;
     }
-    const scored = sections(detail.content, detail.headings).map((section) => ({
+    const scored = noteSections(detail.content, detail.headings).map((section) => ({
       section,
       score: terms.filter((term) => section.text.toLowerCase().includes(term)).length,
     }));

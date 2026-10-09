@@ -88,10 +88,11 @@ export function createConceptsRepository(db: SqlDatabase) {
       );
     },
 
-    insert(row: Omit<ConceptRow, 'updatedAt'>): void {
+    insert(row: Omit<ConceptRow, 'updatedAt'>, createdBy: 'user' | 'ai' = 'user'): void {
       db.run(
-        `INSERT INTO concepts (id, name, name_key, slug, summary, note_id, importance, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO concepts (id, name, name_key, slug, summary, note_id, importance, created_by,
+           created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           row.id,
           row.name,
@@ -100,6 +101,7 @@ export function createConceptsRepository(db: SqlDatabase) {
           row.summary,
           row.noteId,
           row.importance,
+          createdBy,
           row.createdAt,
           row.createdAt,
         ],
