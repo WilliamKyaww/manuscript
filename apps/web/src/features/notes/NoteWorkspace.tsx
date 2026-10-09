@@ -20,6 +20,7 @@ import { cn } from '../../lib/cn';
 import { notifyError } from '../../lib/notify';
 import { conceptsQuery } from '../concepts/api';
 import { ConceptDialog } from '../concepts/ConceptDialog';
+import { LocalGraph } from '../graph/LocalGraph';
 import { useUploadAttachment } from './api';
 import { ConflictBanner } from './editor/ConflictBanner';
 import { MarkdownEditor, type MarkdownEditorHandle } from './editor/MarkdownEditor';
@@ -277,6 +278,7 @@ export function NoteWorkspace({
                 <TabsTrigger value="outline">Outline</TabsTrigger>
                 <TabsTrigger value="backlinks">Backlinks</TabsTrigger>
                 <TabsTrigger value="properties">Properties</TabsTrigger>
+                <TabsTrigger value="graph">Graph</TabsTrigger>
               </TabsList>
             }
           >
@@ -295,6 +297,11 @@ export function NoteWorkspace({
                   setLiveText(text);
                 }}
               />
+            </TabsContent>
+            <TabsContent value="graph">
+              <div className="p-3">
+                <LocalGraph node={note.id} height={240} />
+              </div>
             </TabsContent>
           </Pane>
         </Tabs>

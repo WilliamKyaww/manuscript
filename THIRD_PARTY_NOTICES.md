@@ -35,6 +35,19 @@ This file lists third-party code, algorithms or text that has been **adapted int
   Adapted modules carry a header comment naming the Graphify source file and licence, and state that
   they were modified (translated to TypeScript and changed for this application).
 
+## Sigma.js
+
+- Source: <https://github.com/jacomyal/sigma.js> (`sigma` 3.0.3)
+- Licence: MIT — Copyright (C) 2013-2025, Alexis Jacomy, Guillaume Plique, Benoît Simard
+- Adapted (Phase 7, task 7.08):
+  - `apps/web/src/features/graph/canvas/edge-programs.ts` — the rectangle edge program and its
+    shaders (`src/rendering/programs/edge-rectangle`), extended to measure each edge's length on
+    screen and leave gaps, for dashed and dotted edges;
+  - `apps/web/src/features/graph/canvas/hover.ts` — the hovered-node label (`drawDiscNodeHover`),
+    drawn on the theme's surface colour instead of white.
+- Both files carry a header naming the source and licence and stating that they were modified.
+  `sigma` itself is an ordinary dependency.
+
 ## PDF.js
 
 - Source: <https://github.com/mozilla/pdf.js> (`pdfjs-dist` 6.4.299, file `web/pdf_viewer.css`)

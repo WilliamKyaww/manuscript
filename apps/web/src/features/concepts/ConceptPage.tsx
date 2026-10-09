@@ -13,6 +13,8 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/States';
 import { ApiError } from '../../lib/api/client';
 import { useApi } from '../../lib/api/context';
 import { notifyError } from '../../lib/notify';
+import { LocalGraph } from '../graph/LocalGraph';
+import { RelationsSection } from '../graph/RelationsSection';
 import { viewerSearchFor } from '../library/links';
 import { treeQuery } from '../notes/api';
 import { MarkdownPreview } from '../notes/preview/MarkdownPreview';
@@ -138,6 +140,15 @@ export function ConceptPage() {
           )}
         </div>
       </Card>
+
+      <RelationsSection conceptId={data.id} />
+
+      <StickySection
+        title="Connections"
+        description="Everything one or two steps away: relations, notes, sources and the course."
+      >
+        <LocalGraph node={data.id} />
+      </StickySection>
 
       <StickySection
         title="Notes linking here"

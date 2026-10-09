@@ -7,7 +7,7 @@ import { readPreference, writePreference } from '../../lib/storage';
  */
 
 export type EditorMode = 'edit' | 'split' | 'preview';
-export type SidePanel = 'outline' | 'backlinks' | 'properties';
+export type SidePanel = 'outline' | 'backlinks' | 'properties' | 'graph';
 
 const KEYS = {
   expanded: 'skb.notes.expanded',
