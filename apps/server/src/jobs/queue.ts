@@ -47,7 +47,10 @@ export interface EnqueueOptions {
   subject?: string;
   maxAttempts?: number;
   delayMs?: number;
-  /** Reuse a job of the same kind and subject that is still waiting, instead of adding another. */
+  /**
+   * Reuse a job of the same kind and subject that is still waiting, instead of adding another; a
+   * shorter delay brings the waiting job forward.
+   */
   coalesce?: boolean;
 }
 
@@ -249,7 +252,12 @@ export function createJobQueue(deps: JobQueueDependencies): JobQueue {
     enqueue(kind, payload, options = {}) {
       if (options.coalesce && options.subject) {
         const waiting = repo.queuedFor(kind, options.subject);
-        if (waiting) return toJobSummary(waiting);
+        if (waiting) {
+          // Asked to run sooner than it waits (a rebuild after an edit): it runs sooner.
+          repo.bringForward(waiting.id, later(options.delayMs ?? 0), now());
+          if (started && !closed) setImmediate(pump);
+          return toJobSummary(repo.byId(waiting.id) ?? waiting);
+        }
       }
       const row = repo.insert({
         id: ids('job'),

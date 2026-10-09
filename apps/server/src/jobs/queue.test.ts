@@ -159,6 +159,26 @@ describe('job queue', () => {
     expect(other.id).not.toBe(first.id);
   });
 
+  it('brings a coalesced job forward when asked to run it sooner', async () => {
+    const ran: number[] = [];
+    queue.register(handler(async ({ payload }) => void ran.push(payload.value)));
+    const later = queue.enqueue(
+      'test.job',
+      { value: 1 },
+      { subject: 's', coalesce: true, delayMs: 30_000 },
+    );
+    expect(await queue.runDue()).toBe(0);
+    const now = queue.enqueue('test.job', { value: 1 }, { subject: 's', coalesce: true });
+    expect(now.id).toBe(later.id);
+    expect(await queue.runDue()).toBe(1);
+    expect(ran).toEqual([1]);
+    // A request for later never delays a job already due sooner.
+    queue.enqueue('test.job', { value: 2 }, { subject: 't', coalesce: true });
+    queue.enqueue('test.job', { value: 2 }, { subject: 't', coalesce: true, delayMs: 60_000 });
+    expect(await queue.runDue()).toBe(1);
+    expect(ran).toEqual([1, 2]);
+  });
+
   it('stops jobs that exceed their time limit', async () => {
     queue.register(
       handler(
