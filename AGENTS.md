@@ -65,6 +65,7 @@ All verified on 4 October 2026 (Phase 1):
 | `npm run test:e2e` | Build, then Playwright end-to-end tests (Chromium; `npx playwright install chromium` once) |
 | `npm run verify` | typecheck → lint → test → build → smoke — **run before every commit** |
 | `npm run test:perf` | Generates 10,000 notes (and a library of 10,000 PDF pages) and checks the performance budgets (`architecture.md` §14); run before a gate that touches indexing or search |
+| `npm run test:perf:mastery` | Generates a year of learning (1,000 concepts, 5,000 reviewed cards, 20,000 answers) and times the mastery pass (budget 500 ms); run before a gate that touches mastery |
 | `run-web.bat` | One-click Windows launcher for daily use (`SKB_NO_BROWSER=1` to suppress the browser) |
 
 ### Environment pitfalls (seen in the Claude Code / VS Code environment)
@@ -74,7 +75,7 @@ All verified on 4 October 2026 (Phase 1):
 - `NoDefaultCurrentDirectoryInExePath=1` stops `cmd.exe` finding `run-web.bat` by a relative name; call
   batch files by their full path in automation (double-clicking in Explorer is unaffected).
 - Another local project may already use Vite's default port 5173 — this project's dev server uses 5317.
-  E2E ports: 4399 for the shared Playwright server, 4398 and 4397 for the tests that restart a server
+  E2E ports: 4399 for the shared Playwright server, 4398, 4397 and 4396 for the tests that run a server
   of their own (`e2e/server.ts`).
 - axe (`@axe-core/playwright`) only checks colour contrast for elements inside the viewport, and page
   bodies scroll internally: grow the viewport to the page height first (`seriousViolations` and

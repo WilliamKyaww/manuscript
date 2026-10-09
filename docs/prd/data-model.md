@@ -304,27 +304,45 @@ relearning steps, longest interval, fuzz). Days run from 04:00 to 04:00 local ti
 
 ### 5.7 Questions and quizzes
 
-**questions** `id` · `kind` (`mcq` | `multi` | `true_false` | `short` | `numeric` | `explain` | `code`
-| `derivation`) · `stem` (Markdown + KaTeX) · `options_json` · `answer_json` · `rubric` ·
-`explanation` · `difficulty` (1–5) · `status` · `locator_json` · `created_by` · `created_at` —
+Canonical (migration `0009`, ADR-0032).
+
+**questions** `id` (`qst_…`) · `kind` (`mcq` | `multi` | `true_false` | `numeric` | `short` |
+`explain` | `derivation` | `code`) · `stem` (Markdown + KaTeX) · `answer_json` (the key, options
+with per-option explanations included — `@skb/core` `QuestionAnswerSchema`; its kind is the
+question's) · `rubric` · `explanation` · `hint` · `difficulty` (1–5) · `status` (`draft` |
+`active` | `suspended` | `deleted`; deleted softly, answers keep pointing at it) · `module_id` ·
+`lecture_id` · `tags_json` · `locator_json` · `created_by` · `created_at` · `updated_at` —
 **question_concepts** `question_id` · `concept_id`
 
-**quizzes** `id` · `title` · `kind` (`practice` | `mock_exam` | `adaptive`) · `config_json` (scope,
-counts, time limit) · `created_at` — **quiz_items** `quiz_id` · `question_id` · `ordinal`
+**quizzes** `id` (`quiz_…`) · `title` · `kind` (`practice` | `mock_exam` | `adaptive`) ·
+`config_json` (scope, count, kinds, difficulty, time limit, rehearsed assessment; for a Learn session
+the concepts with their priority and stage when it began) · `module_id` · `assessment_id` ·
+`created_at` · `deleted_at` (soft) — **quiz_items** `quiz_id` · `ordinal` · `question_id` (the
+questions chosen; for a Learn session, the questions it may ask)
 
-**quiz_attempts** `id` · `quiz_id` · `started_at` · `finished_at` · `score` · `session_id`
+**quiz_attempts** `id` (`att_…`) · `quiz_id` · `started_at` · `deadline` (start + time limit) ·
+`finished_at` · `score` (mean of scored answers) · `draft_json` (a mock exam's unsubmitted
+responses; not evidence) · `session_id`
 
-**answers** (append-only) `id` · `attempt_id` · `question_id`† · `response_json` · `score` (0–1) ·
-`graded_by` (`auto` | `self` | `ai`) · `feedback` · `confidence` (1–3, optional) · `assisted` (bool) ·
+**answers** (append-only: a trigger refuses deletes and every update except giving a pending answer
+its score, once) `id` (`ans_…`) · `attempt_id` · `question_id`† · `concept_id` (the concept a
+Learn session asked it for; no foreign key, concepts can be deleted) · `response_json` (null: left
+blank in a mock exam) · `score` (0–1; null while waiting for a self-grade) · `graded_by` (`auto` |
+`self` | `ai`) · `graded_at` · `feedback` · `confidence` (1–3, optional) · `assisted` (bool) ·
 `duration_ms` · `answered_at`†
 
 ### 5.8 Study activity, mastery and planning
 
 **study_sessions** (migration `0008`) `id` (`ses_…`) · `kind` (`review` | `practice` | `quiz` | `tutor` |
-`reading`) · `set_id` · `module_id` · `started_at` · `ended_at` · `stats_json` (a review session's summary)
+`reading`) · `set_id` · `module_id` · `started_at` · `ended_at` · `stats_json` (a review session's summary;
+for quizzes and Learn, answered, correct and score). Quiz attempts open a `quiz` session, Learn a
+`practice` one.
 
-**mastery_cache** (derived) `entity_type` · `entity_id` · `score` · `stage` · `confidence` ·
-`components_json` · `computed_at` — recomputed after relevant events; never edited directly.
+**mastery_cache** (derived, migration `0009`) `entity_type` (`concept` | `topic` | `module` |
+`course`) · `entity_id` (`all` for the course) · `score` · `stage` · `confidence` · `components_json`
+(for concepts with signals and priority) · `computed_at` — replaced as a whole whenever mastery is
+recomputed (after a review, answer or link change, or when a quarter of an hour old); never edited
+directly.
 
 **study_plans** `id` · `title` · `start_date` · `end_date` · `params_json` · `generated_by` ·
 `created_at` — **plan_items** `id` · `plan_id` · `date`† · `kind` (`review` | `practice` | `learn` |

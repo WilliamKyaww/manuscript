@@ -536,3 +536,38 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   references stay valid; purging is for Phase 16's data tools. Exporting reviews to Anki is not
   possible in its plain-text format (cards travel; schedules do not).
 - **Date.** 9 October 2026.
+
+## ADR-0032 — Mastery is recomputed from evidence in one pass; answers are written once
+
+- **Context.** Phase 9 adds questions, quizzes, mock exams, adaptive Learn sessions and the mastery
+  model (learning-system.md §7, ADR-0021). Mastery must be reproducible by hand from the components
+  shown, never set directly, and cheap enough to stay current; answers are the evidence, and open
+  answers are graded by the student after they are given. A Learn session chooses each question from
+  the answers so far, and mastery moves while it runs.
+- **Options.** For mastery: (a) store a running score per concept, updated on each event; (b)
+  recompute every concept from cards and answers whenever something changed, keeping the result in a
+  derived cache. For answers: (i) mutable rows (edit a score, re-answer in place); (ii) append-only rows
+  where a pending answer may be given its score once. For Learn: (x) keep the session's state on the
+  server; (y) fix its concepts (priority, stage) and questions at the start and rebuild its state from
+  its answers.
+- **Decision.** (b), (ii) and (y). The mastery service computes every active concept's components,
+  signals and priority in one pass (reviewed faces' retrievability, the last 20 scored answers,
+  lapses, schedules a fortnight ago, upcoming assessments) and replaces `mastery_cache`; it is stale
+  after a review, an answer, a card or question change, any `data.changed` or `vault.changed` event,
+  or after 15 minutes. Answer ages are whole review days. Answers are append-only by trigger, except
+  that a pending answer (score NULL) is given its score once. A Learn session is an `adaptive` quiz
+  whose config holds its concepts' priority and stage at the start and whose items are the questions
+  it may ask; `@skb/core` `practiceSession` replays its answers with a seed from the quiz id. Learn
+  asks questions only; cards stay in Review (backlog B-LE-24).
+- **Reason.** Recomputing is simple, always consistent with the evidence (no drift, nothing to
+  repair), and fast at this scale; whole days make every weight exact on screen. Writing answers once
+  keeps the history trustworthy and usable for later calibration and AI grading. A replayed session
+  needs no extra state, survives reloads and restarts, and is deterministic to test; fixing its
+  inputs keeps the path stable while mastery changes underneath. Keeping cards out of Learn avoids
+  answering a card outside FSRS's schedule (early-review inflation) until a rule for it is designed.
+- **Consequences.** Each read after a change recomputes everything (milliseconds for hundreds of
+  concepts; measure before thousands). The cache table is rebuilt wholesale and can be dropped at any
+  time. Mock-exam drafts live on the attempt, outside the evidence. Concepts with only cards cannot
+  be practised in Learn yet; their "Practise" action explains why. Priority defaults (no credits, no
+  dated assessment, no module) are documented in learning-system.md §9.
+- **Date.** 9 October 2026.

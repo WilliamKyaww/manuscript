@@ -66,6 +66,15 @@ _Last reviewed: 9 October 2026 (Phase 8)._
 | B-LE-21 | Estimate review time from the student's own durations | Today's estimate uses fixed times per card | Phase 8 |
 | B-LE-22 | Import Anki packages (.apkg) with their scheduling history | Moving an existing Anki collection over without starting again | Phase 8 |
 | B-LE-23 | Warn when many reviews are due (e.g. more than 200) and suggest catching up gradually | After a break, a huge queue discourages | Phase 8 |
+| B-LE-24 | Cards in Learn sessions as the recall rung: due faces rated through FSRS, others as practice that does not reschedule | Concepts with only cards cannot be practised in Learn; the ladder names cards as recall (ADR-0032) | Phase 9 |
+| B-LE-25 | Questions from a selection in notes and sources, with a locator back to the line, page or slide | Cards have this; questions are written from scratch (the API already takes a locator) | Phase 9 |
+| B-LE-26 | Calibration: how sure you said you were against how often you were right | Answers record confidence; nothing shows it yet (learning-system.md §11) | Phase 9 |
+| B-LE-27 | Import and export the question bank (Markdown, CSV), beyond one quiz's Markdown | Moving questions between vaults or from other tools | Phase 9 |
+| B-LE-28 | Pause a mock exam | The clock runs from the start; a reload keeps the draft, not the time | Phase 9 |
+| B-LE-29 | A question's history: every answer with its date, score and grade | The bank shows only the count and the last score | Phase 9 |
+| B-LE-30 | Mastery trend per concept and module over time | Progress shows today's figures only; the cache keeps no history | Phase 9 |
+| B-LE-31 | Learn scoped by lectures and tags, as quizzes are | Learn takes a module, topics or concepts | Phase 9 |
+| B-LE-32 | Revisit the Forgotten rule (e.g. a fall of 0.15 in recall, or predicted recall at the exam) | With FSRS-6's flat curve it fires only for faces with stability under about two days | Phase 9 |
 
 ## AI (AI)
 

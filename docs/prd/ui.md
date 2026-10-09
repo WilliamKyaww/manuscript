@@ -63,8 +63,8 @@ Sidebar (collapsible, `Ctrl+\`):
 | Concepts | `/concepts` | Concept index and concept pages |
 | Graph | `/graph` | Global knowledge graph |
 | Review | `/review` | Flashcard sets, due queue, review sessions |
-| Practice | `/practice` | Quizzes, mock exams, adaptive sessions, results |
-| Progress | `/progress` | Mastery, retention, coverage, calibration |
+| Practice | `/practice` | Learn, quizzes and mock exams; `/practice/questions` the question bank; `/practice/attempts/$id` taking a quiz or exam and its results; `/practice/learn/$id` a Learn session |
+| Progress | `/progress` | Readiness, mastery and coverage by course, module, topic and concept with their components; weak areas (Phase 9); retention and calibration (Phase 14) |
 | Plan | `/plan` | Study plan calendar/timeline |
 | Chat | `/chat` | Agent and tutor threads |
 | Inbox | `/inbox` | AI proposals awaiting decision (concepts, links, cards, edits) |
@@ -84,7 +84,9 @@ card (`Ctrl+Shift+A`), chat side panel (`Ctrl+J`) available on every page with t
 | Concept page | Summary, backing note, sources with locators, relations by type, cards/questions, mastery components |
 | Graph | Canvas, legend, filters, side panel, search-to-focus, mastery overlay toggle |
 | Review session | Card, reveal, ratings with intervals, progress, undo, edit, source |
-| Quiz / practice | Question, answer input by kind, feedback, explanation, source link, progress |
+| Quiz / practice | Question, answer input by kind, hint (marks the answer helped), confidence, feedback with per-option reasons, explanation, source link, self-grading (missed / partly / got it), progress |
+| Mock exam | Every question on one page, clock, draft saved as you go, submit (automatic when time runs out), results with self-grading |
+| Learn session | The question the engine chose, its rung (recognise / recall / explain), feedback, concepts in the session with their level and whether secure |
 | Chat | Threads list, messages with citations, activity rows, approval cards, result cards, mode + scope pickers, `@mentions` |
 | Inbox | Grouped proposals with evidence, accept/edit/reject, bulk actions |
 | Settings | Sections listed in §3 |
