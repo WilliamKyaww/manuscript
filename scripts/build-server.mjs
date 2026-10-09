@@ -1,5 +1,6 @@
 // Bundles the server into a single ESM file and assembles a self-contained dist folder:
 //   apps/server/dist/server.mjs   (+ source map)
+//   apps/server/dist/mcp.mjs      (the stdio MCP bridge for clients that start a command)
 //   apps/server/dist/migrations/  (SQL migrations read at runtime)
 //   apps/server/dist/web/         (built SPA, if apps/web/dist exists)
 import { cpSync, existsSync, readFileSync, rmSync } from 'node:fs';
@@ -16,8 +17,12 @@ const { version } = JSON.parse(readFileSync(path.join(root, 'package.json'), 'ut
 rmSync(outDir, { recursive: true, force: true });
 
 await build({
-  entryPoints: [path.join(serverDir, 'src', 'main.ts')],
-  outfile: path.join(outDir, 'server.mjs'),
+  entryPoints: {
+    server: path.join(serverDir, 'src', 'main.ts'),
+    mcp: path.join(serverDir, 'src', 'mcp-stdio.ts'),
+  },
+  outdir: outDir,
+  outExtension: { '.js': '.mjs' },
   bundle: true,
   platform: 'node',
   format: 'esm',

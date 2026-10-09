@@ -11,6 +11,7 @@ import { useApi } from '../../lib/api/context';
 import { cn } from '../../lib/cn';
 import { formatUptime } from '../../lib/format';
 import { healthQuery } from '../../lib/queries';
+import { AgentSettingsSection } from '../agent/AgentSettingsSection';
 import { AiSettingsSection } from '../ai/settings/AiSettingsSection';
 import { NotesSettingsSection } from './NotesSettingsSection';
 import { ReviewSettingsSection } from './ReviewSettingsSection';
@@ -40,12 +41,13 @@ export function SettingsPage() {
   return (
     <Page
       title="Settings"
-      description="Vault, notes, review, AI, appearance and information about this installation."
+      description="Vault, notes, review, AI, assistant actions, appearance and information about this installation."
     >
       <VaultSection />
       <NotesSettingsSection />
       <ReviewSettingsSection />
       <AiSettingsSection />
+      <AgentSettingsSection />
       <AppearanceSection />
       <KeyboardSection />
       <AboutSection />
