@@ -130,6 +130,22 @@ describe('generation', () => {
     expect(again.cards[0]?.duplicateOf?.id).toBe(drafts.cards[0]?.id);
   });
 
+  it('leaves no empty card set behind when nothing usable comes back', async () => {
+    const { api, sourceId } = await setUp();
+    const job = await generate(api, {
+      task: 'cards',
+      scope: {
+        kind: 'selection',
+        text: 'Too short.',
+        title: 'Consensus',
+        locator: { kind: 'slides', sourceId, slide: 1, part: 'body' },
+      },
+    });
+    expect(job?.message).toMatch(/^0 cards/u);
+    const sets = await api.get<{ sets: unknown[] }>('/api/card-sets');
+    expect(sets.sets).toEqual([]);
+  });
+
   it('makes questions with valid answer keys, in the lecture’s module', async () => {
     const { api, sourceId } = await setUp();
     const module = await api.post<{ id: string }>('/api/modules', {

@@ -129,7 +129,8 @@ export function createTaskRunners(deps: TaskDependencies) {
     });
     context.progress(0.8, 'Checking the cards');
     const known = knownConcepts();
-    const setId = cardSet(context);
+    // Made with the first card kept, so a run that keeps none leaves no empty set behind.
+    let setId: Id<'cardSet'> | null = null;
     const kept: { id: string; text: string }[] = [];
     let skipped = 0;
     for (const card of object.cards.slice(0, request.count)) {
@@ -144,6 +145,7 @@ export function createTaskRunners(deps: TaskDependencies) {
         skipped += 1;
         continue;
       }
+      setId ??= cardSet(context);
       const created = cards.createCard(
         {
           setId,
