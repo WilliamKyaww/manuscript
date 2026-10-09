@@ -77,6 +77,10 @@ All verified on 4 October 2026 (Phase 1):
 - axe (`@axe-core/playwright`) only checks colour contrast for elements inside the viewport, and page
   bodies scroll internally: grow the viewport to the page height first (`seriousViolations` and
   `fitViewportToContent` in `e2e/axe.ts`), otherwise below-the-fold content is silently skipped.
+- jsdom has no WebGL: the graph canvas (Sigma) is loaded lazily and only where WebGL exists, so
+  component tests see its fallback text and test the lists beside it. Headless Chromium draws it
+  with software WebGL — correct but slower than a real GPU, so judge frame rates by hand. Wait for
+  `[data-graph-canvas][data-layout="done"]` before clicking nodes in E2E tests.
 - Never test against the user's real vault (`Documents\Manuscript`, or the pre-rename
   `Documents\Study Knowledge Base`) or data directory (`%APPDATA%\Manuscript` or
   `%APPDATA%\StudyKnowledgeBase`): set `SKB_VAULT` and `SKB_DATA_DIR` to temporary folders.

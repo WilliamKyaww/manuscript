@@ -6,7 +6,7 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 9 October 2026 (end of Phase 6)._
+_Last updated: 9 October 2026 (end of Phase 7)._
 
 ## Platform and architecture
 
@@ -68,10 +68,10 @@ _Last updated: 9 October 2026 (end of Phase 6)._
 |---|---|---|---|
 | F-GR-01 | Concepts with aliases, memberships and concept pages (mentions in notes, passages in sources) | Complete | 6 |
 | F-GR-02 | Wikilinks resolving to concepts after notes; create a concept from an unresolved link | Complete | 6 |
-| F-GR-03 | Typed relations with confidence, status and evidence | Planned | 7 |
-| F-GR-04 | Graph analytics (communities, core concepts, bridges, gaps, paths) | Planned | 7 |
-| F-GR-05 | Study prompts generated from graph analytics | Planned | 7 |
-| F-GR-06 | WebGL global graph and local graph panels | Planned | 7 |
+| F-GR-03 | Typed relations with confidence, status and evidence (added, accepted and rejected on concept pages) | Complete | 7 |
+| F-GR-04 | Graph analytics (stable communities, core concepts, bridges, gaps, surprising connections, paths) | Complete | 7 |
+| F-GR-05 | Study prompts generated from graph analytics, with actions | Complete | 7 |
+| F-GR-06 | WebGL global graph (clusters, filters, search-to-focus, paths) and local graph panels on concept and note pages | Complete | 7 |
 | F-GR-07 | AI concept/relation extraction with de-duplication | Planned | 11 |
 | F-GR-08 | Mastery overlay on the graph | Planned | 15 |
 
