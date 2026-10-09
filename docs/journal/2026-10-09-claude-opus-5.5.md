@@ -343,3 +343,94 @@ Phase 10 — AI foundation: providers, retrieval and grounded Q&A (`phase/10-ai-
 ### Next steps
 
 Phase 11 — AI generation and knowledge extraction (`phase/11-ai-generation`).
+
+## Session 14 — Phase 11: AI generation and knowledge extraction
+
+- **Date:** Friday 9 October 2026
+- **Time:** about 18:30–00:30
+- **Agent model:** Claude Opus 5.5 (`claude-opus-5-5`)
+- **Phase:** 11 — AI generation and knowledge extraction (branch `phase/11-ai-generation`)
+- **Work performed:** built and verified Phase 11 end to end and merged it.
+
+### What was done
+
+1. **Core.** Output schemas for generated cards, questions, notes, concepts with relations, grades
+   and page readings (every field required, as providers' structured outputs demand); conversions
+   and checks (answer keys, unusable cards, word-overlap similarity, a duplicate finder that only
+   compares texts sharing a rare word, output-token estimates); concept de-duplication adapted
+   from Graphify's `dedup.py` (attributed); contracts for generation, drafts, proposals, AI grades
+   and link suggestions; a `transcription` role and per-kind `autoAccept` preferences, both
+   defaulted so existing `ai.json` files load; answers carry `feedback`; an `inbox` data event;
+   recordings and images as source kinds with signature checks and an image locator; search kinds
+   `recording` and `image`.
+2. **Server (11.01–11.11).** Migration `0011` (`proposals`; `ai_usage` rebuilt with its rows for the
+   new role). Material by scope (source or page/slide range, lecture, note, selection) keyed
+   S1…Sn; estimates; `Output.object` with one repair attempt; an `ai.generate` job (no automatic
+   retries; a result message kept after success — the queue gained `result()`). Cards and questions
+   as drafts with their passage as locator; notes as proposals with citations turned into wikilinks
+   and concepts linked; concepts and relations as proposals with evidence, merges for near names,
+   the fast model's judgement for doubtful ones. The proposals service accepts per kind (relations
+   accept their proposed concepts; concepts are `covered_in` their lecture or source; links re-find
+   their words if the note changed) and rejects with cascades. AI grade suggestions; link
+   suggestions for a note. An `AiReader` in `modules/ai` transcribes recordings and reads images and
+   scanned pages for the source parsers. The mock model answers every task deterministically.
+3. **Web (11.12–11.14).** The generation dialogue (lecture pages, the source viewer with ranges or the
+   selection, notes) with a debounced estimate, progress and a notification leading to the Inbox;
+   the Inbox (`/inbox`) with drafts and suggestions, batch decisions, inline edits and "merge into";
+   the sidebar count; AI grade suggestions in answer feedback; link suggestions in the note editor;
+   auto-accept and the transcription role in Settings → AI; the recording player beside its
+   transcript (`?t=`), the image viewer and "Read again".
+4. **Verification and docs (11.15, 11.16).** `e2e/generation.spec.ts` (own server on port 4394 with
+   the mock model: flashcards from slides 1–3 → three drafts with slide links → two accepted, one
+   rejected → studied, with axe); `docs/guide/generation.md`; ADR-0034 (and the missing index rows
+   for ADR-0032 and 0033); agent-system, knowledge-system and data-model PRDs; THIRD_PARTY_NOTICES;
+   backlog B-AI-13…19; AGENTS (port 4394, the mock's scripted media).
+
+### Important decisions
+
+- **Drafts and proposals** (ADR-0034): cards and questions wait as `draft` rows (reviewed with their
+  own editors); everything else waits in one `proposals` table. Rejected proposals are kept so they
+  are not made again. Accepted relations become `USER`/`accepted` as data-model.md §5.5 says.
+- **Generation is never retried by the job queue** — each attempt costs money; a malformed reply
+  gets one repair attempt instead. Its output allowance follows the request, not the "longest
+  answer" setting meant for questions.
+- **Notes cite with wikilinks** to the vault files, so they stay portable.
+- **AI reading goes through an injected reader**, keeping the AI SDK inside `modules/ai`; without AI,
+  recordings and images still import (viewable) with "Read again". Recordings are sent whole, up to
+  25 MB (chunking would need ffmpeg: B-AI-13).
+- **`structured.ts` moved into `modules/ai`** once the reader needed it.
+
+### Problems encountered
+
+- **Shell escapes, twice more**: a heredoc turned `\\r` and `\\x03` in generated code into real
+  characters. The mock transcript regex was repaired with a spliced file, the detection edits redone
+  with the editor tools; a script with curly quotes was written to a file instead of a heredoc.
+- **A component test hung** on an ambiguous query ("Paxos protocol" appears in a concept and in a
+  relation): a probe test showed the page rendered correctly; the query was made specific.
+- **Fixtures lagged the contracts**: the AI and practice component tests needed the new
+  `transcription` role status and answer `feedback`.
+- **Two web tests timed out in the first `verify`** (on battery, all three projects in parallel).
+  Timed alone they take 1.6–1.9 s, and the same at the Phase 10 merge (1.8–2.0 s, measured in a
+  temporary worktree sharing `node_modules` through junctions, removed with `cmd /c rmdir` first):
+  load, not a regression. The re-run passed. The provider test that types a long key got a 15 s
+  timeout of its own.
+- A generation that kept no cards left an empty card set behind; the set is now made with the first
+  card kept (test first).
+
+### Tests run
+
+| Command | Result |
+|---|---|
+| `npm run verify` | **Pass** — type-check, Biome, **636** Vitest tests (core 180, server 309, web 147), build, smoke |
+| `npm run test:e2e` | **Pass** — **82/82** (new: flashcards from the first three slides with the test model) |
+| `npm run test:perf` (on battery) | Four budgets over — search with PDF pages p95 282 ms, graph first build 5,150 ms, graph after an edit 1,705 ms, retrieval p95 1,264 ms — and the Phase 10 merge, run straight after under the same conditions, misses the same four by the same margins (267 ms, 4,767 ms, 1,766 ms, 1,544 ms); untouched work slowed alike (full index 39 s against 11.8 s on mains). Throttling, not a regression; to be re-run on mains power |
+
+### Unresolved issues
+
+- Recordings over 25 MB need chunking (B-AI-13); long material is cut at the budget (B-AI-14).
+- Merging two existing concepts and tag suggestions wait for Phase 15.
+- The performance budgets were measured only on battery this time (no regression against Phase 10 under the same conditions); re-run `npm run test:perf` on mains power.
+
+### Next steps
+
+Phase 12 — agent runtime, tool layer and MCP (`phase/12-agent-tools`).
