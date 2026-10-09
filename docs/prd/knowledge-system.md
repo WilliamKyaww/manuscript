@@ -125,30 +125,49 @@ selection actions arrive with cards and questions (Phases 8–9), derived-artefa
 
 | Nodes | Edges |
 |---|---|
-| concepts, notes, sources, lectures, modules (+ topics optional) | stored `relations` (typed, with confidence and status); computed: wikilinks (`mentioned_in`/`links_to`), course membership (`part_of`), provenance (`derived_from`, `covered_in`) |
+| concepts, notes, sources, lectures, modules (+ topics on request) | stored `relations` (typed, with confidence and status); computed: wikilinks (`links_to` between notes and to sources, concept `mentioned_in` note), backing notes (`covered_in`), course membership (`part_of`) — data-model.md §5.5 |
 
-Assembled server-side into a graphology graph (cached; invalidated by a version counter bumped on
-relevant writes). Payloads are filtered server-side (scope, node types, relation types, confidence
-threshold, status).
+Assembled server-side with graphology (`modules/graph/assemble.ts`) and cached in memory. A version
+counter, bumped by `vault.changed`, `sources.changed` and `data.changed` events, marks the cache
+stale; the next request rebuilds the graph, and keeps the previous analytics if a fingerprint of the
+nodes, names, modules and edges is unchanged (a note saved without changing a link). Payloads are
+filtered server-side: node types (topics off by default), module, relation, confidence, status
+(accepted by default; rejected never), unlinked notes and sources (off), and a size limit (5,000)
+that keeps concepts and the course first, then the best-connected rest. Node ids are entity ids
+(`con_…`, `note_…`, …), so every node has a page.
 
 ### 7.2 Analytics (adapted from Graphify, attributed)
 
+Run on the "semantic" view: knowledge nodes (not modules, lectures or topics) joined by accepted,
+non-structural edges, undirected, parallel edges merged. Deterministic: seeded random sources, id
+order everywhere.
+
 | Analysis | Algorithm | Study use |
 |---|---|---|
-| Communities | Louvain; split communities > 25 % of nodes; re-split low cohesion; stable IDs | Topic clusters; colour legend |
-| Core concepts | Degree (excluding structural hubs) | "Know these first" |
-| Bridges | Betweenness (sampled when large) | Integrative/essay questions |
-| Isolated concepts | Degree ≤ 1 | Gaps — link or study |
-| Surprising connections | Cross-module, cross-community, inferred, peripheral→hub signals | "Connections you might have missed" |
-| Paths | Shortest path between two nodes | "How does X relate to Y?" |
-| Ambiguous / inferred edges | Confidence filter | Verification tasks in the Inbox |
+| Communities | Louvain (seeded); split communities > 25 % of connected nodes (min 10); re-split cohesion < 0.05 at ≥ 50 members; lone nodes in none; ids stable across rebuilds (greedy overlap with the previous assignment, persisted in `graph_communities`); named after the best-connected concept | Topic clusters; colour legend |
+| Core concepts | Distinct semantic neighbours | "Know these first" |
+| Bridges | Brandes betweenness, exact up to 1,000 nodes, else 200 seeded sample sources | Integrative/essay questions |
+| Gaps | Concepts with ≤ 1 semantic neighbour | Link, write or relate |
+| Surprising connections | Confidence (ambiguous 3, inferred 2, else 1) + different modules 2 + different communities 1 + peripheral (≤ 2) → hub (≥ 5) 1; kept only with a structural signal; one per pair of communities | "Connections you might have missed" |
+| Paths | Breadth-first shortest path; "semantic" paths never pass through modules, lectures or topics | "How does X relate to Y?" |
+| Inferred / ambiguous relations | Confidence filter | "Check" prompts that lead to the concept's relations |
+
+Study prompts (`analytics/prompts.ts`): check, gap, bridge, connection, cluster (cohesion < 0.15 at
+≥ 5 members); at most three of each, twelve in all, interleaved; each carries actions (open the page,
+review relations, show in the graph). A report can be narrowed to one module.
 
 ### 7.3 Graph UI
 
-Global graph (Sigma.js/WebGL) with ForceAtlas2 layout in a worker, community legend with toggles,
-search-to-focus, side panel (node details, neighbours by relation), filters (types, modules, confidence,
-status), style by confidence (solid = USER/EXTRACTED, dashed = INFERRED, dotted = AMBIGUOUS); local graph
-on every note/concept page (depth 1–2); mastery overlay colouring concepts by stage (Phase 15).
+Global graph (`/graph`, Sigma.js 3 on graphology) with ForceAtlas2 (LinLog) in a module worker,
+communities starting apart on a sunflower spiral; a cluster legend with toggles (or colour by type);
+search-to-focus; a side panel with the node's connections grouped by relation, **Open**, and a
+path finder, or — with nothing selected — the report's prompts, core concepts and gaps; filters for
+types, module, proposed relations and unlinked items. Edge style by confidence: solid =
+USER/EXTRACTED, dashed = INFERRED, dotted = AMBIGUOUS (a patterned edge program adapted from
+Sigma's). Local graphs (depth 1–2, never expanding through course structure) on concept pages and in
+the Notes **Graph** tab, with the direct connections listed beneath. Relations are added, accepted
+and rejected on concept pages. Without WebGL the canvas is replaced by an explanation; the lists
+carry the same information. Mastery overlay colouring concepts by stage: Phase 15.
 
 ## 8. AI-assisted organisation (Phases 11 and 15)
 

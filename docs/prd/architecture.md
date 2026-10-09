@@ -88,8 +88,8 @@ apps/server/src/
 │   ├── search/          FTS5 indexing and query, hybrid fusion (later)
 │   ├── sources/         library, ingestion pipeline, parsers/, chunking
 │   ├── learning/        courses, modules, lectures, topics, assessments
-│   ├── concepts/        concepts, aliases, relations, proposals
-│   ├── graph/           graph assembly (graphology), analytics, queries
+│   ├── concepts/        concepts and aliases (proposals in Phase 11)
+│   ├── graph/           relations, graph assembly (graphology), analytics, queries
 │   ├── cards/           flashcards, FSRS scheduling, review logs, export
 │   ├── quizzes/         questions, quizzes, attempts, grading
 │   ├── mastery/         evidence aggregation, roll-ups, weak areas
