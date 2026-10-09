@@ -36,10 +36,12 @@ scope.onmessage = (event) => {
       graph.updateEdgeAttribute(source, target, 'weight', (value = 0) => value + weight);
     else graph.addEdge(source, target, { weight });
   }
+  // LinLog pulls clusters apart, which is what the graph is for; the inferred settings keep a
+  // strong, gentle gravity so unconnected parts stay in view.
   const settings = {
     ...forceAtlas2.inferSettings(graph),
+    linLogMode: true,
     barnesHutOptimize: graph.order > 500,
-    gravity: 1,
   };
   for (let done = 0; done < iterations; done += BATCH) {
     const batch = Math.min(BATCH, iterations - done);

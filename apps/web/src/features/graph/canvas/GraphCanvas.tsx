@@ -6,7 +6,7 @@ import { EdgeRectangleProgram } from 'sigma/rendering';
 import type { EdgeDisplayData, NodeDisplayData } from 'sigma/types';
 import { createPatternedEdgeProgram, DASHED, DOTTED } from './edge-programs';
 import { createHoverDrawer } from './hover';
-import { hashUnit, initialPosition, iterationsFor, runLayout } from './layout';
+import { hashUnit, initialPosition, iterationsFor, placeCommunities, runLayout } from './layout';
 import { type GraphColours, readGraphColours, watchTheme } from './theme';
 
 /**
@@ -226,6 +226,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
       neighbourOf.set(edge.source, edge.target);
       neighbourOf.set(edge.target, edge.source);
     }
+    const placement = placeCommunities(payload.communities);
     const added: string[] = [];
     for (const node of payload.nodes) {
       const attributes = {
@@ -243,7 +244,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
         positions.get(node.id) ??
         (near
           ? { x: near.x + hashUnit(node.id) * 2 - 1, y: near.y + hashUnit(`${node.id}:y`) * 2 - 1 }
-          : initialPosition(node.id, node.community));
+          : initialPosition(node.id, node.community, placement));
       model.addNode(node.id, { ...attributes, ...start });
       added.push(node.id);
     }
