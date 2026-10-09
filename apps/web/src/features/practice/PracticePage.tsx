@@ -59,6 +59,7 @@ function QuizRow({ quiz, onDelete }: { quiz: QuizSummary; onDelete(): void }) {
         <p className="font-medium">{quiz.title}</p>
         <p className="text-xs text-muted">
           {formatCount(quiz.questionCount, 'question')}
+          {` · made ${new Date(quiz.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`}
           {quiz.config.timeLimitMinutes ? ` · ${quiz.config.timeLimitMinutes} min` : ''}
           {' · '}
           {quiz.attempts === 0

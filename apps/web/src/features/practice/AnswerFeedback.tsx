@@ -172,7 +172,12 @@ export function AnswerFeedback({
       {mine !== null && (
         <div>
           <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">Your answer</p>
-          <p className="whitespace-pre-wrap rounded-md bg-surface-sunken px-3 py-2 font-mono text-sm">
+          <p
+            className={cn(
+              'whitespace-pre-wrap rounded-md bg-surface-sunken px-3 py-2 text-sm',
+              question.kind === 'code' && 'font-mono',
+            )}
+          >
             {mine}
           </p>
         </div>

@@ -76,7 +76,7 @@ export function computeSnapshot(
   const evidenceOf = (rows: readonly AnswerEvidenceRow[]): AnswerEvidence[] =>
     rows.map((row) => ({
       score: row.score,
-      ageDays: Math.max(0, (at - Date.parse(row.answeredAt)) / DAY_MS),
+      ageDays: ageInDays(row.answeredAt, now),
       assisted: row.assisted,
     }));
 
@@ -190,8 +190,18 @@ export function computeSnapshot(
   };
 }
 
+/**
+ * An answer's age in whole days (days run from 04:00, as for reviews): 0 today, 1 yesterday. Whole
+ * days keep the weights checkable by hand — an answer today weighs 1, one three weeks old ½.
+ */
+export function ageInDays(answeredAt: string, now: Date): number {
+  const days =
+    (reviewDay(now).start.getTime() - reviewDay(new Date(answeredAt)).start.getTime()) / DAY_MS;
+  return Math.max(0, Math.round(days));
+}
+
 /** The weight an answer carries today (shown beside it in the explanation). */
 export function answerWeight(answeredAt: string, assisted: boolean, now: Date): number {
-  const ageDays = Math.max(0, (now.getTime() - Date.parse(answeredAt)) / DAY_MS);
+  const ageDays = ageInDays(answeredAt, now);
   return 0.5 ** (ageDays / MASTERY.halfLifeDays) * (assisted ? MASTERY.assistedFactor : 1);
 }
