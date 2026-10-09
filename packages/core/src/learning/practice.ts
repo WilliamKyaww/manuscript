@@ -121,6 +121,27 @@ export function practiceSession(
   return { progress, steps, next: chooseNext(concepts, itemsByConcept, progress, steps, seed) };
 }
 
+/** A seed from text (FNV-1a), e.g. from an id, so a quiz built from it is reproducible. */
+export function seedOf(text: string): number {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash;
+}
+
+/** Fisher–Yates with a seeded generator. */
+export function seededShuffle<T>(items: readonly T[], seed: number): T[] {
+  const next = random(seed);
+  const result = [...items];
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const other = Math.floor(next() * (index + 1));
+    [result[index], result[other]] = [result[other] as T, result[index] as T];
+  }
+  return result;
+}
+
 /** A small deterministic generator (mulberry32), so a rebuilt session chooses the same way. */
 function random(seed: number): () => number {
   let state = seed >>> 0;

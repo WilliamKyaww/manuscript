@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { idSchema } from '../ids';
+import { MASTERY_STAGES } from '../learning/mastery';
 import { LADDER } from '../learning/practice';
 import {
   QUESTION_KINDS,
@@ -129,6 +130,21 @@ export const QuizConfigSchema = z.object({
   timeLimitMinutes: z.number().int().min(1).max(600).optional(),
   /** Mock exams only: the assessment the exam rehearses. */
   assessmentId: AssessmentIdSchema.optional(),
+  /**
+   * Learn sessions only: the concepts as they stood when the session began (priority and stage), so
+   * the session replays the same way however mastery moves while it runs.
+   */
+  learn: z
+    .object({
+      concepts: z.array(
+        z.object({
+          id: idSchema('concept'),
+          priority: z.number(),
+          stage: z.enum(MASTERY_STAGES),
+        }),
+      ),
+    })
+    .optional(),
 });
 export type QuizConfig = z.infer<typeof QuizConfigSchema>;
 
