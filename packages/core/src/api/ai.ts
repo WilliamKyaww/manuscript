@@ -143,7 +143,8 @@ export const MODEL_SUGGESTIONS: Record<ProviderKind, Record<AiRole, string[]>> =
     chat: [],
     fast: [],
     embedding: ['text-embedding-3-small', 'text-embedding-3-large'],
-    transcription: ['gpt-4o-transcribe', 'gpt-4o-mini-transcribe', 'whisper-1'],
+    // whisper-1 gives timed segments (exact times in the transcript); the others text only.
+    transcription: ['whisper-1', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe'],
   },
   'openai-compatible': {
     chat: ['llama3.2', 'qwen2.5', 'deepseek-chat'],

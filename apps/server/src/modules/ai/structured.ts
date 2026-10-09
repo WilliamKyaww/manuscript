@@ -7,9 +7,9 @@ import {
   type UserContent,
 } from 'ai';
 import type { z } from 'zod';
-import { describeProviderError } from '../ai/errors';
-import type { AiService } from '../ai/service';
-import type { Totals } from '../ai/usage';
+import { describeProviderError } from './errors';
+import type { AiService } from './service';
+import type { Totals } from './usage';
 
 /**
  * Structured generation (task 11.02): asks a model for an object matching a Zod schema. A reply

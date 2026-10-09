@@ -148,16 +148,6 @@ export function gradePrompt(): string {
   ].join('\n');
 }
 
-export function readingPrompt(kind: 'image' | 'scan'): string {
-  return [
-    'Task: read',
-    kind === 'image'
-      ? 'Transcribe the text in this image exactly, keeping its structure as Markdown. If it is a diagram or picture, describe what it shows in a short paragraph instead, naming every label.'
-      : 'Transcribe the text on each page of this scanned document exactly, keeping its structure as Markdown. Describe any figure in a sentence in [brackets].',
-    'Return one entry per page, numbered from 1.',
-  ].join('\n');
-}
-
 /** The user message: the passages, then what to write. */
 export function materialMessage(passages: readonly MaterialPassage[], ask: string): string {
   const material = passages

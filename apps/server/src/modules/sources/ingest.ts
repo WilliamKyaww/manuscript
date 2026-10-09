@@ -1,5 +1,5 @@
 import { readFileSync, statSync } from 'node:fs';
-import { chunkDocument, DETECT_HEAD_BYTES, detectSourceKind } from '@skb/core';
+import { chunkDocument, DETECT_HEAD_BYTES, detectSourceKind, type SourceParser } from '@skb/core';
 import { z } from 'zod';
 import { type JobHandler, type JobQueue, PermanentJobError } from '../../jobs/queue';
 import type { Clock } from '../../shared/clock';
@@ -23,6 +23,8 @@ export interface IngestDependencies {
   repo: SourcesRepository;
   vault: Vault;
   clock: Clock;
+  /** The parsers to use (those that read recordings, images and scans with AI, in the app). */
+  parsers?: readonly SourceParser[];
   /** Announces that sources changed (SSE `sources.changed`). */
   notify(ids: string[]): void;
 }
@@ -36,6 +38,7 @@ export function createIngestHandler({
   repo,
   vault,
   clock,
+  parsers,
   notify,
 }: IngestDependencies): JobHandler<z.infer<typeof PayloadSchema>> {
   return {
@@ -47,7 +50,7 @@ export function createIngestHandler({
     async run({ payload, signal, progress }) {
       const source = repo.byId(payload.sourceId);
       if (!source || source.deletedAt) return;
-      const parser = parserFor(source.kind);
+      const parser = parserFor(source.kind, parsers);
       if (!parser) throw new PermanentJobError(`${source.kind} sources cannot be read yet.`);
 
       let bytes: Uint8Array;

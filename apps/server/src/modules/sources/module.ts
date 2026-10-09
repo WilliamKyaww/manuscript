@@ -1,3 +1,4 @@
+import type { SourceParser } from '@skb/core';
 import type { AppContext } from '../../context';
 import type { JobQueue } from '../../jobs/queue';
 import type { NotesModule } from '../notes/module';
@@ -20,10 +21,19 @@ export function createSourcesModule(
   ctx: AppContext,
   notes: NotesModule,
   queue: JobQueue,
+  parsers?: readonly SourceParser[],
 ): SourcesModule {
   const repo = createSourcesRepository(ctx.db);
   const notify = (ids: string[]) => ctx.events.publish({ type: 'sources.changed', ids });
-  queue.register(createIngestHandler({ repo, vault: ctx.vault, clock: ctx.clock, notify }));
+  queue.register(
+    createIngestHandler({
+      repo,
+      vault: ctx.vault,
+      clock: ctx.clock,
+      ...(parsers ? { parsers } : {}),
+      notify,
+    }),
+  );
   const reconciler = createSourceReconciler({
     repo,
     notesRepo: notes.repo,

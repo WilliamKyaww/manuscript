@@ -7,10 +7,10 @@ import {
   ValidationError,
 } from '@skb/core';
 import type { AiService } from '../ai/service';
+import { generateStructured } from '../ai/structured';
 import type { AttemptsRepository } from '../practice/attempts-repository';
 import type { QuestionsService } from '../practice/questions';
 import { gradePrompt } from './prompts';
-import { generateStructured } from './structured';
 
 /**
  * AI grading (task 11.08): for an answer waiting for its grade (an explanation, derivation, code

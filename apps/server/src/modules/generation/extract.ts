@@ -9,12 +9,12 @@ import {
 import { z } from 'zod';
 import type { Logger } from '../../shared/logger';
 import type { AiService } from '../ai/service';
+import { generateStructured } from '../ai/structured';
 import type { RelationsRepository } from '../graph/relations-repository';
 import type { MaterialPassage } from './material';
 import { askFor, conceptsPrompt, materialMessage, samePrompt } from './prompts';
 import type { ProposalsService } from './proposals';
 import type { Evidence, Origin, ProposalRow } from './proposals-repository';
-import { generateStructured } from './structured';
 import { passageFor, type TaskContext, type TaskOutcome, type TaskRunners } from './tasks';
 
 /**

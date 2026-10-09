@@ -20,7 +20,16 @@ export type FilterKey = 'tag' | 'type' | 'folder' | 'module' | 'kind';
 export const FILTER_KEYS: readonly FilterKey[] = ['tag', 'type', 'folder', 'module', 'kind'];
 
 /** Values of the `kind:` filter after normalisation. */
-export const RESULT_KINDS = ['note', 'source', 'pdf', 'slides', 'docx', 'text'] as const;
+export const RESULT_KINDS = [
+  'note',
+  'source',
+  'pdf',
+  'slides',
+  'docx',
+  'text',
+  'recording',
+  'image',
+] as const;
 export type ResultKind = (typeof RESULT_KINDS)[number];
 
 /** Spellings people are likely to type for each kind. */
@@ -41,6 +50,12 @@ const KIND_SYNONYMS: Readonly<Record<string, ResultKind>> = {
   txt: 'text',
   md: 'text',
   markdown: 'text',
+  recording: 'recording',
+  recordings: 'recording',
+  audio: 'recording',
+  video: 'recording',
+  image: 'image',
+  images: 'image',
 };
 
 export interface SearchFilters {

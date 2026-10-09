@@ -2,7 +2,7 @@ import type { LanguageModelV4 } from '@ai-sdk/provider';
 import { AiError, DEFAULT_AI_PREFERENCES } from '@skb/core';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import type { AiService } from '../ai/service';
+import type { AiService } from './service';
 import { generateStructured } from './structured';
 
 /** A model that replies with the given texts in turn, remembering what it was sent. */

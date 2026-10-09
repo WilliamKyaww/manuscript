@@ -16,6 +16,7 @@ import {
 import { applyTextEdits, formatWikilink, normaliseKey } from '@skb/core/markdown';
 import type { z } from 'zod';
 import type { AiService } from '../ai/service';
+import { generateStructured } from '../ai/structured';
 import type { CardsService } from '../cards/service';
 import type { ConceptsService } from '../concepts/service';
 import type { LearningRepository } from '../learning/repository';
@@ -24,7 +25,6 @@ import type { QuestionsService } from '../practice/questions';
 import type { Material, MaterialPassage } from './material';
 import { askFor, cardsPrompt, materialMessage, notePrompt, questionsPrompt } from './prompts';
 import type { ProposalsService } from './proposals';
-import { generateStructured } from './structured';
 
 /**
  * Generating cards, questions and notes (tasks 11.03–11.05). What the model returns is checked

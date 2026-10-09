@@ -5,6 +5,7 @@ import { notifyingAfter } from '../shared/change-events';
 import { type AskService, createAskService } from './ai/ask';
 import { createEmbeddingsRepository } from './ai/embeddings/repository';
 import { createEmbeddingService, type EmbeddingService } from './ai/embeddings/service';
+import { createAiReader } from './ai/reader';
 import { createModelRegistry } from './ai/registry';
 import { createRetrievalService } from './ai/retrieval';
 import { createRetrievalRepository, type RetrievalRepository } from './ai/retrieval-repository';
@@ -45,6 +46,7 @@ import { createSearchRepository } from './search/repository';
 import { createSearchService, type SearchService } from './search/service';
 import { createSettingsService, type SettingsService } from './settings/service';
 import { createSourcesModule, type SourcesModule } from './sources/module';
+import { createParsers } from './sources/parsers/index';
 
 /**
  * Domain modules built from the application context (architecture.md §3). Routes receive these;
@@ -109,7 +111,8 @@ export function createModules(ctx: AppContext): AppModules {
     logger: ctx.logger,
     events: ctx.events,
   });
-  const sources = createSourcesModule(ctx, notes, jobs);
+  // Recordings, images and scanned pages are read by the AI layer when it is set up.
+  const sources = createSourcesModule(ctx, notes, jobs, createParsers(createAiReader(aiCore)));
   const search = createSearchService({
     repo: createSearchRepository(ctx.db),
     indexer: notes.indexer,

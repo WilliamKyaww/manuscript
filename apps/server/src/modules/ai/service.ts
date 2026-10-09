@@ -16,7 +16,7 @@ import {
   type UsageReport,
   ValidationError,
 } from '@skb/core';
-import { embed, generateText, experimental_transcribe as transcribe } from 'ai';
+import { embed, generateText, transcribe } from 'ai';
 import type { z } from 'zod';
 import type { Clock } from '../../shared/clock';
 import type { Logger } from '../../shared/logger';

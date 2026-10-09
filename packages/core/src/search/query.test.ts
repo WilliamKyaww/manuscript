@@ -31,8 +31,10 @@ describe('parseSearchQuery', () => {
   });
 
   it('normalises kind filters and keeps unknown kinds so that they match nothing', () => {
-    const parsed = parseSearchQuery('raft kind:Slides kind:PPTX kind:notes -kind:md kind:video');
-    expect(parsed.filters.kind).toEqual(['slides', 'note', 'video']);
+    const parsed = parseSearchQuery(
+      'raft kind:Slides kind:PPTX kind:notes -kind:md kind:video kind:spreadsheet',
+    );
+    expect(parsed.filters.kind).toEqual(['slides', 'note', 'recording', 'spreadsheet']);
     expect(parsed.excludedFilters.kind).toEqual(['text']);
     expect(withFilter('raft', 'kind', 'pdf')).toBe('raft kind:pdf');
     expect(withoutFilter('raft kind:pdf', 'kind', 'pdf')).toBe('raft');
