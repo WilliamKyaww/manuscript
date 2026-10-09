@@ -24,7 +24,7 @@ function openAt(vaultRoot: string) {
   const db = openDatabase(vault.paths.database);
   migrate(db, loadMigrations(), clock);
   const ctx = {
-    config: { mode: 'test' },
+    config: { mode: 'test', dataDir: path.join(vaultRoot, '..', 'data'), aiMock: false },
     logger: silentLogger,
     clock,
     ids,

@@ -46,6 +46,7 @@ export function createTestContext(options: TestContextOptions = {}): TestContext
     openBrowser: false,
     devWebOrigin: null,
     authTokenOverride: TEST_TOKEN,
+    aiMock: false,
     ...options.config,
   };
   const ids = createIdFactory({ now: () => clock.now().getTime() });

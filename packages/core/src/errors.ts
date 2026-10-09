@@ -72,6 +72,18 @@ export class UnavailableError extends AppError {
   }
 }
 
+export type AiErrorReason = 'not_configured' | 'budget' | 'provider';
+
+/** The AI layer cannot answer: not set up, over the monthly budget, or the provider failed. */
+export class AiError extends AppError {
+  readonly reason: AiErrorReason;
+  constructor(reason: AiErrorReason, message: string, options: AppErrorOptions = {}) {
+    const status = reason === 'not_configured' ? 409 : reason === 'budget' ? 429 : 502;
+    super(`ai_${reason}`, status, message, options);
+    this.reason = reason;
+  }
+}
+
 /** Converts Zod issues into our flat issue format. */
 export function issuesFromZod(error: z.ZodError): ErrorIssue[] {
   return error.issues.map((issue) => ({

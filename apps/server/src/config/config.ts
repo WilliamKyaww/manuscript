@@ -24,6 +24,8 @@ export interface ServerConfig {
   devWebOrigin: string | null;
   /** Fixed auth token for automation (`SKB_AUTH_TOKEN`); null means use the persisted token. */
   authTokenOverride: string | null;
+  /** `SKB_AI_PROVIDER=mock`: a built-in test model answers every AI role (tests and demos). */
+  aiMock: boolean;
 }
 
 export interface ConfigInput {
@@ -90,6 +92,7 @@ export function resolveConfig(input: ConfigInput): ServerConfig {
   const devWebOrigin =
     mode === 'development' ? parseOrigin(env.SKB_DEV_WEB_ORIGIN ?? DEFAULT_DEV_WEB_ORIGIN) : null;
   const authTokenOverride = parseTokenOverride(env.SKB_AUTH_TOKEN);
+  const aiMock = parseAiProvider(env.SKB_AI_PROVIDER);
 
   if (isInside(dataDir, vaultPath)) {
     throw new ConfigError(
@@ -108,6 +111,7 @@ export function resolveConfig(input: ConfigInput): ServerConfig {
     openBrowser: values.open ?? false,
     devWebOrigin,
     authTokenOverride,
+    aiMock,
   };
 }
 
@@ -196,6 +200,12 @@ function parseTokenOverride(value: string | undefined): string | null {
     throw new ConfigError(`SKB_AUTH_TOKEN must be at least ${MIN_TOKEN_LENGTH} characters long.`);
   }
   return value;
+}
+
+function parseAiProvider(value: string | undefined): boolean {
+  if (value === undefined || value === '') return false;
+  if (value === 'mock') return true;
+  throw new ConfigError(`SKB_AI_PROVIDER only accepts "mock" (providers are set in Settings).`);
 }
 
 function isInside(child: string, parent: string): boolean {

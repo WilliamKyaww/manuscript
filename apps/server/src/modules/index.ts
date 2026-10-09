@@ -2,6 +2,10 @@ import type { AppContext } from '../context';
 import { createJobQueue, type JobQueue } from '../jobs/queue';
 import { createJobsRepository } from '../jobs/repository';
 import { notifyingAfter } from '../shared/change-events';
+import { createModelRegistry } from './ai/registry';
+import { type AiService, createAiService } from './ai/service';
+import { createFileConfigStore, createFileSecretStore } from './ai/store';
+import { createUsageRepository } from './ai/usage';
 import { createCardsRepository } from './cards/repository';
 import { createReviewService, type ReviewService } from './cards/reviews';
 import { type CardsService, createCardsService } from './cards/service';
@@ -51,12 +55,30 @@ export interface AppModules {
   readonly attempts: AttemptsService;
   readonly learn: LearnService;
   readonly mastery: MasteryService;
+  readonly ai: AiService;
   start(options: { watch: boolean }): Promise<void>;
   close(): Promise<void>;
 }
 
 export function createModules(ctx: AppContext): AppModules {
   const settings = createSettingsService(ctx);
+  // AI configuration and keys live in the per-user data directory, never in the vault.
+  const aiStore = createFileConfigStore(ctx.config.dataDir, ctx.logger);
+  const aiSecrets = createFileSecretStore(ctx.config.dataDir, ctx.logger);
+  const ai = createAiService({
+    store: aiStore,
+    secrets: aiSecrets,
+    registry: createModelRegistry({
+      store: aiStore,
+      secrets: aiSecrets,
+      mock: ctx.config.aiMock,
+    }),
+    usage: createUsageRepository(ctx.db),
+    mock: ctx.config.aiMock,
+    clock: ctx.clock,
+    ids: ctx.ids,
+    logger: ctx.logger,
+  });
   const notes = createNotesModule(ctx, settings);
   const jobs = createJobQueue({
     repo: createJobsRepository(ctx.db),
@@ -223,6 +245,7 @@ export function createModules(ctx: AppContext): AppModules {
     attempts,
     learn,
     mastery,
+    ai,
     async start(options) {
       await notes.start(options);
       jobs.start();

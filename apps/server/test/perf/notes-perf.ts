@@ -201,6 +201,7 @@ function open(root: string, dataDir: string) {
     openBrowser: false,
     devWebOrigin: null,
     authTokenOverride: 'perf',
+    aiMock: false,
   };
   const ctx: AppContext = {
     config,

@@ -29,6 +29,7 @@ function config(overrides: Partial<ServerConfig> = {}): ServerConfig {
     openBrowser: false,
     devWebOrigin: null,
     authTokenOverride: TOKEN,
+    aiMock: false,
     ...overrides,
   };
 }
