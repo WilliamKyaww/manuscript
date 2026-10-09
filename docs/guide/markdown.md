@@ -69,6 +69,7 @@ one with the **shortest path**. Such links are reported as ambiguous.
 selecting it in the preview offers **Create note** (next to the current one) or **Create concept**.
 
 **Backlinks** (the Backlinks tab) list every note that links here, with the line containing the link.
+The **Graph** tab shows the note's neighbourhood in the [knowledge graph](./graph.md#6-local-graphs).
 **Unlinked mentions** finds the note's name, title or aliases written as plain words in other notes
 (never inside code, comments or existing links); **Link** turns a mention into `[[…]]`.
 
