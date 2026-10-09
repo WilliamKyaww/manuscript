@@ -13,6 +13,7 @@ import { ErrorState, LoadingState } from '../../components/States';
 import { useApi } from '../../lib/api/context';
 import { formatCount } from '../../lib/format';
 import { notifyError } from '../../lib/notify';
+import type { AcceptedGrade } from './AnswerFeedback';
 import { learnQuery, practiceKeys, useAttemptCalls } from './api';
 import { QuestionCard, type Submission } from './QuestionCard';
 
@@ -104,9 +105,9 @@ export function LearnPage() {
       );
       await refresh();
     });
-  const grade = (answer: AnswerResult, score: SelfScore) =>
+  const grade = (answer: AnswerResult, score: SelfScore, accepted?: AcceptedGrade) =>
     void run(async () => {
-      setShown(await calls.grade(answer.id, score));
+      setShown(await calls.grade(answer.id, score, accepted));
       await refresh();
     });
   const finish = () =>
@@ -171,7 +172,7 @@ export function LearnPage() {
                 result={result}
                 busy={busy}
                 onSubmit={submit}
-                onGrade={(score) => result && grade(result, score)}
+                onGrade={(score, accepted) => result && grade(result, score, accepted)}
                 onContinue={() => setShown(null)}
               />
             )}
@@ -200,7 +201,7 @@ function SessionQuestion({
   result: AnswerResult | null;
   busy: boolean;
   onSubmit(submission: Submission): void;
-  onGrade(score: SelfScore): void;
+  onGrade(score: SelfScore, accepted?: AcceptedGrade): void;
   onContinue(): void;
 }) {
   // An answer on screen shows its own question (from the result); otherwise the current one.

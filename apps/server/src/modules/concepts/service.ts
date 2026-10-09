@@ -159,22 +159,26 @@ export function createConceptsService(deps: ConceptsDependencies) {
 
     get: detail,
 
-    create(input: ConceptInput): ConceptSummary {
+    /** Creates a concept; `ai` when it comes from an accepted proposal. */
+    create(input: ConceptInput, createdBy: 'user' | 'ai' = 'user'): ConceptSummary {
       const name = input.name.trim();
       const id = ids('concept');
       repo.transaction(() => {
         const { nameKey, aliases } = claim(name, input.aliases ?? [], null);
         checkMemberships(input);
-        repo.insert({
-          id,
-          name,
-          nameKey,
-          slug: uniqueSlug(name, null),
-          summary: input.summary?.trim() ?? '',
-          noteId: backingNote(input.noteId),
-          importance: input.importance ?? 1,
-          createdAt: now(),
-        });
+        repo.insert(
+          {
+            id,
+            name,
+            nameKey,
+            slug: uniqueSlug(name, null),
+            summary: input.summary?.trim() ?? '',
+            noteId: backingNote(input.noteId),
+            importance: input.importance ?? 1,
+            createdAt: now(),
+          },
+          createdBy,
+        );
         repo.setAliases(id, aliases);
         repo.setModules(id, input.moduleIds ?? []);
         repo.setTopics(id, input.topicIds ?? []);

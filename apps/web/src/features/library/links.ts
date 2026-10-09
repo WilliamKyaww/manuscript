@@ -14,6 +14,8 @@ export interface ViewerSearch {
   notes?: boolean;
   /** Section ordinal (documents and text). */
   section?: number;
+  /** Seconds into a recording. */
+  t?: number;
 }
 
 const positive = (value: unknown): number | undefined => {
@@ -36,6 +38,8 @@ export function validateViewerSearch(search: Record<string, unknown>): ViewerSea
   )
     result.notes = true;
   if (Number.isInteger(section) && section >= 0) result.section = section;
+  const time = Number(search.t);
+  if (search.t !== undefined && Number.isFinite(time) && time >= 0) result.t = Math.floor(time);
   return result;
 }
 
@@ -47,6 +51,8 @@ export function viewerSearchFor(locator: Locator, sectionOrdinal: number): Viewe
       return locator.part === 'notes'
         ? { slide: locator.slide, notes: true }
         : { slide: locator.slide };
+    case 'media':
+      return { t: Math.floor(locator.startMs / 1000) };
     default:
       return { section: sectionOrdinal };
   }
@@ -68,6 +74,7 @@ export function locatorHref(locator: Locator): string {
     search.set('slide', String(locator.slide));
     if (locator.part === 'notes') search.set('notes', '1');
   }
+  if (locator.kind === 'media') search.set('t', String(Math.floor(locator.startMs / 1000)));
   const query = search.toString();
   return `/library/${sourceId}${query ? `?${query}` : ''}`;
 }

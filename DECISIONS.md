@@ -37,6 +37,9 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 | [0029](#adr-0029--course-structure-in-the-database-tied-to-files-by-module-code) | Course structure in the database, tied to files by module code | Accepted | 2026-10-08 |
 | [0030](#adr-0030--the-knowledge-graph-is-computed-only-relations-are-stored) | The knowledge graph is computed; only relations are stored | Accepted | 2026-10-09 |
 | [0031](#adr-0031--flashcards-are-scheduled-by-face-and-review-logs-are-never-changed) | Flashcards are scheduled by face, and review logs are never changed | Accepted | 2026-10-09 |
+| [0032](#adr-0032--mastery-is-recomputed-from-evidence-in-one-pass-answers-are-written-once) | Mastery is recomputed from evidence in one pass; answers are written once | Accepted | 2026-10-09 |
+| [0033](#adr-0033--ai-configuration-outside-the-vault-answers-streamed-as-json-lines-fusion-in-retrieval) | AI configuration outside the vault; answers streamed as JSON lines; fusion in retrieval | Accepted | 2026-10-09 |
+| [0034](#adr-0034--generated-material-waits-as-drafts-and-proposals-ai-reads-media-through-injected-readers) | Generated material waits as drafts and proposals; AI reads media through injected readers | Accepted | 2026-10-09 |
 
 ---
 
@@ -600,4 +603,54 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   there. Spend is counted per vault database. Memory grows with the library (about 46 MB for 30,000
   vectors of 1,536 numbers). Changing the embedding model re-embeds everything. Costs are estimates
   from prices the user enters.
+- **Date.** 9 October 2026.
+
+## ADR-0034 — Generated material waits as drafts and proposals; AI reads media through injected readers
+
+- **Context.** Phase 11 lets models generate cards, questions, notes, concepts and relations, grade
+  written answers, suggest links, transcribe recordings and read images and scans. The acceptance
+  criteria: every generated item has a valid locator; nothing becomes active without acceptance
+  unless auto-accept is on; duplicates are flagged. Generation costs money, models return malformed
+  output now and then, and the app must keep working without AI.
+- **Options.** Proposed concepts and relations as rows in `concepts` and `relations` with status
+  `proposed` (both tables have one), or one `proposals` table for the Inbox. Generated cards and
+  questions as proposals, or as rows with status `draft`. Structured output by tool calls, or by
+  the AI SDK's `Output.object` with a schema. Citations in generated notes as app addresses
+  (`/library/…`), or as wikilinks to the files in the vault. Recordings split with ffmpeg, or sent
+  whole. AI calls inside the source parsers, or behind an interface.
+- **Decision.**
+  - Cards and questions are saved as `draft` rows of their own tables (created by `ai`), so the
+    editors, locators and duplicate checks are the ordinary ones; drafts are never studied or
+    counted. Concepts, relations, merges (aliases), links and notes are rows of a new `proposals`
+    table (migration 0011) with a payload, evidence quotes with locators, an origin and a
+    normalised `dedupe_key`; rejected proposals are kept so they are not made again. Relation ends
+    may point at proposed concepts; accepting the relation accepts them, rejecting a concept
+    supersedes its relations. Accepted relations become `USER`/`accepted` (data-model.md §5.5),
+    keeping their evidence; accepted concepts are recorded as `covered_in` their lecture or source.
+    The `proposed` statuses of `concepts` and `relations` stay unused for now.
+  - Generation asks for a Zod schema through `Output.object` with every field required (providers'
+    structured outputs reject optional fields), gives one repair attempt with the validation error,
+    records every attempt's usage and is never retried by the job queue. Its output allowance is
+    sized from the request, not from the "longest answer" setting for questions.
+  - Concept names are de-duplicated with Graphify's guards (adapted, Apache-2.0): exact or plural
+    forms are the same concept, a Jaro–Winkler score of 0.94 or more proposes a merge, 0.88–0.94 is
+    judged by the fast model when one is set up and otherwise shown beside its likely match.
+  - Notes cite with wikilinks to the vault files (`[[Sources/…/L3.pdf#page=4|p. 4]]`) and list their
+    sources in frontmatter, so they stay readable in any Markdown editor.
+  - Recordings, images and scanned pages are read by an `AiReader` (in `modules/ai`) that the
+    source parsers receive; transcription is a fourth model role, priced per audio minute. Without
+    AI the file is imported with a warning and can be read again later. Recordings are sent whole,
+    up to the provider's 25 MB limit.
+  - Auto-accept is a per-kind preference in `ai.json`, off by default.
+- **Reason.** One Inbox table keeps every suggestion reviewable in one place without polluting the
+  concept namespace (names and aliases are unique) or the graph before the student decides; cards
+  and questions are better reviewed with the editors they will live in. Rejections must stick, or
+  regenerating would nag. A repair attempt fixes most malformed replies at little cost, while
+  automatic retries could multiply spend. Wikilinks keep generated notes portable (principle 1).
+  Injected readers keep the AI SDK confined (principle 5) and the parsers testable; sending
+  recordings whole avoids a native ffmpeg dependency for now.
+- **Consequences.** Two places hold pending AI output (draft rows and proposals), both listed by the
+  Inbox. A merge proposal adds a name but does not yet merge two existing concepts (Phase 15).
+  Recordings over 25 MB cannot be transcribed until chunking arrives (backlog). Images and scans need
+  a chat model that accepts images and PDFs. Costs remain estimates from user-entered prices.
 - **Date.** 9 October 2026.

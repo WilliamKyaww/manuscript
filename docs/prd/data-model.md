@@ -351,14 +351,20 @@ directly.
 
 ### 5.9 AI, agent and operations
 
-**ai_usage** (canonical, migration `0010`) `id` (`use_…`) · `role` (`chat` | `fast` | `embedding`) · `provider` (the
-provider id in the settings, or `mock`) · `model` · `purpose` (`ask`, `embed`, `connection test`) · `input_tokens` ·
+**ai_usage** (canonical, migration `0010`; rebuilt in `0011` to allow `transcription`) `id` (`use_…`) · `role`
+(`chat` | `fast` | `embedding` | `transcription`) · `provider` (the
+provider id in the settings, or `mock`) · `model` · `purpose` (`ask`, `embed`, `generate cards`, `transcribe a
+recording`, `connection test`…) · `input_tokens` ·
 `output_tokens` · `cost_estimate` (US dollars at the role's prices when the request was made) · `created_at`. Providers,
 preferences and keys are not in the vault: `ai.json` and `secrets.json` in the data directory (ADR-0033).
 
-**proposals** `id` · `kind` (`concept` | `relation` | `card` | `question` | `link` | `note_edit`) ·
-`payload_json` · `origin_json` (job/thread, source locators) · `status` (`pending` | `accepted` |
-`rejected` | `superseded`) · `created_at` · `decided_at`
+**proposals** (canonical, migration `0011`, ADR-0034) `id` (`prp_…`) · `kind` (`concept` | `relation` | `alias`
+| `link` | `note`) · `status` (`pending` | `accepted` | `rejected` | `superseded`) · `payload_json` (@skb/core
+`ProposalPayloadSchema`; a relation's ends are existing concepts or other proposals) · `evidence_json` (`[{ quote,
+title, label, locator }]`) · `origin_json` (label, job, module, lecture, where concepts are covered) · `dedupe_key`
+(what is proposed, normalised: a pending key is not proposed twice, a rejected one never again) · `result_json`
+(`{ kind, id }` of what accepting made) · `created_at` · `decided_at`. Generated cards and questions are not
+proposals: they are `cards` and `questions` rows with status `draft` and `created_by = 'ai'` until accepted.
 
 **chat_threads** `id` · `title` · `mode` · `scope_json` · `created_at` · `updated_at` —
 **chat_messages** `id` · `thread_id`† · `role` · `parts_json` (AI SDK UI message parts) · `created_at`

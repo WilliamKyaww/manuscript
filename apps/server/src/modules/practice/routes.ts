@@ -91,7 +91,7 @@ export function registerPracticeRoutes(registry: ApiRegistry, services: Practice
   registerEndpoint(registry, finishAttemptEndpoint, ({ params }) => attempts.finish(params.id));
   registerEndpoint(registry, retakeAttemptEndpoint, ({ params }) => attempts.retake(params.id));
   registerEndpoint(registry, gradeAnswerEndpoint, ({ params, body }) =>
-    attempts.grade(params.id, body.score),
+    attempts.grade(params.id, body.score, body.gradedBy, body.feedback),
   );
 
   registerEndpoint(registry, startLearnEndpoint, ({ body }) =>

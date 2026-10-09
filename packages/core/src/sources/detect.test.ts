@@ -20,6 +20,40 @@ describe('detectSourceKind', () => {
     expect(detectSourceKind('C:\\x\\readme.txt', bytes('café'))).toMatchObject({ kind: 'text' });
   });
 
+  it('accepts recordings and images by their signatures, with their media types', () => {
+    const at = (offset: number, text: string) => {
+      const head = new Uint8Array(16);
+      head.set(bytes(text), offset);
+      return head;
+    };
+    expect(detectSourceKind('talk.mp3', bytes('ID3\u0004'))).toMatchObject({
+      kind: 'audio',
+      mediaType: 'audio/mpeg',
+    });
+    expect(detectSourceKind('talk.wav', at(0, 'RIFF....WAVEfmt '))).toMatchObject({
+      kind: 'audio',
+      mediaType: 'audio/wav',
+    });
+    expect(detectSourceKind('talk.m4a', at(4, 'ftypM4A '))).toMatchObject({ kind: 'audio' });
+    expect(detectSourceKind('lecture.mp4', at(4, 'ftypisom'))).toMatchObject({
+      kind: 'video',
+      mediaType: 'video/mp4',
+    });
+    expect(
+      detectSourceKind(
+        'board.png',
+        new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      ),
+    ).toMatchObject({ kind: 'image', mediaType: 'image/png' });
+    expect(detectSourceKind('board.jpg', new Uint8Array([0xff, 0xd8, 0xff, 0xe0]))).toMatchObject({
+      kind: 'image',
+      mediaType: 'image/jpeg',
+    });
+    // A text file called .mp3 is not a recording.
+    expect(detectSourceKind('fake.mp3', bytes('hello'))).toMatchObject({ ok: false });
+    expect(detectSourceKind('fake.png', bytes('GIF89a'))).toMatchObject({ ok: false });
+  });
+
   it('refuses mismatched contents, binaries and unknown formats', () => {
     expect(detectSourceKind('evil.pdf', zip)).toMatchObject({ ok: false });
     expect(detectSourceKind('evil.pptx', bytes('%PDF-1.7'))).toMatchObject({ ok: false });

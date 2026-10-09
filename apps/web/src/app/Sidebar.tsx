@@ -1,9 +1,12 @@
+import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { PanelLeftClose, PanelLeftOpen, Search, Sparkles } from 'lucide-react';
 import { IconButton } from '../components/IconButton';
 import { Kbd } from '../components/Kbd';
 import { Tooltip } from '../components/Tooltip';
 import { useAsk } from '../features/ai/ask-store';
+import { inboxCountsQuery } from '../features/inbox/api';
+import { useApi } from '../lib/api/context';
 import { cn } from '../lib/cn';
 import { isApplePlatform } from '../lib/platform';
 import { useLayoutStore } from './layout-store';
@@ -105,7 +108,8 @@ function SidebarLink({ section, collapsed }: { section: Section; collapsed: bool
       )}
     >
       <Icon aria-hidden="true" size={18} className="shrink-0" />
-      <span className={collapsed ? 'sr-only' : 'truncate'}>{section.label}</span>
+      <span className={collapsed ? 'sr-only' : 'min-w-0 flex-1 truncate'}>{section.label}</span>
+      {section.id === 'inbox' && <InboxCount collapsed={collapsed} />}
     </Link>
   );
   return collapsed ? (
@@ -114,6 +118,23 @@ function SidebarLink({ section, collapsed }: { section: Section; collapsed: bool
     </Tooltip>
   ) : (
     link
+  );
+}
+
+/** How many drafts and suggestions wait in the Inbox (nothing when none do). */
+function InboxCount({ collapsed }: { collapsed: boolean }) {
+  const api = useApi();
+  const counts = useQuery(inboxCountsQuery(api));
+  const total = (counts.data?.drafts ?? 0) + (counts.data?.proposals ?? 0);
+  if (total === 0) return null;
+  const text = total > 99 ? '99+' : String(total);
+  return collapsed ? (
+    <span className="sr-only">, {total} waiting</span>
+  ) : (
+    <span className="rounded-full bg-accent-subtle px-1.5 text-xs font-medium text-text tabular-nums">
+      <span aria-hidden="true">{text}</span>
+      <span className="sr-only">, {total} waiting</span>
+    </span>
   );
 }
 

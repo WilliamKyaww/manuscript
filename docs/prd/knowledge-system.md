@@ -94,8 +94,9 @@ re-processed (Graphify's cache lesson) and a parser upgrade can re-run selective
 | PPTX | 5 | one per slide (+ speaker notes part) | In-house zip/XML parser |
 | DOCX | 5 | headings | In-house `word/document.xml` reader → Markdown-style blocks (ADR-0019 "DOCX change") |
 | Web page (URL) | 5 (optional) | headings | http(s) only, size cap, timeout, no `file://` redirects |
-| Images | 11 | one segment | OCR or vision-model description |
-| Audio / video | 11 | timed segments | Transcription provider; timestamps become locators |
+| Images | 11 | one segment | Read or described by the chat model (image locator); imported unread without AI |
+| Audio / video | 11 | timed segments (about a minute each) | Transcription role (`whisper-1` gives timestamps; others are estimated); `media` locators; files up to 25 MB |
+| Scanned PDF pages | 11 | one per page | Pages without a text layer read by the chat model from the PDF (≤ 100 pages, 30 MB) |
 | Graphify `graph.json` | 16 | — | Imports a code graph for coursework repos |
 
 ### 5.3 Source viewer
@@ -115,7 +116,9 @@ selection actions arrive with cards and questions (Phases 8–9), derived-artefa
   accepted via the Inbox.
 - **De-duplication** (Phase 11): exact/alias match → normalised match → fuzzy match guarded by
   Graphify-style rules (numeric tokens differ ⇒ different; very short labels need exact match) →
-  optional LLM tie-break; merges keep aliases and redirect all references.
+  optional LLM tie-break; merges keep aliases and redirect all references. Built in Phase 11
+  (`packages/core/src/ai/dedup.ts`): a proposed name that matches an existing one becomes a merge
+  (alias) proposal; merging two existing concepts arrives in Phase 15.
 - The **concept page** shows: summary, backing note, lectures/sources covering it (with locators),
   related concepts by relation type, notes mentioning it, cards/questions, mastery with components.
 

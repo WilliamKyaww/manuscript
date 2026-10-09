@@ -239,13 +239,14 @@ describe('helpers', () => {
     const scope = (query: string) => searchScope(parseSearchQuery(query));
     expect(scope('raft')).toEqual({
       notes: true,
-      sourceKinds: ['pdf', 'pptx', 'docx', 'markdown', 'text'],
+      sourceKinds: ['pdf', 'pptx', 'docx', 'markdown', 'text', 'audio', 'video', 'image'],
     });
     expect(scope('raft tag:exam')).toEqual({ notes: true, sourceKinds: [] });
     expect(scope('raft folder:Modules')).toEqual({ notes: true, sourceKinds: [] });
     expect(scope('raft folder:sources/COC251').notes).toBe(false);
-    expect(scope('raft folder:Modules folder:Sources').sourceKinds).toHaveLength(5);
+    expect(scope('raft folder:Modules folder:Sources').sourceKinds).toHaveLength(8);
     expect(scope('raft kind:slides -kind:note')).toEqual({ notes: false, sourceKinds: ['pptx'] });
+    expect(scope('raft kind:recording').sourceKinds).toEqual(['audio', 'video']);
   });
 
   it('folds exclusions into the full-text expression when there is one', () => {

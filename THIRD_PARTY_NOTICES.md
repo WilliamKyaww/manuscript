@@ -32,8 +32,14 @@ This file lists third-party code, algorithms or text that has been **adapted int
   - `packages/core/src/ai/untrusted.ts` — untrusted-source wrapping and chat-template sentinel
     neutralisation with a zero-width space, from `graphify/llm.py` (`_EXTRACTION_SYSTEM`,
     `_neutralise_injection_sentinels`), with this application's tag names and sentinel list.
-- Still planned, each to be listed here with its file when implemented:
-  - entity de-duplication guards (`dedup.py`) — Phase 11.
+- Adapted (Phase 11, from release 0.9.75):
+  - `packages/core/src/ai/dedup.ts` — concept-name de-duplication: normalisation, Jaro–Winkler
+    similarity and the guards against merging (differing numbers, very short labels, one name a
+    word of the other), from `graphify/dedup.py`; without MinHash, with thresholds of our own and a
+    "maybe" band left to a model or the student.
+  - `apps/server/src/modules/generation/prompts.ts` — the relation confidence rubric in the
+    extraction instructions (`EXTRACTED` / `INFERRED` with scores 0.55–0.95 / `AMBIGUOUS`), from
+    `graphify/llm.py` (`_EXTRACTION_SYSTEM`).
 
   Adapted modules carry a header comment naming the Graphify source file and licence, and state that
   they were modified (translated to TypeScript and changed for this application).

@@ -54,12 +54,12 @@ _Last updated: 9 October 2026 (end of Phase 10)._
 | ID | Feature | Status | Phase |
 |---|---|---|---|
 | F-SO-01 | Source library with originals preserved | Complete (follows the Sources folder, ADR-0028) | 5 |
-| F-SO-02 | PDF ingestion (per-page) and viewer | Complete (scanned pages need OCR: F-SO-07) | 5 |
+| F-SO-02 | PDF ingestion (per-page) and viewer | Complete (scanned pages read with AI: F-SO-07) | 5 |
 | F-SO-03 | PPTX ingestion (per-slide, speaker notes) | Complete (slides shown as text; slide pictures: B-SO-02) | 5 |
 | F-SO-04 | DOCX, Markdown and text ingestion | Complete (DOCX body only; footnotes and comments: B-SO-03) | 5 |
 | F-SO-05 | Web page import with safe fetch | Deferred (B-SO-01) | 5 |
-| F-SO-06 | Audio/video transcription | Planned | 11 |
-| F-SO-07 | OCR / image understanding | Planned | 11 |
+| F-SO-06 | Audio/video transcription | Complete — timed sections with media locators, player beside the transcript; up to 25 MB (B-AI-13) | 11 |
+| F-SO-07 | OCR / image understanding | Complete — images read or described, PDF pages without text read by the chat model; imported unread without AI | 11 |
 | F-SO-08 | Graphify `graph.json` import | Planned | 16 |
 
 ## Knowledge — concepts and graph
@@ -72,7 +72,7 @@ _Last updated: 9 October 2026 (end of Phase 10)._
 | F-GR-04 | Graph analytics (stable communities, core concepts, bridges, gaps, surprising connections, paths) | Complete | 7 |
 | F-GR-05 | Study prompts generated from graph analytics, with actions | Complete | 7 |
 | F-GR-06 | WebGL global graph (clusters, filters, search-to-focus, paths) and local graph panels on concept and note pages | Complete | 7 |
-| F-GR-07 | AI concept/relation extraction with de-duplication | Planned | 11 |
+| F-GR-07 | AI concept/relation extraction with de-duplication | Complete — proposals with evidence and Graphify confidence; merges for near names; merging two existing concepts in Phase 15 | 11 |
 | F-GR-08 | Mastery overlay on the graph | Planned | 15 |
 
 ## Learning — course structure
@@ -94,7 +94,7 @@ _Last updated: 9 October 2026 (end of Phase 10)._
 | F-FC-04 | Make card from selection (notes and sources), with a locator back to the line, page or slide | Complete | 8 |
 | F-FC-05 | Review statistics (due forecast, history, true retention) and session summaries | Complete | 8 |
 | F-FC-06 | Anki notes-in-plain-text import and export per set | Complete | 8 |
-| F-FC-07 | AI flashcard generation with provenance and review | Planned | 11 |
+| F-FC-07 | AI flashcard generation with provenance and review | Complete | 11 |
 | F-FC-08 | Exam-aware retention policy | Planned | 14 |
 
 ## Learning — questions, quizzes and mastery
@@ -106,7 +106,7 @@ _Last updated: 9 October 2026 (end of Phase 10)._
 | F-QZ-03 | Adaptive practice sessions (ladder, correct-twice, interleaving) | Complete — questions only; cards in Learn are B-LE-24 | 9 |
 | F-QZ-04 | Transparent mastery with roll-ups, readiness and coverage | Complete | 9 |
 | F-QZ-05 | Weak-area detection (weak, slipping, lapsing, forgotten, no material) with priority and actions | Complete | 9 |
-| F-QZ-06 | AI question generation and AI rubric grading | Planned | 11 |
+| F-QZ-06 | AI question generation and AI rubric grading | Complete — grades are suggestions recorded only when accepted | 11 |
 | F-QZ-07 | FIRe-inspired implicit credit along prerequisite edges | Planned | 15 |
 
 ## Learning — tutoring and planning
@@ -126,13 +126,14 @@ _Last updated: 9 October 2026 (end of Phase 10)._
 | F-AI-02 | Secure key storage, usage tracking and spend caps | Complete — keys in the data directory (mode 0600); Electron safeStorage arrives with the desktop app (Phase 18) | 10 |
 | F-AI-03 | Grounded Q&A with citations and grounding badges | Complete — the Ask panel (Ctrl+J) | 10 |
 | F-AI-04 | Prompt-injection defences for source content | Complete | 10 |
-| F-AI-05 | Generation of notes, summaries, cards and questions | Planned | 11 |
-| F-AI-06 | Proposals Inbox (AI proposes, user decides) | Planned | 11 |
+| F-AI-05 | Generation of notes, summaries, cards and questions | Complete — from a lecture, source range, note or selection, with an estimate first | 11 |
+| F-AI-06 | Proposals Inbox (AI proposes, user decides) | Complete — drafts and suggestions, batch decisions, per-kind auto-accept | 11 |
 | F-AI-07 | Typed tool registry with risk levels and approvals | Planned | 12 |
 | F-AI-08 | Action log with snapshots and undo | Planned | 12 |
 | F-AI-09 | MCP server for external agents | Planned | 12 |
 | F-AI-10 | Agentic chat with activity timeline, approvals and result cards | Planned | 13 |
 | F-AI-11 | Chat side panel with page context and @mentions | Planned | 13 |
+| F-AI-12 | Link suggestions for a note (unlinked mentions, notes close in meaning) as Inbox proposals | Complete — per note; vault-wide in the background is B-AI-15 | 11 |
 
 ## Integration
 
@@ -140,7 +141,7 @@ _Last updated: 9 October 2026 (end of Phase 10)._
 |---|---|---|---|
 | F-IN-01 | Lecture pipeline (import → notes, concepts, cards, quiz proposals) | Planned | 15 |
 | F-IN-02 | Cross-module connections view | Planned | 15 |
-| F-IN-03 | Weak concept → targeted practice in one click | Partial — Practise starts a Learn session for the concept (Phase 9); concepts with only cards (B-LE-24) and generated material wait for Phases 11 and 15 | 15 |
+| F-IN-03 | Weak concept → targeted practice in one click | Partial — Practise starts a Learn session for the concept (Phase 9); concepts with only cards (B-LE-24) wait for Phase 15; questions can now be generated from the material (Phase 11) | 15 |
 | F-IN-04 | Proactive resurfacing before lectures and exams | Planned | 15 |
 
 ## Portability

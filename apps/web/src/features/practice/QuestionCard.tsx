@@ -8,7 +8,7 @@ import { Kbd } from '../../components/Kbd';
 import { cn } from '../../lib/cn';
 import { locatorHref } from '../library/links';
 import { CardMarkdown } from '../review/CardMarkdown';
-import { AnswerFeedback } from './AnswerFeedback';
+import { type AcceptedGrade, AnswerFeedback } from './AnswerFeedback';
 import { KIND_LABELS } from './format';
 import { isComplete, ResponseInput } from './ResponseInput';
 
@@ -45,7 +45,7 @@ export function QuestionCard({
   result: AnswerResult | null;
   busy: boolean;
   onSubmit(submission: Submission): void;
-  onGrade(score: SelfScore): void;
+  onGrade(score: SelfScore, accepted?: AcceptedGrade): void;
   /** What moves on once the answer is graded. */
   next: ReactNode;
 }) {

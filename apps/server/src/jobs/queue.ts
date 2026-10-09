@@ -29,6 +29,8 @@ export interface JobContext<P> {
   readonly signal: AbortSignal;
   /** Reports progress (0–1) and the current step; throttled before it reaches the database. */
   progress(fraction: number, message?: string | null): void;
+  /** What the job achieved ("12 cards to review"), kept as its message once it has succeeded. */
+  result(message: string): void;
 }
 
 export interface JobHandler<P> {
@@ -163,6 +165,7 @@ export function createJobQueue(deps: JobQueueDependencies): JobQueue {
 
     let payload: unknown = null;
     let outcome: JobOutcome;
+    let resultMessage: string | null = null;
     try {
       if (!handler) throw new PermanentJobError(`No handler is registered for "${row.kind}" jobs.`);
       const parsed = handler.payload.safeParse(JSON.parse(row.payloadJson));
@@ -173,9 +176,13 @@ export function createJobQueue(deps: JobQueueDependencies): JobQueue {
         payload,
         signal: entry.controller.signal,
         progress,
+        result: (message) => {
+          resultMessage = message;
+        },
       });
       if (entry.stop) throw new Error('Stopped');
       repo.finish(row.id, 'succeeded', null, now());
+      if (resultMessage !== null) repo.progress(row.id, 1, resultMessage, now());
       outcome = 'succeeded';
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

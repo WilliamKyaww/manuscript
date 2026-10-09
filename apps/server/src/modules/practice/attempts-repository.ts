@@ -40,6 +40,8 @@ export interface AnswerRow {
   score: number | null;
   gradedBy: 'auto' | 'self' | 'ai' | null;
   gradedAt: string | null;
+  /** The grader's comments (a model's, when its grade was accepted). */
+  feedback: string;
   confidence: number | null;
   assisted: boolean;
   durationMs: number | null;
@@ -81,6 +83,7 @@ const toAnswer = (raw: Raw): AnswerRow => ({
   score: number(raw.score),
   gradedBy: (raw.graded_by as AnswerRow['gradedBy']) ?? null,
   gradedAt: text(raw.graded_at),
+  feedback: String(raw.feedback ?? ''),
   confidence: number(raw.confidence),
   assisted: Number(raw.assisted) === 1,
   durationMs: number(raw.duration_ms),
@@ -209,10 +212,11 @@ export function createAttemptsRepository(db: SqlDatabase) {
         )
         .map(toAnswer),
     /** Gives a pending answer its score; the trigger refuses any other change. */
-    grade: (id: string, score: number, gradedBy: 'self' | 'ai', at: string) =>
+    grade: (id: string, score: number, gradedBy: 'self' | 'ai', at: string, feedback = '') =>
       db.run(
-        'UPDATE answers SET score = ?, graded_by = ?, graded_at = ? WHERE id = ? AND score IS NULL',
-        [score, gradedBy, at, id],
+        `UPDATE answers SET score = ?, graded_by = ?, graded_at = ?, feedback = ?
+         WHERE id = ? AND score IS NULL`,
+        [score, gradedBy, at, feedback, id],
       ),
 
     // --- Study sessions ---------------------------------------------------------------------

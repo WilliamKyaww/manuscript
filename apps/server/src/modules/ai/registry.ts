@@ -1,9 +1,13 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-import type { EmbeddingModelV4, LanguageModelV4 } from '@ai-sdk/provider';
+import type { EmbeddingModelV4, LanguageModelV4, TranscriptionModelV4 } from '@ai-sdk/provider';
 import type { AiRole, RoleSettings } from '@skb/core';
-import { createMockEmbeddingModel, createMockLanguageModel } from './mock';
+import {
+  createMockEmbeddingModel,
+  createMockLanguageModel,
+  createMockTranscriptionModel,
+} from './mock';
 import type { AiConfigStore, SecretStore, StoredProvider } from './store';
 
 /**
@@ -44,6 +48,7 @@ const ROLE_NAMES: Record<AiRole, string> = {
   chat: 'answers',
   fast: 'quick tasks',
   embedding: 'semantic search',
+  transcription: 'transcribing recordings',
 };
 
 export function createModelRegistry(deps: RegistryDependencies) {
@@ -61,6 +66,7 @@ export function createModelRegistry(deps: RegistryDependencies) {
         return {
           language: (id: string) => made.languageModel(id),
           embedding: null as ((id: string) => EmbeddingModelV4) | null,
+          transcription: null as ((id: string) => TranscriptionModelV4) | null,
         };
       }
       case 'openai': {
@@ -68,6 +74,7 @@ export function createModelRegistry(deps: RegistryDependencies) {
         return {
           language: (id: string) => made.languageModel(id),
           embedding: (id: string) => made.embeddingModel(id),
+          transcription: (id: string) => made.transcription(id),
         };
       }
       default: {
@@ -77,9 +84,13 @@ export function createModelRegistry(deps: RegistryDependencies) {
           apiKey,
           fetch,
         });
+        // Local transcription servers (whisper.cpp, faster-whisper, LocalAI…) copy OpenAI's
+        // /audio/transcriptions endpoint, so OpenAI's client talks to them; many need no key.
+        const openai = createOpenAI({ apiKey: apiKey ?? 'none', baseURL, fetch });
         return {
           language: (id: string) => made.chatModel(id),
           embedding: (id: string) => made.embeddingModel(id),
+          transcription: (id: string) => openai.transcription(id),
         };
       }
     }
@@ -122,6 +133,13 @@ export function createModelRegistry(deps: RegistryDependencies) {
       return {
         ready: false,
         reason: 'Anthropic has no embedding models: choose another provider for semantic search.',
+        label,
+        settings,
+      };
+    if (role === 'transcription' && provider.kind === 'anthropic')
+      return {
+        ready: false,
+        reason: 'Anthropic has no transcription models: choose OpenAI or a Whisper server.',
         label,
         settings,
       };
@@ -176,6 +194,28 @@ export function createModelRegistry(deps: RegistryDependencies) {
       };
     },
 
+    transcription(): Resolved<TranscriptionModelV4> | null {
+      const current = state('transcription');
+      if (!current.ready) return null;
+      if (mock || !current.provider)
+        return {
+          model: createMockTranscriptionModel(),
+          role: 'transcription',
+          provider: 'mock',
+          modelId: 'mock-transcription',
+          settings: current.settings,
+        };
+      const make = client(current.provider).transcription;
+      if (!make) return null;
+      return {
+        model: make(current.settings.model),
+        role: 'transcription',
+        provider: current.provider.id,
+        modelId: current.settings.model,
+        settings: current.settings,
+      };
+    },
+
     /** A model on a given provider, for a connection test before it is chosen for a role. */
     forTest(providerId: string, modelId: string, role: AiRole) {
       const provider = store.read().providers.find((candidate) => candidate.id === providerId);
@@ -187,6 +227,11 @@ export function createModelRegistry(deps: RegistryDependencies) {
         if (!made.embedding)
           return { problem: `${provider.name} has no embedding models.` } as const;
         return { embedding: made.embedding(modelId) } as const;
+      }
+      if (role === 'transcription') {
+        if (!made.transcription)
+          return { problem: `${provider.name} has no transcription models.` } as const;
+        return { transcription: made.transcription(modelId) } as const;
       }
       return { language: made.language(modelId) } as const;
     },

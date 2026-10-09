@@ -187,10 +187,15 @@ function attemptCalls(api: ApiClient, queryClient: ReturnType<typeof useQueryCli
       touched();
       return result;
     },
-    grade: async (answerId: string, score: SelfScore) => {
+    /** The student's own grade, or the model's suggestion they accepted (with its feedback). */
+    grade: async (
+      answerId: string,
+      score: SelfScore,
+      accepted?: { gradedBy: 'ai'; feedback: string },
+    ) => {
       const result = await api.request(gradeAnswerEndpoint, {
         params: { id: answerId },
-        body: { score },
+        body: { score, ...(accepted ?? {}) },
       });
       touched();
       return result;

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { AskEventSchema, DEFAULT_AI_PREFERENCES, ProviderInputSchema } from '../api/ai';
+import {
+  AiPreferencesSchema,
+  AskEventSchema,
+  DEFAULT_AI_PREFERENCES,
+  ProviderInputSchema,
+} from '../api/ai';
 import { cosine, reciprocalRankFusion } from './fusion';
 import { checkCitations, classifyGrounding } from './grounding';
 import { anyTermQuery, questionTerms } from './terms';
@@ -97,5 +102,19 @@ describe('contracts', () => {
       type: 'text',
       delta: 'Raft',
     });
+  });
+});
+
+describe('AI preferences', () => {
+  it('loads settings written before transcription and auto-accept existed', () => {
+    const { transcription: _transcription, ...roles } = DEFAULT_AI_PREFERENCES.roles;
+    const parsed = AiPreferencesSchema.parse({
+      roles,
+      monthlyBudget: 5,
+      contextTokens: 12_000,
+    });
+    expect(parsed.roles.transcription.providerId).toBeNull();
+    expect(parsed.autoAccept.cards).toBe(false);
+    expect(parsed.monthlyBudget).toBe(5);
   });
 });

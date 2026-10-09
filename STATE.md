@@ -4,18 +4,18 @@ _Last updated: 9 October 2026 — Claude Opus 5.5._
 
 ## Current phase
 
-**Phase 11 — AI generation and knowledge extraction: next.** Phases 0 (research), 1
-(foundation), 2 (application shell), 3 (notes and Markdown knowledge base), 4 (lexical search and
-quick navigation), 5 (source library and ingestion pipeline), 6 (course structure and concepts), 7
-(knowledge graph), 8 (flashcards and spaced repetition), 9 (questions, quizzes and mastery) and 10
-(AI foundation) are complete and merged into `main`.
+**Phase 12 — Agent runtime, tool layer and MCP: next.** Phases 0 (research), 1 (foundation), 2
+(application shell), 3 (notes and Markdown knowledge base), 4 (lexical search and quick
+navigation), 5 (source library and ingestion pipeline), 6 (course structure and concepts), 7
+(knowledge graph), 8 (flashcards and spaced repetition), 9 (questions, quizzes and mastery), 10 (AI
+foundation) and 11 (AI generation and knowledge extraction) are complete and merged into `main`.
 
 ## What works
 
 - **Local server** (`apps/server`): Hono on `127.0.0.1` with token (cookie or bearer), Host allowlist,
   Origin and Fetch-Metadata checks; `/auth` sign-in link; RFC 9457 problem details (with `details`);
   CSP and security headers; production SPA serving; server-sent events at `/api/events`.
-- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0010`), vault (`.skb/` layout,
+- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0011`), vault (`.skb/` layout,
   lock with crash recovery, strict path containment), atomic writes, vault-scoped settings.
 - **Notes** (Phase 3): Markdown files are canonical; the index (notes, aliases, tags, links,
   attachments, FTS5) is rebuilt from the files and follows edits made in other programs. Ids are
@@ -67,13 +67,23 @@ quick navigation), 5 (source library and ingestion pipeline), 6 (course structur
   too, streamed with citations that open the page, slide or line, and a grounding label; optional
   semantic search (embeddings, fused with full-text and graph-neighbourhood retrieval) and similar
   notes. `SKB_AI_PROVIDER=mock` runs a built-in test model (ADR-0033).
+- **Generation and the Inbox** (Phase 11, optional): **Generate…** on lectures, sources (or a
+  page/slide range), notes and selections makes flashcards, questions, lecture notes or concepts,
+  after an estimate of passages, tokens and cost; a background job checks every item (a source
+  locator, working answer keys, card writing rules, repeats) and leaves cards and questions as
+  drafts and notes, concepts, relations, merges and links as proposals in the **Inbox** (`/inbox`),
+  accepted, edited or rejected one by one or in batches; Graphify-style concept de-duplication;
+  auto-accept per kind (off by default); link suggestions for a note; AI-suggested grades for
+  written answers, recorded only when accepted. **Recordings** (audio and video) are transcribed into
+  timed sections and play beside their transcript; **images** and **scanned PDF pages** are read by
+  the chat model; without AI they import unread and can be read again later (ADR-0034).
 - **Application shell:** sidebar, sticky page headers (per pane on paned pages), themes, command
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 601 Vitest tests and 81 Playwright tests (sticky headers on every route and pane,
-  axe in both themes, the library, the course, the graph, reviewing, practice and asking with the
-  test model) — all green. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
+- **Tests:** 636 Vitest tests and 82 Playwright tests (sticky headers on every route and pane,
+  axe in both themes, the library, the course, the graph, reviewing, practice, asking and generating
+  with the test model) — all green. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
   p95 404 ms, median 51 ms (provisional budget 500 ms).
   Reviewing: 7 ms median between cards over 100 (budget 50 ms). Mastery pass over a year of learning
   (1,000 concepts, 5,000 reviewed cards, 20,000 answers): 201 ms (budget 500 ms). On mains power at 10,000
@@ -83,12 +93,16 @@ quick navigation), 5 (source library and ingestion pipeline), 6 (course structur
 
 ## In progress
 
-- Nothing; Phase 11 not yet started.
+- Nothing; Phase 12 not yet started.
 
 ## Incomplete / not started
 
-- Phases 11–22: AI generation, the agent and chat, the planner and the desktop app do not exist yet;
-  their sections show placeholders.
+- Phases 12–22: the agent and chat, the planner and the desktop app do not exist yet; their
+  sections show placeholders.
+- Not in Phase 11 (backlog): recordings over 25 MB (B-AI-13), generating from long material in
+  parts (B-AI-14), vault-wide link suggestions (B-AI-15), undoing a whole generation (B-AI-16), an
+  Inbox history (B-AI-17), scans with image-only models (B-AI-18), cards from a recording's time
+  range (B-AI-19); merging two existing concepts and tag suggestions arrive in Phase 15.
 - Not in Phase 10 (backlog): semantic results on the Search page (B-AI-08), Google provider
   (B-AI-09), price presets (B-AI-10), an AI latency budget (B-AI-11), past questions in Ask
   (B-AI-12); reranking (B-AI-02), local embeddings (B-AI-03). Keys use Electron safeStorage from
@@ -108,18 +122,21 @@ quick navigation), 5 (source library and ingestion pipeline), 6 (course structur
   the UI (B-LE-14), degree classification across years (B-LE-15), exam duration in the dialog
   (B-LE-16). Course structure and concepts are canonical in `.skb/skb.db` until Phase 16's export.
 - Earlier deferrals: web page import (B-SO-01), slide pictures (B-SO-02), DOCX footnotes (B-SO-03),
-  OCR (Phase 11), search grouping and highlighting (B-SE-04/05), date filters (B-SE-01).
+  search grouping and highlighting (B-SE-04/05), date filters (B-SE-01).
 
 ## Broken
 
 - Nothing known.
+- Performance budgets were last measured on battery (9 October): four over, exactly as the Phase 10
+  code under the same conditions — throttling, not a regression. Re-run `npm run test:perf` on mains
+  power to confirm the figures above.
 
 ## Next steps
 
-1. Create `phase/11-ai-generation` from `main`.
-2. Phase 11: flashcards, questions, quizzes and lecture or summary notes generated from your material
-   with provenance; concepts and relations extracted as proposals; free-text answers graded; audio,
-   video and images transcribed — all reviewed before they enter the knowledge base.
+1. Create `phase/12-agent-tools` from `main`.
+2. Phase 12: the agent runtime and a typed tool layer with risk levels, approvals, an action log
+   with undo, and an MCP server — tools wrapping the services built so far (search, notes,
+   generation, the Inbox).
 
 ## Relevant decisions
 
@@ -132,7 +149,8 @@ knowledge graph is computed; only relations are stored · ADR-0011 FSRS-6 via ts
 flashcards are scheduled by face, and review logs are never changed · ADR-0021 transparent mastery ·
 ADR-0032 mastery recomputed from evidence in one pass; answers written once; Learn replayed from
 its answers · ADR-0012 AI SDK 7 · **ADR-0033** AI configuration outside the vault, answers as JSON lines,
-fusion in retrieval.
+fusion in retrieval · **ADR-0034** generated material waits as drafts and proposals; AI reads media
+through injected readers.
 
 ## Technical debt
 

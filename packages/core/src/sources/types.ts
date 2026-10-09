@@ -25,13 +25,16 @@ export type SourceKind = z.infer<typeof SourceKindSchema>;
 export const SourceStatusSchema = z.enum(['pending', 'processing', 'ready', 'failed']);
 export type SourceStatus = z.infer<typeof SourceStatusSchema>;
 
-/** Kinds Phase 5 can import and parse. */
+/** Kinds that can be imported: documents (Phase 5), recordings and images (Phase 11). */
 export const IMPORTABLE_SOURCE_KINDS = [
   'pdf',
   'pptx',
   'docx',
   'markdown',
   'text',
+  'audio',
+  'video',
+  'image',
 ] as const satisfies readonly SourceKind[];
 
 const sourceId = z.string().min(1);
@@ -73,6 +76,8 @@ export const LocatorSchema = z.discriminatedUnion('kind', [
     startMs: z.number().int().nonnegative(),
     endMs: z.number().int().nonnegative(),
   }),
+  /** An image (its text or description, read by a model). */
+  z.object({ kind: z.literal('image'), sourceId }),
 ]);
 export type Locator = z.infer<typeof LocatorSchema>;
 
@@ -131,6 +136,8 @@ export function locatorLabel(locator: Locator): string {
     case 'text':
     case 'markdown':
       return locator.headingPath.length > 0 ? locator.headingPath.join(' › ') : 'Start';
+    case 'image':
+      return 'Image';
     case 'media': {
       const seconds = Math.floor(locator.startMs / 1000);
       const hours = Math.floor(seconds / 3600);

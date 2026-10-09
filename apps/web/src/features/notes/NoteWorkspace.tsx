@@ -1,4 +1,4 @@
-import type { NoteDetail, NoteTree } from '@skb/core';
+import type { GenerationScope, NoteDetail, NoteTree } from '@skb/core';
 import {
   analyseNote,
   folderOf,
@@ -8,7 +8,7 @@ import {
 } from '@skb/core/markdown';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Columns2, Eye, PenLine, SquarePlus } from 'lucide-react';
+import { Columns2, Eye, Link2, PenLine, Sparkles, SquarePlus } from 'lucide-react';
 import { ToggleGroup } from 'radix-ui';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Group, Panel, Separator } from 'react-resizable-panels';
@@ -18,10 +18,12 @@ import { LoadingState } from '../../components/States';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/Tabs';
 import { useApi } from '../../lib/api/context';
 import { cn } from '../../lib/cn';
-import { notifyError } from '../../lib/notify';
+import { notifyError, notifySuccess } from '../../lib/notify';
 import { conceptsQuery } from '../concepts/api';
 import { ConceptDialog } from '../concepts/ConceptDialog';
 import { LocalGraph } from '../graph/LocalGraph';
+import { useInboxActions } from '../inbox/api';
+import { GenerateDialog } from '../inbox/GenerateDialog';
 import { useQuickAdd } from '../review/quick-add';
 import { useUploadAttachment } from './api';
 import { ConflictBanner } from './editor/ConflictBanner';
@@ -120,6 +122,8 @@ export function NoteWorkspace({
   const api = useApi();
   const concepts = useQuery(conceptsQuery(api));
   const [newConcept, setNewConcept] = useState<string | null>(null);
+  const [generating, setGenerating] = useState<GenerationScope | null>(null);
+  const inbox = useInboxActions();
   const completions = useMemo(
     () => ({
       notes: () => {
@@ -205,6 +209,40 @@ export function NoteWorkspace({
     });
   };
 
+  /** Generate from the selection if there is one, otherwise from the whole note (task 11.12). */
+  const generate = () => {
+    const selected = mode === 'preview' ? null : (editor.current?.getSelection() ?? null);
+    const text = (selected?.text ?? window.getSelection()?.toString() ?? '').trim();
+    const line = selected?.line ?? 1;
+    setGenerating(
+      text
+        ? {
+            kind: 'selection',
+            text,
+            title: note.title,
+            locator: {
+              kind: 'markdown',
+              noteId: note.id,
+              headingPath: headingPathAt(analysis.headings, line),
+              line,
+            },
+          }
+        : { kind: 'note', noteId: note.id },
+    );
+  };
+
+  /** Link suggestions (task 11.09): unlinked mentions and notes close in meaning, to the Inbox. */
+  const suggestLinks = () =>
+    inbox.suggestLinks.mutate(note.id, {
+      onSuccess: ({ created }) =>
+        notifySuccess(
+          created === 0
+            ? 'No new links to suggest'
+            : `${created} link suggestion${created === 1 ? '' : 's'} in the Inbox`,
+        ),
+      onError: notifyError,
+    });
+
   const conflict = session.conflict;
   return (
     <Group orientation="horizontal" id="skb-note-layout" className="min-w-0 flex-1">
@@ -233,6 +271,19 @@ export function NoteWorkspace({
                 size="sm"
                 onClick={makeCard}
               />
+              <IconButton
+                label="Generate from this note or the selection"
+                icon={<Sparkles size={16} />}
+                size="sm"
+                onClick={generate}
+              />
+              <IconButton
+                label="Suggest links"
+                icon={<Link2 size={16} />}
+                size="sm"
+                disabled={inbox.suggestLinks.isPending}
+                onClick={suggestLinks}
+              />
               <ModeToggle mode={mode} onChange={setMode} />
             </>
           }
@@ -250,6 +301,15 @@ export function NoteWorkspace({
           }
           bodyClassName="flex overflow-hidden"
         >
+          {generating && (
+            <GenerateDialog
+              scope={generating}
+              title={
+                generating.kind === 'selection' ? `the selection in “${note.title}”` : note.title
+              }
+              onClose={() => setGenerating(null)}
+            />
+          )}
           <div className={cn('min-w-0 flex-1', mode === 'preview' && 'hidden')}>
             <MarkdownEditor
               ref={editor}

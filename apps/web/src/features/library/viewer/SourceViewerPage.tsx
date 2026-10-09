@@ -1,8 +1,8 @@
-import { fileUrl, type Locator, type SourceSummary } from '@skb/core';
+import { fileUrl, type GenerationScope, type Locator, type SourceSummary } from '@skb/core';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { Download, SquarePlus, TriangleAlert } from 'lucide-react';
-import { lazy, type ReactNode, Suspense } from 'react';
+import { Download, Sparkles, SquarePlus, TriangleAlert } from 'lucide-react';
+import { lazy, type ReactNode, Suspense, useState } from 'react';
 import { Button, buttonClasses } from '../../../components/Button';
 import { Page } from '../../../components/Page';
 import { Pane } from '../../../components/Pane';
@@ -10,11 +10,13 @@ import { EmptyState, ErrorState, LoadingState } from '../../../components/States
 import { ApiError } from '../../../lib/api/client';
 import { useApi } from '../../../lib/api/context';
 import { notifyError } from '../../../lib/notify';
+import { GenerateDialog } from '../../inbox/GenerateDialog';
 import { useQuickAdd } from '../../review/quick-add';
 import { sectionsQuery, sourceQuery, useLiveImportProgress, useRetrySource } from '../api';
 import type { ViewerSearch } from '../links';
 import { ImportProgress, SourceStatus } from '../SourceRow';
 import { DocumentViewer } from './DocumentViewer';
+import { ImageViewer, MediaViewer } from './MediaViewer';
 import { SlidesViewer } from './SlidesViewer';
 
 // pdf.js is large: it loads only when a PDF is opened.
@@ -30,6 +32,9 @@ export function SourceViewerPage() {
   useLiveImportProgress();
   const parsed = source.data?.status === 'ready' || (source.data?.sectionCount ?? 0) > 0;
   const sections = useQuery({ ...sectionsQuery(api, sourceId), enabled: Boolean(parsed) });
+  const [generating, setGenerating] = useState<{ scope: GenerationScope; title: string } | null>(
+    null,
+  );
 
   const go = (next: ViewerSearch) =>
     void navigate({
@@ -69,26 +74,59 @@ export function SourceViewerPage() {
 
   const data = source.data;
   /** "Make card from selection" (task 8.08): the selected text, and where it is in the source. */
-  const makeCard = () => {
-    const front = window.getSelection()?.toString().trim() ?? '';
+  /** Where the reader is: the page, slide, moment or section on screen. */
+  const locatorHere = (): Locator | undefined => {
     const section =
       sections.data?.sections.find((candidate) => candidate.ordinal === search.section) ??
       sections.data?.sections[0];
-    const locator: Locator | undefined =
-      data.kind === 'pdf'
-        ? { kind: 'pdf', sourceId: data.id, page: search.page ?? 1 }
-        : data.kind === 'pptx'
-          ? {
-              kind: 'slides',
-              sourceId: data.id,
-              slide: search.slide ?? 1,
-              part: search.notes ? 'notes' : 'body',
-            }
-          : section?.locator;
+    if (data.kind === 'pdf') return { kind: 'pdf', sourceId: data.id, page: search.page ?? 1 };
+    if (data.kind === 'pptx')
+      return {
+        kind: 'slides',
+        sourceId: data.id,
+        slide: search.slide ?? 1,
+        part: search.notes ? 'notes' : 'body',
+      };
+    if (data.kind === 'audio' || data.kind === 'video') {
+      const at = (search.t ?? 0) * 1000;
+      const playing = [...(sections.data?.sections ?? [])]
+        .reverse()
+        .find((candidate) => candidate.locator.kind === 'media' && candidate.locator.startMs <= at);
+      return playing?.locator ?? section?.locator;
+    }
+    return section?.locator;
+  };
+  const makeCard = () => {
+    const front = window.getSelection()?.toString().trim() ?? '';
+    const locator = locatorHere();
     useQuickAdd.getState().open({ front, ...(locator ? { locator } : {}) });
   };
+  /** Generate from the selection if there is one, otherwise from the source (task 11.12). */
+  const generate = () => {
+    const text = window.getSelection()?.toString().trim() ?? '';
+    const locator = locatorHere();
+    setGenerating(
+      text && locator
+        ? {
+            scope: { kind: 'selection', text, locator, title: data.title },
+            title: `the selection in “${data.title}”`,
+          }
+        : { scope: { kind: 'source', sourceId: data.id }, title: data.title },
+    );
+  };
   let body: ReactNode;
-  if (data.kind === 'pdf' && !data.missing) {
+  if ((data.kind === 'audio' || data.kind === 'video') && !data.missing) {
+    body = (
+      <MediaViewer
+        source={data}
+        sections={sections.data?.sections ?? []}
+        time={search.t}
+        onNavigate={(t) => go({ t })}
+      />
+    );
+  } else if (data.kind === 'image' && !data.missing) {
+    body = <ImageViewer source={data} sections={sections.data?.sections ?? []} />;
+  } else if (data.kind === 'pdf' && !data.missing) {
     body = (
       <Suspense fallback={<LoadingState label="Loading the PDF viewer" />}>
         <PdfViewer
@@ -148,6 +186,10 @@ export function SourceViewerPage() {
               <SquarePlus aria-hidden="true" size={16} />
               Card from selection
             </Button>
+            <Button onClick={generate} disabled={data.status !== 'ready'}>
+              <Sparkles aria-hidden="true" size={16} />
+              Generate…
+            </Button>
             <a href={fileUrl(data.path)} target="_blank" rel="noopener" className={buttonClasses()}>
               <Download aria-hidden="true" size={16} />
               Open original
@@ -157,9 +199,20 @@ export function SourceViewerPage() {
       }
     >
       {body}
+      {generating && (
+        <GenerateDialog
+          scope={generating.scope}
+          title={generating.title}
+          pageCount={data.pageCount}
+          onClose={() => setGenerating(null)}
+        />
+      )}
     </Page>
   );
 }
+
+/** Warnings that reading the source again can resolve, once AI is set up. */
+const READ_AGAIN = new Set(['needs-ai', 'no-text', 'pages-without-text']);
 
 function StatusLine({ source }: { source: SourceSummary }) {
   const retry = useRetrySource();
@@ -182,6 +235,16 @@ function StatusLine({ source }: { source: SourceSummary }) {
         <span className="flex items-center gap-1 text-xs">
           <TriangleAlert aria-hidden="true" size={13} className="text-warning" />
           {source.warnings.map((warning) => warning.message).join(' ')}
+          {!source.missing && source.warnings.some((warning) => READ_AGAIN.has(warning.code)) && (
+            <Button
+              size="sm"
+              className="ml-1"
+              loading={retry.isPending}
+              onClick={() => retry.mutate(source.id, { onError: notifyError })}
+            >
+              Read again
+            </Button>
+          )}
         </span>
       )}
       <div className="w-full max-w-sm empty:hidden">

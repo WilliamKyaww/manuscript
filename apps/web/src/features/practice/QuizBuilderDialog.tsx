@@ -10,7 +10,7 @@ import { cn } from '../../lib/cn';
 import { formatCount } from '../../lib/format';
 import { describeError } from '../../lib/notify';
 import { moduleQuery, modulesQuery } from '../learning/api';
-import { Field, FormError, selectClasses } from '../learning/Field';
+import { Chips, chipClasses, Field, FormError, selectClasses } from '../learning/Field';
 import { quizPreviewQuery, usePracticeActions } from './api';
 import { KIND_LABELS } from './format';
 
@@ -21,49 +21,6 @@ import { KIND_LABELS } from './format';
  */
 
 type Kind = 'practice' | 'mock_exam';
-
-const chipClasses = (on: boolean) =>
-  cn(
-    'cursor-pointer rounded-full border px-2.5 py-0.5 text-xs',
-    on ? 'border-accent bg-accent-subtle' : 'border-border-strong hover:bg-surface-hover',
-  );
-
-function Chips<T extends string>({
-  legend,
-  options,
-  value,
-  onChange,
-}: {
-  legend: string;
-  options: readonly { value: T; label: string }[];
-  value: readonly T[];
-  onChange(next: T[]): void;
-}) {
-  if (options.length === 0) return null;
-  return (
-    <fieldset>
-      <legend className="mb-1 text-sm font-medium">{legend}</legend>
-      <div className="flex flex-wrap gap-1.5">
-        {options.map((option) => {
-          const on = value.includes(option.value);
-          return (
-            <label key={option.value} className={chipClasses(on)}>
-              <input
-                type="checkbox"
-                className="sr-only"
-                checked={on}
-                onChange={() =>
-                  onChange(on ? value.filter((v) => v !== option.value) : [...value, option.value])
-                }
-              />
-              {option.label}
-            </label>
-          );
-        })}
-      </div>
-    </fieldset>
-  );
-}
 
 export function QuizBuilderDialog({
   initialKind = 'practice',

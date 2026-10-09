@@ -11,7 +11,7 @@ import { SourceIdSchema } from './sources';
  * whether a provider has one.
  */
 
-export const AI_ROLES = ['chat', 'fast', 'embedding'] as const;
+export const AI_ROLES = ['chat', 'fast', 'embedding', 'transcription'] as const;
 export type AiRole = (typeof AI_ROLES)[number];
 export const AiRoleSchema = z.enum(AI_ROLES);
 
@@ -68,19 +68,6 @@ export const RoleSettingsSchema = z.object({
 });
 export type RoleSettings = z.infer<typeof RoleSettingsSchema>;
 
-export const AiPreferencesSchema = z.object({
-  roles: z.object({
-    chat: RoleSettingsSchema,
-    fast: RoleSettingsSchema,
-    embedding: RoleSettingsSchema,
-  }),
-  /** Estimated spend allowed per calendar month, in US dollars; null for no limit. */
-  monthlyBudget: z.number().min(0).max(100_000).nullable(),
-  /** Passages and context sent with one question, in tokens. */
-  contextTokens: z.number().int().min(1_000).max(200_000),
-});
-export type AiPreferences = z.infer<typeof AiPreferencesSchema>;
-
 const role = (maxOutputTokens: number): RoleSettings => ({
   providerId: null,
   model: '',
@@ -89,10 +76,56 @@ const role = (maxOutputTokens: number): RoleSettings => ({
   outputPrice: null,
 });
 
+/** What may skip the Inbox and enter the knowledge base as soon as it is generated (all off by default). */
+export const AUTO_ACCEPT_KINDS = [
+  'cards',
+  'questions',
+  'concepts',
+  'relations',
+  'aliases',
+  'links',
+  'notes',
+] as const;
+export type AutoAcceptKind = (typeof AUTO_ACCEPT_KINDS)[number];
+
+const AutoAcceptSchema = z.object(
+  Object.fromEntries(AUTO_ACCEPT_KINDS.map((kind) => [kind, z.boolean()])) as Record<
+    AutoAcceptKind,
+    z.ZodBoolean
+  >,
+);
+export type AutoAccept = z.infer<typeof AutoAcceptSchema>;
+
+const NO_AUTO_ACCEPT = Object.fromEntries(
+  AUTO_ACCEPT_KINDS.map((kind) => [kind, false]),
+) as AutoAccept;
+
+export const AiPreferencesSchema = z.object({
+  roles: z.object({
+    chat: RoleSettingsSchema,
+    fast: RoleSettingsSchema,
+    embedding: RoleSettingsSchema,
+    // Added in Phase 11: settings written before it have neither, and get the defaults.
+    transcription: RoleSettingsSchema.default(() => role(1_000)),
+  }),
+  /** Estimated spend allowed per calendar month, in US dollars; null for no limit. */
+  monthlyBudget: z.number().min(0).max(100_000).nullable(),
+  /** Passages and context sent with one question, in tokens. */
+  contextTokens: z.number().int().min(1_000).max(200_000),
+  autoAccept: AutoAcceptSchema.default(() => ({ ...NO_AUTO_ACCEPT })),
+});
+export type AiPreferences = z.infer<typeof AiPreferencesSchema>;
+
 export const DEFAULT_AI_PREFERENCES: AiPreferences = {
-  roles: { chat: role(2_000), fast: role(1_000), embedding: role(1_000) },
+  roles: {
+    chat: role(2_000),
+    fast: role(1_000),
+    embedding: role(1_000),
+    transcription: role(1_000),
+  },
   monthlyBudget: 10,
   contextTokens: 12_000,
+  autoAccept: { ...NO_AUTO_ACCEPT },
 };
 
 /**
@@ -104,16 +137,20 @@ export const MODEL_SUGGESTIONS: Record<ProviderKind, Record<AiRole, string[]>> =
     chat: ['claude-sonnet-5-5', 'claude-opus-5-5'],
     fast: ['claude-haiku-4-5-20251001'],
     embedding: [],
+    transcription: [],
   },
   openai: {
     chat: [],
     fast: [],
     embedding: ['text-embedding-3-small', 'text-embedding-3-large'],
+    // whisper-1 gives timed segments (exact times in the transcript); the others text only.
+    transcription: ['whisper-1', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe'],
   },
   'openai-compatible': {
     chat: ['llama3.2', 'qwen2.5', 'deepseek-chat'],
     fast: ['llama3.2', 'qwen2.5'],
     embedding: ['nomic-embed-text', 'mxbai-embed-large'],
+    transcription: ['whisper-1', 'whisper-large-v3'],
   },
 };
 
@@ -137,7 +174,12 @@ export const AiStatusSchema = z.object({
   enabled: z.boolean(),
   /** A built-in test model answers instead of a provider (SKB_AI_PROVIDER=mock). */
   mock: z.boolean(),
-  roles: z.object({ chat: RoleStatusSchema, fast: RoleStatusSchema, embedding: RoleStatusSchema }),
+  roles: z.object({
+    chat: RoleStatusSchema,
+    fast: RoleStatusSchema,
+    embedding: RoleStatusSchema,
+    transcription: RoleStatusSchema,
+  }),
   month: UsageTotalsSchema.extend({
     budget: z.number().nullable(),
     /** At or above 80 % of the budget. */
@@ -265,11 +307,13 @@ export const updateAiPreferencesEndpoint = defineEndpoint({
         chat: RoleSettingsSchema.partial(),
         fast: RoleSettingsSchema.partial(),
         embedding: RoleSettingsSchema.partial(),
+        transcription: RoleSettingsSchema.partial(),
       })
       .partial()
       .optional(),
     monthlyBudget: z.number().min(0).max(100_000).nullable().optional(),
     contextTokens: z.number().int().min(1_000).max(200_000).optional(),
+    autoAccept: AutoAcceptSchema.partial().optional(),
   }),
   response: AiSettingsSchema,
 });

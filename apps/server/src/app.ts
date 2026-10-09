@@ -9,6 +9,7 @@ import { registerAiRoutes } from './modules/ai/routes';
 import { registerCardRoutes } from './modules/cards/routes';
 import { registerConceptRoutes } from './modules/concepts/routes';
 import { registerEventRoutes } from './modules/events/routes';
+import { registerGenerationRoutes } from './modules/generation/routes';
 import { registerGraphRoutes } from './modules/graph/routes';
 import type { AppModules } from './modules/index';
 import { registerLearningRoutes } from './modules/learning/routes';
@@ -68,6 +69,7 @@ export function createApp(ctx: AppContext, modules: AppModules, auth: AuthOption
   registerCardRoutes(registry, modules.cards, modules.reviews, modules.settings);
   registerPracticeRoutes(registry, modules);
   registerAiRoutes(registry, { ...modules, logger: ctx.logger });
+  registerGenerationRoutes(registry, modules);
   registerEventRoutes(registry, ctx);
 
   // Unknown API routes are problem-details 404s, never the SPA.

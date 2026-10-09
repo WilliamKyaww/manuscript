@@ -64,6 +64,8 @@ const SOURCE_KINDS_FOR: Readonly<Record<string, readonly SourceKind[]>> = {
   slides: ['pptx'],
   docx: ['docx'],
   text: ['markdown', 'text'],
+  recording: ['audio', 'video'],
+  image: ['image'],
 };
 
 const inSources = (folder: string) => {

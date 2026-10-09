@@ -1,7 +1,12 @@
 import type { AnswerResult, Question, QuestionResponse, SelfScore } from '@skb/core';
-import { CheckCircle2, CircleDashed, ExternalLink, XCircle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { CheckCircle2, CircleDashed, ExternalLink, Sparkles, XCircle } from 'lucide-react';
 import { Button, buttonClasses } from '../../components/Button';
+import { useApi } from '../../lib/api/context';
 import { cn } from '../../lib/cn';
+import { describeError } from '../../lib/notify';
+import { aiStatusQuery } from '../ai/api';
+import { useAiGrade } from '../inbox/api';
 import { locatorHref } from '../library/links';
 import { CardMarkdown } from '../review/CardMarkdown';
 import { SELF_GRADES, scoreLabel } from './format';
@@ -149,13 +154,85 @@ function KeyView({
   }
 }
 
+/** A grade the model suggested and the student accepted, kept with the model's feedback. */
+export interface AcceptedGrade {
+  gradedBy: 'ai';
+  feedback: string;
+}
+
+/**
+ * A model's suggested grade for a written answer (task 11.08). Only a suggestion: the student
+ * accepts it — then the answer is graded by AI, with the feedback kept — or grades it themselves.
+ */
+function AiGradeSuggestion({
+  answerId,
+  disabled,
+  onAccept,
+}: {
+  answerId: string;
+  disabled: boolean;
+  onAccept(score: SelfScore, accepted: AcceptedGrade): void;
+}) {
+  const api = useApi();
+  const status = useQuery(aiStatusQuery(api));
+  const suggest = useAiGrade();
+  if (!status.data?.enabled) return null;
+  const suggestion = suggest.data;
+  if (!suggestion)
+    return (
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <Button
+          size="sm"
+          variant="ghost"
+          loading={suggest.isPending}
+          disabled={disabled}
+          onClick={() => suggest.mutate(answerId)}
+        >
+          <Sparkles aria-hidden="true" size={14} /> Suggest a grade with AI
+        </Button>
+        {suggest.isError && (
+          <span role="alert" className="text-xs text-danger">
+            {describeError(suggest.error).description}
+          </span>
+        )}
+      </div>
+    );
+  return (
+    <div className="mt-3 space-y-2 rounded-md bg-info-subtle px-3 py-2 text-sm" aria-live="polite">
+      <p>
+        <span className="font-medium">
+          AI suggests: {SELF_GRADES.find((grade) => grade.score === suggestion.score)?.label}.
+        </span>{' '}
+        {suggestion.feedback}
+      </p>
+      {suggestion.misconceptions.length > 0 && (
+        <ul className="list-disc pl-5 text-xs">
+          {suggestion.misconceptions.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      )}
+      <Button
+        size="sm"
+        variant="primary"
+        disabled={disabled}
+        onClick={() =>
+          onAccept(suggestion.score, { gradedBy: 'ai', feedback: suggestion.feedback })
+        }
+      >
+        Accept this grade
+      </Button>
+    </div>
+  );
+}
+
 export function AnswerFeedback({
   result,
   onGrade,
   grading = false,
 }: {
   result: AnswerResult;
-  onGrade?(score: SelfScore): void;
+  onGrade?(score: SelfScore, accepted?: AcceptedGrade): void;
   grading?: boolean;
 }) {
   const { question } = result;
@@ -216,7 +293,15 @@ export function AnswerFeedback({
               </Button>
             ))}
           </div>
+          {result.response !== null && (
+            <AiGradeSuggestion answerId={result.id} disabled={grading} onAccept={onGrade} />
+          )}
         </fieldset>
+      )}
+      {result.gradedBy === 'ai' && result.feedback && (
+        <p className="rounded-md bg-surface-sunken px-3 py-2 text-sm">
+          <span className="font-medium">Graded with AI:</span> {result.feedback}
+        </p>
       )}
     </section>
   );

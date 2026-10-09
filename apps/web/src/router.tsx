@@ -164,6 +164,11 @@ const progressRoute = createRoute({
   path: '/progress',
   component: lazyRouteComponent(() => import('./features/progress/ProgressPage'), 'ProgressPage'),
 });
+const inboxRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/inbox',
+  component: lazyRouteComponent(() => import('./features/inbox/InboxPage'), 'InboxPage'),
+});
 const conceptRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/concepts/$conceptId',
@@ -182,6 +187,7 @@ const IMPLEMENTED = new Set([
   'review',
   'practice',
   'progress',
+  'inbox',
   'settings',
 ]);
 const placeholderRoutes = SECTIONS.filter((section) => !IMPLEMENTED.has(section.id)).map(
@@ -215,6 +221,7 @@ export const routeTree = rootRoute.addChildren([
   attemptRoute,
   learnRoute,
   progressRoute,
+  inboxRoute,
   ...placeholderRoutes,
 ]);
 

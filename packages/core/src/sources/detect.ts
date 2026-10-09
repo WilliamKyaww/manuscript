@@ -14,6 +14,43 @@ export const SOURCE_EXTENSIONS: Readonly<Record<string, SourceKind>> = {
   markdown: 'markdown',
   txt: 'text',
   text: 'text',
+  // Phase 11: recordings are transcribed and images read by the AI layer.
+  mp3: 'audio',
+  m4a: 'audio',
+  wav: 'audio',
+  ogg: 'audio',
+  oga: 'audio',
+  flac: 'audio',
+  aac: 'audio',
+  mp4: 'video',
+  m4v: 'video',
+  mov: 'video',
+  webm: 'video',
+  png: 'image',
+  jpg: 'image',
+  jpeg: 'image',
+  gif: 'image',
+  webp: 'image',
+};
+
+/** Media types by extension, for kinds with several formats (audio, video, images). */
+export const EXTENSION_MEDIA_TYPES: Readonly<Record<string, string>> = {
+  mp3: 'audio/mpeg',
+  m4a: 'audio/mp4',
+  wav: 'audio/wav',
+  ogg: 'audio/ogg',
+  oga: 'audio/ogg',
+  flac: 'audio/flac',
+  aac: 'audio/aac',
+  mp4: 'video/mp4',
+  m4v: 'video/mp4',
+  mov: 'video/quicktime',
+  webm: 'video/webm',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
 };
 
 export const SOURCE_MEDIA_TYPES: Readonly<Partial<Record<SourceKind, string>>> = {
@@ -36,7 +73,8 @@ export type DetectResult =
   | { ok: true; kind: SourceKind; mediaType: string }
   | { ok: false; reason: string };
 
-const SUPPORTED = 'PDF, PowerPoint (.pptx), Word (.docx), Markdown and plain text';
+const SUPPORTED =
+  'PDF, PowerPoint (.pptx), Word (.docx), Markdown, plain text, recordings (MP3, M4A, WAV, MP4, WebM…) and images (PNG, JPEG, GIF, WebP)';
 
 const LEGACY: Readonly<Record<string, string>> = {
   ppt: 'Old PowerPoint files (.ppt) cannot be read. Save the file as .pptx and import that.',
@@ -57,6 +95,43 @@ function startsWith(bytes: Uint8Array, signature: readonly number[], offset = 0)
 
 const PDF_SIGNATURE = [0x25, 0x50, 0x44, 0x46, 0x2d]; // %PDF-
 const ZIP_SIGNATURE = [0x50, 0x4b, 0x03, 0x04]; // PK\x03\x04
+const ascii = (text: string) => [...text].map((character) => character.charCodeAt(0));
+
+/** The signatures of the media formats, by extension: bytes expected at an offset. */
+const MEDIA_SIGNATURES: Readonly<Record<string, readonly (readonly [number[], number])[]>> = {
+  // ID3 tags, or an MPEG audio frame header.
+  mp3: [
+    [ascii('ID3'), 0],
+    [[0xff, 0xfb], 0],
+    [[0xff, 0xf3], 0],
+    [[0xff, 0xf2], 0],
+  ],
+  wav: [[ascii('WAVE'), 8]],
+  ogg: [[ascii('OggS'), 0]],
+  oga: [[ascii('OggS'), 0]],
+  flac: [[ascii('fLaC'), 0]],
+  aac: [
+    [[0xff, 0xf1], 0],
+    [[0xff, 0xf9], 0],
+    [ascii('ID3'), 0],
+  ],
+  // ISO media (MP4, M4A, QuickTime): a "ftyp" box first.
+  m4a: [[ascii('ftyp'), 4]],
+  mp4: [[ascii('ftyp'), 4]],
+  m4v: [[ascii('ftyp'), 4]],
+  mov: [
+    [ascii('ftyp'), 4],
+    [ascii('moov'), 4],
+    [ascii('wide'), 4],
+    [ascii('mdat'), 4],
+  ],
+  webm: [[[0x1a, 0x45, 0xdf, 0xa3], 0]],
+  png: [[[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0]],
+  jpg: [[[0xff, 0xd8, 0xff], 0]],
+  jpeg: [[[0xff, 0xd8, 0xff], 0]],
+  gif: [[ascii('GIF8'), 0]],
+  webp: [[ascii('WEBP'), 8]],
+};
 
 /** PDF readers accept the header anywhere in the first kilobyte. */
 function isPdf(head: Uint8Array): boolean {
@@ -106,8 +181,10 @@ export function detectSourceKind(
   }
   if (head.length === 0) return { ok: false, reason: 'The file is empty.' };
 
-  const matches =
-    kind === 'pdf'
+  const media = MEDIA_SIGNATURES[extension];
+  const matches = media
+    ? media.some(([signature, offset]) => startsWith(head, signature, offset))
+    : kind === 'pdf'
       ? isPdf(head)
       : kind === 'pptx' || kind === 'docx'
         ? startsWith(head, ZIP_SIGNATURE)
@@ -119,5 +196,10 @@ export function detectSourceKind(
         : `The file's contents do not match its .${extension} extension, so it was not imported.`;
     return { ok: false, reason };
   }
-  return { ok: true, kind, mediaType: SOURCE_MEDIA_TYPES[kind] ?? 'application/octet-stream' };
+  return {
+    ok: true,
+    kind,
+    mediaType:
+      EXTENSION_MEDIA_TYPES[extension] ?? SOURCE_MEDIA_TYPES[kind] ?? 'application/octet-stream',
+  };
 }
