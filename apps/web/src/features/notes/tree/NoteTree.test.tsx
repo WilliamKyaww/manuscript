@@ -37,6 +37,26 @@ beforeEach(() => {
 });
 
 describe('NoteTree', () => {
+  it('is no tree while the vault is empty, only a message', () => {
+    const empty = buildTree({ notes: [], folders: [], attachments: [] }, { attachments: false });
+    render(
+      <NoteTree
+        root={empty}
+        activePath={null}
+        onOpen={vi.fn()}
+        onCreateNote={vi.fn()}
+        onCreateFolder={vi.fn()}
+        onRename={vi.fn()}
+        onMove={vi.fn()}
+        onDelete={vi.fn()}
+        onCopyLink={vi.fn()}
+      />,
+    );
+    // A tree must contain tree items (WAI-ARIA); an empty one is plain text.
+    expect(screen.queryByRole('tree')).not.toBeInTheDocument();
+    expect(screen.getByText('This vault has no notes yet.')).toBeInTheDocument();
+  });
+
   it('is an accessible tree with levels, positions and expansion state', () => {
     renderTree();
     const tree = screen.getByRole('tree', { name: 'Notes and folders' });

@@ -199,8 +199,9 @@ export function NoteTree({ root, activePath, ...actions }: NoteTreeProps) {
       <ContextMenuTrigger asChild>
         <div
           ref={containerRef}
-          role="tree"
-          aria-label="Notes and folders"
+          // A tree must contain tree items; an empty vault is just its message.
+          role={rows.length > 0 ? 'tree' : undefined}
+          aria-label={rows.length > 0 ? 'Notes and folders' : undefined}
           className={cn('min-h-full py-1 text-sm', dropTarget === '' && 'bg-accent-subtle')}
           onContextMenu={(event) => {
             const path = (event.target as HTMLElement).closest<HTMLElement>('[data-path]')?.dataset
