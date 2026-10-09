@@ -166,3 +166,103 @@ Phase 8 — flashcards and spaced repetition (`phase/08-flashcards`).
 ### Next steps
 
 Phase 9 — questions, quizzes and mastery (`phase/09-quizzes-mastery`).
+
+## Session 12 — Phase 9: questions, quizzes and mastery
+
+- **Date:** Friday 9 October 2026
+- **Time:** about 06:00–13:30 (with breaks for context compaction)
+- **Agent model:** Claude Opus 5.5 (`claude-opus-5-5`)
+- **Phase:** 9 — Questions, quizzes and mastery (branch `phase/09-quizzes-mastery`)
+- **Work performed:** built and verified Phase 9 end to end and merged it.
+
+### What was done
+
+1. **Core (9.03, 9.06, 9.08, 9.09).** Question kinds with their answer keys and responses; grading
+   (choices, multi-select credit less wrong picks, numeric tolerance with a floating-point margin,
+   normalised short answers that otherwise wait for a self-grade). The mastery model exactly as
+   learning-system.md §7 (recall, recency- and help-weighted accuracy, evidence, confidence, stages,
+   importance-weighted roll-ups) with a hand-worked test and a property test; weak signals; priority
+   with module exposures; the Learn engine (ladder, correct twice, interleaving, priority halving per
+   showing), replayable from answers with a seeded generator. Contracts for questions, quizzes,
+   attempts, Learn, progress and weak areas.
+2. **Server (9.01, 9.02, 9.04, 9.05, 9.07–9.09).** Migration `0009`: questions (soft delete),
+   concept links, quizzes and items, attempts with deadline and draft, append-only answers (a trigger
+   allows only grading a pending answer, once), the derived `mastery_cache`. Question service; quiz
+   builder (scope narrowing, seeded shuffle, mock exams timed like their assessment, recognition
+   first, Markdown export, retakes); attempts (practice, mock-exam submission with blanks at 0, self
+   grades, scores, study sessions); Learn sessions (concepts and questions fixed at the start, state
+   replayed); the mastery service (one pass, cache, staleness after writes or 15 minutes).
+3. **Web (9.10–9.14).** `/practice` (Learn starter, quizzes and mock exams, builder with a live match
+   count), `/practice/questions` (bank and editor for every kind), attempt pages (practice runner with
+   hint, confidence and self-grading; mock exam with clock, drafts and automatic submission;
+   results with retake), Learn sessions, `/progress` (roll-ups, topics, every concept's sentence and
+   sum, priority, weak areas with Practise), the mastery panel on concept pages, readiness and Learn
+   on module pages, and Today's Weak areas widget. The concept chips and file download became shared.
+4. **Verification and docs (9.15, 9.16).** `e2e/practice.spec.ts` on its own server (port 4396);
+   screenshots of every new page; `npm run test:perf:mastery`; guides `practice.md` and `mastery.md`;
+   ADR-0032; learning-system, data-model, architecture and ui PRDs; FEATURES, backlog (B-LE-24…32),
+   AGENTS (ports, perf command), STATE.
+
+### Important decisions
+
+- **ADR-0032:** mastery is recomputed from all evidence in one pass and cached; answers are written
+  once (a pending answer graded once); a Learn session fixes its concepts and questions at the start
+  and is replayed from its answers; Learn asks questions only (cards in Learn: B-LE-24).
+- **Answer ages are whole review days.** With fractional days, two fresh answers weighed 2.99, showed
+  as "3.0" but counted as low confidence — not reproducible by hand. Found from a screenshot.
+- **Priority defaults** for modules without credits or dated assessments and for concepts in no module
+  (learning-system.md §9), so Learn and weak areas work before Phase 14's planner.
+- A short answer that matches no accepted form is not marked wrong: the student compares and grades.
+
+### Files changed
+
+- `packages/core/src/learning/{questions,mastery,weakness,priority,practice}.ts` (+ tests),
+  `packages/core/src/api/{questions,mastery}.ts`.
+- `apps/server/src/db/migrations/0009_questions_mastery.sql`; `apps/server/src/modules/practice/*`;
+  `apps/server/src/modules/mastery/*`; `apps/server/test/{practice-helpers,api-helpers}.ts`;
+  `apps/server/test/perf/mastery-perf.ts`.
+- `apps/web/src/features/practice/*`, `apps/web/src/features/progress/*`,
+  `apps/web/src/features/concepts/ConceptPicker.tsx`, `apps/web/src/lib/download.ts`, the router,
+  Today, concept and module pages, `preview.css` (no trailing margin), `test/practice-fixtures.ts`.
+- `e2e/practice.spec.ts`, `e2e/axe.ts`.
+- Docs listed above.
+
+### Tests run
+
+| Command | Result |
+|---|---|
+| `npm run verify` | **Pass** — type-check, Biome, **575** Vitest tests (core 162, server 273, web 140), build, smoke |
+| `npx playwright test` | **Pass** — **79/79** (the practice flow on its own server; the question bank in the shell checks) |
+| `npm run test:perf:mastery` | **Pass** — mastery pass over 1,000 concepts, 5,000 reviewed cards and 20,000 answers: 201 ms median (budget 500 ms; 324 ms before restricting the fortnight-ago lookup), mains power |
+| Manual | Screenshots of Practice, the question editor, a practice attempt waiting for a self-grade, a mock exam, Progress, a concept's mastery panel and Today |
+
+### Problems encountered
+
+- **A test-helper refactor by regular expression went wrong**: a lazy match spanned several calls and
+  bash swallowed template literals. Repaired by hand; such edits now go through exact replacements.
+- **Playwright matched "Option 1" inside "Why option 1 is right"** (names match as substrings); the
+  test uses exact names.
+- **The Phase 8 review E2E began failing axe** on toasts caught mid-fade. Scans now wait for finite
+  animations to end (`e2e/axe.ts`).
+- **The full Vitest run once timed out ten source-import tests** under load; a re-run passed (574/574).
+- **Forgotten rarely fires**: FSRS-6's flat curve means only faces with a stability under about two
+  days fall from 0.85 to below 0.70 in a fortnight. Documented; B-LE-32 revisits the rule.
+- Answer options rendered with a paragraph's bottom margin; rendered Markdown now has no trailing
+  margin.
+- **Running the shell checks alone found an older bug:** an empty vault's Notes tree had
+  `role="tree"` with no items (axe: aria-required-children); the full run hid it because earlier
+  tests create notes. Test first, then fixed — but the first fix (a conditional role) failed Biome and
+  was committed before lint was checked; a follow-up commit renders the empty state as a plain
+  message. Lint output is now read before every commit, not just the exit code.
+- **The Phase 6 course E2E failed once on timing:** an empty Modules page has two New module
+  buttons; the test now uses the header's.
+
+### Unresolved issues
+
+- Backlog B-LE-24…32: cards in Learn, questions from a selection, calibration, bank import/export,
+  pausing mock exams, a question's history, mastery trends, Learn by lectures and tags, the Forgotten
+  rule.
+
+### Next steps
+
+Phase 10 — AI foundation: providers, retrieval and grounded Q&A (`phase/10-ai-foundation`).

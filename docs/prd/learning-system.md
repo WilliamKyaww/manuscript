@@ -87,6 +87,13 @@ the header itself stays, so no exception to the sticky-header rule (`ui.md` §2)
 
 Every question has an explanation and, when generated from material, a source locator.
 
+**As built (Phase 9).** A question's kind is its answer key's kind (`@skb/core` `QuestionAnswerSchema`;
+options, with a per-option explanation, live inside the key). Questions also carry a hint (using it, or
+opening the source, marks the answer *assisted*), a rubric for self-graded kinds, difficulty 1–5, a
+module, a lecture, tags and concepts. A short answer that matches no accepted form is not marked
+wrong: it waits for the student's own grade, like the open kinds. Self-grades are 0, ½ or 1 and are
+given once. Questions are deleted softly; answers to deleted questions stop counting.
+
 ## 5. Quizzes and mock exams (Phase 9)
 
 - **Practice quiz**: scope (module, lectures, topics, concepts, tags), count, kinds mix, difficulty;
@@ -94,6 +101,14 @@ Every question has an explanation and, when generated from material, a source lo
 - **Mock exam**: timed, no feedback until submission, mirrors the assessment's duration and question
   style; results feed mastery with full weight.
 - Retake wrong answers; export to Markdown.
+
+**As built (Phase 9).** Each part of a scope narrows the choice (module: filed under it or linked to
+one of its concepts; lectures: filed under them; topics: linked to concepts in them or their
+subtopics; concepts; tags), any match within a part; kinds and difficulty filter too. The chosen
+questions are shuffled with a seed from the quiz id, so a quiz is reproducible, and stored as its
+items. A mock exam takes the rehearsed assessment's duration unless given minutes, orders recognition
+→ recall → production, keeps a draft (not evidence) and is graded on submission; blanks score 0. A
+retake is a new practice quiz of the questions not answered fully right.
 
 ## 6. Adaptive practice session ("Learn")
 
@@ -108,6 +123,18 @@ For a scope, repeatedly:
 
 Session results are mastery evidence; cards answered in the session are **not** rescheduled by FSRS
 unless they were due (prevents early-review inflation).
+
+**As built (Phase 9, ADR-0032).** Learn asks **questions only**; cards in Learn sessions are backlog
+B-LE-24 (their reviews stay in Review). A session is an `adaptive` quiz: its concepts with their
+priority and stage, and the questions it may ask, are fixed when it starts, and its state is rebuilt
+from its answers (`@skb/core` `practiceSession`, seeded by the quiz id), so the server keeps nothing
+else. A concept starts at recognition (new, learning), recall (practised) or production (confident,
+mastered), capped at its highest rung with material; the nearest rung with material is asked (the
+lower on a tie); unseen questions first, never the one just asked if there is another. A score of
+0.75 or more climbs, below 0.5 steps down, between stays. A concept with nothing at recall or above
+is secure after two right answers at its top rung. Priority halves each time a concept is shown, so
+sessions move around rather than drill one concept. An answer awaiting its self-grade holds the
+session until graded.
 
 ## 7. Mastery model (Phase 9) — transparent heuristic
 
@@ -125,6 +152,10 @@ Coverage: items practised at least once / items linked (cards + questions)
 ```
 
 Questions weigh 1.5× because they test understanding and application rather than recall only.
+
+**As built (Phase 9).** Each reviewed *face* of an active card counts once (a reversed card has two).
+Answer ages are whole review days (04:00 to 04:00), so a fresh answer weighs exactly 1 and the
+displayed components reproduce the figure by hand. Answers to deleted questions do not count.
 
 | Stage | Rule |
 |---|---|
@@ -155,6 +186,15 @@ attempts · 2 of 5 sub-concepts never practised · confidence: medium").
 
 Each signal links to a one-click action: practise now, generate material (Phase 11), tutor (Phase 14).
 
+**As built (Phase 9).** Slipping compares the mean scores of answers 0–13 and 14–27 days old and needs
+at least two answers in each window. Lapsing counts standing reviews rated Again on faces that were in
+review. Forgotten compares recall now with the mean retrievability, 14 days ago, of the faces reviewed
+by then (from the schedule each had after its last review before that moment). FSRS-6 forgets slowly
+(its curve is flatter than FSRS-4.5's), so within a fortnight only faces with a stability under about
+two days can fall from 0.85 to below 0.70: Forgotten marks weakly learnt cards (B-LE-32 revisits the
+rule). "Practise now" starts a
+ten-minute Learn session for the concept; "no material" offers to write a question.
+
 ## 9. Priority and study planning (Phase 14)
 
 ```text
@@ -163,6 +203,12 @@ stake_M,a    = weight(a) × credits(M) / Σ credits         (share of the year's
 urgency_a    = clamp(14 / max(days_until(a), 1), 0.25, 3)
 priority_c   = gap_c × stake × urgency × importance_c × (at_risk ? 1.25 : 1)
 ```
+
+**Phase 9** implements priority for weak areas and Learn (`@skb/core` `learning/priority.ts`): a
+concept's exposure is the most pressing (stake × urgency) of its modules' next planned, dated
+assessments; a module without one counts its whole mark at urgency 0.25; modules without credits count
+as the mean of the known credits; a concept in no module gets an equal share at urgency 0.25. Archived
+modules are left out. *At risk* waits for Phase 15.
 
 **Daily plan** (rolling, regenerated daily or on demand, keeps completed items):
 1. Reserve time for due reviews (forecast × the user's median seconds per card).

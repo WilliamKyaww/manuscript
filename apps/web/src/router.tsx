@@ -136,6 +136,34 @@ const reviewSessionRoute = createRoute({
     ...(typeof search.module === 'string' && search.module ? { module: search.module } : {}),
   }),
 });
+const practiceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/practice',
+  component: lazyRouteComponent(() => import('./features/practice/PracticePage'), 'PracticePage'),
+});
+const questionBankRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/practice/questions',
+  component: lazyRouteComponent(
+    () => import('./features/practice/QuestionBankPage'),
+    'QuestionBankPage',
+  ),
+});
+const attemptRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/practice/attempts/$attemptId',
+  component: lazyRouteComponent(() => import('./features/practice/AttemptPage'), 'AttemptPage'),
+});
+const learnRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/practice/learn/$attemptId',
+  component: lazyRouteComponent(() => import('./features/practice/LearnPage'), 'LearnPage'),
+});
+const progressRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/progress',
+  component: lazyRouteComponent(() => import('./features/progress/ProgressPage'), 'ProgressPage'),
+});
 const conceptRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/concepts/$conceptId',
@@ -152,6 +180,8 @@ const IMPLEMENTED = new Set([
   'concepts',
   'graph',
   'review',
+  'practice',
+  'progress',
   'settings',
 ]);
 const placeholderRoutes = SECTIONS.filter((section) => !IMPLEMENTED.has(section.id)).map(
@@ -180,6 +210,11 @@ export const routeTree = rootRoute.addChildren([
   reviewRoute,
   cardSetRoute,
   reviewSessionRoute,
+  practiceRoute,
+  questionBankRoute,
+  attemptRoute,
+  learnRoute,
+  progressRoute,
   ...placeholderRoutes,
 ]);
 

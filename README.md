@@ -4,7 +4,7 @@ A personal **Knowledge & Learning OS**: a Markdown knowledge base, a lecture/sou
 graph and a spaced-repetition learning system that share one data model — with an AI agent that can
 search, explain, generate study material and act on the knowledge base through permissioned tools.
 
-> **Status: Phases 0–8 complete** (research and planning; secure local server, database, vault and
+> **Status: Phases 0–9 complete** (research and planning; secure local server, database, vault and
 > launcher; application shell; **notes**: Markdown files in your vault with an editor, preview,
 > wikilinks, backlinks, templates, attachments, trash and live pick-up of edits made in Obsidian or
 > VS Code; **search**: full-text search with filters, a quick switcher and notes in the command
@@ -13,7 +13,9 @@ search, explain, generate study material and act on the knowledge base through p
 > with their material, topics, assessments with a mark calculator against your targets, and concepts
 > that wikilinks resolve to; **graph**: concepts, notes, sources and the course as a WebGL graph with
 > typed relations, clusters and study prompts; **flashcards**: basic, reversed and cloze cards
-> scheduled with FSRS-6 and reviewed from the keyboard). Quizzes and mastery arrive in Phase 9. See
+> scheduled with FSRS-6 and reviewed from the keyboard; **practice**: a question bank of eight kinds,
+> quizzes, timed mock exams and adaptive Learn sessions; **progress**: transparent mastery per concept
+> with readiness by module and weak areas). AI features arrive from Phase 10. See
 > [`STATE.md`](./STATE.md), the
 > [user guides](./docs/guide/README.md) and
 > [`docs/checklist/`](./docs/checklist/README.md) for the roadmap.

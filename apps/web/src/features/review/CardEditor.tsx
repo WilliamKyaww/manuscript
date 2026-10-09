@@ -8,7 +8,6 @@ import {
   nextClozeNumber,
 } from '@skb/core';
 import { useQuery } from '@tanstack/react-query';
-import { Lightbulb } from 'lucide-react';
 import { type FormEvent, useId, useRef, useState } from 'react';
 import { Button } from '../../components/Button';
 import { Dialog } from '../../components/Dialog';
@@ -18,7 +17,7 @@ import { cn } from '../../lib/cn';
 import { formatCount } from '../../lib/format';
 import { describeError, notifySuccess } from '../../lib/notify';
 import { readPreference, writePreference } from '../../lib/storage';
-import { conceptsQuery } from '../concepts/api';
+import { ConceptPicker } from '../concepts/ConceptPicker';
 import { Field, FormError, selectClasses } from '../learning/Field';
 import { cardSetsQuery, useCardActions } from './api';
 import { CardMarkdown } from './CardMarkdown';
@@ -54,10 +53,8 @@ export function CardEditor({
 }) {
   const api = useApi();
   const sets = useQuery(cardSetsQuery(api));
-  const concepts = useQuery(conceptsQuery(api));
   const actions = useCardActions();
   const frontRef = useRef<HTMLTextAreaElement>(null);
-  const conceptListId = useId();
   const formId = useId();
   const [setId, setSetId] = useState(card?.setId ?? draft?.setId ?? readPreference(LAST_SET) ?? '');
   const [newSetTitle, setNewSetTitle] = useState('');
@@ -68,7 +65,6 @@ export function CardEditor({
   const [conceptIds, setConceptIds] = useState<string[]>(
     card?.concepts.map((concept) => concept.id) ?? draft?.conceptIds ?? [],
   );
-  const [conceptText, setConceptText] = useState('');
   const [draftOnly, setDraftOnly] = useState(card?.status === 'draft');
   const [error, setError] = useState<string | null>(null);
   const locator: Locator | null = card?.locator ?? draft?.locator ?? null;
@@ -79,7 +75,6 @@ export function CardEditor({
   const hints = front.trim() ? cardHints(content) : [];
   const faces = faceOrdinals(kind, front);
   const preview = faces.length > 0 ? faceContent(content, faces[0] as number) : null;
-  const allConcepts = concepts.data?.concepts ?? [];
 
   const insertCloze = () => {
     const area = frontRef.current;
@@ -93,17 +88,6 @@ export function CardEditor({
       area?.focus();
       area?.setSelectionRange(start + cloze.length, start + cloze.length);
     });
-  };
-
-  const addConcept = () => {
-    const wanted = conceptText.trim().toLowerCase();
-    const match = allConcepts.find(
-      (concept) =>
-        concept.name.toLowerCase() === wanted ||
-        concept.aliases.some((alias) => alias.toLowerCase() === wanted),
-    );
-    if (match && !conceptIds.includes(match.id)) setConceptIds([...conceptIds, match.id]);
-    setConceptText('');
   };
 
   const saving =
@@ -284,46 +268,7 @@ export function CardEditor({
           )}
         </Field>
 
-        <div>
-          <p className="mb-1 text-sm font-medium">Concepts</p>
-          <div className="flex flex-wrap items-center gap-2">
-            {conceptIds.map((id) => {
-              const concept = allConcepts.find((candidate) => candidate.id === id);
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  className="flex items-center gap-1 rounded-full bg-surface-sunken px-2.5 py-0.5 text-xs hover:bg-surface-hover"
-                  aria-label={`Remove concept ${concept?.name ?? id}`}
-                  onClick={() => setConceptIds(conceptIds.filter((value) => value !== id))}
-                >
-                  <Lightbulb aria-hidden="true" size={12} />
-                  {concept?.name ?? id} ×
-                </button>
-              );
-            })}
-            <Input
-              aria-label="Add a concept"
-              placeholder="Add a concept"
-              list={conceptListId}
-              className="h-8 w-48"
-              value={conceptText}
-              onChange={(event) => setConceptText(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  addConcept();
-                }
-              }}
-              onBlur={() => conceptText.trim() && addConcept()}
-            />
-            <datalist id={conceptListId}>
-              {allConcepts.map((concept) => (
-                <option key={concept.id} value={concept.name} />
-              ))}
-            </datalist>
-          </div>
-        </div>
+        <ConceptPicker value={conceptIds} onChange={setConceptIds} />
 
         {preview && (
           <section

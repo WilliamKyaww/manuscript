@@ -30,6 +30,8 @@ export function jsonApi(request: Requester) {
       send<T>('POST', path, body, status, schema),
     patch: <T = unknown>(path: string, body: unknown, status = 200, schema?: z.ZodType<T>) =>
       send<T>('PATCH', path, body, status, schema),
+    put: <T = unknown>(path: string, body: unknown, status = 200, schema?: z.ZodType<T>) =>
+      send<T>('PUT', path, body, status, schema),
     delete: <T = unknown>(path: string, status = 200) => send<T>('DELETE', path, undefined, status),
   };
 }

@@ -10,6 +10,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../../components/States
 import { ApiError } from '../../../lib/api/client';
 import { useApi } from '../../../lib/api/context';
 import { notifyError, notifySuccess } from '../../../lib/notify';
+import { ModuleReadiness } from '../../progress/ModuleReadiness';
 import { coursesQuery, moduleQuery, useLearningActions } from '../api';
 import { ModuleDialog } from '../dialogs';
 import { MarksSummary } from '../MarksSummary';
@@ -111,6 +112,7 @@ export function ModulePage() {
           </p>
         )}
       </Card>
+      <ModuleReadiness moduleId={data.id} />
       <AssessmentsSection moduleId={data.id} assessments={data.assessments} />
       <LecturesSection moduleId={data.id} lectures={data.lectures} />
       <TopicsSection moduleId={data.id} topics={data.topics} />

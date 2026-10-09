@@ -27,9 +27,32 @@ export async function fitViewportToContent(page: Page): Promise<void> {
   await page.setViewportSize({ width, height: Math.min(Math.max(height, 720), 8000) });
 }
 
+/**
+ * Waits for finite animations and transitions to end (a toast fading in measures as low contrast
+ * half-way). Endless ones (spinners) are ignored; if something never settles, the scan goes ahead
+ * after a few seconds and reports what it sees.
+ */
+async function settleAnimations(page: Page): Promise<void> {
+  await page
+    .waitForFunction(
+      () =>
+        document
+          .getAnimations()
+          .every(
+            (animation) =>
+              animation.playState !== 'running' ||
+              animation.effect?.getTiming().iterations === Number.POSITIVE_INFINITY,
+          ),
+      undefined,
+      { timeout: 3_000 },
+    )
+    .catch(() => undefined);
+}
+
 /** Serious and critical WCAG violations on the current page, after fitting it to the viewport. */
 export async function seriousViolations(page: Page) {
   await fitViewportToContent(page);
+  await settleAnimations(page);
   const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
   return results.violations
     .filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')

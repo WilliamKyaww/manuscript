@@ -1,11 +1,11 @@
-import { CalendarRange, Keyboard, type LucideIcon, Search, TrendingDown } from 'lucide-react';
+import { CalendarRange, Keyboard, type LucideIcon, Search } from 'lucide-react';
 import { useLayoutStore } from '../../app/layout-store';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Page, StickySection } from '../../components/Page';
 import { formatLongDate, greeting } from '../../lib/format';
-import { DeadlinesWidget, ReviewsWidget, TargetWidget } from './LearningWidgets';
+import { DeadlinesWidget, ReviewsWidget, TargetWidget, WeakAreasWidget } from './LearningWidgets';
 
 interface UpcomingWidget {
   title: string;
@@ -23,13 +23,6 @@ const WIDGETS: UpcomingWidget[] = [
     phase: 14,
     icon: CalendarRange,
   },
-  {
-    title: 'Weak areas',
-    description:
-      'Concepts that are slipping or have never been practised, with one-click practice.',
-    phase: 9,
-    icon: TrendingDown,
-  },
 ];
 
 export function TodayPage({ now = new Date() }: { now?: Date }) {
@@ -42,6 +35,7 @@ export function TodayPage({ now = new Date() }: { now?: Date }) {
         <ReviewsWidget />
         <DeadlinesWidget now={now} />
         <TargetWidget now={now} />
+        <WeakAreasWidget />
         {WIDGETS.map((widget) => (
           <Card key={widget.title} className="p-5">
             <div className="flex items-start justify-between gap-3">

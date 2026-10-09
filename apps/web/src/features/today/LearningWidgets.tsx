@@ -1,9 +1,9 @@
 import type { Course } from '@skb/core';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { CalendarClock, Layers, Play, Target } from 'lucide-react';
+import { CalendarClock, Layers, Play, Sparkles, Target, TrendingDown } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { buttonClasses } from '../../components/Button';
+import { Button, buttonClasses } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { LoadingState } from '../../components/States';
 import { useApi } from '../../lib/api/context';
@@ -11,9 +11,11 @@ import { formatCount } from '../../lib/format';
 import { coursesQuery, deadlinesQuery, modulesQuery } from '../learning/api';
 import { dueLabel, formatDue, formatWeight, isoDay } from '../learning/format';
 import { MarksSummary } from '../learning/MarksSummary';
+import { weakAreasQuery } from '../practice/api';
+import { usePractiseConcept } from '../progress/WeakAreas';
 import { cardSetsQuery, reviewSettingsQuery, reviewStatsQuery } from '../review/api';
 
-/** Today's review, deadline and target widgets (tasks 6.14, 8.10). */
+/** Today's review, deadline, target and weak-area widgets (tasks 6.14, 8.10, 9.13). */
 
 function WidgetCard({
   title,
@@ -171,6 +173,64 @@ export function TargetWidget({ now }: { now: Date }) {
             compact
           />
         </>
+      )}
+    </WidgetCard>
+  );
+}
+
+const WEAK_SHOWN = 4;
+
+export function WeakAreasWidget() {
+  const api = useApi();
+  const weak = useQuery(weakAreasQuery(api, undefined, WEAK_SHOWN));
+  const practise = usePractiseConcept();
+  const items = weak.data?.items ?? [];
+  const missing = weak.data?.noMaterial.length ?? 0;
+  return (
+    <WidgetCard title="Weak areas" icon={<TrendingDown size={18} />}>
+      {weak.isPending ? (
+        <LoadingState label="Loading weak areas" />
+      ) : items.length === 0 ? (
+        <p className="text-sm text-muted">
+          Nothing weak, slipping or being forgotten.{' '}
+          {missing > 0 && (
+            <>
+              {formatCount(missing, 'concept')} {missing === 1 ? 'has' : 'have'} nothing to practise
+              yet —{' '}
+              <Link to="/progress" className="underline">
+                see Progress
+              </Link>
+              .
+            </>
+          )}
+        </p>
+      ) : (
+        <ul aria-label="Weak areas" className="space-y-2">
+          {items.map((row) => (
+            <li key={row.concept.id} className="flex items-center gap-3 text-sm">
+              <span className="min-w-0 flex-1">
+                <Link
+                  to="/concepts/$conceptId"
+                  params={{ conceptId: row.concept.id }}
+                  className="font-medium hover:underline"
+                >
+                  {row.concept.name}
+                </Link>
+                <span className="block truncate text-xs text-muted">
+                  {row.signals.find((signal) => signal.kind !== 'no_material')?.reason}
+                </span>
+              </span>
+              <Button
+                size="sm"
+                disabled={practise.pending}
+                onClick={() => void practise.start(row.concept.id)}
+                aria-label={`Practise ${row.concept.name}`}
+              >
+                <Sparkles aria-hidden="true" size={14} /> Practise
+              </Button>
+            </li>
+          ))}
+        </ul>
       )}
     </WidgetCard>
   );

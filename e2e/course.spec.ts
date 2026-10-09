@@ -29,7 +29,8 @@ test('a module with a lecture, its material, a concept and the mark calculator',
 }) => {
   // Module.
   await page.goto('/modules');
-  await page.getByRole('button', { name: 'New module' }).click();
+  // The header's button: an empty Modules page offers a second one in its empty state.
+  await page.locator('[data-page-header]').getByRole('button', { name: 'New module' }).click();
   const moduleDialog = page.getByRole('dialog', { name: 'New module' });
   await moduleDialog.getByLabel('Code').fill('E2E201');
   await moduleDialog.getByLabel('Title').fill('Gossip Systems');

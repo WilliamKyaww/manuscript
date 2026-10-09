@@ -6,7 +6,7 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 9 October 2026 (end of Phase 8)._
+_Last updated: 9 October 2026 (end of Phase 9)._
 
 ## Platform and architecture
 
@@ -101,11 +101,11 @@ _Last updated: 9 October 2026 (end of Phase 8)._
 
 | ID | Feature | Status | Phase |
 |---|---|---|---|
-| F-QZ-01 | Question bank (8 kinds) with explanations and locators | Planned | 9 |
-| F-QZ-02 | Practice quizzes and timed mock exams | Planned | 9 |
-| F-QZ-03 | Adaptive practice sessions (ladder, correct-twice, interleaving) | Planned | 9 |
-| F-QZ-04 | Transparent mastery with roll-ups, readiness and coverage | Planned | 9 |
-| F-QZ-05 | Weak-area detection with actions | Planned | 9 |
+| F-QZ-01 | Question bank (8 kinds) with per-option reasons, explanations, hints, rubrics, tags, concepts and source links | Complete — questions from a selection are B-LE-25 | 9 |
+| F-QZ-02 | Practice quizzes and timed mock exams (scope, kinds, difficulty; drafts; self-grading; retakes; Markdown export) | Complete | 9 |
+| F-QZ-03 | Adaptive practice sessions (ladder, correct-twice, interleaving) | Complete — questions only; cards in Learn are B-LE-24 | 9 |
+| F-QZ-04 | Transparent mastery with roll-ups, readiness and coverage | Complete | 9 |
+| F-QZ-05 | Weak-area detection (weak, slipping, lapsing, forgotten, no material) with priority and actions | Complete | 9 |
 | F-QZ-06 | AI question generation and AI rubric grading | Planned | 11 |
 | F-QZ-07 | FIRe-inspired implicit credit along prerequisite edges | Planned | 15 |
 
@@ -116,7 +116,7 @@ _Last updated: 9 October 2026 (end of Phase 8)._
 | F-PN-01 | Guardrailed Socratic tutor mode | Planned | 14 |
 | F-PN-02 | Misconception check against the knowledge base | Planned | 14 |
 | F-PN-03 | Rolling study planner with reasons | Planned | 14 |
-| F-PN-04 | Today dashboard | Partial — reviews due (Phase 8), upcoming deadlines and progress towards the target average (Phase 6) work; weak areas and the plan arrive in Phases 9 and 14 | 14 |
+| F-PN-04 | Today dashboard | Partial — reviews due (Phase 8), upcoming deadlines and progress towards the target average (Phase 6) and weak areas (Phase 9) work; the plan arrives in Phase 14 | 14 |
 
 ## AI and agent
 
@@ -140,7 +140,7 @@ _Last updated: 9 October 2026 (end of Phase 8)._
 |---|---|---|---|
 | F-IN-01 | Lecture pipeline (import → notes, concepts, cards, quiz proposals) | Planned | 15 |
 | F-IN-02 | Cross-module connections view | Planned | 15 |
-| F-IN-03 | Weak concept → targeted practice in one click | Planned | 15 |
+| F-IN-03 | Weak concept → targeted practice in one click | Partial — Practise starts a Learn session for the concept (Phase 9); concepts with only cards (B-LE-24) and generated material wait for Phases 11 and 15 | 15 |
 | F-IN-04 | Proactive resurfacing before lectures and exams | Planned | 15 |
 
 ## Portability

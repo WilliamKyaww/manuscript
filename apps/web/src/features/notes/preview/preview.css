@@ -14,6 +14,11 @@
   margin-top: 0;
 }
 
+/* No trailing gap: short Markdown (card faces, answer options) sits tight in its box. */
+.markdown-body > :last-child {
+  margin-bottom: 0;
+}
+
 .markdown-body :where(p, ul, ol, blockquote, pre, table, .table-wrapper, details, .callout, hr) {
   margin: 0 0 1em;
 }

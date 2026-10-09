@@ -16,7 +16,7 @@ flowchart LR
   end
   subgraph Server["Local server (Node 24, Hono) — 127.0.0.1"]
     API[HTTP API + SSE streams]
-    MOD[Domain modules<br/>notes · sources · learning · graph · cards · quizzes · mastery · planning]
+    MOD[Domain modules<br/>notes · sources · learning · graph · cards · practice · mastery · planning]
     AG[Agent runtime<br/>tool registry · policies · action log]
     JOB[Job queue<br/>ingestion · embedding · generation]
     AI[AI layer<br/>AI SDK 7 providers · retrieval]
@@ -91,8 +91,8 @@ apps/server/src/
 │   ├── concepts/        concepts and aliases (proposals in Phase 11)
 │   ├── graph/           relations, graph assembly (graphology), analytics, queries
 │   ├── cards/           flashcards, FSRS scheduling, review logs, export
-│   ├── quizzes/         questions, quizzes, attempts, grading
-│   ├── mastery/         evidence aggregation, roll-ups, weak areas
+│   ├── practice/        questions, quizzes, attempts, grading, Learn sessions (Phase 9)
+│   ├── mastery/         evidence aggregation, roll-ups, weak areas, priority, mastery_cache
 │   ├── planning/        study plans, sessions
 │   ├── ai/              providers, model roles, retrieval, generation services
 │   ├── agent/           tool registry, policy, runner, action log, MCP adapter
@@ -266,3 +266,4 @@ package contains **no native Node modules** (ADR-0006, ADR-0016).
 | Graph built from scratch (10k notes, 1k concepts, ~11k nodes) | < 3 s (first open, or after a link, name or relation changes) |
 | Graph after a note edit that changes no link | < 1 s (the analytics are reused) |
 | Review: next card | < 50 ms (measured at Phase 8: median 7 ms, p95 10 ms over 100 cards) |
+| Mastery pass (1k concepts, 5k reviewed cards, 20k answers; ADR-0032) | < 500 ms (measured at Phase 9: 201 ms, `npm run test:perf:mastery`) |

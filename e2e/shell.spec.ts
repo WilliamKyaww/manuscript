@@ -6,6 +6,7 @@ import { E2E_TOKEN } from './constants';
 /** Every route in the app, plus an unknown address that renders the not-found page. */
 const ROUTES = [
   ...SECTIONS.map((section) => ({ path: section.path, title: section.label })),
+  { path: '/practice/questions', title: 'Question bank' },
   { path: '/no/such/page', title: 'Page not found' },
 ];
 

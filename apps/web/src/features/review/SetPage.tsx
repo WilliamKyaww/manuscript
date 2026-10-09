@@ -10,6 +10,7 @@ import { Page, StickySection } from '../../components/Page';
 import { EmptyState, ErrorState, LoadingState } from '../../components/States';
 import { useApi } from '../../lib/api/context';
 import { cn } from '../../lib/cn';
+import { downloadText } from '../../lib/download';
 import { formatCount } from '../../lib/format';
 import { notifyError, notifySuccess } from '../../lib/notify';
 import { selectClasses } from '../learning/Field';
@@ -84,14 +85,7 @@ export function SetPage() {
     );
   const exportSet = () =>
     actions.exportSet.mutate(data.id, {
-      onSuccess: ({ filename, content }) => {
-        const url = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }));
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        link.click();
-        URL.revokeObjectURL(url);
-      },
+      onSuccess: ({ filename, content }) => downloadText(filename, content),
       onError: notifyError,
     });
   const importFile = async (file: File) =>
