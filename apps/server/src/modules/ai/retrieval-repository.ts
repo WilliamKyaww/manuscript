@@ -3,7 +3,8 @@ import type { SqlDatabase, SqlValue } from '../../db/sqlite';
 /**
  * SQL for grounding (task 10.07): source chunks and notes matching a full-text query within a
  * scope, chunks by id (for semantic hits), and the concepts and relations used to widen a question
- * to its neighbourhood in the graph.
+ * to its neighbourhood in the graph. Full-text tables come first through CROSS JOIN, as in search:
+ * otherwise SQLite may run the MATCH once for every row of the other table.
  */
 
 export interface ScopeFilter {
@@ -92,7 +93,7 @@ export function createRetrievalRepository(db: SqlDatabase) {
       const scope = sourceClauses(filter);
       return db
         .all<Raw>(
-          `SELECT ${CHUNK_COLUMNS} FROM chunks_fts JOIN chunks c ON c.id = chunks_fts.rowid
+          `SELECT ${CHUNK_COLUMNS} FROM chunks_fts CROSS JOIN chunks c ON c.id = chunks_fts.rowid
            ${CHUNK_JOINS}
            WHERE chunks_fts MATCH ?${scope.sql} ORDER BY chunks_fts.rank LIMIT ?`,
           [match, ...scope.params, limit],
@@ -119,7 +120,7 @@ export function createRetrievalRepository(db: SqlDatabase) {
       if (!scope) return [];
       return db
         .all<Raw>(
-          `SELECT n.id, n.title FROM notes_fts JOIN notes n ON n.doc_id = notes_fts.rowid
+          `SELECT n.id, n.title FROM notes_fts CROSS JOIN notes n ON n.doc_id = notes_fts.rowid
            WHERE notes_fts MATCH ?${scope.sql} ORDER BY notes_fts.rank LIMIT ?`,
           [match, ...scope.params, limit],
         )
