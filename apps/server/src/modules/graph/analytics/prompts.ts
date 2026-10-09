@@ -20,7 +20,7 @@ export interface PromptInputs {
   graph: KnowledgeGraph;
   degree: (node: string) => number;
   isolated: readonly string[];
-  bridges: readonly { node: string; communities: readonly number[] }[];
+  bridges: readonly { node: string; communities: readonly number[]; own: number | null }[];
   surprising: readonly { edge: string; reasons: readonly string[] }[];
   communities: readonly {
     id: number;
@@ -86,17 +86,28 @@ export function studyPrompts(inputs: PromptInputs): StudyPrompt[] {
   }));
 
   // 3. Bridges between clusters: integrative or essay questions.
-  const bridging: StudyPrompt[] = inputs.bridges.map(({ node, communities }) => ({
-    id: `bridge:${node}`,
-    kind: 'bridge',
-    title: `Explain how ${name(node)} connects the ${communities.slice(0, 3).map(communityName).join(' and ')} clusters`,
-    detail:
-      'It sits between clusters that are otherwise far apart: a good integrative or essay question.',
-    actions: [
-      { label: 'Show in graph', node: ref(node), view: 'graph' },
-      { label: 'Open', node: ref(node), view: 'page' },
-    ],
-  }));
+  const bridging: StudyPrompt[] = inputs.bridges.map(({ node, communities, own }) => {
+    const others = communities
+      .filter((id) => id !== own)
+      .slice(0, 3)
+      .map(communityName);
+    const joined = others.join(' and ');
+    const title =
+      own === null
+        ? `Explain how ${name(node)} connects the ${joined} clusters`
+        : `Explain how ${name(node)} connects its cluster with the ${joined} ${others.length === 1 ? 'cluster' : 'clusters'}`;
+    return {
+      id: `bridge:${node}`,
+      kind: 'bridge',
+      title,
+      detail:
+        'It sits between clusters that are otherwise far apart: a good integrative or essay question.',
+      actions: [
+        { label: 'Show in graph', node: ref(node), view: 'graph' },
+        { label: 'Open', node: ref(node), view: 'page' },
+      ],
+    };
+  });
 
   // 4. Surprising connections.
   const surprising: StudyPrompt[] = inputs.surprising.map(({ edge, reasons }) => {

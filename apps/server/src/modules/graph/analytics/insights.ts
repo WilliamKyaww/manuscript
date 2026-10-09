@@ -49,7 +49,7 @@ export function bridges(
   centrality: ReadonlyMap<string, number>,
   communityOf: ReadonlyMap<string, number>,
 ) {
-  const found: { node: string; score: number; communities: number[] }[] = [];
+  const found: { node: string; score: number; communities: number[]; own: number | null }[] = [];
   for (const [node, score] of centrality) {
     if (score <= 0) continue;
     const communities = new Set<number>();
@@ -60,7 +60,12 @@ export function bridges(
       if (community !== undefined) communities.add(community);
     });
     if (communities.size >= 2)
-      found.push({ node, score, communities: [...communities].sort((a, b) => a - b) });
+      found.push({
+        node,
+        score,
+        communities: [...communities].sort((a, b) => a - b),
+        own: own ?? null,
+      });
   }
   return found.sort((a, b) => b.score - a.score || byLabel(graph)(a.node, b.node)).slice(0, KEEP);
 }

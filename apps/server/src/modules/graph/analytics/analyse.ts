@@ -26,7 +26,7 @@ export interface Analysis {
   degree: Map<string, number>;
   core: { node: string; degree: number }[];
   isolated: string[];
-  bridges: { node: string; score: number; communities: number[] }[];
+  bridges: { node: string; score: number; communities: number[]; own: number | null }[];
   surprising: { edge: string; score: number; reasons: string[] }[];
 }
 
