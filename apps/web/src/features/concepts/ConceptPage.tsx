@@ -17,6 +17,7 @@ import { RelationsSection } from '../graph/RelationsSection';
 import { viewerSearchFor } from '../library/links';
 import { MarkdownPreview } from '../notes/preview/MarkdownPreview';
 import { useLinkResolve } from '../notes/preview/useLinkResolve';
+import { ConceptMasteryPanel } from '../progress/ConceptMasteryPanel';
 import { conceptQuery, useConceptActions } from './api';
 import { ConceptDialog } from './ConceptDialog';
 
@@ -118,6 +119,8 @@ export function ConceptPage() {
           )}
         </div>
       </Card>
+
+      <ConceptMasteryPanel conceptId={data.id} />
 
       <RelationsSection conceptId={data.id} />
 
