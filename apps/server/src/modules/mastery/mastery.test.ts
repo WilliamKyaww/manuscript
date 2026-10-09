@@ -8,6 +8,7 @@ import {
 } from '@skb/core';
 import { afterEach, describe, expect, it } from 'vitest';
 import { practiceTestbed } from '../../../test/practice-helpers';
+import { createMasteryRepository } from './repository';
 
 let bed: Awaited<ReturnType<typeof practiceTestbed>>['bed'] | undefined;
 afterEach(() => bed?.cleanup());
@@ -150,5 +151,65 @@ describe('mastery', () => {
     expect(raftRow?.exposure).toMatchObject({ assessment: { title: 'Exam', daysUntil: 7 } });
     expect(raftRow?.priority).toBeCloseTo(2);
     expect(weak.noMaterial).toEqual([{ id: paxos.id, name: 'Paxos' }]);
+  });
+});
+
+describe('recall a fortnight ago', () => {
+  /** A card on Raft, rated Good (learning) and Good again ten minutes later (review). */
+  async function reviewedCard(first = 3) {
+    const testbed = await setUp();
+    const { api, clock, raft } = testbed;
+    const set = await api.post('/api/card-sets', { title: 'Raft' }, 201, CardSetSchema);
+    const card = await api.post(
+      '/api/cards',
+      {
+        setId: set.id,
+        kind: 'basic',
+        front: 'Raft elects?',
+        back: 'A leader',
+        conceptIds: [raft.id],
+      },
+      201,
+      CardSchema,
+    );
+    const rate = (rating: number) =>
+      api.post('/api/reviews', { cardId: card.id, ordinal: 0, rating, durationMs: 3_000 }, 201);
+    await rate(first);
+    if (first === 1) {
+      // Again: back in a minute, then Good moves it on to the ten-minute step.
+      clock.advance(60_000);
+      await rate(3);
+    }
+    clock.advance(10 * 60_000);
+    await rate(3);
+    return { ...testbed, card, rate };
+  }
+
+  it('flags a concept as forgotten when recall has fallen since', async () => {
+    // FSRS-6 forgets slowly: within a fortnight only a weakly learnt card (stability under about
+    // two days) falls from 0.85 to below 0.70 — here one forgotten once while learning.
+    const { api, clock, raft } = await reviewedCard(1);
+    clock.advance(14 * DAY + 60 * 60_000);
+    const detail = await api.get(`/api/mastery/concepts/${raft.id}`, ConceptMasteryDetailSchema);
+    expect(detail.components.recall).toBeLessThan(0.7);
+    expect(detail.signals.map((signal) => signal.kind)).toContain('forgotten');
+  });
+
+  it('reads the schedule a face had then from the log when it was reviewed since', async () => {
+    const { bed: testbed, clock, card, rate } = await reviewedCard();
+    const firstReview = new Date(clock.now().getTime() - 10 * 60_000).toISOString();
+    clock.advance(DAY);
+    await rate(3);
+    const repo = createMasteryRepository(testbed.ctx.db);
+    const face = `${card.id}:0`;
+    // Between the reviews: the face changed since, so its schedule then comes from the log.
+    const between = repo.schedulesBefore(new Date(clock.now().getTime() - DAY / 2).toISOString());
+    expect(between.get(face)?.reps).toBe(2);
+    // Before any review: reviewed since, but nothing by then.
+    const before = repo.schedulesBefore(new Date(Date.parse(firstReview) - 60_000).toISOString());
+    expect(before.has(face)).toBe(true);
+    expect(before.get(face)).toBeNull();
+    // After the last review: nothing changed since.
+    expect(repo.schedulesBefore(clock.now().toISOString()).has(face)).toBe(false);
   });
 });

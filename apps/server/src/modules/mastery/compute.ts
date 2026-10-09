@@ -62,7 +62,8 @@ export function computeSnapshot(
   const info = new Map(concepts.map((concept) => [concept.id, concept]));
 
   const cards = new Map<string, CardEvidence[]>();
-  for (const face of repo.faces()) {
+  const faces = repo.faces();
+  for (const face of faces) {
     const retrievability = scheduler.retrievability(face.schedule, now);
     if (retrievability === null) continue;
     push(cards, face.conceptId, {
@@ -83,9 +84,13 @@ export function computeSnapshot(
   const items = repo.items();
   const windowStart = new Date(at - WEAKNESS.windowDays * DAY_MS);
   const lapses = repo.lapses(windowStart.toISOString());
+  // Recall a fortnight ago: a face not reviewed since still has the schedule it had then.
   const before = new Map<string, number[]>();
-  for (const face of repo.schedulesAt(windowStart.toISOString())) {
-    const retrievability = scheduler.retrievability(face.schedule, windowStart);
+  const changed = repo.schedulesBefore(windowStart.toISOString());
+  for (const face of faces) {
+    const then = changed.has(face.face) ? changed.get(face.face) : face.schedule;
+    if (!then) continue;
+    const retrievability = scheduler.retrievability(then, windowStart);
     if (retrievability !== null) push(before, face.conceptId, retrievability);
   }
 

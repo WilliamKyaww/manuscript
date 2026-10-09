@@ -149,7 +149,8 @@ export function createMasteryService(deps: MasteryDependencies) {
   };
 }
 
-function cacheRows(s: Snapshot): CacheRow[] {
+/** The cache rows for a snapshot: every concept, topic, module and the course. */
+export function cacheRows(s: Snapshot): CacheRow[] {
   const result: CacheRow[] = [];
   for (const row of s.concepts.values())
     result.push({

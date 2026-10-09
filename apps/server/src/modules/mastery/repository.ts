@@ -62,15 +62,16 @@ export function createMasteryRepository(db: SqlDatabase) {
         })),
 
     /** Reviewed faces of active cards, by concept. */
-    faces: (): { conceptId: string; schedule: Schedule }[] =>
+    faces: (): { conceptId: string; face: string; schedule: Schedule }[] =>
       db
         .all<Raw>(
-          `SELECT cc.concept_id, cs.schedule_json FROM card_concepts cc
+          `SELECT cc.concept_id, cs.card_id, cs.ordinal, cs.schedule_json FROM card_concepts cc
            JOIN cards c ON c.id = cc.card_id AND c.status = 'active'
            JOIN card_schedules cs ON cs.card_id = c.id AND cs.retired = 0 AND cs.state != 'new'`,
         )
         .map((raw) => ({
           conceptId: String(raw.concept_id),
+          face: `${raw.card_id}:${raw.ordinal}`,
           schedule: parseSchedule(raw.schedule_json),
         })),
 
@@ -137,24 +138,33 @@ export function createMasteryRepository(db: SqlDatabase) {
       );
     },
 
-    /** Each reviewed face's schedule as it stood at `at` (after its last review by then). */
-    schedulesAt: (at: string): { conceptId: string; schedule: Schedule }[] =>
-      db
-        .all<Raw>(
-          `SELECT cc.concept_id, r.next_json FROM (
-             SELECT l.card_id, l.ordinal, l.next_json, ROW_NUMBER() OVER (
-               PARTITION BY l.card_id, l.ordinal ORDER BY l.reviewed_at DESC, l.rowid DESC) AS n
-             FROM review_logs l WHERE ${STANDING} AND l.reviewed_at <= ?) r
-           JOIN cards c ON c.id = r.card_id AND c.status = 'active'
-           JOIN card_schedules cs ON cs.card_id = r.card_id AND cs.ordinal = r.ordinal AND cs.retired = 0
-           JOIN card_concepts cc ON cc.card_id = r.card_id
-           WHERE r.n = 1`,
-          [at],
-        )
-        .map((raw) => ({
-          conceptId: String(raw.concept_id),
-          schedule: parseSchedule(raw.next_json),
-        })),
+    /**
+     * For faces reviewed after `at`, the schedule each had at `at` (after its last review by then),
+     * or null when it was first reviewed later. Other faces still have the schedule they had then.
+     */
+    schedulesBefore(at: string): Map<string, Schedule | null> {
+      const result = new Map<string, Schedule | null>();
+      for (const raw of db.all<Raw>(
+        `SELECT DISTINCT l.card_id, l.ordinal FROM review_logs l
+         WHERE ${STANDING} AND l.reviewed_at > ?`,
+        [at],
+      ))
+        result.set(`${raw.card_id}:${raw.ordinal}`, null);
+      if (result.size === 0) return result;
+      for (const raw of db.all<Raw>(
+        `SELECT r.card_id, r.ordinal, r.next_json FROM (
+           SELECT l.card_id, l.ordinal, l.next_json, ROW_NUMBER() OVER (
+             PARTITION BY l.card_id, l.ordinal ORDER BY l.reviewed_at DESC, l.rowid DESC) AS n
+           FROM review_logs l WHERE ${STANDING} AND l.reviewed_at <= ?
+             AND l.card_id IN (SELECT card_id FROM review_logs WHERE reviewed_at > ?)) r
+         WHERE r.n = 1`,
+        [at, at],
+      )) {
+        const face = `${raw.card_id}:${raw.ordinal}`;
+        if (result.has(face)) result.set(face, parseSchedule(raw.next_json));
+      }
+      return result;
+    },
 
     modules: (): { id: string; code: string; title: string; credits: number | null }[] =>
       db
