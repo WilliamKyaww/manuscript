@@ -3,6 +3,7 @@ import {
   AskEventSchema,
   ConceptSummarySchema,
   EmbeddingStatusSchema,
+  RelatedNotesSchema,
   UsageReportSchema,
 } from '@skb/core';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -193,6 +194,21 @@ describe('embeddings', () => {
     );
     // With vectors, the question is also embedded and searched semantically.
     await ask({ question: 'How does Raft elect a leader?', scope: 'sources' });
+
+    // Related notes: closest in meaning first; unknown until a note has a vector.
+    const note = (title: string, content: string) =>
+      api.post<{ id: string }>('/api/notes', { title, content }, 201);
+    const election = await note('Election', 'Raft leader election needs a majority of votes.');
+    const terms = await note('Terms', 'Each Raft term starts with a leader election and votes.');
+    await note('Pasta', 'Boil the water, salt it, and cook the pasta until tender.');
+    const before = await api.get(`/api/ai/notes/${election.id}/related`, RelatedNotesSchema);
+    expect(before).toEqual({ available: false, notes: [] });
+    testbed.modules.embeddings.schedule(0);
+    await testbed.settle();
+    const related = await api.get(`/api/ai/notes/${election.id}/related`, RelatedNotesSchema);
+    expect(related.available).toBe(true);
+    expect(related.notes[0]).toMatchObject({ id: terms.id, title: 'Terms' });
+    expect(related.notes.map((entry) => entry.id)).not.toContain(election.id);
     const after = UsageReportSchema.parse(await api.get('/api/ai/usage'));
     expect(after.recent.some((row) => row.purpose === 'ask' && row.role === 'embedding')).toBe(
       true,

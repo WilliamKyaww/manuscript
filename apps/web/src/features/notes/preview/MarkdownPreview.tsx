@@ -170,6 +170,7 @@ function PreviewLink({
     <a
       href={href}
       className={className}
+      title={attribute(props, 'title') ?? undefined}
       {...(external ? { target: '_blank', rel: 'noreferrer noopener' } : {})}
     >
       {children}

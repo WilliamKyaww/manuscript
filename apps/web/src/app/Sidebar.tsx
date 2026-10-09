@@ -1,8 +1,9 @@
 import { Link } from '@tanstack/react-router';
-import { PanelLeftClose, PanelLeftOpen, Search } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Search, Sparkles } from 'lucide-react';
 import { IconButton } from '../components/IconButton';
 import { Kbd } from '../components/Kbd';
 import { Tooltip } from '../components/Tooltip';
+import { useAsk } from '../features/ai/ask-store';
 import { cn } from '../lib/cn';
 import { isApplePlatform } from '../lib/platform';
 import { useLayoutStore } from './layout-store';
@@ -52,6 +53,7 @@ export function Sidebar() {
 
       <div className="flex-none px-3 pb-2">
         <SidebarSearchButton collapsed={collapsed} onClick={() => openPalette(true)} />
+        <SidebarAskButton collapsed={collapsed} />
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
@@ -112,6 +114,36 @@ function SidebarLink({ section, collapsed }: { section: Section; collapsed: bool
     </Tooltip>
   ) : (
     link
+  );
+}
+
+function SidebarAskButton({ collapsed }: { collapsed: boolean }) {
+  const open = () => useAsk.getState().setOpen(true);
+  if (collapsed)
+    return (
+      <IconButton
+        label="Ask about your material"
+        icon={<Sparkles size={18} />}
+        shortcut="mod+j"
+        tooltipSide="right"
+        className="mt-1 w-full"
+        onClick={open}
+      />
+    );
+  return (
+    <button
+      type="button"
+      onClick={open}
+      className="mt-1 flex h-9 w-full items-center gap-2 rounded-md px-2.5 text-sm text-muted hover:bg-surface-hover hover:text-text"
+    >
+      <Sparkles aria-hidden="true" size={16} />
+      <span className="min-w-0 flex-1 truncate text-left">Ask…</span>
+      <span className="flex gap-0.5" aria-hidden="true">
+        {keyLabels('mod+j', isApplePlatform()).map((label) => (
+          <Kbd key={label}>{label}</Kbd>
+        ))}
+      </span>
+    </button>
   );
 }
 

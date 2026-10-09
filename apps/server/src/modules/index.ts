@@ -7,7 +7,7 @@ import { createEmbeddingsRepository } from './ai/embeddings/repository';
 import { createEmbeddingService, type EmbeddingService } from './ai/embeddings/service';
 import { createModelRegistry } from './ai/registry';
 import { createRetrievalService } from './ai/retrieval';
-import { createRetrievalRepository } from './ai/retrieval-repository';
+import { createRetrievalRepository, type RetrievalRepository } from './ai/retrieval-repository';
 import { type AiService, createAiService } from './ai/service';
 import { createFileConfigStore, createFileSecretStore } from './ai/store';
 import { createUsageRepository } from './ai/usage';
@@ -63,6 +63,7 @@ export interface AppModules {
   readonly ai: AiService;
   readonly embeddings: EmbeddingService;
   readonly ask: AskService;
+  readonly retrievalRepo: RetrievalRepository;
   start(options: { watch: boolean }): Promise<void>;
   close(): Promise<void>;
 }
@@ -248,10 +249,11 @@ export function createModules(ctx: AppContext): AppModules {
     ['updatePreferences', 'createProvider', 'updateProvider', 'deleteProvider'],
     () => embeddings.schedule(0),
   );
+  const retrievalRepo = createRetrievalRepository(ctx.db);
   const ask = createAskService({
     ai: aiCore,
     retrieval: createRetrievalService({
-      repo: createRetrievalRepository(ctx.db),
+      repo: retrievalRepo,
       learning: learningRepo,
       embeddings,
       notes: notes.notes,
@@ -281,6 +283,7 @@ export function createModules(ctx: AppContext): AppModules {
     ai,
     embeddings,
     ask,
+    retrievalRepo,
     async start(options) {
       await notes.start(options);
       jobs.start();

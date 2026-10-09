@@ -321,5 +321,19 @@ export const rebuildEmbeddingsEndpoint = defineEndpoint({
   response: EmbeddingStatusSchema,
 });
 
+export const RelatedNotesSchema = z.object({
+  /** False when semantic search is off or this note has no vector yet. */
+  available: z.boolean(),
+  notes: z.array(z.object({ id: z.string(), title: z.string(), score: z.number() })),
+});
+export type RelatedNotes = z.infer<typeof RelatedNotesSchema>;
+
+export const relatedNotesEndpoint = defineEndpoint({
+  method: 'GET',
+  path: '/api/ai/notes/:id/related',
+  params: z.object({ id: z.string().regex(/^note_[0-9A-HJKMNP-TV-Z]{26}$/u) }),
+  response: RelatedNotesSchema,
+});
+
 /** Streams AskEvent lines; not a JSON endpoint, so it is declared here for its path only. */
 export const ASK_PATH = '/api/ai/ask';

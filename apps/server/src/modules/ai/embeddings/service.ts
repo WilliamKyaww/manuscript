@@ -193,6 +193,19 @@ export function createEmbeddingService(deps: EmbeddingDependencies) {
         .slice(0, options.limit);
     },
 
+    /** Notes closest in meaning to a note (task 10.11), or null when there is no vector for it. */
+    relatedNotes(noteId: string, limit: number): VectorHit[] | null {
+      const model = current();
+      if (!model) return null;
+      const loaded = loadedIndex(model.key);
+      const vector = loaded.vectorOf('note', noteId);
+      if (!vector) return null;
+      return loaded
+        .search(vector, { limit: limit + 1, type: 'note' })
+        .filter((hit) => hit.id !== noteId)
+        .slice(0, limit);
+    },
+
     close: unsubscribe,
   };
 }

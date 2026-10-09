@@ -1,5 +1,6 @@
 import { useRouterState } from '@tanstack/react-router';
 import { type ReactNode, useEffect, useRef } from 'react';
+import { AskPanel } from '../features/ai/AskPanel';
 import { QuickAddHost } from '../features/review/QuickAddHost';
 import { QuickSwitcher } from '../features/search/QuickSwitcher';
 import { useServerEvents } from '../lib/events';
@@ -38,6 +39,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <ShortcutsDialog />
       <GlobalShortcuts />
       <QuickAddHost />
+      <AskPanel />
     </div>
   );
 }

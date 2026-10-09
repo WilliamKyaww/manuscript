@@ -10,6 +10,7 @@ import {
   getAiSettingsEndpoint,
   issuesFromZod,
   rebuildEmbeddingsEndpoint,
+  relatedNotesEndpoint,
   testProviderEndpoint,
   updateAiPreferencesEndpoint,
   updateProviderEndpoint,
@@ -20,6 +21,7 @@ import { type ApiRegistry, registerEndpoint } from '../../http/endpoint';
 import type { Logger } from '../../shared/logger';
 import type { AskService } from './ask';
 import type { EmbeddingService } from './embeddings/service';
+import type { RetrievalRepository } from './retrieval-repository';
 import type { AiService } from './service';
 
 const ok = { ok: true as const };
@@ -28,11 +30,12 @@ export interface AiRouteServices {
   ai: AiService;
   ask: AskService;
   embeddings: EmbeddingService;
+  retrievalRepo: RetrievalRepository;
   logger: Logger;
 }
 
 export function registerAiRoutes(registry: ApiRegistry, services: AiRouteServices): void {
-  const { ai, ask, embeddings, logger } = services;
+  const { ai, ask, embeddings, retrievalRepo, logger } = services;
   registerEndpoint(registry, getAiSettingsEndpoint, () => ai.settings());
   registerEndpoint(registry, updateAiPreferencesEndpoint, ({ body }) => ai.updatePreferences(body));
   registerEndpoint(registry, createProviderEndpoint, ({ body }) => ai.createProvider(body));
@@ -50,6 +53,25 @@ export function registerAiRoutes(registry: ApiRegistry, services: AiRouteService
   registerEndpoint(registry, aiUsageEndpoint, () => ai.usageReport());
   registerEndpoint(registry, embeddingStatusEndpoint, () => embeddings.status());
   registerEndpoint(registry, rebuildEmbeddingsEndpoint, () => embeddings.rebuild());
+  registerEndpoint(registry, relatedNotesEndpoint, ({ params }) => {
+    const hits = embeddings.relatedNotes(params.id, 8);
+    if (!hits) return { available: false, notes: [] };
+    const titles = new Map(
+      retrievalRepo
+        .notesByIds(
+          hits.map((hit) => hit.id),
+          {},
+        )
+        .map((note) => [note.id, note.title]),
+    );
+    return {
+      available: true,
+      notes: hits.flatMap((hit) => {
+        const title = titles.get(hit.id);
+        return title ? [{ id: hit.id, title, score: hit.score }] : [];
+      }),
+    };
+  });
 
   // A grounded answer, streamed as one JSON event per line (application/x-ndjson).
   registry.app.post(ASK_PATH, async (c) => {
