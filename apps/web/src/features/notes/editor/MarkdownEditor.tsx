@@ -28,6 +28,8 @@ export interface MarkdownEditorHandle {
   insertAt(position: number, text: string): void;
   /** Scrolls a 1-based line into view and puts the cursor there. */
   goToLine(line: number): void;
+  /** The selected text and the 1-based line it starts on, or null when nothing is selected. */
+  getSelection(): { text: string; line: number } | null;
 }
 
 export interface MarkdownEditorProps extends EditorCallbacks {
@@ -107,6 +109,15 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
       () => ({
         focus: () => view.current?.focus(),
         getText: () => view.current?.state.doc.toString() ?? '',
+        getSelection() {
+          const state = view.current?.state;
+          const range = state?.selection.main;
+          if (!state || !range || range.empty) return null;
+          return {
+            text: state.sliceDoc(range.from, range.to),
+            line: state.doc.lineAt(range.from).number,
+          };
+        },
         setText(text) {
           const current = view.current;
           if (!current) return;

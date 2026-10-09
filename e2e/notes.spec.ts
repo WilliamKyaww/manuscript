@@ -1,10 +1,10 @@
-import { type ChildProcess, fork } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 import { E2E_TOKEN } from './constants';
+import { startServer, stopServer } from './server';
 
 /** The vault the Playwright web server uses (see playwright.config.ts). */
 const VAULT = path.join(process.env.SKB_E2E_DIR ?? '', 'vault');
@@ -211,37 +211,8 @@ test.describe('persistence', () => {
   const PORT = 4398;
   const origin = `http://127.0.0.1:${PORT}`;
 
-  function start(dir: string): Promise<ChildProcess> {
-    const child = fork(path.resolve('apps/server/dist/server.mjs'), ['--port', String(PORT)], {
-      env: {
-        ...process.env,
-        SKB_VAULT: path.join(dir, 'vault'),
-        SKB_DATA_DIR: path.join(dir, 'data'),
-        SKB_AUTH_TOKEN: E2E_TOKEN,
-        SKB_LOG_LEVEL: 'warn',
-        SKB_NO_BROWSER: '1',
-      },
-      stdio: ['ignore', 'ignore', 'inherit', 'ipc'],
-    });
-    return new Promise((resolve, reject) => {
-      child.on(
-        'message',
-        (message: { type?: string }) => message?.type === 'skb:ready' && resolve(child),
-      );
-      child.once('exit', (code) => reject(new Error(`The server exited early (code ${code}).`)));
-    });
-  }
-
-  function stop(child: ChildProcess): Promise<void> {
-    return new Promise((resolve) => {
-      if (child.exitCode !== null) {
-        resolve();
-        return;
-      }
-      child.once('exit', () => resolve());
-      child.send({ type: 'skb:shutdown' });
-    });
-  }
+  const start = (dir: string) => startServer(dir, PORT);
+  const stop = stopServer;
 
   test('notes and their content survive a server restart', async ({ page }) => {
     const dir = mkdtempSync(path.join(tmpdir(), 'skb-e2e-restart-'));

@@ -84,6 +84,7 @@ function fakeEditor(onChange: (text: string) => void) {
     releaseCheckpoint: () => undefined,
     insertAt: () => undefined,
     goToLine: () => undefined,
+    getSelection: () => null,
   };
   return {
     handle,

@@ -52,6 +52,26 @@ export function viewerSearchFor(locator: Locator, sectionOrdinal: number): Viewe
   }
 }
 
+/**
+ * An address for a locator kept without its section (a flashcard's source): PDF pages and slides
+ * open where they were; other sources open at the start; a note opens at its line.
+ */
+export function locatorHref(locator: Locator): string {
+  if ('noteId' in locator && locator.noteId) {
+    const line = 'line' in locator && locator.line ? `?line=${locator.line}` : '';
+    return `/notes/${locator.noteId}${line}`;
+  }
+  const sourceId = 'sourceId' in locator ? locator.sourceId : '';
+  const search = new URLSearchParams();
+  if (locator.kind === 'pdf') search.set('page', String(locator.page));
+  if (locator.kind === 'slides') {
+    search.set('slide', String(locator.slide));
+    if (locator.part === 'notes') search.set('notes', '1');
+  }
+  const query = search.toString();
+  return `/library/${sourceId}${query ? `?${query}` : ''}`;
+}
+
 export const KIND_LABELS: Record<SourceKind, string> = {
   pdf: 'PDF',
   pptx: 'Slides',

@@ -6,7 +6,7 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 9 October 2026 (end of Phase 7)._
+_Last updated: 9 October 2026 (end of Phase 8)._
 
 ## Platform and architecture
 
@@ -88,12 +88,12 @@ _Last updated: 9 October 2026 (end of Phase 7)._
 
 | ID | Feature | Status | Phase |
 |---|---|---|---|
-| F-FC-01 | Basic, reversed and cloze cards with Markdown/KaTeX | Planned | 8 |
-| F-FC-02 | FSRS-6 scheduling (ts-fsrs) with append-only review logs | Planned | 8 |
-| F-FC-03 | Keyboard review session with undo, edit, suspend, bury | Planned | 8 |
-| F-FC-04 | Make card from selection (notes and sources) | Planned | 8 |
-| F-FC-05 | Review statistics and due forecast | Planned | 8 |
-| F-FC-06 | Anki TSV/CSV import/export | Planned | 8 |
+| F-FC-01 | Basic, reversed and cloze cards with Markdown/KaTeX, concepts, hints and drafts; quick add (Ctrl+Shift+A) | Complete | 8 |
+| F-FC-02 | FSRS-6 scheduling (ts-fsrs), one schedule per face, append-only review logs with exact undo | Complete | 8 |
+| F-FC-03 | Keyboard review session with undo, edit, suspend, bury, open source and focus mode | Complete | 8 |
+| F-FC-04 | Make card from selection (notes and sources), with a locator back to the line, page or slide | Complete | 8 |
+| F-FC-05 | Review statistics (due forecast, history, true retention) and session summaries | Complete | 8 |
+| F-FC-06 | Anki notes-in-plain-text import and export per set | Complete | 8 |
 | F-FC-07 | AI flashcard generation with provenance and review | Planned | 11 |
 | F-FC-08 | Exam-aware retention policy | Planned | 14 |
 
@@ -116,7 +116,7 @@ _Last updated: 9 October 2026 (end of Phase 7)._
 | F-PN-01 | Guardrailed Socratic tutor mode | Planned | 14 |
 | F-PN-02 | Misconception check against the knowledge base | Planned | 14 |
 | F-PN-03 | Rolling study planner with reasons | Planned | 14 |
-| F-PN-04 | Today dashboard | Partial — upcoming deadlines and progress towards the target average work (Phase 6); reviews due, weak areas and the plan arrive in Phases 8, 9 and 14 | 14 |
+| F-PN-04 | Today dashboard | Partial — reviews due (Phase 8), upcoming deadlines and progress towards the target average (Phase 6) work; weak areas and the plan arrive in Phases 9 and 14 | 14 |
 
 ## AI and agent
 

@@ -37,13 +37,13 @@ linking (AI can propose links in Phase 11).
 
 | Aspect | Specification |
 |---|---|
-| Kinds | `basic` (front → back), `reversed` (generates both directions), `cloze` (`{{c1::…}}` syntax; one card per cloze index) |
+| Kinds | `basic` (front → back), `reversed` (both directions), `cloze` (`{{c1::…}}` or `{{c1::…::hint}}`). A card has one **face** per direction or cloze number, each scheduled on its own (ADR-0031) |
 | Content | Markdown with KaTeX, code and images; optional `extra` shown after reveal; source locator ("Show source") |
 | Authoring | Card editor; quick-add (`Ctrl+Shift+A`); from a selection in a note or source; AI generation (Phase 11) |
 | Quality rules (shown as editor hints) | One fact per card; prefer cloze for definitions; avoid sets/lists; add context; keep answers short (after Wozniak's *20 rules of formulating knowledge*) |
-| Organisation | Card sets (decks) per module/lecture; tags; concepts |
+| Organisation | Card sets (decks) per module/lecture; concepts (card tags: backlog B-LE-18) |
 | States | `draft` (generated, unreviewed) · `active` · `suspended` · `deleted` (soft) |
-| Import/export | Anki-compatible TSV/CSV, JSON |
+| Import/export | Anki's notes-in-plain-text format per set (task 8.11); everything as JSON in Phase 16 |
 
 ### 3.1 Scheduling — FSRS-6 via `ts-fsrs` (ADR-0011)
 
@@ -53,23 +53,26 @@ linking (AI can propose links in Phase 11).
 | Learning steps / relearning steps | 1 min, 10 min / 10 min |
 | Maximum interval | 365 days |
 | Fuzz | On |
-| New cards per day | 20 (per module limit optional) |
-| Reviews per day | Unlimited (warning when > 200 due) |
+| New cards per day | 20 (a per-module limit: backlog B-LE-19) |
+| Reviews per day | Unlimited (optional limit) |
 | Parameters | FSRS-6 defaults; per-user optimisation once ≥ 1,000 reviews exist (backlog `B-LE-10`) |
 
-All schedule changes are computed by the scheduler from review logs, which are append-only; "undo last
-rating" restores the previous schedule state from the log.
+Every rating writes the face's schedule and a review log row, with the schedule before and after;
+logs are append-only, so "undo last rating" restores the previous schedule from the log and records
+the undo as a row of its own. Days run from 04:00 to 04:00 local time. ts-fsrs keeps Hard, Good and
+Easy at least a day apart, so the longest interval can exceed the maximum by up to two days.
 
 ### 3.2 Review session
 
-Queue: learning/relearning cards due now → due review cards ordered by **lowest current
-retrievability** first (most at risk) → new cards (interleaved, up to the daily limit). Optional
-interleaving across modules. Keyboard: `Space` reveal; `1`–`4` Again/Hard/Good/Easy (buttons show the
+Queue: learning/relearning faces due now → review faces due today ordered by **lowest current
+retrievability** first (most at risk) → new faces up to the daily limit, taking sets in turn. When
+nothing else is left, learning faces due within 20 minutes are shown early; a session ends when
+nothing is due within 20 minutes. Keyboard: `Space` reveal; `1`–`4` Again/Hard/Good/Easy (buttons show the
 next interval); `Ctrl+Z` undo; `E` edit; `S` suspend; `B` bury until tomorrow; `O` open source at
 locator. Session summary: cards, true retention, time, concepts touched, lapses.
 
-Distraction-free mode may collapse the page header — a deliberate, documented exception to the
-sticky-header rule (`ui.md` §2).
+Focus mode (`F`) hides the page's description, actions and secondary buttons and enlarges the card;
+the header itself stays, so no exception to the sticky-header rule (`ui.md` §2) was needed.
 
 ## 4. Questions (Phase 9)
 

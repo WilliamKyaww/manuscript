@@ -1,5 +1,6 @@
 import { useRouterState } from '@tanstack/react-router';
 import { type ReactNode, useEffect, useRef } from 'react';
+import { QuickAddHost } from '../features/review/QuickAddHost';
 import { QuickSwitcher } from '../features/search/QuickSwitcher';
 import { useServerEvents } from '../lib/events';
 import { CommandPalette } from './CommandPalette';
@@ -36,6 +37,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <QuickSwitcher />
       <ShortcutsDialog />
       <GlobalShortcuts />
+      <QuickAddHost />
     </div>
   );
 }

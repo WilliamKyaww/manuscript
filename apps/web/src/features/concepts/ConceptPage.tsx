@@ -1,8 +1,7 @@
-import { LinkResolver } from '@skb/core/markdown';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import { FileText, Pencil, Trash2 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Badge } from '../../components/Badge';
 import { Button, buttonClasses } from '../../components/Button';
 import { Card } from '../../components/Card';
@@ -16,10 +15,9 @@ import { notifyError } from '../../lib/notify';
 import { LocalGraph } from '../graph/LocalGraph';
 import { RelationsSection } from '../graph/RelationsSection';
 import { viewerSearchFor } from '../library/links';
-import { treeQuery } from '../notes/api';
 import { MarkdownPreview } from '../notes/preview/MarkdownPreview';
-import type { PreviewTarget } from '../notes/preview/remark-obsidian';
-import { conceptQuery, conceptsQuery, useConceptActions } from './api';
+import { useLinkResolve } from '../notes/preview/useLinkResolve';
+import { conceptQuery, useConceptActions } from './api';
 import { ConceptDialog } from './ConceptDialog';
 
 const IMPORTANCE: Record<string, string> = {
@@ -35,30 +33,10 @@ export function ConceptPage() {
   const navigate = useNavigate();
   const { conceptId } = useParams({ strict: false }) as { conceptId: string };
   const concept = useQuery(conceptQuery(api, conceptId));
-  const tree = useQuery(treeQuery(api));
-  const concepts = useQuery(conceptsQuery(api));
   const actions = useConceptActions();
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const resolver = useMemo(
-    () =>
-      new LinkResolver(
-        tree.data?.notes ?? [],
-        tree.data?.attachments ?? [],
-        concepts.data?.concepts ?? [],
-      ),
-    [tree.data, concepts.data],
-  );
-  const resolve = useCallback(
-    (target: string): PreviewTarget => {
-      const result = resolver.resolve(target);
-      if (result.kind === 'note') return { kind: 'note', id: result.noteId, path: result.path };
-      if (result.kind === 'concept')
-        return { kind: 'concept', id: result.conceptId, name: result.name };
-      return { kind: 'unresolved' };
-    },
-    [resolver],
-  );
+  const resolve = useLinkResolve();
 
   if (concept.isPending) {
     return (

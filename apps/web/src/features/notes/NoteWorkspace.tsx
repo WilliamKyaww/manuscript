@@ -8,10 +8,11 @@ import {
 } from '@skb/core/markdown';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Columns2, Eye, PenLine } from 'lucide-react';
+import { Columns2, Eye, PenLine, SquarePlus } from 'lucide-react';
 import { ToggleGroup } from 'radix-ui';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Group, Panel, Separator } from 'react-resizable-panels';
+import { IconButton } from '../../components/IconButton';
 import { Pane } from '../../components/Pane';
 import { LoadingState } from '../../components/States';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/Tabs';
@@ -21,6 +22,7 @@ import { notifyError } from '../../lib/notify';
 import { conceptsQuery } from '../concepts/api';
 import { ConceptDialog } from '../concepts/ConceptDialog';
 import { LocalGraph } from '../graph/LocalGraph';
+import { useQuickAdd } from '../review/quick-add';
 import { useUploadAttachment } from './api';
 import { ConflictBanner } from './editor/ConflictBanner';
 import { MarkdownEditor, type MarkdownEditorHandle } from './editor/MarkdownEditor';
@@ -53,6 +55,17 @@ const STATUS_TEXT: Record<SaveStatus, string> = {
 };
 
 const LIVE_DELAY_MS = 200;
+
+/** The headings a line sits under, outermost first (for a card's source locator). */
+export function headingPathAt(headings: readonly HeadingRef[], line: number): string[] {
+  const path: HeadingRef[] = [];
+  for (const heading of headings) {
+    if (heading.line > line) break;
+    while (path.length > 0 && (path.at(-1) as HeadingRef).level >= heading.level) path.pop();
+    path.push(heading);
+  }
+  return path.map((heading) => heading.text);
+}
 
 // The preview (unified, KaTeX, highlight.js) is loaded only when a preview is first shown.
 const MarkdownPreview = lazy(() =>
@@ -176,6 +189,22 @@ export function NoteWorkspace({
     }
   };
 
+  /** "Make card from selection" (task 8.08): the selected text, and a way back to this line. */
+  const makeCard = () => {
+    const selected = mode === 'preview' ? null : (editor.current?.getSelection() ?? null);
+    const text = selected?.text ?? window.getSelection()?.toString() ?? '';
+    const line = selected?.line ?? 1;
+    useQuickAdd.getState().open({
+      front: text.trim(),
+      locator: {
+        kind: 'markdown',
+        noteId: note.id,
+        headingPath: headingPathAt(analysis.headings, line),
+        line,
+      },
+    });
+  };
+
   const conflict = session.conflict;
   return (
     <Group orientation="horizontal" id="skb-note-layout" className="min-w-0 flex-1">
@@ -198,6 +227,12 @@ export function NoteWorkspace({
               <span aria-hidden="true" className="mr-2 hidden text-xs text-subtle xl:inline">
                 {analysis.wordCount} {analysis.wordCount === 1 ? 'word' : 'words'}
               </span>
+              <IconButton
+                label="Make a card from the selection"
+                icon={<SquarePlus size={16} />}
+                size="sm"
+                onClick={makeCard}
+              />
               <ModeToggle mode={mode} onChange={setMode} />
             </>
           }

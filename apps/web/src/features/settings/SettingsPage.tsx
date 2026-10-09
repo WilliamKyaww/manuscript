@@ -12,6 +12,7 @@ import { cn } from '../../lib/cn';
 import { formatUptime } from '../../lib/format';
 import { healthQuery } from '../../lib/queries';
 import { NotesSettingsSection } from './NotesSettingsSection';
+import { ReviewSettingsSection } from './ReviewSettingsSection';
 
 const THEME_OPTIONS: {
   value: ThemePreference;
@@ -39,6 +40,7 @@ export function SettingsPage() {
     <Page title="Settings" description="Vault, appearance and information about this installation.">
       <VaultSection />
       <NotesSettingsSection />
+      <ReviewSettingsSection />
       <AppearanceSection />
       <KeyboardSection />
       <AboutSection />

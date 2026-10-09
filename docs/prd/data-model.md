@@ -273,20 +273,34 @@ Deferred: `supports` / `contradicts` (for dissertation argument mapping).
 
 ### 5.6 Flashcards
 
-**card_sets** `id` · `title` · `module_id` · `lecture_id` · `origin` (`manual` | `ai` | `import`) ·
-`description` · `created_at`
+Canonical (migration `0008`, ADR-0031). A **card** is what the student writes; a **face** is what is
+reviewed: one for a basic card (ordinal 0), two for a reversed card (0 front → back, 1 back → front),
+one per cloze number for a cloze card (ordinal = the number). Each face has its own FSRS schedule.
 
-**cards** `id` · `set_id`† · `kind` (`basic` | `reversed` | `cloze`) · `front` (Markdown) · `back` ·
-`extra` · `cloze_index` · `status` (`draft` | `active` | `suspended` | `deleted`) · `locator_json` ·
-`created_by` · `created_at` · `updated_at` — **card_concepts** `card_id` · `concept_id`
+**card_sets** `id` (`set_…`) · `title` · `description` · `module_id` · `lecture_id` · `origin` (`manual`
+| `ai` | `import`) · `created_at` · `updated_at` · `deleted_at` (sets are deleted softly; their cards
+become `deleted`)
 
-**card_schedules** (FSRS state; one row per card) `card_id` PK · `due`† · `stability` · `difficulty` ·
-`elapsed_days` · `scheduled_days` · `learning_steps` · `reps` · `lapses` · `state` (`new` | `learning`
-| `review` | `relearning`) · `last_review`
+**cards** `id` (`card_…`) · `set_id`† · `kind` (`basic` | `reversed` | `cloze`) · `front` (Markdown; for
+cloze cards, the text with `{{cN::answer::hint}}`) · `back` · `extra` (shown after the answer) ·
+`status` (`draft` | `active` | `suspended` | `deleted`) · `locator_json` (where the card came from:
+a source page or slide, or a note's line) · `created_by` (`user` | `ai` | `import`) · `created_at` ·
+`updated_at` — **card_concepts** `card_id` · `concept_id`
 
-**review_logs** (append-only) `id` · `card_id`† · `rating` (1–4) · `state` · `due` · `stability` ·
-`difficulty` · `elapsed_days` · `last_elapsed_days` · `scheduled_days` · `learning_steps` ·
-`reviewed_at`† · `duration_ms` · `session_id`
+**card_schedules** (one row per face) `card_id` · `ordinal` (PK together) · `state` (`new` | `learning` |
+`review` | `relearning`)† · `due`† · `schedule_json` (the full FSRS state: stability, difficulty,
+elapsed and scheduled days, learning steps, reps, lapses, last review — `@skb/core` `ScheduleSchema`) ·
+`buried_until` · `retired` (a face whose cloze number was removed: kept with its history, revived
+if the number returns)
+
+**review_logs** (append-only: triggers refuse updates and deletes) `id` (`rev_…`) · `kind` (`review` |
+`undo`) · `card_id`† · `ordinal` · `rating` (1–4; null for undo rows) · `undoes` (the review an undo
+row takes back; unique) · `previous_json` · `next_json` (the face's schedule before and after) ·
+`elapsed_days` (since the face's previous review) · `reviewed_at`† · `duration_ms` · `session_id`. A
+review is *standing* unless an undo row points at it; statistics count standing reviews only.
+
+Review settings are the `review` group in `settings` (desired retention, daily limits, learning and
+relearning steps, longest interval, fuzz). Days run from 04:00 to 04:00 local time.
 
 ### 5.7 Questions and quizzes
 
@@ -306,8 +320,8 @@ counts, time limit) · `created_at` — **quiz_items** `quiz_id` · `question_id
 
 ### 5.8 Study activity, mastery and planning
 
-**study_sessions** `id` · `kind` (`review` | `practice` | `quiz` | `tutor` | `reading`) · `module_id` ·
-`started_at` · `ended_at` · `stats_json`
+**study_sessions** (migration `0008`) `id` (`ses_…`) · `kind` (`review` | `practice` | `quiz` | `tutor` |
+`reading`) · `set_id` · `module_id` · `started_at` · `ended_at` · `stats_json` (a review session's summary)
 
 **mastery_cache** (derived) `entity_type` · `entity_id` · `score` · `stage` · `confidence` ·
 `components_json` · `computed_at` — recomputed after relevant events; never edited directly.

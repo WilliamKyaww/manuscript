@@ -10,6 +10,13 @@ function keyEvent(init: KeyboardEventInit & { key: string }, target?: Element): 
 describe('normaliseKeys', () => {
   it('orders modifiers canonically and lower-cases', () => {
     expect(normaliseKeys('Shift+Mod+F')).toBe('mod+shift+f');
+    // Space is written by name and matches the space bar.
+    expect(normaliseKeys('space')).toBe(
+      eventToKeys(
+        { key: ' ', ctrlKey: false, metaKey: false, altKey: false, shiftKey: false },
+        false,
+      ),
+    );
     expect(normaliseKeys('alt+MOD+k')).toBe('mod+alt+k');
     expect(normaliseKeys('Escape')).toBe('escape');
   });

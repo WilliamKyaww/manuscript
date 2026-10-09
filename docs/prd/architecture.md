@@ -265,4 +265,4 @@ package contains **no native Node modules** (ADR-0006, ADR-0016).
 | Graph payload (5k nodes) | < 500 ms server time (from the cached graph) |
 | Graph built from scratch (10k notes, 1k concepts, ~11k nodes) | < 3 s (first open, or after a link, name or relation changes) |
 | Graph after a note edit that changes no link | < 1 s (the analytics are reused) |
-| Review: next card | < 50 ms |
+| Review: next card | < 50 ms (measured at Phase 8: median 7 ms, p95 10 ms over 100 cards) |

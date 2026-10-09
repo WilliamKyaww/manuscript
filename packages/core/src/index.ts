@@ -1,3 +1,4 @@
+export * from './api/cards';
 export * from './api/concepts';
 export * from './api/contract';
 export * from './api/course';
@@ -12,6 +13,9 @@ export * from './app';
 export * from './errors';
 export * from './graph/vocabulary';
 export * from './ids';
+export * from './learning/anki';
+export * from './learning/cards';
+export * from './learning/fsrs';
 export * from './learning/marks';
 export * from './search/fuzzy';
 export * from './search/query';

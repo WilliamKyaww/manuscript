@@ -2,10 +2,21 @@ import { rankCandidates } from '@skb/core';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Command, defaultFilter } from 'cmdk';
-import { FileText, Keyboard, Monitor, Moon, PanelLeft, Search, Sun } from 'lucide-react';
+import {
+  FileText,
+  Keyboard,
+  Layers,
+  Monitor,
+  Moon,
+  PanelLeft,
+  Search,
+  SquarePlus,
+  Sun,
+} from 'lucide-react';
 import { Dialog as RadixDialog, VisuallyHidden } from 'radix-ui';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { treeQuery } from '../features/notes/api';
+import { useQuickAdd } from '../features/review/quick-add';
 import { useApi } from '../lib/api/context';
 import { useLayoutStore } from './layout-store';
 import { sectionIcon } from './section-icons';
@@ -145,6 +156,26 @@ export function CommandPalette() {
                 >
                   <Keyboard aria-hidden="true" size={16} className="text-muted" />
                   Show keyboard shortcuts
+                </Command.Item>
+              </Command.Group>
+              <Command.Group heading="Flashcards" className={groupClasses}>
+                <Command.Item
+                  value="New flashcard"
+                  keywords={['card', 'add', 'anki']}
+                  onSelect={() => run(() => useQuickAdd.getState().open())}
+                  className={itemClasses}
+                >
+                  <SquarePlus aria-hidden="true" size={16} className="text-muted" />
+                  New flashcard
+                </Command.Item>
+                <Command.Item
+                  value="Review due cards"
+                  keywords={['study', 'flashcards', 'spaced repetition']}
+                  onSelect={() => run(() => void navigate({ to: '/review/session' }))}
+                  className={itemClasses}
+                >
+                  <Layers aria-hidden="true" size={16} className="text-muted" />
+                  Review due cards
                 </Command.Item>
               </Command.Group>
               {trimmed.length >= 2 && (

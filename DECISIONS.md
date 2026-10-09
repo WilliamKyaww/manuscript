@@ -36,6 +36,7 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 | [0028](#adr-0028--the-source-library-follows-the-sources-folder) | The source library follows the `Sources` folder | Accepted | 2026-10-08 |
 | [0029](#adr-0029--course-structure-in-the-database-tied-to-files-by-module-code) | Course structure in the database, tied to files by module code | Accepted | 2026-10-08 |
 | [0030](#adr-0030--the-knowledge-graph-is-computed-only-relations-are-stored) | The knowledge graph is computed; only relations are stored | Accepted | 2026-10-09 |
+| [0031](#adr-0031--flashcards-are-scheduled-by-face-and-review-logs-are-never-changed) | Flashcards are scheduled by face, and review logs are never changed | Accepted | 2026-10-09 |
 
 ---
 
@@ -506,4 +507,32 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   per save (backlog B-KM-18: tell the graph when links, rather than text, changed). The graph is
   rebuilt after a restart (first open ~2 s at 10,000 notes). Export (Phase 16) needs only
   `relations`.
+- **Date.** 9 October 2026.
+
+## ADR-0031 — Flashcards are scheduled by face, and review logs are never changed
+
+- **Context.** Phase 8 schedules flashcards with FSRS-6 (ADR-0011). A reversed card asks two
+  questions and a cloze card one per number; editing a card must not lose the history of what was
+  already reviewed. The review history is also the input of a future per-user FSRS optimisation, and
+  "undo last rating" must restore a card exactly.
+- **Options.** (a) One row per question (as the data model first had it): a reversed or cloze card
+  becomes several cards, and editing the shared text means editing several rows. (b) One authored
+  card with one schedule per *face* (direction or cloze number). For undo: (i) delete the last log row
+  and roll the schedule back with ts-fsrs's `rollback`; (ii) keep every row, store each rating's
+  schedule before and after, and record undo as a row of its own.
+- **Decision.** (b) and (ii). `card_schedules` is keyed by (card, ordinal); saving a card adds faces
+  for new cloze numbers and retires those whose numbers were removed (kept with their history,
+  revived if the number returns). `review_logs` are append-only, enforced by triggers: a rating stores
+  the schedule before and after; undo restores the "before" exactly and writes an `undo` row pointing
+  at the rating. Statistics and summaries count only standing ratings. The review day runs from
+  04:00 to 04:00 local time, and learning faces due within 20 minutes are shown early when nothing
+  else is due (both as in Anki).
+- **Reason.** One card stays one thing to edit, move, suspend or delete, while each question keeps its
+  own memory model. Storing the schedules makes undo exact (rollback cannot restore everything, for
+  example the previous last-review time) and keeps the full history, including mistakes, for
+  optimisation and for trust ("what happened to this card?").
+- **Consequences.** Suspending, burying and statuses are per card, burying per face. The log grows
+  with every rating and undo (a few hundred bytes each). Deleting cards or sets is soft, so the log's
+  references stay valid; purging is for Phase 16's data tools. Exporting reviews to Anki is not
+  possible in its plain-text format (cards travel; schedules do not).
 - **Date.** 9 October 2026.

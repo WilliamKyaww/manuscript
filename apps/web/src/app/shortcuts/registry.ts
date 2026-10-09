@@ -34,7 +34,9 @@ export function normaliseKeys(keys: string): string {
     .split('+')
     .map((token) => token.trim());
   // Support the "+" key itself, written as "mod++".
-  const key = keys.endsWith('++') ? '+' : (tokens.at(-1) ?? '');
+  const written = keys.endsWith('++') ? '+' : (tokens.at(-1) ?? '');
+  // Space is written `space` but arrives as a space character.
+  const key = written === 'space' ? ' ' : written;
   const modifiers = new Set(tokens.slice(0, keys.endsWith('++') ? -2 : -1).filter(isModifier));
   if (isShiftedSymbol(key)) modifiers.delete('shift');
   const ordered = MODIFIER_ORDER.filter((modifier) => modifiers.has(modifier));

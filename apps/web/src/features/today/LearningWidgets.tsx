@@ -1,16 +1,19 @@
 import type { Course } from '@skb/core';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { CalendarClock, Target } from 'lucide-react';
+import { CalendarClock, Layers, Play, Target } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { buttonClasses } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { LoadingState } from '../../components/States';
 import { useApi } from '../../lib/api/context';
+import { formatCount } from '../../lib/format';
 import { coursesQuery, deadlinesQuery, modulesQuery } from '../learning/api';
 import { dueLabel, formatDue, formatWeight, isoDay } from '../learning/format';
 import { MarksSummary } from '../learning/MarksSummary';
+import { cardSetsQuery, reviewSettingsQuery, reviewStatsQuery } from '../review/api';
 
-/** Today's deadline and target widgets (task 6.14). */
+/** Today's review, deadline and target widgets (tasks 6.14, 8.10). */
 
 function WidgetCard({
   title,
@@ -34,6 +37,49 @@ function WidgetCard({
       </div>
       {children}
     </Card>
+  );
+}
+
+/** Rough time per face, for the estimate: a known face is quick, a new one takes longer. */
+const SECONDS_PER_DUE = 10;
+const SECONDS_PER_NEW = 30;
+
+export function ReviewsWidget() {
+  const api = useApi();
+  const stats = useQuery(reviewStatsQuery(api));
+  const sets = useQuery(cardSetsQuery(api));
+  const settings = useQuery(reviewSettingsQuery(api));
+  const due = stats.data?.dueToday ?? 0;
+  const waiting = (sets.data?.sets ?? []).reduce((sum, set) => sum + set.counts.new, 0);
+  const fresh = Math.min(waiting, settings.data?.newPerDay ?? waiting);
+  const minutes = Math.max(1, Math.round((due * SECONDS_PER_DUE + fresh * SECONDS_PER_NEW) / 60));
+  return (
+    <WidgetCard title="Reviews due" icon={<Layers size={18} />}>
+      {stats.isPending || sets.isPending ? (
+        <LoadingState label="Loading reviews" />
+      ) : (sets.data?.sets.length ?? 0) === 0 ? (
+        <p className="text-sm text-muted">
+          Make your first{' '}
+          <Link to="/review" className="underline">
+            flashcards
+          </Link>{' '}
+          (Ctrl+Shift+A adds one from anywhere).
+        </p>
+      ) : due + fresh === 0 ? (
+        <p className="text-sm text-muted">Nothing is due. Well done.</p>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm">
+            <span className="text-2xl font-semibold tabular-nums">{due}</span> due
+            {fresh > 0 && ` · ${formatCount(fresh, 'new card')}`}
+            <span className="block text-xs text-muted">about {formatCount(minutes, 'minute')}</span>
+          </p>
+          <Link to="/review/session" className={buttonClasses('primary', 'sm')}>
+            <Play aria-hidden="true" size={14} /> Review now
+          </Link>
+        </div>
+      )}
+    </WidgetCard>
   );
 }
 

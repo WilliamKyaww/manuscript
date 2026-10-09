@@ -96,3 +96,73 @@
 ## Next steps
 
 Phase 8 — flashcards and spaced repetition (`phase/08-flashcards`).
+
+## Session 11 — Phase 8: flashcards and spaced repetition
+
+- **Date:** Friday 9 October 2026
+- **Time:** about 05:15–05:55
+- **Agent model:** Claude Opus 5.5 (`claude-opus-5-5`)
+- **Phase:** 8 — Flashcards and spaced repetition (branch `phase/08-flashcards`)
+- **Work performed:** built and verified Phase 8 end to end and merged it.
+
+### What was done
+
+1. **Core (8.02, 8.11).** ts-fsrs 5.4.2 (MIT) behind our own schedule type: previews, ratings and
+   retrievability at an explicit time, checked review by review against ts-fsrs itself; card faces
+   (basic one, reversed two, cloze one per number), how each face reads, editor hints; Anki's
+   notes-in-plain-text format both ways; contracts for sets, cards, the queue, reviews, sessions,
+   statistics and settings.
+2. **Server (8.01, 8.03–8.05, 8.10–8.12).** Migration `0008` with one schedule per face and
+   append-only review logs (triggers); faces kept in step with edits; the queue (learning due, then
+   reviews by lowest retrievability, then new faces by set in turn, 20-minute learn-ahead, 04:00 day
+   boundary); ratings, exact undo as a log row of its own, burying, sessions and summaries,
+   statistics, Anki import and export, review settings (the settings service now has groups).
+3. **Web (8.06–8.10, 8.12).** `/review` with due counts, sets and charts; set pages with bulk
+   actions and Anki files; the card editor (cloze helper, concepts, preview, hints, drafts); quick add
+   from anywhere and cards from selections in notes and sources; the keyboard session with a summary;
+   review settings; Today's reviews widget. Space became a registry key; a shared link resolver
+   renders Markdown outside notes.
+4. **Verification and docs (8.13, 8.14).** `e2e/review.spec.ts` (on its own server, with a restart);
+   the time between cards measured; `docs/guide/flashcards.md`, data model, learning-system PRD,
+   ui.md, ADR-0031, backlog B-LE-18…23, FEATURES, STATE, README, AGENTS.md (E2E ports).
+
+### Important decisions
+
+- **ADR-0031:** a card has faces, each with its own schedule; review logs are never changed, undo is
+  a row of its own and restores the stored schedule exactly.
+- Focus mode keeps the page header, so the planned exception to the sticky-header rule was not
+  needed (ui.md §2 updated).
+- Session keys report whether they acted; only then is the key kept from the page, so Enter on a
+  focused button still presses it.
+
+### Tests run
+
+| Command | Result |
+|---|---|
+| `npm run verify` | **Pass** — type-check, Biome, **523** Vitest tests, build, smoke |
+| `npx playwright test` | **Pass** — **75/75** (the review flow with a restart; Review in the shell checks) |
+| Manual | Screenshots of the Review page, a set, the editor, the session (question and answer), the summary, settings and Today; 100 cards reviewed from the keyboard: median 7 ms, p95 10 ms, max 48 ms from the rating to the next card (mains power) |
+
+### Problems encountered
+
+- **The first E2E draft expected the session to end after Again** — but learning faces due within 20
+  minutes come back in the same session, by design. The test now follows the real flow.
+- **The E2E restart server could not start**: it was given port 4399, the shared Playwright server's.
+  The restart helpers moved to `e2e/server.ts`, and AGENTS.md lists the ports.
+- **The card editor's actions fell below the dialogue's fold** with a long card; they now sit in the
+  dialogue footer.
+- **Space could not be registered** as a shortcut (written `space`, arriving as `' '`); fixed in the
+  registry with a test.
+- ts-fsrs keeps Hard, Good and Easy a day apart, so intervals can pass the maximum by two days;
+  documented rather than worked around.
+- A formatting error was committed once and fixed in the next commit (lint was run after `git
+  commit`, not before).
+
+### Unresolved issues
+
+- Backlog B-LE-18…23 (tags and filters, per-module limits, cards on concept pages, personal time
+  estimates, Anki packages, a large-backlog warning); FSRS optimisation (B-LE-10).
+
+### Next steps
+
+Phase 9 — questions, quizzes and mastery (`phase/09-quizzes-mastery`).
