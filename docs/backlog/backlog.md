@@ -1,6 +1,6 @@
 # Backlog items
 
-_Last reviewed: 9 October 2026 (Phase 6)._
+_Last reviewed: 9 October 2026 (Phase 7)._
 
 ## Knowledge (KM)
 
@@ -19,6 +19,13 @@ _Last reviewed: 9 October 2026 (Phase 6)._
 | B-KM-11 | Toggle task-list checkboxes in the preview | Quicker revision checklists | Phase 3 |
 | B-KM-12 | Scroll synchronisation between editor and preview in split view | Long notes are easier to proof-read | Phase 3 |
 | B-KM-13 | Restore an id removed by hand from a note that other data refers to (warn in the editor first) | Ids are app-owned (ADR-0025); removing one by hand is the only way to lose it | Phase 3 |
+| B-KM-14 | Cluster hulls in the graph (translucent shapes around communities, as Graphify draws hyperedges) | Clusters would read as groups, not only colours | Phase 7 |
+| B-KM-15 | Keyboard navigation of the graph canvas (arrow keys to neighbours, Enter to open) | Today the canvas is pointer-only; the lists beside it carry the same information | Phase 7 |
+| B-KM-16 | Relation names on hovered edges in the canvas | The side panel names them; the canvas only styles them | Phase 7 |
+| B-KM-17 | Relations to notes and sources from the UI (`covered_in`, `derived_from`) | The API accepts them; concept pages only relate concepts | Phase 7 |
+| B-KM-18 | Have the notes index say whether a note's links changed, so the graph rebuilds only then | Each save while the graph is open costs about 0.7 s at 10,000 notes (ADR-0030) | Phase 7 |
+| B-KM-19 | Dismiss or snooze study prompts | A prompt the student has decided to ignore keeps coming back | Phase 7 |
+| B-KM-20 | Move to Sigma 4 once it has settled | Sigma 3 is in maintenance; the wrapper keeps the change local (ADR-0015 note) | Phase 7 |
 | B-SE-01 | Date filters in search (`created:`, `updated:` before/after) | Listed in knowledge-system.md §4; not needed for the Phase 4 gate | Phase 4 |
 | B-SE-02 | Highlight the search terms inside the opened note | Results open at the matching line; marking every occurrence would help scanning | Phase 4 |
 | B-SE-03 | Search operators for a single field (`title:`, `heading:`) | Narrower searches in large vaults | Phase 4 |

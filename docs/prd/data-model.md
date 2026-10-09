@@ -228,26 +228,48 @@ one namespace: no alias may equal another concept's name.
 **concept_topics** `concept_id` · `topic_id` · **concept_modules** `concept_id` · `module_id`
 (a concept may span modules — this is what makes cross-module connections visible)
 
-**relations** (typed, provenance-tagged edges — Graphify model)
-`id` · `from_type` · `from_id`† · `to_type` · `to_id`† · `relation` · `confidence`
-(`USER` | `EXTRACTED` | `INFERRED` | `AMBIGUOUS`) · `score` (0–1; INFERRED rubric 0.55–0.95) ·
-`weight` (FIRe encompassing weight, optional) · `status` (`proposed` | `accepted` | `rejected`) ·
-`evidence_json` (locators + quote) · `created_by` · `created_at`
+**relations** (canonical, migration `0007`; typed, provenance-tagged edges — Graphify's model, ADR-0030)
+`id` (`rel_…`) · `from_type` · `from_id`† · `to_type` · `to_id`† (types: `concept` | `note` | `source` |
+`lecture` | `module` | `topic`) · `relation` · `confidence` (`USER` | `EXTRACTED` | `INFERRED` |
+`AMBIGUOUS`) · `score` (0–1; INFERRED rubric 0.55–0.95) · `weight` (FIRe encompassing weight, Phase 9,
+optional) · `status` (`proposed` | `accepted` | `rejected`) · `evidence_json` (`[{ quote?, locator? }]`)
+· `created_by` (`user` | `ai`) · `created_at` · `updated_at`
 
-Initial relation vocabulary (small on purpose; extended only with evidence of need):
+- Unique on (`from_id`, `to_id`, `relation`); symmetric relations are stored smaller id first, so each
+  pair is stored once; the service refuses a relation whose reverse is already stated.
+- Ends are polymorphic, so triggers delete a concept's, lecture's, module's, topic's or source's
+  relations with it. Relations to notes are not deleted when a note leaves the index (the index is
+  rebuilt from files); they are skipped while the note is missing, and a note at either end gets its
+  id written into the file (ADR-0025).
+- What the student adds is `USER` and `accepted`; accepting a proposal sets both. Rejected relations
+  stay, so they are not proposed again, and are never drawn.
 
-| Relation | Direction | Meaning |
-|---|---|---|
-| `relates_to` | symmetric | General association |
-| `prerequisite_for` | A → B | Understanding A is needed before B (inverse view: B *depends on* A) |
-| `part_of` | A → B | A is a component/sub-concept of B |
-| `example_of` | A → B | A is an instance/example of B |
-| `contrasts_with` | symmetric | Commonly compared/confused ("compare and contrast" exam fodder) |
-| `covered_in` | concept → lecture/source | Structural; from extraction provenance |
-| `derived_from` | note/card/question → source | Structural provenance |
+Relation vocabulary (`@skb/core` `graph/vocabulary.ts`; small on purpose, extended only with evidence
+of need):
 
-Edges implied by wikilinks (`mentioned_in`) and course structure (`part_of` module) are **computed**,
-not stored in `relations`. Deferred: `supports` / `contradicts` (for dissertation argument mapping).
+| Relation | Direction | Ends | Meaning |
+|---|---|---|---|
+| `relates_to` | symmetric | concept – concept | General association |
+| `prerequisite_for` | A → B | concept → concept | Understanding A is needed before B (B *depends on* A) |
+| `part_of` | A → B | concept → concept | A is a component/sub-concept of B |
+| `example_of` | A → B | concept → concept | A is an instance/example of B |
+| `contrasts_with` | symmetric | concept – concept | Commonly compared/confused ("compare and contrast" exam fodder) |
+| `covered_in` | A → B | concept → lecture, source or note | Where a concept is taught or explained |
+| `derived_from` | A → B | note → source | Structural provenance |
+
+**Computed edges** (never stored; assembled with the graph, knowledge-system.md §7.1):
+
+| Edge | Kind | Confidence | From |
+|---|---|---|---|
+| note `links_to` note or source | link | `EXTRACTED` | `note_links` (attachments matched to sources by path) |
+| concept `mentioned_in` note | link | `EXTRACTED` | `note_links.target_concept` |
+| concept `covered_in` note | link | `USER` | `concepts.note_id` (the backing note) |
+| `part_of` | structure | `USER` | lecture → module; topic → parent topic or module; concept → topic, or module when not in one of its topics; note → its lecture, else its module; source → its lecture, else its module |
+
+**graph_communities** (derived, migration `0007`) `node_id` · `community` — the community each node
+was last placed in, so cluster ids (and colours) stay stable between rebuilds.
+
+Deferred: `supports` / `contradicts` (for dissertation argument mapping).
 
 ### 5.6 Flashcards
 

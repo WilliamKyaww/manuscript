@@ -4,16 +4,17 @@ _Last updated: 9 October 2026 — Claude Opus 5.5._
 
 ## Current phase
 
-**Phase 7 — Knowledge graph: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3
-(notes and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
-ingestion pipeline) and 6 (course structure and concepts) are complete and merged into `main`.
+**Phase 8 — Flashcards and spaced repetition: next.** Phases 0 (research), 1 (foundation), 2
+(application shell), 3 (notes and Markdown knowledge base), 4 (lexical search and quick navigation),
+5 (source library and ingestion pipeline), 6 (course structure and concepts) and 7 (knowledge graph)
+are complete and merged into `main`.
 
 ## What works
 
 - **Local server** (`apps/server`): Hono on `127.0.0.1` with token (cookie or bearer), Host allowlist,
   Origin and Fetch-Metadata checks; `/auth` sign-in link; RFC 9457 problem details (with `details`);
   CSP and security headers; production SPA serving; server-sent events at `/api/events`.
-- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0006`), vault (`.skb/` layout,
+- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0007`), vault (`.skb/` layout,
   lock with crash recovery, strict path containment), atomic writes, vault-scoped settings.
 - **Notes** (Phase 3): Markdown files are canonical; the index (notes, aliases, tags, links,
   attachments, FTS5) is rebuilt from the files and follows edits made in other programs. Ids are
@@ -37,24 +38,34 @@ ingestion pipeline) and 6 (course structure and concepts) are complete and merge
   importance, modules, topics, optional backing note; `[[Name]]` resolves to a concept when no note
   matches; the preview creates a note or a concept from an unresolved link; concept pages list
   mentioning notes and source passages that name it.
+- **Knowledge graph** (Phase 7, `/graph`): concepts, notes, sources, lectures and modules with stored
+  typed relations (confidence, status, evidence) and edges computed from links and the course
+  (ADR-0030); stable Louvain clusters, core concepts, bridges, gaps, surprising connections and
+  paths (adapted from Graphify); study prompts with actions; Sigma (WebGL) with ForceAtlas2 in a
+  worker, dashed and dotted edges for inferred and ambiguous relations, search-to-focus, filters and
+  a details/insights panel; local graphs on concept pages and in the Notes **Graph** tab; relations
+  added, accepted and rejected on concept pages.
 - **Application shell:** sidebar, sticky page headers (per pane on paned pages), themes, command
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 452 Vitest tests and 73 Playwright tests (sticky headers on every route and pane, axe in
-  both themes, the library, the course flow) — all green. Search p95 30 ms at 10,000 notes and 105 ms
-  with 10,000 PDF pages as well (budget 150 ms), measured on mains power at the Phase 5 gate. At the
-  Phase 6 gate the laptop was on battery: 92 ms and 303 ms, the same as `main` measured at the same
-  time, so not a regression. Re-measure on mains power.
+- **Tests:** 483 Vitest tests and 74 Playwright tests (sticky headers on every route and pane,
+  axe in both themes, the library, the course and the graph) — all green. On mains power at 10,000
+  notes: search p95 28 ms (100 ms with 10,000 PDF pages; budget 150 ms); graph payload of 5,000 nodes
+  97 ms from the cache (budget 500 ms), 2.1 s for a first build (budget 3 s), 674 ms after a note
+  edit (budget 1 s).
 
 ## In progress
 
-- Nothing; Phase 7 not yet started.
+- Nothing; Phase 8 not yet started.
 
 ## Incomplete / not started
 
-- Phases 7–22: the graph, flashcards, quizzes, mastery and AI features do not exist yet; their
-  sections show placeholders.
+- Phases 8–22: flashcards, quizzes, mastery and AI features do not exist yet; their sections show
+  placeholders. The assistant does not propose relations yet (Phase 11).
+- Not in Phase 7 (backlog): cluster hulls (B-KM-14), keyboard navigation of the canvas (B-KM-15),
+  relation names on edges (B-KM-16), relations to notes and sources in the UI (B-KM-17), rebuilding
+  only when links change (B-KM-18), dismissing prompts (B-KM-19), Sigma 4 (B-KM-20).
 - Not in Phase 6 (backlog): renaming a module code or lecture key while files use it (B-LE-11/12 —
   refused with an explanation today), reordering and renaming topics (B-LE-13), deleting a course in
   the UI (B-LE-14), degree classification across years (B-LE-15), exam duration in the dialog
@@ -68,10 +79,10 @@ ingestion pipeline) and 6 (course structure and concepts) are complete and merge
 
 ## Next steps
 
-1. Create `phase/07-graph` from `main`.
-2. Phase 7: `relations` with confidence and evidence, graph assembly over concepts, notes, sources,
-   lectures and modules, Graphify-adapted analytics and study prompts, the Sigma.js graph and local
-   graph panels.
+1. Create `phase/08-flashcards` from `main`.
+2. Phase 8: card sets and cards (basic, reversed, cloze) linked to concepts and sources, FSRS-6
+   scheduling through ts-fsrs, the review queue and keyboard review session, statistics, Anki TSV
+   import and export.
 
 ## Relevant decisions
 
@@ -79,13 +90,15 @@ ADR-0004 hybrid storage · ADR-0007 plain SQL + prefixed ULIDs · ADR-0010 FTS5 
 ADR-0015 graphology + Sigma.js, Graphify ideas ported with attribution · ADR-0020 concepts are entities;
 relations carry provenance · ADR-0024 shared Zod contracts · ADR-0025 note ids written only when needed
 · ADR-0026 Obsidian-compatible dialect · ADR-0027 Manuscript · ADR-0028 the library follows `Sources` ·
-**ADR-0029** course structure in the database, tied to files by module code.
+ADR-0029 course structure in the database, tied to files by module code · **ADR-0030** the
+knowledge graph is computed; only relations are stored (ADR-0015 implementation note: Sigma 3 with
+our own wrapper).
 
 ## Technical debt
 
 TD-01 launcher duplicates the data-directory logic · TD-05 KaTeX override · TD-06 file tree not
 virtualised · TD-07 `shell-quote` override (for `concurrently`) · TD-08 parsing on the main thread ·
-TD-09 PDF viewer estimates page sizes from page 1. No new debt in Phase 6.
+TD-09 PDF viewer estimates page sizes from page 1. No new debt in Phases 6–7.
 
 ## Environment notes for agents
 
@@ -103,7 +116,7 @@ background load — compare against a worktree of the previous gate (`AGENTS.md`
   while the app is closed (`docs/guide/README.md`).
 - Push `main` and the phase branches when convenient (the agent never pushes).
 - Try entering this semester's modules and assessments (`docs/guide/course.md`); RQ-02 asks how your
-  modules are assessed.
+  modules are assessed. Then relate a few concepts and look at the graph (`docs/guide/graph.md`).
 
 ## Open questions for the user
 

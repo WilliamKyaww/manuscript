@@ -2,13 +2,20 @@
  * Notes performance check (task 3.22, budgets from architecture.md §14). Generates a vault of
  * 10,000 interlinked notes and measures indexing, start-up reconciliation, note opening and other
  * operations through the real modules; search is measured again with a library of 10,000 PDF pages
- * (task 5.16), whose sections and chunks are written straight to the database. Run with `npm run test:perf` (add a number to change the
- * note count). Exits with code 1 if a budget is exceeded.
+ * (task 5.16), whose sections and chunks are written straight to the database, and the knowledge
+ * graph with concepts and relations added (task 7.12). Run with `npm run test:perf` (add a number
+ * to change the note count). Exits with code 1 if a budget is exceeded.
  */
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { chunkDocument, createIdFactory, type IdFactory, type NormalisedDocument } from '@skb/core';
+import {
+  chunkDocument,
+  createIdFactory,
+  GraphFilterSchema,
+  type IdFactory,
+  type NormalisedDocument,
+} from '@skb/core';
 import type { ServerConfig } from '../../src/config/config';
 import type { AppContext } from '../../src/context';
 import { loadMigrations, migrate } from '../../src/db/migrate';
@@ -21,7 +28,16 @@ import { openVault } from '../../src/vault/vault';
 
 const NOTE_COUNT = Number(process.argv[2] ?? 10_000);
 const FOLDERS = 50;
-const BUDGETS = { fullIndexMs: 60_000, startupMs: 3_000, noteOpenP95Ms: 100, searchP95Ms: 150 };
+const BUDGETS = {
+  fullIndexMs: 60_000,
+  startupMs: 3_000,
+  noteOpenP95Ms: 100,
+  searchP95Ms: 150,
+  // architecture.md §14: a 5,000-node graph payload in under 500 ms of server time.
+  graphPayloadMs: 500,
+  graphColdMs: 3_000,
+  graphAfterEditMs: 1_000,
+};
 
 /** Small deterministic PRNG (mulberry32) so every run generates the same vault. */
 function random(seed: number) {
@@ -138,6 +154,35 @@ function seedLibrary(modules: ReturnType<typeof createModules>, ids: IdFactory):
     }
   });
   return chunks;
+}
+
+/** One module per vault folder code, 20 concepts in each, and two relations per concept. */
+function seedConcepts(modules: ReturnType<typeof createModules>): number {
+  const next = random(7);
+  const concepts: string[] = [];
+  for (let folder = 0; folder < FOLDERS; folder += 1) {
+    const module = modules.learning.createModule({
+      code: `COC${200 + folder}`,
+      title: `Module ${folder}`,
+    });
+    for (let index = 0; index < 20; index += 1)
+      concepts.push(
+        modules.concepts.create({ name: `Concept ${folder}-${index}`, moduleIds: [module.id] }).id,
+      );
+  }
+  let relations = 0;
+  for (const from of concepts) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const to = concepts[Math.floor(next() * concepts.length)] as string;
+      try {
+        modules.relations.create({ from, to, relation: 'relates_to' });
+        relations += 1;
+      } catch {
+        // The same pair twice, or a concept with itself: skipped.
+      }
+    }
+  }
+  return relations;
 }
 
 function open(root: string, dataDir: string) {
@@ -329,6 +374,56 @@ async function main() {
       }
     }
 
+    // The knowledge graph (task 7.12): modules, concepts and relations on top of the notes and
+    // the library, then a 5,000-node payload, first built from scratch and then from the cache.
+    started = performance.now();
+    const relationCount = seedConcepts(session.modules);
+    record(
+      `Writing 50 modules, 1000 concepts and ${relationCount} relations`,
+      performance.now() - started,
+    );
+    const filter = GraphFilterSchema.parse({});
+    started = performance.now();
+    const cold = session.modules.graph.graph(filter);
+    JSON.stringify(cold);
+    record(
+      `Graph: first build and a ${cold.nodes.length}-node payload (${cold.edges.length} edges, of ${cold.matched})`,
+      performance.now() - started,
+      BUDGETS.graphColdMs,
+    );
+    const graphTimings: number[] = [];
+    for (let round = 0; round < 10; round += 1) {
+      const before = performance.now();
+      JSON.stringify(session.modules.graph.graph(filter));
+      graphTimings.push(performance.now() - before);
+    }
+    record(
+      `Graph: ${cold.nodes.length}-node payload from the cache, p95`,
+      percentile(graphTimings, 0.95),
+      BUDGETS.graphPayloadMs,
+    );
+    // The usual change while writing: a note's text, not its links. The analytics are kept.
+    const edited = path.join(root, ...notePath(3).split('/'));
+    writeFileSync(edited, `${readFileSync(edited, 'utf8')}\nOne more sentence.\n`);
+    session.modules.notes.indexer.apply({ changed: [notePath(3)] }, 'external');
+    started = performance.now();
+    JSON.stringify(session.modules.graph.graph(filter));
+    record(
+      'Graph: payload after an edit that changes no link',
+      performance.now() - started,
+      BUDGETS.graphAfterEditMs,
+    );
+    started = performance.now();
+    const centre = session.modules.concepts.list()[0]?.id ?? '';
+    session.modules.graph.local(centre, 2, GraphFilterSchema.parse({ limit: 300 }));
+    record('Graph: a concept two steps out', performance.now() - started);
+    started = performance.now();
+    const report = session.modules.graph.report();
+    record(
+      `Graph: report (${report.communities.length} clusters, ${report.prompts.length} prompts)`,
+      performance.now() - started,
+    );
+
     const changed = notePath(1);
     writeFileSync(
       path.join(root, ...changed.split('/')),
@@ -338,8 +433,16 @@ async function main() {
     session.modules.notes.indexer.apply({ changed: [changed] }, 'external');
     record('Re-index one changed note', performance.now() - started);
     await session.close();
+  } catch (error) {
+    // Report the failure itself: removing the folder may fail too while the database is open.
+    console.error(error);
+    process.exitCode = 1;
   } finally {
-    rmSync(temp, { recursive: true, force: true, maxRetries: 3 });
+    try {
+      rmSync(temp, { recursive: true, force: true, maxRetries: 3 });
+    } catch {
+      console.error(`Could not remove ${temp}; delete it by hand.`);
+    }
   }
 
   console.table(results);

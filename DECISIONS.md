@@ -20,7 +20,7 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 | [0012](#adr-0012--ai-sdk-7-with-an-in-house-tool-runtime) | AI SDK 7 with an in-house tool runtime | Accepted | 2026-10-04 |
 | [0013](#adr-0013--risk-classified-tools-approvals-snapshots-and-undo) | Risk-classified tools, approvals, snapshots and undo | Accepted | 2026-10-04 |
 | [0014](#adr-0014--expose-the-tool-layer-over-mcp) | Expose the tool layer over MCP | Accepted | 2026-10-04 |
-| [0015](#adr-0015--graphology--sigmajs-graphify-ideas-ported-with-attribution) | graphology + Sigma.js; Graphify ideas ported with attribution | Accepted | 2026-10-04 |
+| [0015](#adr-0015--graphology--sigmajs-graphify-ideas-ported-with-attribution) | graphology + Sigma.js; Graphify ideas ported with attribution | Accepted (implementation note 2026-10-09) | 2026-10-04 |
 | [0016](#adr-0016--electron-44-electron-builder-nsis-server-in-a-utilityprocess) | Electron 44, electron-builder (NSIS), server in a utilityProcess | Accepted | 2026-10-04 |
 | [0017](#adr-0017--tooling-typescript-7-biome-npm-workspaces-vitest-playwright-esbuild) | Tooling: TypeScript 7, Biome, npm workspaces, Vitest, Playwright, esbuild | Accepted | 2026-10-04 |
 | [0018](#adr-0018--frontend-react-19-vite-8-tanstack-tailwind-4-radix) | Frontend: React 19, Vite 8, TanStack, Tailwind 4, Radix | Accepted | 2026-10-04 |
@@ -35,6 +35,7 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 | [0027](#adr-0027--the-product-is-called-manuscript-internal-identifiers-keep-skb) | The product is called Manuscript; internal identifiers keep `skb` | Accepted | 2026-10-08 |
 | [0028](#adr-0028--the-source-library-follows-the-sources-folder) | The source library follows the `Sources` folder | Accepted | 2026-10-08 |
 | [0029](#adr-0029--course-structure-in-the-database-tied-to-files-by-module-code) | Course structure in the database, tied to files by module code | Accepted | 2026-10-08 |
+| [0030](#adr-0030--the-knowledge-graph-is-computed-only-relations-are-stored) | The knowledge graph is computed; only relations are stored | Accepted | 2026-10-09 |
 
 ---
 
@@ -219,6 +220,15 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 - **Reason.** One graph library end to end; scales beyond Graphify's 5,000-node rendering cap; licence
   permits adaptation with notice.
 - **Consequences.** Cytoscape may still be used for small hierarchical (prerequisite) views.
+- **Implementation note (9 October 2026, Phase 7).** Sigma **3.0.3** with a small React wrapper of our
+  own rather than `@react-sigma/core`: Sigma 4.0.0 was released the day before and `@react-sigma`
+  still targets 3, so the mature line was chosen and the wrapper keeps an upgrade local. Sigma has no
+  dashed edges, so a patterned edge program adapted from its rectangle program (MIT) draws inferred
+  and ambiguous edges. ForceAtlas2 runs in our own module worker (not the package's blob worker), so
+  starting positions and iteration counts are ours. Louvain comes from
+  `graphology-communities-louvain` with a seeded random source; betweenness and paths are small
+  functions of our own, because sampled betweenness is needed and the metrics package computes it
+  exactly.
 
 ## ADR-0016 — Electron 44, electron-builder (NSIS), server in a utilityProcess
 
@@ -468,3 +478,32 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   explanation belongs. Creating a note with a concept's name takes over that name's links, by
   design. Joins use `lower(module_code)`, which the indexed columns keep cheap at a student's scale.
 - **Date.** 8 October 2026.
+
+## ADR-0030 — The knowledge graph is computed; only relations are stored
+
+- **Context.** Phase 7 draws concepts, notes, sources, lectures and modules as one graph and runs
+  analytics on it. Most of its edges already exist elsewhere: links in the notes (the notes index),
+  course membership (the course tables and note properties, ADR-0029). Only typed relations between
+  concepts are new information.
+- **Options.** (a) A stored graph: node and edge tables kept in step with notes, sources and the
+  course on every change. (b) A computed graph: assembled on request from the existing tables, with
+  only the typed relations stored, and cached. (c) A graph database alongside SQLite.
+- **Decision.** (b). `relations` holds the stored edges (confidence, score, status, evidence,
+  creator); everything else is assembled with graphology when the graph is asked for and cached
+  in memory until a `vault.changed`, `sources.changed` or `data.changed` event (published after
+  course, concept and relation writes). Analytics are reused while a fingerprint of the graph's
+  nodes, names, modules and edges is unchanged; community assignments are persisted only so that
+  cluster ids stay stable (`graph_communities`, derived). Node ids are entity ids.
+- **Reason.** Nothing to keep in sync, so the graph cannot drift from the files; links edited in
+  Obsidian appear at once; the stored part is exactly what the student or the assistant asserted,
+  with its provenance. The cost — rebuilding on change — measured 2.1 s at 10,000 notes and 1,000
+  concepts, 674 ms after a note edit that changes no link, and 97 ms for a cached 5,000-node payload
+  (architecture.md §14).
+- **Consequences.** Relations are polymorphic; triggers remove those of deleted concepts,
+  lectures, modules, topics and sources, while relations to notes survive index rebuilds and are
+  skipped while a note is missing (notes at either end get their id written in, ADR-0025). Every
+  saved note marks the graph stale, so very large vaults with the graph open pay the assembly cost
+  per save (backlog B-KM-18: tell the graph when links, rather than text, changed). The graph is
+  rebuilt after a restart (first open ~2 s at 10,000 notes). Export (Phase 16) needs only
+  `relations`.
+- **Date.** 9 October 2026.

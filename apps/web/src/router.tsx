@@ -105,6 +105,14 @@ const conceptsRoute = createRoute({
   path: '/concepts',
   component: lazyRouteComponent(() => import('./features/concepts/ConceptsPage'), 'ConceptsPage'),
 });
+const graphRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/graph',
+  component: lazyRouteComponent(() => import('./features/graph/GraphPage'), 'GraphPage'),
+  // `?focus=con_…` opens the graph centred on a node (study prompts and concept pages link here).
+  validateSearch: (search: Record<string, unknown>): { focus?: string } =>
+    typeof search.focus === 'string' && search.focus !== '' ? { focus: search.focus } : {},
+});
 const conceptRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/concepts/$conceptId',
@@ -119,6 +127,7 @@ const IMPLEMENTED = new Set([
   'library',
   'modules',
   'concepts',
+  'graph',
   'settings',
 ]);
 const placeholderRoutes = SECTIONS.filter((section) => !IMPLEMENTED.has(section.id)).map(
@@ -143,6 +152,7 @@ export const routeTree = rootRoute.addChildren([
   lectureRoute,
   conceptsRoute,
   conceptRoute,
+  graphRoute,
   ...placeholderRoutes,
 ]);
 

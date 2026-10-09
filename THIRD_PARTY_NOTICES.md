@@ -17,16 +17,36 @@ This file lists third-party code, algorithms or text that has been **adapted int
   > Portions of this software were contributed under the MIT License prior to the relicensing and
   > remain available under those terms. The original MIT license text is retained in LICENSE-MIT.
 
-- Adapted so far: **none** (Phase 0 documents ideas only). Planned adaptations, each to be listed here
-  with the target file when implemented:
-  - edge confidence rubric and provenance model (`docs/research/graphify.md` §3);
-  - community splitting, cohesion scoring and hub-based labelling (`cluster.py`) — Phase 7;
-  - surprise scoring and suggested questions (`analyze.py`) — Phase 7;
+- Adapted (Phase 7, from release 0.9.75):
+  - `apps/server/src/modules/graph/analytics/communities.ts` — community detection with oversized
+    and low-cohesion re-splitting, cohesion scores, hub-based labels and stable community ids, from
+    `graphify/cluster.py` (`cluster`, `_split_community`, `cohesion_score`,
+    `label_communities_by_hub`, `remap_communities_to_previous`);
+  - `apps/server/src/modules/graph/analytics/insights.ts` — the surprising-connection score, from
+    `graphify/analyze.py` (`_surprise_score`, `_cross_community_surprises`);
+  - `apps/server/src/modules/graph/analytics/prompts.ts` — study prompts, from `graphify/analyze.py`
+    (`suggest_questions`);
+  - `packages/core/src/graph/vocabulary.ts` — the edge confidence rubric (`EXTRACTED`, `INFERRED`,
+    `AMBIGUOUS`; `USER` added), from Graphify's `docs/how-it-works.md`.
+- Still planned, each to be listed here with its file when implemented:
   - entity de-duplication guards (`dedup.py`) — Phase 11;
   - untrusted-source wrapping and sentinel neutralisation (`llm.py`) — Phase 10.
 
   Adapted modules carry a header comment naming the Graphify source file and licence, and state that
   they were modified (translated to TypeScript and changed for this application).
+
+## Sigma.js
+
+- Source: <https://github.com/jacomyal/sigma.js> (`sigma` 3.0.3)
+- Licence: MIT — Copyright (C) 2013-2025, Alexis Jacomy, Guillaume Plique, Benoît Simard
+- Adapted (Phase 7, task 7.08):
+  - `apps/web/src/features/graph/canvas/edge-programs.ts` — the rectangle edge program and its
+    shaders (`src/rendering/programs/edge-rectangle`), extended to measure each edge's length on
+    screen and leave gaps, for dashed and dotted edges;
+  - `apps/web/src/features/graph/canvas/hover.ts` — the hovered-node label (`drawDiscNodeHover`),
+    drawn on the theme's surface colour instead of white.
+- Both files carry a header naming the source and licence and stating that they were modified.
+  `sigma` itself is an ordinary dependency.
 
 ## PDF.js
 

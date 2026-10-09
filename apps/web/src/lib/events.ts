@@ -5,7 +5,8 @@ import { create } from 'zustand';
 
 /**
  * Live updates from the server (`/api/events`, server-sent events): edits made in other programs,
- * moves, index progress, source imports and background job progress. Lists refresh themselves; the open editor subscribes for its note.
+ * moves, index progress, source imports, background job progress and changes to the course,
+ * concepts and relations. Lists refresh themselves; the open editor subscribes for its note.
  */
 
 type Listener = (event: ServerEvent) => void;
@@ -50,6 +51,16 @@ export function applyEventToCache(queryClient: QueryClient, event: ServerEvent):
     void queryClient.invalidateQueries({ queryKey: ['sources'] });
     // Modules and lectures list their sources.
     void queryClient.invalidateQueries({ queryKey: ['learning'] });
+    void queryClient.invalidateQueries({ queryKey: ['graph'] });
+    return;
+  }
+  if (event.type === 'data.changed') {
+    // Each area feeds the others' views: modules list concepts, concepts list relations, and the
+    // graph is built from all three.
+    void queryClient.invalidateQueries({ queryKey: ['graph'] });
+    void queryClient.invalidateQueries({ queryKey: ['concepts'] });
+    if (event.area === 'relations') void queryClient.invalidateQueries({ queryKey: ['relations'] });
+    else void queryClient.invalidateQueries({ queryKey: ['learning'] });
     return;
   }
   // Job progress is shown by the features that started the job (through onServerEvent).
@@ -64,6 +75,7 @@ export function applyEventToCache(queryClient: QueryClient, event: ServerEvent):
   // A note's module and lecture properties and its links feed modules, lectures and concepts.
   void queryClient.invalidateQueries({ queryKey: ['learning'] });
   void queryClient.invalidateQueries({ queryKey: ['concepts'] });
+  void queryClient.invalidateQueries({ queryKey: ['graph'] });
   for (const change of event.notes) {
     // The open editor decides for itself; elsewhere a cached copy is simply out of date.
     if (change.origin === 'external' || change.kind !== 'updated') {
@@ -98,6 +110,7 @@ export function useServerEvents(): void {
       'index.status',
       'sources.changed',
       'job.updated',
+      'data.changed',
     ] as const) {
       source.addEventListener(type, handle);
     }

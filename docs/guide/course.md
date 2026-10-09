@@ -121,8 +121,10 @@ and choose **Create concept** (or **Create note**, as before). A concept has:
 note is called that, because notes come first (see [links](./markdown.md#2-links-and-how-they-are-resolved)).
 Concept links are shown with a dotted underline and open the concept page.
 
-The **concept page** lists the notes linking to it, with the lines that mention it, and passages in
-your sources that name it or one of its aliases — each opens the source at that page or slide.
+The **concept page** lists its **relations** to other concepts (*is a prerequisite for*, *is part
+of*… — see [the graph guide](./graph.md#4-relations-between-concepts)), its **connections** one or
+two steps out, the notes linking to it, with the lines that mention it, and passages in your
+sources that name it or one of its aliases — each opens the source at that page or slide.
 Renaming a concept or changing its aliases updates which links resolve to it; deleting it leaves the
 links in your notes as they are, unresolved again.
 
@@ -139,6 +141,5 @@ until then a backing note is the place for anything you would not want to lose.
 ## Coming later
 
 - Flashcards and questions per concept and lecture (Phases 8–9), and mastery per concept (Phase 9).
-- The concept graph (Phase 7).
 - Suggested concepts from your notes and sources, and merging duplicates (Phase 11).
 - A study plan built from deadlines, weights and weak concepts (Phase 14).
