@@ -196,6 +196,26 @@ export function createToolRegistry(deps: ToolRegistryDependencies) {
       return approvals.grant(name, checked.input);
     },
 
+    /** What a call would need, without running it: the policy's verdict and a line describing it. */
+    preview(name: string, rawInput: unknown) {
+      const checked = check(name, rawInput);
+      if (!checked.ok) return { ok: false as const, error: checked.error };
+      const { tool, input } = checked;
+      const policy = decideApproval({
+        risk: tool.risk,
+        items: Math.max(1, tool.items?.(input) ?? 1),
+        override: deps.permissions()[tool.name],
+      });
+      return {
+        ok: true as const,
+        decision: policy.decision,
+        risk: policy.risk,
+        reason: policy.reason,
+        summary: describeSafely(tool, input),
+        input,
+      };
+    },
+
     async call(name: string, rawInput: unknown, options: CallOptions): Promise<ToolOutcome> {
       const checked = check(name, rawInput);
       if (!checked.ok) {

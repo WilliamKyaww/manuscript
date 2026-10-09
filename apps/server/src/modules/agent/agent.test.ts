@@ -231,7 +231,9 @@ describe('knowledge tools', () => {
       headings: string[];
       hash: string;
     };
-    expect(note.content).toBe('## Phases\n\nPrepare, then accept.');
+    expect(note.content).toMatch(
+      /^<untrusted_source [^>]*>\n## Phases\n\nPrepare, then accept\.\n<\/untrusted_source>$/u,
+    );
     expect(note.headings).toEqual(['Paxos', 'Phases']);
   });
 

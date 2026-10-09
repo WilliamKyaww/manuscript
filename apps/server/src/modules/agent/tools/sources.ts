@@ -50,7 +50,12 @@ export const searchSources = defineTool({
                   sourceId: result.source.id,
                   title: result.source.title,
                   where: result.section.label,
-                  snippet: plain(result.snippet),
+                  snippet: untrusted(
+                    result.source.id,
+                    result.source.title,
+                    result.section.label,
+                    plain(result.snippet),
+                  ),
                 },
               ]
             : [],
