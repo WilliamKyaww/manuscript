@@ -9,14 +9,14 @@ import {
 } from '@skb/core';
 import { expect } from 'vitest';
 import { z } from 'zod';
-import { createTestApp } from './helpers';
+import { createTestApp, type TestContextOptions } from './helpers';
 
 /**
  * The whole app on a temporary vault, for source-library tests. The job worker loop is not
  * started: `settle()` runs reconciliation and due jobs explicitly, so tests are deterministic.
  */
-export function createSourcesTestbed() {
-  const harness = createTestApp();
+export function createSourcesTestbed(options: TestContextOptions = {}) {
+  const harness = createTestApp(options);
   const events: ServerEvent[] = [];
   harness.ctx.events.subscribe((event) => events.push(event));
   const abs = (relative: string) => path.join(harness.ctx.vault.root, ...relative.split('/'));
