@@ -89,7 +89,7 @@ export function studyPrompts(inputs: PromptInputs): StudyPrompt[] {
   const bridging: StudyPrompt[] = inputs.bridges.map(({ node, communities }) => ({
     id: `bridge:${node}`,
     kind: 'bridge',
-    title: `Explain how ${name(node)} links ${communities.slice(0, 3).map(communityName).join(' and ')}`,
+    title: `Explain how ${name(node)} connects the ${communities.slice(0, 3).map(communityName).join(' and ')} clusters`,
     detail:
       'It sits between clusters that are otherwise far apart: a good integrative or essay question.',
     actions: [
