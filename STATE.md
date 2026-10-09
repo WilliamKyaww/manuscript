@@ -4,18 +4,18 @@ _Last updated: 9 October 2026 — Claude Opus 5.5._
 
 ## Current phase
 
-**Phase 10 — AI foundation (providers, retrieval and grounded Q&A): next.** Phases 0 (research), 1
+**Phase 11 — AI generation and knowledge extraction: next.** Phases 0 (research), 1
 (foundation), 2 (application shell), 3 (notes and Markdown knowledge base), 4 (lexical search and
 quick navigation), 5 (source library and ingestion pipeline), 6 (course structure and concepts), 7
-(knowledge graph), 8 (flashcards and spaced repetition) and 9 (questions, quizzes and mastery) are
-complete and merged into `main`.
+(knowledge graph), 8 (flashcards and spaced repetition), 9 (questions, quizzes and mastery) and 10
+(AI foundation) are complete and merged into `main`.
 
 ## What works
 
 - **Local server** (`apps/server`): Hono on `127.0.0.1` with token (cookie or bearer), Host allowlist,
   Origin and Fetch-Metadata checks; `/auth` sign-in link; RFC 9457 problem details (with `details`);
   CSP and security headers; production SPA serving; server-sent events at `/api/events`.
-- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0009`), vault (`.skb/` layout,
+- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0010`), vault (`.skb/` layout,
   lock with crash recovery, strict path containment), atomic writes, vault-scoped settings.
 - **Notes** (Phase 3): Markdown files are canonical; the index (notes, aliases, tags, links,
   attachments, FTS5) is rebuilt from the files and follows edits made in other programs. Ids are
@@ -60,12 +60,21 @@ complete and merged into `main`.
   confidence, stages and coverage, every figure shown with its sum; readiness, mastery and coverage by
   topic, module and course; weak areas (weak, slipping, lapsing, forgotten, no material) ordered by
   priority with one-click practice; panels on concept and module pages; Today's Weak areas widget.
+- **AI** (Phase 10, optional — everything above works without it): providers (Anthropic, OpenAI,
+  OpenAI-compatible such as Ollama or LM Studio) and a model per role in Settings → AI, with
+  write-only keys kept in the data directory, connection tests, prices, a monthly budget and usage;
+  **Ask** (Ctrl+J): questions answered from your sources, sources and notes, or general knowledge
+  too, streamed with citations that open the page, slide or line, and a grounding label; optional
+  semantic search (embeddings, fused with full-text and graph-neighbourhood retrieval) and similar
+  notes. `SKB_AI_PROVIDER=mock` runs a built-in test model (ADR-0033).
 - **Application shell:** sidebar, sticky page headers (per pane on paned pages), themes, command
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 575 Vitest tests and 79 Playwright tests (sticky headers on every route and pane,
-  axe in both themes, the library, the course, the graph, reviewing and practice) — all green.
+- **Tests:** 601 Vitest tests and 81 Playwright tests (sticky headers on every route and pane,
+  axe in both themes, the library, the course, the graph, reviewing, practice and asking with the
+  test model) — all green. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
+  p95 404 ms, median 51 ms (provisional budget 500 ms).
   Reviewing: 7 ms median between cards over 100 (budget 50 ms). Mastery pass over a year of learning
   (1,000 concepts, 5,000 reviewed cards, 20,000 answers): 201 ms (budget 500 ms). On mains power at 10,000
   notes: search p95 28 ms (100 ms with 10,000 PDF pages; budget 150 ms); graph payload of 5,000 nodes
@@ -74,12 +83,16 @@ complete and merged into `main`.
 
 ## In progress
 
-- Nothing; Phase 10 not yet started.
+- Nothing; Phase 11 not yet started.
 
 ## Incomplete / not started
 
-- Phases 10–22: AI features, the planner and the desktop app do not exist yet; their sections show
-  placeholders. The assistant does not propose relations, cards or questions yet (Phase 11).
+- Phases 11–22: AI generation, the agent and chat, the planner and the desktop app do not exist yet;
+  their sections show placeholders.
+- Not in Phase 10 (backlog): semantic results on the Search page (B-AI-08), Google provider
+  (B-AI-09), price presets (B-AI-10), an AI latency budget (B-AI-11), past questions in Ask
+  (B-AI-12); reranking (B-AI-02), local embeddings (B-AI-03). Keys use Electron safeStorage from
+  Phase 18.
 - Not in Phase 9 (backlog): cards in Learn sessions (B-LE-24 — Learn asks questions only), questions
   from a selection (B-LE-25), calibration (B-LE-26), question bank import/export (B-LE-27), pausing a
   mock exam (B-LE-28), a question's history (B-LE-29), mastery trends (B-LE-30), Learn by lectures
@@ -103,11 +116,10 @@ complete and merged into `main`.
 
 ## Next steps
 
-1. Create `phase/10-ai-foundation` from `main`.
-2. Phase 10: provider-independent model access by role (Anthropic, OpenAI, OpenAI-compatible, a
-   mock for tests), keys stored outside the vault, usage and spend caps, optional embeddings with
-   hybrid search, retrieval with citations, and grounded Q&A labelled "my sources" or "general
-   knowledge" — with the app still fully useful without AI.
+1. Create `phase/11-ai-generation` from `main`.
+2. Phase 11: flashcards, questions, quizzes and lecture or summary notes generated from your material
+   with provenance; concepts and relations extracted as proposals; free-text answers graded; audio,
+   video and images transcribed — all reviewed before they enter the knowledge base.
 
 ## Relevant decisions
 
@@ -118,8 +130,9 @@ relations carry provenance · ADR-0024 shared Zod contracts · ADR-0025 note ids
 ADR-0029 course structure in the database, tied to files by module code · ADR-0030 the
 knowledge graph is computed; only relations are stored · ADR-0011 FSRS-6 via ts-fsrs · ADR-0031
 flashcards are scheduled by face, and review logs are never changed · ADR-0021 transparent mastery ·
-**ADR-0032** mastery recomputed from evidence in one pass; answers written once; Learn replayed from
-its answers.
+ADR-0032 mastery recomputed from evidence in one pass; answers written once; Learn replayed from
+its answers · ADR-0012 AI SDK 7 · **ADR-0033** AI configuration outside the vault, answers as JSON lines,
+fusion in retrieval.
 
 ## Technical debt
 
@@ -146,6 +159,9 @@ background load — compare against a worktree of the previous gate (`AGENTS.md`
   modules are assessed. Then relate a few concepts and look at the graph (`docs/guide/graph.md`), make the first
   flashcards (`docs/guide/flashcards.md`), and write a few questions for a module to try Learn and
   Progress (`docs/guide/practice.md`, `docs/guide/mastery.md`).
+- To try Ask: add a provider in Settings → AI (`docs/guide/ai.md`). RQ-04 (which providers, what
+  budget) decides the defaults worth suggesting; without an answer, nothing is preset and the budget
+  starts at $10 a month.
 
 ## Open questions for the user
 

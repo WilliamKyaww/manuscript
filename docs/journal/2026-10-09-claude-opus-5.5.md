@@ -266,3 +266,80 @@ Phase 9 — questions, quizzes and mastery (`phase/09-quizzes-mastery`).
 ### Next steps
 
 Phase 10 — AI foundation: providers, retrieval and grounded Q&A (`phase/10-ai-foundation`).
+
+## Session 13 — Phase 10: AI foundation
+
+- **Date:** Friday 9 October 2026
+- **Time:** about 13:30–18:00
+- **Agent model:** Claude Opus 5.5 (`claude-opus-5-5`)
+- **Phase:** 10 — AI foundation: providers, retrieval and grounded Q&A (branch `phase/10-ai-foundation`)
+- **Work performed:** built and verified Phase 10 end to end and merged it.
+
+### What was done
+
+1. **Dependencies.** AI SDK 7 (`ai` 7.0.136) with `@ai-sdk/anthropic` 4.0.78, `@ai-sdk/openai` 4.0.91,
+   `@ai-sdk/openai-compatible` 3.0.67 and `@ai-sdk/provider` 4.0.26 (types), all Apache-2.0, in the
+   server only (ADR-0012).
+2. **Core.** Contracts for providers, roles, preferences, status, usage, connection tests, embeddings
+   and the answer stream; citation checking and grounding labels; untrusted wrapping and sentinel
+   neutralisation (Graphify-adapted, attributed); reciprocal rank fusion, cosine, question terms;
+   an `AiError` (not configured 409, budget 429, provider 502).
+3. **Server (10.01–10.09).** `ai.json` and `secrets.json` in the data directory; the registry (the
+   only place provider clients are built) with readiness per role; built-in mock chat and embedding
+   models (`SKB_AI_PROVIDER=mock`); migration `0010` (`ai_usage`, derived `embeddings`); connection
+   tests with scrubbed errors; prices, budget and usage. Embeddings as a background job with an
+   in-memory int8 index; retrieval fusing full text, concept neighbourhoods and semantic neighbours,
+   packed into a token budget with citation keys; `POST /api/ai/ask` streaming JSON lines; related
+   notes from stored vectors.
+4. **Web (10.04, 10.10, 10.11).** Settings → AI (providers with write-only keys, roles with tests
+   and prices, limits, usage, semantic-search progress); the Ask panel (Ctrl+J, sidebar, palette)
+   narrowed to the page on screen, with citation links, grounding label, passages and usage;
+   similar notes in the Backlinks tab. The API client reads JSON-line streams; Markdown links keep
+   their titles.
+5. **Verification and docs (10.12, 10.13).** `e2e/ask.spec.ts` (own server on port 4395 with the mock
+   model; the shared server without one); screenshots of the panel and settings; retrieval timed in
+   the 10,000-note performance run; `docs/guide/ai.md`; ADR-0033; PRDs; backlog B-AI-08…12; AGENTS.
+
+### Important decisions
+
+- **ADR-0033:** AI configuration and keys outside the vault; answers streamed as JSON lines read by
+  the shared client (no AI SDK code in the browser); fusion in the AI module's retrieval so search
+  never depends on AI; brute-force int8 vectors in memory.
+- **The search page stays full-text** for now (B-AI-08): fused results would lose the highlighted
+  snippets that make it useful; Ask shows what fusion finds.
+- **No model call when the sources have nothing** in the sources-only scopes: an honest "not in your
+  sources" costs nothing and cannot be filled from general knowledge.
+- **Model suggestions are kept to ids known to exist**; any id works, and the guide says to check
+  the provider's list.
+
+### Problems encountered
+
+- **Coalesced jobs never moved earlier**: a request to embed now joined a job waiting 30 seconds
+  after an edit. Test first, then the queue brings a waiting job forward on a shorter delay.
+- **A partial test context without a data directory** (the rebuild test) broke once the AI store
+  needed one; the test now supplies it.
+- **Shell escapes again**: a template literal and a `\n` were mangled by the shell; fixed with the
+  editor tools. A `cd ../../..` sent one `npx` command outside the project (only the npx cache was
+  touched).
+- **A careless `git checkout -- e2e`** (meant to confirm a scratch file was gone) discarded an
+  uncommitted change to `e2e/server.ts`; it was redone at once and committed. Scratch files are now
+  deleted by name only.
+- Biome flagged an unused suppression and a needless effect dependency in the Ask panel; the mock
+  embedding result needed `warnings: []` for the V4 interface.
+- **The 10,000-note performance run never finished** (first on battery, stopped after 50 minutes).
+  Stage logs showed it stalled in the new retrieval step: retrieval joined the full-text tables with
+  plain JOINs, and SQLite ran the MATCH once per row of the other table. CROSS JOIN, as search
+  already uses, fixed it. Unit tests could not see it: their data is tiny.
+
+### Tests run
+
+| Command | Result |
+|---|---|
+| `npm run verify` | **Pass** — type-check, Biome, **601** Vitest tests (core 169, server 289, web 143), build, smoke |
+| `npx playwright test` | **Pass** — **81/81** (the Ask flow with the test model on its own server; no-provider guidance on the shared one) |
+| Manual | Screenshots of the Ask panel with a streamed, cited answer and of Settings → AI with two providers and roles |
+| `npm run test:perf` (mains power) | **Pass** — every budget; new: retrieval for a grounded answer p95 404 ms, median 51 ms (provisional budget 500 ms); search p95 23 ms (96 ms with 10,000 PDF pages); graph 1,965 ms cold, 107 ms cached, 652 ms after an edit; full index 11.8 s; start-up 686 ms |
+
+### Next steps
+
+Phase 11 — AI generation and knowledge extraction (`phase/11-ai-generation`).
