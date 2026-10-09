@@ -197,96 +197,98 @@ export function NoteTree({ root, activePath, ...actions }: NoteTreeProps) {
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <div
-          ref={containerRef}
-          // A tree must contain tree items; an empty vault is just its message.
-          role={rows.length > 0 ? 'tree' : undefined}
-          aria-label={rows.length > 0 ? 'Notes and folders' : undefined}
-          className={cn('min-h-full py-1 text-sm', dropTarget === '' && 'bg-accent-subtle')}
-          onContextMenu={(event) => {
-            const path = (event.target as HTMLElement).closest<HTMLElement>('[data-path]')?.dataset
-              .path;
-            setMenuTarget((path && byPath.get(path)?.node) || null);
-          }}
-          {...dropProps('')}
-        >
-          {rows.length === 0 && (
-            <p className="px-3 py-2 text-muted">This vault has no notes yet.</p>
-          )}
-          {rows.map((row) => {
-            const { node, depth } = row;
-            const isFolder = node.kind === 'folder';
-            const isOpen = isFolder && expanded.has(node.path);
-            const isActive = node.path === activePath;
-            return (
-              <div
-                key={node.path}
-                role="treeitem"
-                data-path={node.path}
-                aria-level={depth}
-                aria-posinset={row.position}
-                aria-setsize={row.siblings}
-                aria-expanded={isFolder ? isOpen : undefined}
-                aria-selected={isActive}
-                aria-label={
-                  node.kind === 'note' && node.title !== node.name
-                    ? `${node.name} (${node.title})`
-                    : node.name
-                }
-                tabIndex={node.path === tabStop ? 0 : -1}
-                draggable={renaming !== node.path}
-                onDragStart={(event) => {
-                  dragging.current = node.path;
-                  event.dataTransfer.setData(DRAG_TYPE, node.path);
-                  event.dataTransfer.effectAllowed = 'move';
-                }}
-                onDragEnd={() => {
-                  dragging.current = null;
-                  setDropTarget(null);
-                }}
-                {...(isFolder ? dropProps(node.path) : {})}
-                onFocus={() => setFocusedPath(node.path)}
-                onClick={() => {
-                  setFocusedPath(node.path);
-                  activate(node);
-                }}
-                onKeyDown={(event) => onKeyDown(event, row)}
-                className={cn(
-                  'flex h-7 cursor-default items-center gap-1.5 pr-2 outline-none select-none',
-                  'hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset',
-                  isActive && 'bg-accent-subtle font-medium text-text',
-                  dropTarget === node.path && 'bg-accent-subtle ring-1 ring-accent ring-inset',
-                )}
-                style={{ paddingLeft: `${(depth - 1) * 14 + 6}px` }}
-              >
-                <ChevronRight
-                  aria-hidden="true"
-                  size={14}
+        {rows.length === 0 ? (
+          // A tree must contain tree items, so an empty vault is just its message (which still
+          // opens the menu with New note and New folder).
+          <p className="min-h-full px-3 py-3 text-sm text-muted">This vault has no notes yet.</p>
+        ) : (
+          <div
+            ref={containerRef}
+            role="tree"
+            aria-label="Notes and folders"
+            className={cn('min-h-full py-1 text-sm', dropTarget === '' && 'bg-accent-subtle')}
+            onContextMenu={(event) => {
+              const path = (event.target as HTMLElement).closest<HTMLElement>('[data-path]')
+                ?.dataset.path;
+              setMenuTarget((path && byPath.get(path)?.node) || null);
+            }}
+            {...dropProps('')}
+          >
+            {rows.map((row) => {
+              const { node, depth } = row;
+              const isFolder = node.kind === 'folder';
+              const isOpen = isFolder && expanded.has(node.path);
+              const isActive = node.path === activePath;
+              return (
+                <div
+                  key={node.path}
+                  role="treeitem"
+                  data-path={node.path}
+                  aria-level={depth}
+                  aria-posinset={row.position}
+                  aria-setsize={row.siblings}
+                  aria-expanded={isFolder ? isOpen : undefined}
+                  aria-selected={isActive}
+                  aria-label={
+                    node.kind === 'note' && node.title !== node.name
+                      ? `${node.name} (${node.title})`
+                      : node.name
+                  }
+                  tabIndex={node.path === tabStop ? 0 : -1}
+                  draggable={renaming !== node.path}
+                  onDragStart={(event) => {
+                    dragging.current = node.path;
+                    event.dataTransfer.setData(DRAG_TYPE, node.path);
+                    event.dataTransfer.effectAllowed = 'move';
+                  }}
+                  onDragEnd={() => {
+                    dragging.current = null;
+                    setDropTarget(null);
+                  }}
+                  {...(isFolder ? dropProps(node.path) : {})}
+                  onFocus={() => setFocusedPath(node.path)}
+                  onClick={() => {
+                    setFocusedPath(node.path);
+                    activate(node);
+                  }}
+                  onKeyDown={(event) => onKeyDown(event, row)}
                   className={cn(
-                    'shrink-0 text-subtle transition-transform',
-                    !isFolder && 'invisible',
-                    isOpen && 'rotate-90',
+                    'flex h-7 cursor-default items-center gap-1.5 pr-2 outline-none select-none',
+                    'hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset',
+                    isActive && 'bg-accent-subtle font-medium text-text',
+                    dropTarget === node.path && 'bg-accent-subtle ring-1 ring-accent ring-inset',
                   )}
-                />
-                <span aria-hidden="true" className="flex shrink-0 text-muted">
-                  {iconFor(node, isOpen)}
-                </span>
-                {renaming === node.path ? (
-                  <RenameInput
-                    initial={node.name}
-                    onDone={(name) => {
-                      setRenaming(null);
-                      focusRow(node.path);
-                      if (name && name !== node.name) actions.onRename(node, name);
-                    }}
+                  style={{ paddingLeft: `${(depth - 1) * 14 + 6}px` }}
+                >
+                  <ChevronRight
+                    aria-hidden="true"
+                    size={14}
+                    className={cn(
+                      'shrink-0 text-subtle transition-transform',
+                      !isFolder && 'invisible',
+                      isOpen && 'rotate-90',
+                    )}
                   />
-                ) : (
-                  <span className="truncate">{node.name}</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                  <span aria-hidden="true" className="flex shrink-0 text-muted">
+                    {iconFor(node, isOpen)}
+                  </span>
+                  {renaming === node.path ? (
+                    <RenameInput
+                      initial={node.name}
+                      onDone={(name) => {
+                        setRenaming(null);
+                        focusRow(node.path);
+                        if (name && name !== node.name) actions.onRename(node, name);
+                      }}
+                    />
+                  ) : (
+                    <span className="truncate">{node.name}</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </ContextMenuTrigger>
       <ContextMenuContent>
         {(menuTarget === null || menuTarget.kind === 'folder') && (
