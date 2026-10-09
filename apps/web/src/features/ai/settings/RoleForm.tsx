@@ -24,7 +24,15 @@ export const ROLE_TEXT: Record<AiRole, { title: string; description: string }> =
     description:
       'Optional. Finds passages by meaning, not only by words. Every passage and note is embedded once (and again when it changes).',
   },
+  transcription: {
+    title: 'Transcription',
+    description:
+      'Optional. Turns lecture recordings (audio and video) into timed text you can search, cite and generate from. OpenAI or a Whisper server.',
+  },
 };
+
+/** Roles that are optional and have no answers to limit (no output length or output price). */
+const optional = (role: AiRole) => role === 'embedding' || role === 'transcription';
 
 const priceText = (value: number | null) => (value === null ? '' : String(value));
 
@@ -106,7 +114,7 @@ export function RoleForm({
               value={providerId}
               onChange={(event) => setProviderId(event.target.value)}
             >
-              <option value="">{role === 'embedding' ? 'Off' : 'None'}</option>
+              <option value="">{optional(role) ? 'Off' : 'None'}</option>
               {providers.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.name}
@@ -133,7 +141,7 @@ export function RoleForm({
             </>
           )}
         </Field>
-        {role !== 'embedding' && (
+        {!optional(role) && (
           <Field label="Longest answer (tokens)" className="w-44">
             {(id) => (
               <Input
@@ -149,18 +157,25 @@ export function RoleForm({
         )}
       </div>
       <div className="flex flex-wrap items-end gap-3">
-        <Field label="Input price ($ per million tokens)" className="w-60">
+        <Field
+          label={
+            role === 'transcription'
+              ? 'Price ($ per audio minute)'
+              : 'Input price ($ per million tokens)'
+          }
+          className="w-60"
+        >
           {(id) => (
             <Input
               id={id}
               inputMode="decimal"
               value={inputPrice}
-              placeholder="e.g. 3"
+              placeholder={role === 'transcription' ? 'e.g. 0.006' : 'e.g. 3'}
               onChange={(event) => setInputPrice(event.target.value)}
             />
           )}
         </Field>
-        {role !== 'embedding' && (
+        {!optional(role) && (
           <Field label="Output price ($ per million tokens)" className="w-60">
             {(id) => (
               <Input

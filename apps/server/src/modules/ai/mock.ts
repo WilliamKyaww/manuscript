@@ -5,7 +5,9 @@ import type {
   LanguageModelV4Prompt,
   LanguageModelV4StreamPart,
   LanguageModelV4Usage,
+  TranscriptionModelV4,
 } from '@ai-sdk/provider';
+import { mockStructured } from './mock-generation';
 
 /**
  * Built-in test models (`SKB_AI_PROVIDER=mock`, agent-system.md §14): deterministic, offline, and
@@ -60,6 +62,12 @@ function usageOf(options: LanguageModelV4CallOptions, text: string): LanguageMod
   };
 }
 
+/** What the test model replies: JSON when asked for an object, otherwise prose. */
+function reply(options: LanguageModelV4CallOptions): string {
+  if (options.responseFormat?.type === 'json') return mockStructured(options.prompt) ?? '{}';
+  return mockAnswer(options.prompt);
+}
+
 export function createMockLanguageModel(modelId = 'mock-chat'): LanguageModelV4 {
   const finishReason = { unified: 'stop' as const, raw: 'stop' };
   return {
@@ -68,7 +76,7 @@ export function createMockLanguageModel(modelId = 'mock-chat'): LanguageModelV4 
     modelId,
     supportedUrls: {},
     async doGenerate(options) {
-      const text = mockAnswer(options.prompt);
+      const text = reply(options);
       return {
         content: [{ type: 'text', text }],
         finishReason,
@@ -77,7 +85,7 @@ export function createMockLanguageModel(modelId = 'mock-chat'): LanguageModelV4 
       };
     },
     async doStream(options) {
-      const text = mockAnswer(options.prompt);
+      const text = reply(options);
       // Word by word, so the interface sees a real stream.
       const pieces = text.match(/\S+\s*/gu) ?? [text];
       const parts: LanguageModelV4StreamPart[] = [
@@ -129,6 +137,55 @@ export function createMockEmbeddingModel(modelId = 'mock-embedding'): EmbeddingM
         embeddings: values.map(mockEmbedding),
         usage: { tokens: values.reduce((sum, value) => sum + tokens(value), 0) },
         warnings: [],
+      };
+    },
+  };
+}
+
+/**
+ * The test transcriber cannot hear, so a test recording carries its own transcript: lines
+ * "[start-end] words" between "MOCK TRANSCRIPT" and "END TRANSCRIPT" anywhere in the file (an ID3
+ * comment, say). Any other recording becomes one numbered sentence per half-minute of its length,
+ * reckoned at 16 kB a second.
+ */
+export function mockTranscript(audio: Uint8Array | string): {
+  text: string;
+  segments: { text: string; startSecond: number; endSecond: number }[];
+  durationInSeconds: number;
+} {
+  const bytes = typeof audio === 'string' ? Buffer.from(audio, 'base64') : audio;
+  const content = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+  const scripted = content.match(/MOCK TRANSCRIPT\r?\n([\s\S]*?)\r?\nEND TRANSCRIPT/u)?.[1];
+  const segments = scripted
+    ? [...scripted.matchAll(/^\[(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)\]\s*(.+)$/gmu)].map((match) => ({
+        startSecond: Number(match[1]),
+        endSecond: Number(match[2]),
+        text: (match[3] ?? '').trim(),
+      }))
+    : Array.from({ length: Math.max(1, Math.ceil(bytes.length / 16_000 / 30)) }, (_, index) => ({
+        startSecond: index * 30,
+        endSecond: Math.min((index + 1) * 30, Math.max(1, bytes.length / 16_000)),
+        text: `Test transcript, part ${index + 1}.`,
+      }));
+  return {
+    text: segments.map((segment) => segment.text).join(' '),
+    segments,
+    durationInSeconds: segments.at(-1)?.endSecond ?? 0,
+  };
+}
+
+export function createMockTranscriptionModel(modelId = 'mock-transcription'): TranscriptionModelV4 {
+  return {
+    specificationVersion: 'v4',
+    provider: 'mock',
+    modelId,
+    async doGenerate({ audio }) {
+      const transcript = mockTranscript(audio);
+      return {
+        ...transcript,
+        language: 'en',
+        warnings: [],
+        response: { timestamp: new Date(0), modelId },
       };
     },
   };

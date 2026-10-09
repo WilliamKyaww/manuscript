@@ -1,4 +1,4 @@
-import type { EmbeddingModelV4, LanguageModelV4 } from '@ai-sdk/provider';
+import type { EmbeddingModelV4, LanguageModelV4, TranscriptionModelV4 } from '@ai-sdk/provider';
 import {
   AI_ROLES,
   AiError,
@@ -6,6 +6,7 @@ import {
   type AiRole,
   type AiSettings,
   type AiStatus,
+  type AutoAccept,
   type IdFactory,
   NotFoundError,
   type Provider,
@@ -15,7 +16,7 @@ import {
   type UsageReport,
   ValidationError,
 } from '@skb/core';
-import { embed, generateText } from 'ai';
+import { embed, generateText, experimental_transcribe as transcribe } from 'ai';
 import type { z } from 'zod';
 import type { Clock } from '../../shared/clock';
 import type { Logger } from '../../shared/logger';
@@ -36,6 +37,7 @@ type PreferencesPatch = {
   roles?: Partial<Record<AiRole, Partial<RoleSettings>>>;
   monthlyBudget?: number | null;
   contextTokens?: number;
+  autoAccept?: Partial<AutoAccept>;
 };
 
 export interface AiServiceDependencies {
@@ -67,6 +69,26 @@ const slug = (text: string) =>
     .slice(0, 36);
 
 const money = (value: number) => `$${value.toFixed(2)}`;
+
+/** A WAV file of silence (16 kHz, mono, 16-bit), for testing a transcription model. */
+function silentWav(seconds: number): Uint8Array {
+  const rate = 16_000;
+  const data = rate * 2 * seconds;
+  const buffer = Buffer.alloc(44 + data);
+  buffer.write('RIFF', 0, 'ascii');
+  buffer.writeUInt32LE(36 + data, 4);
+  buffer.write('WAVEfmt ', 8, 'ascii');
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20);
+  buffer.writeUInt16LE(1, 22);
+  buffer.writeUInt32LE(rate, 24);
+  buffer.writeUInt32LE(rate * 2, 28);
+  buffer.writeUInt16LE(2, 32);
+  buffer.writeUInt16LE(16, 34);
+  buffer.write('data', 36, 'ascii');
+  buffer.writeUInt32LE(data, 40);
+  return new Uint8Array(buffer);
+}
 
 export function createAiService(deps: AiServiceDependencies) {
   const { store, secrets, registry, usage, mock, clock, ids, logger } = deps;
@@ -133,8 +155,10 @@ export function createAiService(deps: AiServiceDependencies) {
     purpose: string,
     inputTokens = 0,
     outputTokens = 0,
+    /** Spend worked out by the caller (transcription is priced per minute of audio). */
+    spentOverride?: number,
   ): Totals {
-    const spent = cost(resolved.settings, inputTokens, outputTokens);
+    const spent = spentOverride ?? cost(resolved.settings, inputTokens, outputTokens);
     usage.insert({
       id: ids('usage'),
       role: resolved.role,
@@ -149,10 +173,19 @@ export function createAiService(deps: AiServiceDependencies) {
     return { requests: 1, inputTokens, outputTokens, cost: spent };
   }
 
+  /** Records a transcription, priced per minute of audio (the role's input price). */
+  const recordTranscription = (
+    resolved: Resolved<TranscriptionModelV4>,
+    purpose: string,
+    seconds: number,
+  ): Totals =>
+    record(resolved, purpose, 0, 0, ((resolved.settings.inputPrice ?? 0) * seconds) / 60);
+
   return {
     settings,
     status,
     record,
+    recordTranscription,
 
     /** A language model for a role, or an AiError saying why there is none. */
     require(role: 'chat' | 'fast'): Resolved<LanguageModelV4> {
@@ -174,6 +207,19 @@ export function createAiService(deps: AiServiceDependencies) {
       return resolved;
     },
 
+    /** The transcription model, or an AiError saying why there is none. */
+    requireTranscription(): Resolved<TranscriptionModelV4> {
+      const resolved = registry.transcription();
+      if (!resolved)
+        throw new AiError(
+          'not_configured',
+          registry.status('transcription').reason ??
+            'Transcription is not set up. Choose a model in Settings → AI.',
+        );
+      checkBudget();
+      return resolved;
+    },
+
     updatePreferences(patch: PreferencesPatch): AiSettings {
       const config = store.read();
       const preferences: AiPreferences = structuredClone(config.preferences);
@@ -189,6 +235,8 @@ export function createAiService(deps: AiServiceDependencies) {
       }
       if (patch.monthlyBudget !== undefined) preferences.monthlyBudget = patch.monthlyBudget;
       if (patch.contextTokens !== undefined) preferences.contextTokens = patch.contextTokens;
+      if (patch.autoAccept)
+        preferences.autoAccept = { ...preferences.autoAccept, ...patch.autoAccept };
       store.write({ ...config, preferences });
       return settings();
     },
@@ -256,6 +304,20 @@ export function createAiService(deps: AiServiceDependencies) {
           : { ...settingsFor, inputPrice: null, outputPrice: null };
       const resolved = { role, provider: id, modelId, settings: priced };
       try {
+        if (made.transcription) {
+          const result = await transcribe({
+            model: made.transcription,
+            audio: silentWav(1),
+            abortSignal: AbortSignal.timeout(CONNECTION_TIMEOUT_MS),
+            maxRetries: 0,
+          });
+          recordTranscription({ ...resolved, model: made.transcription }, 'connection test', 1);
+          return {
+            ok: true,
+            message: `Connected: ${modelId} transcribed a second of silence${result.text.trim() ? ` as “${result.text.trim().slice(0, 40)}”` : ''}.`,
+            latencyMs: Date.now() - started,
+          };
+        }
         if (made.embedding) {
           const result = await embed({
             model: made.embedding,
