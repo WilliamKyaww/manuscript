@@ -92,6 +92,13 @@ _Last reviewed: 9 October 2026 (Phase 8)._
 | B-AI-10 | Price presets for well-known models, updated with the app | Typing prices per role is error-prone | Phase 10 |
 | B-AI-11 | Bring retrieval's p95 down (404 ms at 10,000 notes: questions of common words make the OR query score most of the library) — e.g. try all words first and widen only when few match — and measure the first answer token with a real provider | Phase 10 measured retrieval only; the first token depends on the provider | Phase 10 |
 | B-AI-12 | Keep the Ask panel's past questions (until the Phase 13 chat threads replace it) | Only the last answer is kept | Phase 10 |
+| B-AI-13 | Transcribe recordings over 25 MB: split the audio (and take it out of video) with ffmpeg, transcribe the parts and join their times | A lecture recording is often 50–100 MB; today it must be exported smaller by hand | Phase 11 |
+| B-AI-14 | Generate from long material in parts (map over passages, then merge and de-duplicate) instead of cutting it at the budget | A whole module or a long PDF is truncated today; the estimate says so | Phase 11 |
+| B-AI-15 | Link suggestions across the vault in the background (after edits, as a job), not only for the open note | Today they are asked for one note at a time | Phase 11 |
+| B-AI-16 | Undo a whole generation (reject every draft and proposal of one job) and show each draft's generation | A bad run is rejected item by item | Phase 11 |
+| B-AI-17 | An Inbox history: accepted and rejected suggestions, with a way to reconsider a rejection | Rejections stick so they are not proposed again; there is no way back in the UI | Phase 11 |
+| B-AI-18 | Read scanned pages with models that do not accept PDFs, by rendering pages to images | Scans need a chat model that takes PDFs (Anthropic, OpenAI); local models usually take images only | Phase 11 |
+| B-AI-19 | Cards and questions straight from a recording's moment ("make cards from 12:30–15:00") | Generation from recordings works per source or selection, not by time range | Phase 11 |
 
 ## Platform (PL)
 

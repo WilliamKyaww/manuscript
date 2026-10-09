@@ -184,6 +184,18 @@ Built in Phase 10: `packages/core/src/ai/untrusted.ts` (attributed in THIRD_PART
 Generated artefacts land as **drafts/proposals** reviewed in a batch UI (accept all / edit / reject)
 unless auto-accept is enabled for that kind.
 
+Built in Phase 11 (ADR-0034, `docs/guide/generation.md`): scopes are a lecture, a source or a page
+or slide range of it, a note, or a selection; material is keyed S1…Sn within twice the context
+budget and every item must name its passage, which becomes its locator. Structured outputs use the
+AI SDK's `Output.object` with every field required, one repair attempt and no automatic job retry.
+Cards and questions become `draft` rows; notes, concepts, relations, merges and link suggestions
+become rows of `proposals`. Concept names are de-duplicated with Graphify's guards (exact and plural
+forms; Jaro–Winkler 0.94 merge, 0.88–0.94 judged by the fast model). Grading suggestions are
+recorded only when accepted (`graded_by = 'ai'`, feedback kept). Recordings are transcribed by a
+fourth role, `transcription`; images and scanned pages are read by the chat model; both go through
+an `AiReader` the source parsers receive. The mock model answers every task deterministically
+(`SKB_AI_PROVIDER=mock`).
+
 ## 12. Limits and cost control
 
 Max 12 tool-loop steps per request (configurable); timeouts (total 120 s, per step 60 s, per tool 30 s

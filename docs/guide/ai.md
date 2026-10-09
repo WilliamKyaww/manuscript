@@ -2,8 +2,9 @@
 
 Manuscript works fully without AI. Everything in this guide is optional: notes, the library,
 search, the course, the graph, flashcards, quizzes and mastery never need a model. AI adds
-answers about your own material, with citations you can check, and (in later versions) generated
-cards, questions and a tutor.
+answers about your own material, with citations you can check; flashcards, questions, notes and
+concepts generated from it (see [generation.md](generation.md)); recordings, images and scans made
+searchable; and (in later versions) a tutor.
 
 ## 1. Setting up a provider
 
@@ -19,8 +20,9 @@ Open **Settings → AI**.
    | Role | Used for | A sensible choice |
    |---|---|---|
    | **Answers** | Questions about your material (and later the tutor and chat) | A strong model, such as Claude Sonnet |
-   | **Quick tasks** | Short jobs: titles, classification, grading (later phases) | A small, cheap model, such as Claude Haiku |
+   | **Quick tasks** | Short jobs: suggested grades for written answers, telling whether two concept names mean the same thing | A small, cheap model, such as Claude Haiku |
    | **Semantic search** | Finding passages by meaning, not only by words | An embedding model, such as OpenAI `text-embedding-3-small` or Ollama `nomic-embed-text`; leave **Off** if you prefer |
+   | **Transcription** | Turning recordings into timed text (see [generation.md](generation.md) §6) | OpenAI `whisper-1` (exact times), or a Whisper server; priced per audio minute; leave **Off** if you prefer |
 
    The model field suggests a few ids; any id your provider offers works. Providers rename models
    often, so check their list.
