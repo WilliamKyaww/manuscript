@@ -124,6 +124,74 @@ describe('a practice quiz', () => {
   });
 });
 
+describe('grading with AI', () => {
+  it('suggests a grade that counts only once the student accepts it', async () => {
+    const user = userEvent.setup();
+    const pending = result(ANS_B, essay, { kind: 'explain', text: 'They overlap' }, null);
+    const server = fakeServer({
+      [`GET /api/attempts/${ATT}`]: () =>
+        json(
+          attempt({
+            items: [
+              { ordinal: 0, prompt: prompt(choice), answer: null },
+              { ordinal: 1, prompt: prompt(essay), answer: null },
+            ],
+          }),
+        ),
+      [`POST /api/attempts/${ATT}/answers`]: () => json(pending, 201),
+      'GET /api/ai/status': () =>
+        json({
+          enabled: true,
+          mock: false,
+          roles: Object.fromEntries(
+            ['chat', 'fast', 'embedding', 'transcription'].map((role) => [
+              role,
+              { ready: role === 'chat', reason: null, label: null },
+            ]),
+          ),
+          month: {
+            requests: 0,
+            inputTokens: 0,
+            outputTokens: 0,
+            cost: 0,
+            budget: null,
+            warning: false,
+            exhausted: false,
+          },
+        }),
+      [`POST /api/answers/${ANS_B}/ai-grade`]: () =>
+        json({
+          score: 1,
+          feedback: 'You named the overlap of majorities.',
+          misconceptions: [],
+        }),
+      [`POST /api/answers/${ANS_B}/grade`]: () =>
+        json({
+          ...pending,
+          score: 1,
+          gradedBy: 'ai',
+          feedback: 'You named the overlap of majorities.',
+        }),
+    });
+    renderApp(`/practice/attempts/${ATT}`, server.fetch);
+    await user.click(await screen.findByRole('button', { name: /Skip for now/u }));
+    const box = await screen.findByRole('textbox', { name: 'Your answer' });
+    await user.type(box, 'They overlap');
+    await user.click(screen.getByRole('button', { name: /Check/ }));
+    await user.click(await screen.findByRole('button', { name: /Suggest a grade with AI/u }));
+    expect(await screen.findByText(/AI suggests: Got it/u)).toBeInTheDocument();
+    expect(server.find('POST', `/api/answers/${ANS_B}/grade`)).toHaveLength(0);
+    await user.click(screen.getByRole('button', { name: 'Accept this grade' }));
+    await waitFor(() =>
+      expect(server.find('POST', `/api/answers/${ANS_B}/grade`)[0]?.body).toEqual({
+        score: 1,
+        gradedBy: 'ai',
+        feedback: 'You named the overlap of majorities.',
+      }),
+    );
+  });
+});
+
 describe('a mock exam', () => {
   it('shows the clock, hides feedback and submits every response at once', async () => {
     const user = userEvent.setup();

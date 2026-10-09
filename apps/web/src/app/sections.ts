@@ -124,7 +124,8 @@ export const SECTIONS: readonly Section[] = [
     label: 'Inbox',
     path: '/inbox',
     group: 'assistant',
-    description: 'Suggestions from the AI (concepts, links, cards) waiting for your decision.',
+    description:
+      'Generated cards and questions, and AI suggestions (concepts, relations, links, notes) waiting for your decision.',
     phase: 11,
   },
   {

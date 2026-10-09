@@ -1,7 +1,7 @@
 import type { LectureDetail } from '@skb/core';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import { FilePlus, Lightbulb, Pencil, Trash2, Unlink } from 'lucide-react';
+import { FilePlus, Lightbulb, Pencil, Sparkles, Trash2, Unlink } from 'lucide-react';
 import { useId, useState } from 'react';
 import { Button, buttonClasses } from '../../components/Button';
 import { IconButton } from '../../components/IconButton';
@@ -12,6 +12,7 @@ import { ApiError } from '../../lib/api/client';
 import { useApi } from '../../lib/api/context';
 import { cn } from '../../lib/cn';
 import { notifyError } from '../../lib/notify';
+import { GenerateDialog } from '../inbox/GenerateDialog';
 import { sourcesQuery } from '../library/api';
 import { SourceIcon } from '../library/SourceRow';
 import { templatesQuery, treeQuery, useCreateNote } from '../notes/api';
@@ -28,6 +29,7 @@ export function LecturePage() {
   const lecture = useQuery(lectureQuery(api, lectureId));
   const actions = useLearningActions();
   const [editing, setEditing] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   if (lecture.isPending) {
     return (
@@ -74,6 +76,10 @@ export function LecturePage() {
       ]}
       actions={
         <>
+          <Button onClick={() => setGenerating(true)}>
+            <Sparkles aria-hidden="true" size={16} />
+            Generate…
+          </Button>
           <Button onClick={() => setEditing(true)}>
             <Pencil aria-hidden="true" size={16} />
             Edit
@@ -124,6 +130,13 @@ export function LecturePage() {
           moduleId={data.moduleId}
           lecture={data}
           onClose={() => setEditing(false)}
+        />
+      )}
+      {generating && (
+        <GenerateDialog
+          scope={{ kind: 'lecture', lectureId: data.id }}
+          title={`${data.key} — ${data.title}`}
+          onClose={() => setGenerating(false)}
         />
       )}
     </Page>

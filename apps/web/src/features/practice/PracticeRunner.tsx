@@ -4,6 +4,7 @@ import { Button } from '../../components/Button';
 import { Kbd } from '../../components/Kbd';
 import { ProgressBar } from '../../components/ProgressBar';
 import { notifyError } from '../../lib/notify';
+import type { AcceptedGrade } from './AnswerFeedback';
 import { useAttemptCalls } from './api';
 import { QuestionCard, type Submission } from './QuestionCard';
 
@@ -49,8 +50,8 @@ export function PracticeRunner({ attempt, onChanged }: { attempt: Attempt; onCha
         }),
       );
     });
-  const grade = (result: AnswerResult, score: SelfScore) =>
-    void run(async () => record(await calls.grade(result.id, score)));
+  const grade = (result: AnswerResult, score: SelfScore, accepted?: AcceptedGrade) =>
+    void run(async () => record(await calls.grade(result.id, score, accepted)));
   const finish = () =>
     void run(async () => {
       await calls.finish(attempt.id);
@@ -72,7 +73,7 @@ export function PracticeRunner({ attempt, onChanged }: { attempt: Attempt; onCha
         result={result}
         busy={busy}
         onSubmit={submit}
-        onGrade={(score) => result && grade(result, score)}
+        onGrade={(score, accepted) => result && grade(result, score, accepted)}
         next={
           last ? (
             <Button variant="primary" autoFocus onClick={finish} loading={busy}>

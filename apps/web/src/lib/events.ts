@@ -54,6 +54,12 @@ export function applyEventToCache(queryClient: QueryClient, event: ServerEvent):
     void queryClient.invalidateQueries({ queryKey: ['graph'] });
     return;
   }
+  if (event.type === 'data.changed' && event.area === 'inbox') {
+    // Generated drafts and proposals: the Inbox, and the cards and questions they may become.
+    for (const key of ['inbox', 'review', 'practice', 'mastery'])
+      void queryClient.invalidateQueries({ queryKey: [key] });
+    return;
+  }
   if (event.type === 'data.changed') {
     // Each area feeds the others' views: modules list concepts, concepts list relations, and the
     // graph is built from all three.

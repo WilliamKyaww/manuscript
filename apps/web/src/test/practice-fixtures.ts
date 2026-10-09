@@ -76,6 +76,7 @@ export const result = (
   response,
   score,
   gradedBy: score === null ? null : 'auto',
+  feedback: '',
   confidence: null,
   assisted: false,
   answeredAt: now,

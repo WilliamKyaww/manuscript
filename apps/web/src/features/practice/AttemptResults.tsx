@@ -7,7 +7,7 @@ import { Card } from '../../components/Card';
 import { formatCount } from '../../lib/format';
 import { notifyError } from '../../lib/notify';
 import { CardMarkdown } from '../review/CardMarkdown';
-import { AnswerFeedback } from './AnswerFeedback';
+import { type AcceptedGrade, AnswerFeedback } from './AnswerFeedback';
 import { useAttemptCalls, usePracticeActions } from './api';
 import { percent } from './format';
 
@@ -19,10 +19,10 @@ export function AttemptResults({ attempt, onChanged }: { attempt: Attempt; onCha
   const [grading, setGrading] = useState<string | null>(null);
   const { counts } = attempt;
 
-  const grade = async (answerId: string, score: SelfScore) => {
+  const grade = async (answerId: string, score: SelfScore, accepted?: AcceptedGrade) => {
     setGrading(answerId);
     try {
-      await calls.grade(answerId, score);
+      await calls.grade(answerId, score, accepted);
       onChanged();
     } catch (reason) {
       notifyError(reason);
@@ -87,7 +87,9 @@ export function AttemptResults({ attempt, onChanged }: { attempt: Attempt; onCha
                 <AnswerFeedback
                   result={item.answer}
                   grading={grading === item.answer.id}
-                  onGrade={(score) => item.answer && void grade(item.answer.id, score)}
+                  onGrade={(score, accepted) =>
+                    item.answer && void grade(item.answer.id, score, accepted)
+                  }
                 />
               ) : (
                 <p className="text-sm text-muted">Not answered.</p>

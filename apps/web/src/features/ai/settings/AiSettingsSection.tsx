@@ -15,6 +15,7 @@ import { formatCount } from '../../../lib/format';
 import { describeError, notifyError, notifySuccess } from '../../../lib/notify';
 import { Field, FormError, numberOrNull } from '../../learning/Field';
 import { aiSettingsQuery, embeddingStatusQuery, useAiActions } from '../api';
+import { AutoAcceptForm } from './AutoAcceptForm';
 import { KIND_LABELS, ProviderDialog } from './ProviderDialog';
 import { RoleForm } from './RoleForm';
 import { UsagePanel } from './UsagePanel';
@@ -272,6 +273,7 @@ export function AiSettingsSection() {
           )}
           <EmbeddingsPanel />
           <LimitsForm settings={data} />
+          <AutoAcceptForm settings={data} />
           <UsagePanel />
         </div>
       )}

@@ -23,6 +23,7 @@ const status = (enabled: boolean) => ({
       : role(false, 'Choose a provider and model for answers.'),
     fast: role(false, 'Choose a provider and model for quick tasks.'),
     embedding: role(false, 'Choose a provider and model for semantic search.'),
+    transcription: role(false, 'Choose a provider and model for transcribing recordings.'),
   },
   month: {
     requests: 0,
@@ -180,7 +181,8 @@ describe('Settings → AI', () => {
       model: 'gpt-test',
       role: 'chat',
     });
-  });
+    // Typing a long key character by character is slow when the whole suite runs at once.
+  }, 15_000);
 });
 
 describe('the Ask panel', () => {

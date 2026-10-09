@@ -6,11 +6,14 @@ import {
   FileCode,
   FileText,
   FileType,
+  Image,
   MoreHorizontal,
+  Music,
   Presentation,
   RotateCcw,
   Trash2,
   TriangleAlert,
+  Video,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Badge, type BadgeTone } from '../../components/Badge';
@@ -31,6 +34,9 @@ const ICONS: Partial<Record<SourceKind, ReactNode>> = {
   pptx: <Presentation size={18} />,
   docx: <FileType size={18} />,
   markdown: <FileCode size={18} />,
+  audio: <Music size={18} />,
+  video: <Video size={18} />,
+  image: <Image size={18} />,
 };
 
 export function SourceIcon({ kind }: { kind: SourceKind }) {

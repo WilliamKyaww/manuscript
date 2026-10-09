@@ -1,6 +1,7 @@
 import { useRouterState } from '@tanstack/react-router';
 import { type ReactNode, useEffect, useRef } from 'react';
 import { AskPanel } from '../features/ai/AskPanel';
+import { useGenerationJobEvents } from '../features/inbox/generation-jobs';
 import { QuickAddHost } from '../features/review/QuickAddHost';
 import { QuickSwitcher } from '../features/search/QuickSwitcher';
 import { useServerEvents } from '../lib/events';
@@ -16,6 +17,7 @@ import { Sidebar } from './Sidebar';
 export function AppShell({ children }: { children: ReactNode }) {
   useFocusPageTitleOnNavigation();
   useServerEvents();
+  useGenerationJobEvents();
   return (
     <div data-app-shell className="flex h-dvh overflow-hidden bg-bg text-text">
       {/* A button rather than a fragment link, so the router never sees a "#main" navigation. */}
