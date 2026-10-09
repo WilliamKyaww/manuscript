@@ -2,6 +2,9 @@ import type { AppContext } from '../context';
 import { createJobQueue, type JobQueue } from '../jobs/queue';
 import { createJobsRepository } from '../jobs/repository';
 import { notifyingAfter } from '../shared/change-events';
+import { createCardsRepository } from './cards/repository';
+import { createReviewService, type ReviewService } from './cards/reviews';
+import { type CardsService, createCardsService } from './cards/service';
 import { createConceptsRepository } from './concepts/repository';
 import { type ConceptsService, createConceptsService } from './concepts/service';
 import { createGraphRepository } from './graph/graph-repository';
@@ -33,6 +36,8 @@ export interface AppModules {
   readonly concepts: ConceptsService;
   readonly relations: RelationsService;
   readonly graph: GraphService;
+  readonly cards: CardsService;
+  readonly reviews: ReviewService;
   start(options: { watch: boolean }): Promise<void>;
   close(): Promise<void>;
 }
@@ -114,6 +119,21 @@ export function createModules(ctx: AppContext): AppModules {
   });
   // Before the first scan, so links to concepts resolve as notes are indexed.
   concepts.sync();
+  const cardsRepo = createCardsRepository(ctx.db);
+  const cards = createCardsService({
+    repo: cardsRepo,
+    learning: learningRepo,
+    settings,
+    clock: ctx.clock,
+    ids: ctx.ids,
+  });
+  const reviews = createReviewService({
+    repo: cardsRepo,
+    cards,
+    settings,
+    clock: ctx.clock,
+    ids: ctx.ids,
+  });
   return {
     settings,
     notes,
@@ -125,6 +145,8 @@ export function createModules(ctx: AppContext): AppModules {
     concepts,
     relations,
     graph,
+    cards,
+    reviews,
     async start(options) {
       await notes.start(options);
       jobs.start();
