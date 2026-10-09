@@ -1,18 +1,11 @@
-import {
-  CalendarRange,
-  Keyboard,
-  Layers,
-  type LucideIcon,
-  Search,
-  TrendingDown,
-} from 'lucide-react';
+import { CalendarRange, Keyboard, type LucideIcon, Search, TrendingDown } from 'lucide-react';
 import { useLayoutStore } from '../../app/layout-store';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Page, StickySection } from '../../components/Page';
 import { formatLongDate, greeting } from '../../lib/format';
-import { DeadlinesWidget, TargetWidget } from './LearningWidgets';
+import { DeadlinesWidget, ReviewsWidget, TargetWidget } from './LearningWidgets';
 
 interface UpcomingWidget {
   title: string;
@@ -23,12 +16,6 @@ interface UpcomingWidget {
 
 /** What Today will show; each widget names the phase that delivers it rather than showing fake data. */
 const WIDGETS: UpcomingWidget[] = [
-  {
-    title: 'Reviews due',
-    description: 'Flashcards ready for review, with an estimate of how long they will take.',
-    phase: 8,
-    icon: Layers,
-  },
   {
     title: 'Today’s plan',
     description:
@@ -52,6 +39,7 @@ export function TodayPage({ now = new Date() }: { now?: Date }) {
   return (
     <Page title="Today" description={`${greeting(now)} — ${formatLongDate(now)}`}>
       <div className="grid gap-4 md:grid-cols-2">
+        <ReviewsWidget />
         <DeadlinesWidget now={now} />
         <TargetWidget now={now} />
         {WIDGETS.map((widget) => (

@@ -113,6 +113,29 @@ const graphRoute = createRoute({
   validateSearch: (search: Record<string, unknown>): { focus?: string } =>
     typeof search.focus === 'string' && search.focus !== '' ? { focus: search.focus } : {},
 });
+const reviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/review',
+  component: lazyRouteComponent(() => import('./features/review/ReviewPage'), 'ReviewPage'),
+});
+const cardSetRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/review/sets/$setId',
+  component: lazyRouteComponent(() => import('./features/review/SetPage'), 'SetPage'),
+});
+const reviewSessionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/review/session',
+  component: lazyRouteComponent(
+    () => import('./features/review/session/SessionPage'),
+    'SessionPage',
+  ),
+  // `?set=…` or `?module=…` review one set or module; without either, everything due.
+  validateSearch: (search: Record<string, unknown>): { set?: string; module?: string } => ({
+    ...(typeof search.set === 'string' && search.set ? { set: search.set } : {}),
+    ...(typeof search.module === 'string' && search.module ? { module: search.module } : {}),
+  }),
+});
 const conceptRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/concepts/$conceptId',
@@ -128,6 +151,7 @@ const IMPLEMENTED = new Set([
   'modules',
   'concepts',
   'graph',
+  'review',
   'settings',
 ]);
 const placeholderRoutes = SECTIONS.filter((section) => !IMPLEMENTED.has(section.id)).map(
@@ -153,6 +177,9 @@ export const routeTree = rootRoute.addChildren([
   conceptsRoute,
   conceptRoute,
   graphRoute,
+  reviewRoute,
+  cardSetRoute,
+  reviewSessionRoute,
   ...placeholderRoutes,
 ]);
 

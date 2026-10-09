@@ -1,4 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
+import { useQuickAdd } from '../features/review/quick-add';
 import { SEARCH_INPUT_ID } from '../features/search/search-ids';
 import { useLayoutStore } from './layout-store';
 import { useShortcut } from './shortcuts/useShortcuts';
@@ -36,6 +37,18 @@ export function GlobalShortcuts() {
     },
   });
 
+  useShortcut({
+    id: 'app.quick-add-card',
+    keys: 'mod+shift+a',
+    description: 'Add a flashcard',
+    group: 'Review',
+    allowInInputs: true,
+    handler: (event) => {
+      event.preventDefault();
+      const { draft, open } = useQuickAdd.getState();
+      if (!draft) open();
+    },
+  });
   useShortcut({
     id: 'app.command-palette',
     keys: 'mod+k',

@@ -1,7 +1,7 @@
-import { fileUrl, type SourceSummary } from '@skb/core';
+import { fileUrl, type Locator, type SourceSummary } from '@skb/core';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { Download, TriangleAlert } from 'lucide-react';
+import { Download, SquarePlus, TriangleAlert } from 'lucide-react';
 import { lazy, type ReactNode, Suspense } from 'react';
 import { Button, buttonClasses } from '../../../components/Button';
 import { Page } from '../../../components/Page';
@@ -10,6 +10,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../../components/States
 import { ApiError } from '../../../lib/api/client';
 import { useApi } from '../../../lib/api/context';
 import { notifyError } from '../../../lib/notify';
+import { useQuickAdd } from '../../review/quick-add';
 import { sectionsQuery, sourceQuery, useLiveImportProgress, useRetrySource } from '../api';
 import type { ViewerSearch } from '../links';
 import { ImportProgress, SourceStatus } from '../SourceRow';
@@ -67,6 +68,25 @@ export function SourceViewerPage() {
   }
 
   const data = source.data;
+  /** "Make card from selection" (task 8.08): the selected text, and where it is in the source. */
+  const makeCard = () => {
+    const front = window.getSelection()?.toString().trim() ?? '';
+    const section =
+      sections.data?.sections.find((candidate) => candidate.ordinal === search.section) ??
+      sections.data?.sections[0];
+    const locator: Locator | undefined =
+      data.kind === 'pdf'
+        ? { kind: 'pdf', sourceId: data.id, page: search.page ?? 1 }
+        : data.kind === 'pptx'
+          ? {
+              kind: 'slides',
+              sourceId: data.id,
+              slide: search.slide ?? 1,
+              part: search.notes ? 'notes' : 'body',
+            }
+          : section?.locator;
+    useQuickAdd.getState().open({ front, ...(locator ? { locator } : {}) });
+  };
   let body: ReactNode;
   if (data.kind === 'pdf' && !data.missing) {
     body = (
@@ -123,10 +143,16 @@ export function SourceViewerPage() {
       toolbar={<StatusLine source={data} />}
       actions={
         !data.missing && (
-          <a href={fileUrl(data.path)} target="_blank" rel="noopener" className={buttonClasses()}>
-            <Download aria-hidden="true" size={16} />
-            Open original
-          </a>
+          <>
+            <Button onClick={makeCard}>
+              <SquarePlus aria-hidden="true" size={16} />
+              Card from selection
+            </Button>
+            <a href={fileUrl(data.path)} target="_blank" rel="noopener" className={buttonClasses()}>
+              <Download aria-hidden="true" size={16} />
+              Open original
+            </a>
+          </>
         )
       }
     >
