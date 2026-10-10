@@ -43,6 +43,11 @@ export function renderCloze(text: string, number: number, side: 'front' | 'back'
   });
 }
 
+/** A cloze text read whole, as in the Inbox: every deletion shown and highlighted, no syntax. */
+export function revealCloze(text: string): string {
+  return text.replace(CLOZE, (_match, _digits: string, answer: string) => `==${answer}==`);
+}
+
 export interface CardContent {
   kind: CardKind;
   front: string;

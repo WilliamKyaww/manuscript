@@ -6,6 +6,7 @@ import {
   faceOrdinals,
   nextClozeNumber,
   renderCloze,
+  revealCloze,
 } from './cards';
 
 const text =
@@ -32,6 +33,13 @@ describe('cloze cards', () => {
     expect(renderCloze('Maths: {{c1::$e^{i\\pi}$}} works', 1, 'back')).toBe(
       'Maths: ==$e^{i\\pi}$== works',
     );
+  });
+
+  it('can show every deletion at once, marked, to read a card whole', () => {
+    expect(revealCloze(text)).toBe(
+      'Raft elects a ==leader== per ==term==; the ==leader== replicates the log.',
+    );
+    expect(revealCloze('no deletions')).toBe('no deletions');
   });
 });
 

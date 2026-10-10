@@ -4,6 +4,7 @@ import {
   locatorLabel,
   type Question,
   type QuestionAnswer,
+  revealCloze,
 } from '@skb/core';
 import { Check, Copy, Lightbulb, Pencil, X } from 'lucide-react';
 import { lazy, type ReactNode, Suspense, useState } from 'react';
@@ -16,6 +17,7 @@ import { notifyError, notifySuccess } from '../../lib/notify';
 import { locatorHref } from '../library/links';
 import { KIND_LABELS } from '../practice/format';
 import { CardMarkdown } from '../review/CardMarkdown';
+import { glimpse } from '../review/glimpse';
 import { useInboxActions } from './api';
 
 const CardEditor = lazy(() =>
@@ -236,7 +238,7 @@ export function DraftsPanel({ drafts, onEdited }: { drafts: Drafts; onEdited(): 
             {drafts.cards.map((card: DraftCard) => (
               <Row
                 key={card.id}
-                label={`card “${card.front.slice(0, 40)}”`}
+                label={`card “${glimpse(card.front).slice(0, 40)}”`}
                 selected={cards.has(card.id)}
                 onSelect={(on) => toggle(cards, setCards, card.id, on)}
                 busy={busy}
@@ -260,7 +262,11 @@ export function DraftsPanel({ drafts, onEdited }: { drafts: Drafts; onEdited(): 
                   </>
                 }
               >
-                <CardMarkdown content={card.front} cardId={card.id} className="text-sm" />
+                <CardMarkdown
+                  content={card.kind === 'cloze' ? revealCloze(card.front) : card.front}
+                  cardId={card.id}
+                  className="text-sm"
+                />
                 {card.back && (
                   <CardMarkdown
                     content={card.back}

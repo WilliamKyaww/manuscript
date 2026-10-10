@@ -133,7 +133,7 @@ interface Call {
   body: Record<string, unknown> | null;
 }
 
-function fakeServer(options: { drafts?: boolean; proposals?: boolean } = {}) {
+function fakeServer(options: { drafts?: boolean; proposals?: boolean; cloze?: boolean } = {}) {
   const calls: Call[] = [];
   const fetch: FakeFetch = async (input, init) => {
     const url = new URL(String(input), 'http://localhost');
@@ -151,7 +151,19 @@ function fakeServer(options: { drafts?: boolean; proposals?: boolean } = {}) {
       return json(
         options.drafts === false
           ? { cards: [], questions: [] }
-          : { cards: [draftCard], questions: [draftQuestion] },
+          : {
+              cards: [
+                options.cloze
+                  ? {
+                      ...draftCard,
+                      kind: 'cloze',
+                      front: 'Two-phase commit is an {{c1::atomic commitment}} protocol.',
+                      back: '',
+                    }
+                  : draftCard,
+              ],
+              questions: [draftQuestion],
+            },
       );
     if (path === '/api/drafts/accept' || path === '/api/drafts/reject')
       return json({ cards: body?.cardIds?.length ?? 0, questions: body?.questionIds?.length ?? 0 });
@@ -267,6 +279,13 @@ describe('the Inbox', () => {
         questionIds: [QUESTION],
       }),
     );
+  });
+
+  it('shows a cloze draft as it reads, its deletions marked rather than in braces', async () => {
+    renderApp('/inbox', fakeServer({ cloze: true }).fetch);
+    const card = (await screen.findByText(/Two-phase commit is an/u)).closest('li') as HTMLElement;
+    expect(within(card).getByText('atomic commitment').tagName).toBe('MARK');
+    expect(card).not.toHaveTextContent('{{c1::');
   });
 
   it('shows suggestions with their evidence, merges a near-duplicate and rejects a relation', async () => {

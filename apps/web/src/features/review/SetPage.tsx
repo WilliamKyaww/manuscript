@@ -17,6 +17,7 @@ import { notifyError, notifySuccess } from '../../lib/notify';
 import { selectClasses } from '../learning/Field';
 import { cardSetQuery, cardSetsQuery, useCardActions } from './api';
 import { CardEditor } from './CardEditor';
+import { glimpse } from './glimpse';
 import { SetDialog } from './SetDialog';
 
 /** One card set (task 8.06): its cards, editing, bulk actions, and Anki import and export. */
@@ -27,14 +28,6 @@ const STATUS: Record<Card['status'], { label: string; tone: BadgeTone }> = {
   suspended: { label: 'Suspended', tone: 'warning' },
   deleted: { label: 'Deleted', tone: 'danger' },
 };
-
-/** A one-line glimpse of a card's front, without Markdown or cloze syntax. */
-export const glimpse = (text: string) =>
-  text
-    .replace(/\{\{c\d+::((?:(?!\}\}).)*?)(?:::(?:(?!\}\}).)*?)?\}\}/g, '[$1]')
-    .replace(/[#*_`>$]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
 
 function nextDue(card: Card, now: number): string {
   const learnt = card.faces.filter((face) => face.state !== 'new');
