@@ -38,6 +38,7 @@ interface Seed {
   note: string;
   source: string;
   cardSet: string;
+  attempt: string;
 }
 let seed: Seed;
 
@@ -256,6 +257,7 @@ test.beforeAll(async ({ request }) => {
     note: note.id,
     source: source.id,
     cardSet: cardSet.id,
+    attempt: attempt.id,
   };
 });
 
@@ -273,7 +275,9 @@ const SCREENS = (): { name: string; path: string; wait?: string }[] => [
   { name: 'graph', path: '/graph', wait: '[data-graph-canvas][data-layout="done"]' },
   { name: 'review', path: '/review' },
   { name: 'card-set', path: `/review/sets/${seed.cardSet}` },
+  { name: 'review-session', path: '/review/session' },
   { name: 'practice', path: '/practice' },
+  { name: 'quiz', path: `/practice/attempts/${seed.attempt}` },
   { name: 'question-bank', path: '/practice/questions' },
   { name: 'progress', path: '/progress' },
   { name: 'plan', path: '/plan' },
