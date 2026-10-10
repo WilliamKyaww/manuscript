@@ -281,6 +281,24 @@ describe('writing cards', () => {
       }),
     );
   });
+
+  it('asks before deleting selected cards', async () => {
+    const server = fakeServer();
+    renderApp(`/review/sets/${SET}`, server.fetch);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('checkbox', { name: 'Select all cards' }));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Delete 2 cards?' });
+    expect(server.calls.some((call) => call.path === '/api/cards/bulk')).toBe(false);
+    await user.click(within(dialog).getByRole('button', { name: 'Delete cards' }));
+    await waitFor(() =>
+      expect(server.calls.find((call) => call.path === '/api/cards/bulk')?.body).toEqual({
+        ids: [CARD_A, CARD_B],
+        action: 'delete',
+      }),
+    );
+    expect(await screen.findByText('2 cards deleted')).toBeInTheDocument();
+  });
 });
 
 describe('today', () => {

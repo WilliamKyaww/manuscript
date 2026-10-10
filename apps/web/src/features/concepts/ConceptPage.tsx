@@ -80,7 +80,7 @@ export function ConceptPage() {
             <Pencil aria-hidden="true" size={16} />
             Edit
           </Button>
-          <Button variant="danger" onClick={() => setDeleting(true)}>
+          <Button variant="danger-outline" onClick={() => setDeleting(true)}>
             <Trash2 aria-hidden="true" size={16} />
             Delete
           </Button>

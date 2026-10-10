@@ -5,6 +5,7 @@ import { Download, Pencil, Play, SquarePlus, Trash2, Upload } from 'lucide-react
 import { useRef, useState } from 'react';
 import { Badge, type BadgeTone } from '../../components/Badge';
 import { Button, buttonClasses } from '../../components/Button';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Dialog } from '../../components/Dialog';
 import { Page, StickySection } from '../../components/Page';
 import { EmptyState, ErrorState, LoadingState } from '../../components/States';
@@ -53,6 +54,7 @@ export function SetPage() {
   const [editing, setEditing] = useState<Card | 'new' | null>(null);
   const [editingSet, setEditingSet] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deletingCards, setDeletingCards] = useState(false);
   const [moveTo, setMoveTo] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -72,13 +74,15 @@ export function SetPage() {
   const data = set.data;
   const now = Date.now();
   const ids = [...selected];
+  const DONE = { activate: 'activated', suspend: 'suspended', delete: 'deleted', move: 'moved' };
   const bulk = (action: 'activate' | 'suspend' | 'delete' | 'move') =>
     actions.bulk.mutate(
       { ids, action, ...(action === 'move' ? { setId: moveTo } : {}) },
       {
         onSuccess: ({ changed }) => {
-          notifySuccess(`${formatCount(changed, 'card')} updated`);
+          notifySuccess(`${formatCount(changed, 'card')} ${DONE[action]}`);
           setSelected(new Set());
+          setDeletingCards(false);
         },
         onError: notifyError,
       },
@@ -158,7 +162,7 @@ export function SetPage() {
             event.target.value = '';
           }}
         />
-        <Button size="sm" variant="danger" onClick={() => setDeleting(true)}>
+        <Button size="sm" variant="danger-outline" onClick={() => setDeleting(true)}>
           <Trash2 aria-hidden="true" size={14} /> Delete set
         </Button>
       </div>
@@ -194,7 +198,7 @@ export function SetPage() {
               <Button size="sm" disabled={!moveTo} onClick={() => bulk('move')}>
                 Move
               </Button>
-              <Button size="sm" variant="danger" onClick={() => bulk('delete')}>
+              <Button size="sm" variant="danger-outline" onClick={() => setDeletingCards(true)}>
                 Delete
               </Button>
             </div>
@@ -282,6 +286,16 @@ export function SetPage() {
         />
       )}
       {editingSet && <SetDialog set={data} onClose={() => setEditingSet(false)} />}
+      <ConfirmDialog
+        open={deletingCards}
+        title={`Delete ${formatCount(ids.length, 'card')}?`}
+        confirmLabel="Delete cards"
+        busy={actions.bulk.isPending}
+        onCancel={() => setDeletingCards(false)}
+        onConfirm={() => bulk('delete')}
+      >
+        <p>They leave your reviews. Their review history is kept.</p>
+      </ConfirmDialog>
       <Dialog
         open={deleting}
         onOpenChange={(open) => !open && setDeleting(false)}
