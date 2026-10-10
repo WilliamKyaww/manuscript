@@ -8,7 +8,15 @@ import { idKind } from '../ids';
  * for what the student asserted.
  */
 
-export const NODE_TYPES = ['concept', 'note', 'source', 'lecture', 'module', 'topic'] as const;
+export const NODE_TYPES = [
+  'concept',
+  'note',
+  'source',
+  'lecture',
+  'module',
+  'topic',
+  'code',
+] as const;
 export type GraphNodeType = (typeof NODE_TYPES)[number];
 
 const NODE_TYPE_OF_KIND: Partial<Record<string, GraphNodeType>> = {
@@ -18,6 +26,7 @@ const NODE_TYPE_OF_KIND: Partial<Record<string, GraphNodeType>> = {
   lecture: 'lecture',
   module: 'module',
   topic: 'topic',
+  codeEntity: 'code',
 };
 
 /** The node type encoded in an id's prefix (`con_…` → concept), or `undefined`. */
@@ -117,9 +126,10 @@ export const CONCEPT_RELATIONS = STORED_RELATIONS.filter(
 
 /**
  * Relations computed from files and course data, never stored: wikilinks between notes (and to
- * sources), notes mentioning concepts, and membership in the course structure (`part_of`).
+ * sources), notes mentioning concepts, and membership in the course structure (`part_of`); and, for
+ * an imported code graph, where a concept is implemented and which code uses which.
  */
-export const COMPUTED_RELATIONS = ['links_to', 'mentioned_in'] as const;
+export const COMPUTED_RELATIONS = ['links_to', 'mentioned_in', 'implemented_in', 'uses'] as const;
 export const EDGE_RELATIONS = [...STORED_RELATIONS, ...COMPUTED_RELATIONS] as const;
 export type EdgeRelation = StoredRelation | (typeof COMPUTED_RELATIONS)[number];
 
@@ -127,6 +137,8 @@ export const EDGE_RELATION_LABELS: Record<EdgeRelation, { label: string; inverse
   ...RELATIONS,
   links_to: { label: 'links to', inverseLabel: 'is linked from' },
   mentioned_in: { label: 'is mentioned in', inverseLabel: 'mentions' },
+  implemented_in: { label: 'is implemented in', inverseLabel: 'implements' },
+  uses: { label: 'uses', inverseLabel: 'is used by' },
 };
 
 /**

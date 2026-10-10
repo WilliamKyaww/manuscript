@@ -30,7 +30,10 @@ export interface GraphDependencies {
   events: EventBus;
 }
 
-const DEFAULT_TYPES: GraphNodeType[] = NODE_TYPES.filter((type) => type !== 'topic');
+/** Topics and imported code are shown only when asked for: there are many of them. */
+const DEFAULT_TYPES: GraphNodeType[] = NODE_TYPES.filter(
+  (type) => type !== 'topic' && type !== 'code',
+);
 /** What a size-limited graph keeps first: the ideas and the course, then the best-linked rest. */
 const KEEP_FIRST: Record<GraphNodeType, number> = {
   concept: 0,
@@ -39,6 +42,7 @@ const KEEP_FIRST: Record<GraphNodeType, number> = {
   topic: 3,
   source: 4,
   note: 5,
+  code: 6,
 };
 
 interface Built {
@@ -191,7 +195,7 @@ export function createGraphService(deps: GraphDependencies) {
       nodes = new Set(
         [...nodes].filter((node) => {
           const type = graph.getNodeAttribute(node, 'type');
-          return (type !== 'note' && type !== 'source') || linked.has(node);
+          return (type !== 'note' && type !== 'source' && type !== 'code') || linked.has(node);
         }),
       );
     }

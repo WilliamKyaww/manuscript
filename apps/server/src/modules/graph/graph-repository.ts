@@ -1,3 +1,4 @@
+import type { Confidence } from '@skb/core';
 import type { SqlDatabase } from '../../db/sqlite';
 import type { RelationsRepository } from './relations-repository';
 
@@ -31,6 +32,25 @@ export interface GraphData {
   modules: { id: string; code: string; title: string }[];
   topics: { id: string; moduleId: string; parentId: string | null; title: string }[];
   relations: ReturnType<RelationsRepository['all']>;
+  /** Imported code graphs (Phase 16): entities, what they use, and what they implement. */
+  code: {
+    entities: { id: string; label: string; file: string | null; moduleId: string | null }[];
+    edges: {
+      id: number;
+      sourceId: string;
+      targetId: string;
+      relation: string;
+      confidence: Confidence;
+      score: number | null;
+      weight: number;
+    }[];
+    links: {
+      conceptId: string;
+      entityId: string;
+      status: 'proposed' | 'accepted';
+      score: number | null;
+    }[];
+  };
 }
 
 type Raw = Record<string, unknown>;
@@ -123,6 +143,45 @@ export function createGraphRepository(db: SqlDatabase, relations: RelationsRepos
             title: String(raw.title),
           })),
         relations: relations.all(['accepted', 'proposed']),
+        code: {
+          entities: db
+            .all<Raw>(
+              `SELECT e.id, e.label, e.file, g.module_id FROM code_entities e
+               JOIN code_graphs g ON g.id = e.graph_id ORDER BY e.id`,
+            )
+            .map((raw) => ({
+              id: String(raw.id),
+              label: String(raw.label),
+              file: text(raw.file),
+              moduleId: text(raw.module_id),
+            })),
+          edges: db
+            .all<Raw>(
+              'SELECT id, source_id, target_id, relation, confidence, score, weight FROM code_edges ORDER BY id',
+            )
+            .map((raw) => ({
+              id: Number(raw.id),
+              sourceId: String(raw.source_id),
+              targetId: String(raw.target_id),
+              relation: String(raw.relation),
+              confidence: raw.confidence as Confidence,
+              score: raw.score === null ? null : Number(raw.score),
+              weight: Number(raw.weight),
+            })),
+          links: db
+            .all<Raw>(
+              `SELECT l.concept_id, l.entity_id, l.status, l.score FROM code_links l
+               JOIN concepts c ON c.id = l.concept_id
+               WHERE l.status IN ('proposed', 'accepted') AND c.status = 'active'
+               ORDER BY l.concept_id, l.entity_id`,
+            )
+            .map((raw) => ({
+              conceptId: String(raw.concept_id),
+              entityId: String(raw.entity_id),
+              status: raw.status as 'proposed' | 'accepted',
+              score: raw.score === null ? null : Number(raw.score),
+            })),
+        },
       }));
     },
 

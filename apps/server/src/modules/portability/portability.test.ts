@@ -12,6 +12,7 @@ import {
 import { strToU8, zipSync } from 'fflate';
 import { afterEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import { graphifyBytes, raftRepository } from '../../../test/fixtures/graphify';
 import { makePptx } from '../../../test/fixtures/sources/builders';
 import { practiceTestbed } from '../../../test/practice-helpers';
 import type { AppContext } from '../../context';
@@ -117,6 +118,16 @@ describe('export and restore', () => {
     writeFileSync(byHand, handwritten);
     await bed.modules.notes.indexer.scan();
     await api.post('/api/relations', { from: paxos.id, to: raft.id, relation: 'relates_to' }, 201);
+    // A code graph, with a suggested link to Raft.
+    const codeForm = new FormData();
+    codeForm.append(
+      'file',
+      new Blob([new Uint8Array(graphifyBytes(raftRepository()))]),
+      'raft-lab.json',
+    );
+    expect((await bed.request('/api/code/graphs', { method: 'POST', body: codeForm })).status).toBe(
+      201,
+    );
     const set = await api.post<{ id: string }>('/api/card-sets', {
       title: 'Consensus: terms',
       moduleId: module.id,
@@ -162,6 +173,8 @@ describe('export and restore', () => {
     expect(manifest.counts.tables.concepts).toBe(2);
     expect(text(inside('README.md'))).toContain('Obsidian-compatible');
     expect(text(inside('docs/schema.md'))).toContain('## review_logs');
+    expect(JSON.parse(text(inside('data/code_entities.json')))).toHaveLength(7);
+    expect(JSON.parse(text(inside('data/code_links.json'))).length).toBeGreaterThan(0);
     const concepts = JSON.parse(text(inside('data/concepts.json'))) as { name: string }[];
     expect(concepts.map((concept) => concept.name).sort()).toEqual(['Paxos', 'Raft']);
     expect(

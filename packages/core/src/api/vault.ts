@@ -201,7 +201,7 @@ export const ServerEventSchema = z.discriminatedUnion('type', [
    */
   z.object({
     type: z.literal('data.changed'),
-    area: z.enum(['course', 'concepts', 'relations', 'inbox']),
+    area: z.enum(['course', 'concepts', 'relations', 'inbox', 'code']),
   }),
 ]);
 export type ServerEvent = z.infer<typeof ServerEventSchema>;

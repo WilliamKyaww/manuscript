@@ -130,6 +130,7 @@ function course(): GraphData {
       },
     ],
     lectureSources: [{ lectureId: 'lec_l03', sourceId: 'src_slides' }],
+    code: { entities: [], edges: [], links: [] },
     relations: [
       relation('rel_1', 'con_paxos', 'con_raft', { relation: 'prerequisite_for' }),
       relation('rel_2', 'con_cap', 'con_sgd', {

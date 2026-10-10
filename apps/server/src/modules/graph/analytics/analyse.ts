@@ -63,7 +63,10 @@ export function analyseGraph(
   graph.forEachNode((node, attributes) => {
     degree.set(
       node,
-      isStructural(attributes.type) ? graph.neighbors(node).length : view.degree(node),
+      // Modules, lectures, topics and code are not in the semantic view: count what they touch.
+      isStructural(attributes.type) || attributes.type === 'code'
+        ? graph.neighbors(node).length
+        : view.degree(node),
     );
   });
 

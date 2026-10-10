@@ -21,6 +21,8 @@ export interface MergeSnapshot {
   questions: string[];
   /** Every relation that touched the merged concept, as it was. */
   relations: Row[];
+  /** The merged concept's links to imported code (absent in snapshots from before Phase 16). */
+  codeLinks?: Row[];
   /** What the kept concept gained, which restoring takes away again. */
   added: {
     aliasKeys: string[];
@@ -30,6 +32,7 @@ export interface MergeSnapshot {
     questions: string[];
     adoptedNote: boolean;
     adoptedSummary: boolean;
+    codeLinks?: string[];
   };
 }
 
@@ -143,6 +146,35 @@ export function createConceptMergeRepository(db: SqlDatabase) {
       const cards = redirectLinks('card_concepts', 'card_id', loserId, keepId);
       const questions = redirectLinks('question_concepts', 'question_id', loserId, keepId);
 
+      // Code the merged concept was linked to is now linked to the kept one.
+      const codeLinks = db.all<Row>('SELECT * FROM code_links WHERE concept_id = ?', [loserId]);
+      const codeAdded: string[] = [];
+      for (const link of codeLinks) {
+        const entityId = String(link.entity_id);
+        if (
+          db.get('SELECT 1 FROM code_links WHERE concept_id = ? AND entity_id = ?', [
+            keepId,
+            entityId,
+          ])
+        )
+          continue;
+        db.run(
+          `INSERT INTO code_links (concept_id, entity_id, status, score, reason, created_by, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            keepId,
+            entityId,
+            String(link.status),
+            link.score ?? null,
+            String(link.reason),
+            String(link.created_by),
+            String(link.created_at),
+            at,
+          ],
+        );
+        codeAdded.push(entityId);
+      }
+
       // Relations: point them at the kept concept, dropping any that would repeat one, loop back
       // on the concept, or contradict one (a relation and its reverse cannot both hold).
       for (const relation of relations) {
@@ -202,6 +234,7 @@ export function createConceptMergeRepository(db: SqlDatabase) {
         cards: cards.moved,
         questions: questions.moved,
         relations,
+        codeLinks,
         added: {
           aliasKeys,
           modules: modules.added,
@@ -210,6 +243,7 @@ export function createConceptMergeRepository(db: SqlDatabase) {
           questions: questions.added,
           adoptedNote,
           adoptedSummary,
+          codeLinks: codeAdded,
         },
       };
     },
@@ -242,6 +276,24 @@ export function createConceptMergeRepository(db: SqlDatabase) {
             id,
           ]);
       }
+      for (const entityId of snapshot.added.codeLinks ?? [])
+        db.run('DELETE FROM code_links WHERE concept_id = ? AND entity_id = ?', [keepId, entityId]);
+      for (const link of snapshot.codeLinks ?? [])
+        db.run(
+          `INSERT OR IGNORE INTO code_links
+             (concept_id, entity_id, status, score, reason, created_by, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            loserId,
+            String(link.entity_id),
+            String(link.status),
+            link.score ?? null,
+            String(link.reason),
+            String(link.created_by),
+            String(link.created_at),
+            String(link.updated_at),
+          ],
+        );
       for (const relation of snapshot.relations) {
         db.run('DELETE FROM relations WHERE id = ?', [relation.id as string]);
         insertRow('relations', RELATION_COLUMNS, relation);

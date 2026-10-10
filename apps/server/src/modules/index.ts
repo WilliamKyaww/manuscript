@@ -20,6 +20,8 @@ import { createReviewService, type ReviewService } from './cards/reviews';
 import { type CardsService, createCardsService } from './cards/service';
 import { createChatRepository } from './chat/repository';
 import { type ChatService, createChatService } from './chat/service';
+import { createCodeRepository } from './code/repository';
+import { type CodeService, createCodeService } from './code/service';
 import { createConceptMergeRepository } from './concepts/merge-repository';
 import { createConceptsRepository } from './concepts/repository';
 import { type ConceptsService, createConceptsService } from './concepts/service';
@@ -104,6 +106,7 @@ export interface AppModules {
   readonly resurface: ResurfaceService;
   readonly tutor: TutorService;
   readonly portability: PortabilityService;
+  readonly code: CodeService;
   start(options: { watch: boolean }): Promise<void>;
   close(): Promise<void>;
 }
@@ -472,6 +475,16 @@ export function createModules(ctx: AppContext): AppModules {
     logger: ctx.logger,
   });
 
+  // Imported code graphs and their links to concepts (Phase 16).
+  const code = createCodeService({
+    db: ctx.db,
+    repo: createCodeRepository(ctx.db),
+    concepts,
+    events: ctx.events,
+    clock: ctx.clock,
+    ids: ctx.ids,
+  });
+
   // Export, restore and switching vault (Phase 16) read every part of the vault, so they come last.
   const portability = createPortabilityService({
     db: ctx.db,
@@ -534,6 +547,7 @@ export function createModules(ctx: AppContext): AppModules {
     resurface,
     tutor,
     portability,
+    code,
     async start(options) {
       await notes.start(options);
       jobs.start();

@@ -40,6 +40,17 @@ export const CANONICAL_TABLES: readonly TableInfo[] = [
   { name: 'concept_modules', about: 'The modules a concept belongs to.' },
   { name: 'concept_topics', about: 'The topics a concept belongs to.' },
   {
+    name: 'code_graphs',
+    about:
+      'Imported Graphify graphs of coursework repositories (the original graph.json is not kept: these rows are the import).',
+  },
+  { name: 'code_entities', about: 'The code in each imported graph: files, classes, functions.' },
+  { name: 'code_edges', about: 'What uses what in each imported graph, as Graphify recorded it.' },
+  {
+    name: 'code_links',
+    about: 'Which code implements which concept: suggested from names, then accepted or rejected.',
+  },
+  {
     name: 'relations',
     about:
       'Typed relations between concepts, notes, sources, lectures and modules, with provenance.',

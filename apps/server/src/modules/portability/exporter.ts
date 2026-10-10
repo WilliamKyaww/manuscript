@@ -165,7 +165,7 @@ export function createExporter(deps: ExporterDependencies) {
       }
       const everything = graph.graph(
         graphEndpoint.schemas.query.parse({
-          types: ['concept', 'note', 'source', 'lecture', 'module', 'topic'],
+          types: ['concept', 'note', 'source', 'lecture', 'module', 'topic', 'code'],
           status: ['accepted', 'proposed'],
           isolated: 'true',
           limit: 20_000,

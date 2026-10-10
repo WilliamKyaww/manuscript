@@ -83,6 +83,8 @@ export function surprisingConnections(
   const candidates: { edge: string; score: number; reasons: string[]; pair: string }[] = [];
   graph.forEachEdge((edge, attributes, source, target) => {
     if (!isSemantic(attributes)) return;
+    // Imported code is shown, not analysed: it is not in the view.
+    if (!view.hasNode(source) || !view.hasNode(target)) return;
     if (
       isStructural(graph.getNodeAttribute(source, 'type')) ||
       isStructural(graph.getNodeAttribute(target, 'type'))

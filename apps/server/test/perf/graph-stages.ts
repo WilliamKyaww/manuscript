@@ -52,6 +52,7 @@ const data: GraphData = {
   })),
   sources: [],
   lectureSources: [],
+  code: { entities: [], edges: [], links: [] },
   relations: Array.from({ length: 2_000 }, (_, i) => ({
     id: `rel_${i}`,
     fromType: 'concept' as const,
