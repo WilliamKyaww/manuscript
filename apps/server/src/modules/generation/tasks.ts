@@ -47,6 +47,8 @@ export interface TaskContext {
 
 export interface TaskOutcome {
   created: number;
+  /** The ids of the cards or questions made, for what comes next (a quiz). */
+  ids?: string[];
   /** Items dropped, with why (no source, an unusable key, a repeat…). */
   skipped: number;
   summary: string;
@@ -164,6 +166,7 @@ export function createTaskRunners(deps: TaskDependencies) {
     const where = context.autoAccept.cards ? 'added to your cards' : 'ready to review in the Inbox';
     return {
       created: kept.length,
+      ids: kept.map((item) => item.id),
       skipped,
       summary: `${plural(kept.length, 'card')} ${where}${skipped ? ` (${skipped} left out)` : ''}.`,
     };
@@ -218,6 +221,7 @@ export function createTaskRunners(deps: TaskDependencies) {
       : 'ready to review in the Inbox';
     return {
       created: kept.length,
+      ids: kept.map((item) => item.id),
       skipped,
       summary: `${plural(kept.length, 'question')} ${where}${skipped ? ` (${skipped} left out)` : ''}.`,
     };

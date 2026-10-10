@@ -80,6 +80,7 @@ A concept is listed as a weak area when:
 | Slipping | Accuracy over the last 14 days is 20 points or more below the 14 days before (at least two answers in each fortnight) |
 | Lapsing | Two or more of its cards forgotten in review in the last 14 days |
 | Forgotten | Recall below 0.70 now after at least 0.85 a fortnight ago |
+| At risk | A concept this one builds on (a prerequisite) was answered wrongly in the last 14 days |
 
 Concepts with **no cards or questions** are listed separately, with a button to write a question.
 
@@ -95,6 +96,24 @@ The assessment is the module's next planned one with a date that matters most. A
 dated assessment counts as its whole mark at the lowest urgency; modules without credits count as the
 average of the others. Learn uses the same priority to choose concepts.
 
+### Credit along prerequisites
+
+When you state that one concept is a **prerequisite for** another (and accept the relation), what you
+show on the second says something about the first:
+
+- A **correct answer** on a concept counts a little towards the concepts it builds on, as if they had
+  been asked about too. Each step along the prerequisite edges multiplies it by the edge's weight (0.2
+  unless the relation says otherwise, never more than 0.3), up to two steps. The concept's explanation
+  lists it: *"Implicit credit from “Raft”: 4 correct answers × 0.20"*, and the answer weight says how
+  much of it is credit.
+- Credit only counts for a concept that has something to practise, and never when your **own** recent
+  accuracy on that concept is below 60 %: a shaky prerequisite needs practice of its own.
+- A **wrong answer** on a prerequisite puts the concepts that build on it **at risk**: their priority is
+  raised by a quarter and they appear in the weak areas with the reason. Their scores do not change.
+
+Credit is one more kind of answer in the sum, weighed by age and help like any other, so you can still
+check every figure by hand.
+
 ## 5. Limitations
 
 - Mastery measures **your practice**, not your understanding directly. Concepts with few linked
@@ -104,6 +123,7 @@ average of the others. Learn uses the same priority to choose concepts.
   (backlog B-LE-10).
 - *Forgotten* fires mostly for cards that were never learnt well: FSRS-6 forgets slowly, so a card
   that was well learnt rarely falls that far within a fortnight. *Weak* and *Lapsing* catch the rest.
-- Learning a prerequisite does not yet credit the concepts that build on it (Phase 15).
+- Credit follows only relations you have stated or accepted, and only `prerequisite for`; a missing
+  relation means no credit.
 - Figures are recalculated after every review and answer, and every quarter of an hour otherwise, as
   recall keeps falling while you do nothing.

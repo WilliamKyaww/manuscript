@@ -1,3 +1,4 @@
+import type { ImplicitAnswer } from './credit';
 import type { ReviewState } from './fsrs';
 
 /**
@@ -48,6 +49,8 @@ export interface ConceptEvidence {
   /** Cards and questions linked to the concept, and how many of them were ever practised. */
   itemsLinked: number;
   itemsPractised: number;
+  /** Credit from answers on concepts that build on this one (learning-system.md §10). */
+  implicit?: readonly ImplicitAnswer[];
 }
 
 export interface ConceptMastery {
@@ -58,6 +61,8 @@ export interface ConceptMastery {
   /** Recency-weighted accuracy of recent answers, and their total weight. */
   accuracy: number | null;
   answerWeight: number;
+  /** The part of the answer weight that is credit from concepts that build on this one. */
+  implicitWeight: number;
   evidence: number;
   confidence: MasteryConfidence;
   stage: MasteryStage;
@@ -87,13 +92,28 @@ export function conceptMastery(evidence: ConceptEvidence): ConceptMastery {
       0.5 ** (answer.ageDays / MASTERY.halfLifeDays) *
       (answer.assisted ? MASTERY.assistedFactor : 1),
   );
-  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  // Credit from what builds on this concept weighs like an answer, scaled by the edges it came along.
+  const implicit = evidence.implicit ?? [];
+  const implicitWeights = implicit.map(
+    (answer) =>
+      0.5 ** (answer.ageDays / MASTERY.halfLifeDays) *
+      (answer.assisted ? MASTERY.assistedFactor : 1) *
+      answer.factor,
+  );
+  const ownWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  const creditWeight = implicitWeights.reduce((sum, weight) => sum + weight, 0);
+  const totalWeight = ownWeight + creditWeight;
   const counts = totalWeight >= MASTERY.minAnswerWeight;
   const accuracy = counts
-    ? recent.reduce((sum, answer, index) => sum + (weights[index] as number) * answer.score, 0) /
+    ? (recent.reduce((sum, answer, index) => sum + (weights[index] as number) * answer.score, 0) +
+        implicit.reduce(
+          (sum, answer, index) => sum + (implicitWeights[index] as number) * answer.score,
+          0,
+        )) /
       totalWeight
     : null;
   const answerWeight = counts ? totalWeight : 0;
+  const implicitWeight = counts ? creditWeight : 0;
 
   const q = MASTERY.questionWeight;
   const evidenceWeight = recallCount + q * answerWeight;
@@ -133,6 +153,7 @@ export function conceptMastery(evidence: ConceptEvidence): ConceptMastery {
     recallCount,
     accuracy,
     answerWeight,
+    implicitWeight,
     evidence: evidenceWeight,
     confidence,
     stage,

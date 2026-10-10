@@ -154,6 +154,64 @@ describe('mastery', () => {
   });
 });
 
+describe('credit along prerequisites', () => {
+  it('credits what a concept builds on, shows where it came from, and never from a shaky answer record', async () => {
+    const { api, raft, paxos, mcq, quiz, attempt, answer } = await setUp();
+    // Paxos is a prerequisite for Raft (as far as this module is concerned).
+    await api.post(
+      '/api/relations',
+      { from: paxos.id, to: raft.id, relation: 'prerequisite_for' },
+      201,
+    );
+    const asked = [
+      ...(await Promise.all([1, 2, 3, 4].map((n) => mcq([raft.id], { stem: `Raft ${n}` })))),
+      await mcq([paxos.id], { stem: 'Paxos 1' }),
+    ];
+    const started = await attempt((await quiz({ kind: 'practice', config: {} })).id);
+    for (const question of asked.slice(0, 4))
+      await answer(started.id, { questionId: question.id, response: { kind: 'mcq', choice: 'a' } });
+
+    // Four correct answers on Raft count 4 × 0.2 = 0.8 towards Paxos, which has a question to its name.
+    const detail = await api.get(`/api/mastery/concepts/${paxos.id}`, ConceptMasteryDetailSchema);
+    expect(detail.components.implicitWeight).toBeCloseTo(0.8);
+    expect(detail.components.answerWeight).toBeCloseTo(0.8);
+    expect(detail.components.mastery).toBeCloseTo(1);
+    expect(detail.credit).toEqual([
+      { concept: { id: raft.id, name: 'Raft' }, hops: 1, factor: 0.2, answers: 4 },
+    ]);
+    // It is still a low-confidence figure, and Raft itself is unchanged by it.
+    expect(detail.components.confidence).toBe('low');
+    const raftDetail = await api.get(
+      `/api/mastery/concepts/${raft.id}`,
+      ConceptMasteryDetailSchema,
+    );
+    expect(raftDetail.credit).toEqual([]);
+    expect(raftDetail.components.implicitWeight).toBe(0);
+
+    // A wrong answer on Paxos puts Raft at risk and raises its priority, without touching its score.
+    const before = raftDetail.priority;
+    await answer(started.id, {
+      questionId: (asked[4] as { id: string }).id,
+      response: { kind: 'mcq', choice: 'b' },
+    });
+    const after = await api.get(`/api/mastery/concepts/${raft.id}`, ConceptMasteryDetailSchema);
+    expect(after.atRisk).toBe(true);
+    expect(after.signals.find((signal) => signal.kind === 'at_risk')?.reason).toBe(
+      'You answered “Paxos”, which this builds on, wrongly lately.',
+    );
+    expect(after.components.mastery).toBeCloseTo(raftDetail.components.mastery ?? 0);
+    expect(after.priority).toBeCloseTo(before * 1.25);
+
+    // With Paxos answered wrongly its own accuracy is under 0.6: no more credit comes to it.
+    const paxosAfter = await api.get(
+      `/api/mastery/concepts/${paxos.id}`,
+      ConceptMasteryDetailSchema,
+    );
+    expect(paxosAfter.credit).toEqual([]);
+    expect(paxosAfter.components.implicitWeight).toBe(0);
+  });
+});
+
 describe('recall a fortnight ago', () => {
   /** A card on Raft, rated Good (learning) and Good again ten minutes later (review). */
   async function reviewedCard(first = 3) {

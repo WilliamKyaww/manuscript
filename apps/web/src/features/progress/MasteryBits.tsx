@@ -1,4 +1,4 @@
-import type { MasteryComponents, MasteryStage, RollUpView } from '@skb/core';
+import type { ConceptProgress, MasteryComponents, MasteryStage, RollUpView } from '@skb/core';
 import { Badge } from '../../components/Badge';
 import { ProgressBar } from '../../components/ProgressBar';
 import { cn } from '../../lib/cn';
@@ -52,11 +52,29 @@ export function ReadinessBar({ rollUp, label }: { rollUp: RollUpView; label: str
 }
 
 /** "recall 0.82 from 14 card faces · questions 60 % over 9 weighted answers · …" and the sum. */
-export function MasteryExplanation({ components }: { components: MasteryComponents }) {
+export function MasteryExplanation({
+  components,
+  credit = [],
+}: {
+  components: MasteryComponents;
+  credit?: ConceptProgress['credit'];
+}) {
   const formula = masteryFormula(components);
   return (
     <div className="space-y-1 text-sm">
       <p>{explainMastery(components).join(' · ')}</p>
+      {credit.length > 0 && (
+        <ul aria-label="Implicit credit" className="text-xs text-muted">
+          {credit.map((line) => (
+            <li key={line.concept.id}>
+              Implicit credit from “{line.concept.name}”: {line.answers}{' '}
+              {line.answers === 1 ? 'correct answer' : 'correct answers'} ×{' '}
+              {decimal(line.factor, 2)}
+              {line.hops > 1 ? ` (${line.hops} steps along prerequisites)` : ' (it builds on this)'}
+            </li>
+          ))}
+        </ul>
+      )}
       {formula && <p className="font-mono text-xs text-muted">mastery = {formula}</p>}
       {components.evidence > 0 && (
         <p className="text-xs text-muted">

@@ -1,9 +1,16 @@
-import { edgeStyleOf, type GraphNode, type GraphNodeType, type GraphPayload } from '@skb/core';
+import {
+  edgeStyleOf,
+  type GraphNode,
+  type GraphNodeType,
+  type GraphPayload,
+  type MasteryStage,
+} from '@skb/core';
 import { MultiDirectedGraph } from 'graphology';
 import { useCallback, useEffect, useRef } from 'react';
 import Sigma from 'sigma';
 import { EdgeRectangleProgram } from 'sigma/rendering';
 import type { EdgeDisplayData, NodeDisplayData } from 'sigma/types';
+import { STAGE_GLYPHS, WEAK_GLYPH } from '../nodes';
 import { createPatternedEdgeProgram, DASHED, DOTTED } from './edge-programs';
 import { createHoverDrawer } from './hover';
 import { hashUnit, initialPosition, iterationsFor, placeCommunities, runLayout } from './layout';
@@ -18,7 +25,7 @@ import { type GraphColours, readGraphColours, watchTheme } from './theme';
 
 export interface GraphCanvasProps {
   payload: GraphPayload;
-  colourBy: 'community' | 'type';
+  colourBy: 'community' | 'type' | 'mastery';
   hiddenCommunities: ReadonlySet<number>;
   selected: string | null;
   /** Centre the camera on a node; a new nonce repeats the request for the same node. */
@@ -38,6 +45,9 @@ interface NodeAttributes {
   label: string;
   kind: GraphNodeType;
   community: number | null;
+  /** The mastery overlay: how well a concept is known, and whether it is worth studying now. */
+  stage: MasteryStage | null;
+  weak: boolean;
 }
 
 interface EdgeAttributes {
@@ -104,6 +114,7 @@ export default function GraphCanvas(props: GraphCanvasProps) {
     const colourOf = (data: NodeAttributes) => {
       const { colourBy } = latest.current;
       const palette = view.current?.colours ?? colours;
+      if (colourBy === 'mastery') return data.stage ? palette.stages[data.stage] : palette.node;
       if (colourBy === 'type') return TYPE_COLOUR[data.kind](palette);
       if (data.community !== null)
         return palette.communities[data.community % palette.communities.length] ?? palette.node;
@@ -129,6 +140,14 @@ export default function GraphCanvas(props: GraphCanvasProps) {
         const { hiddenCommunities, highlight, selected } = latest.current;
         const palette = state?.colours ?? colours;
         const display: Partial<NodeDisplayData> = { ...data, color: colourOf(data) };
+        if (latest.current.colourBy === 'mastery' && data.stage) {
+          // Name the stage in the label too, and make the concepts to study now stand out.
+          display.label = `${data.weak ? `${WEAK_GLYPH} ` : ''}${STAGE_GLYPHS[data.stage]} ${data.label}`;
+          if (data.weak) {
+            display.size = (data.size ?? 4) * 1.35;
+            display.forceLabel = true;
+          }
+        }
         if (data.community !== null && hiddenCommunities.has(data.community))
           return { ...display, hidden: true };
         const focus = state?.hovered ?? selected;
@@ -234,6 +253,8 @@ export default function GraphCanvas(props: GraphCanvasProps) {
         size: sizeFor(node, compact ?? false),
         kind: node.type,
         community: node.community,
+        stage: node.mastery?.stage ?? null,
+        weak: node.mastery?.weak ?? false,
       };
       if (model.hasNode(node.id)) {
         model.mergeNodeAttributes(node.id, attributes);

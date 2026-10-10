@@ -95,6 +95,20 @@ Each prompt has buttons that take you there (the concept's page, its relations, 
 graph). Below the prompts are the **core concepts** (the best connected: know these first) and the
 **gaps**. With a module chosen in the filters, all of these are about that module.
 
+### Colouring by mastery
+
+Choose **Colour by mastery** and concepts take the colour of their stage — new, learning, practised,
+confident, mastered — with a shape that fills as you learn (○ ◔ ◑ ◕ ●), so the stage is readable
+without telling the colours apart. Concepts worth studying now (weak, slipping, lapsing, forgotten or at
+risk) are larger and marked ⚠. Notes, sources and the rest are left grey. The key above the graph
+repeats this.
+
+### Between modules
+
+With nothing selected, the side panel has **Insights** and **Between modules**. The second lists the
+concepts that belong to more than one module and the stated relations that join concepts of different
+modules ("Consensus (CS301) is a prerequisite for Transactions (CS402)"), strongest first.
+
 ## 6. Local graphs
 
 Every concept page has **Connections**: its neighbourhood one or two steps out (**1 step** /

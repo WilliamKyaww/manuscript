@@ -4,10 +4,21 @@ import {
   type EdgeRelation,
   edgeStyleOf,
   type GraphNodeType,
+  type MasteryStage,
 } from '@skb/core';
 import { useNavigate } from '@tanstack/react-router';
 
 /** Opening graph nodes in their own pages, and the small marks that explain edges. */
+
+/** The overlay does not rely on colour alone: each stage has a shape that fills as it is learnt. */
+export const STAGE_GLYPHS: Record<MasteryStage, string> = {
+  new: '○',
+  learning: '◔',
+  practised: '◑',
+  confident: '◕',
+  mastered: '●',
+};
+export const WEAK_GLYPH = '⚠';
 
 export const NODE_TYPE_LABELS: Record<GraphNodeType, string> = {
   concept: 'Concept',

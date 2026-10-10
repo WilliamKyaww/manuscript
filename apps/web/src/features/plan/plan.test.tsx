@@ -82,7 +82,7 @@ interface Call {
   body: Record<string, unknown> | null;
 }
 
-function fakeServer(options: { withPlan?: boolean } = {}) {
+function fakeServer(options: { withPlan?: boolean; resurface?: unknown[] } = {}) {
   const calls: Call[] = [];
   let plan: ReturnType<typeof planned> | null = options.withPlan ? planned() : null;
   let settings = { ...SETTINGS };
@@ -94,6 +94,7 @@ function fakeServer(options: { withPlan?: boolean } = {}) {
     const path = url.pathname;
     if (path === '/api/health') return json(HEALTH);
     if (path === '/api/plan' && method === 'GET') return json({ plan, today: TODAY });
+    if (path === '/api/resurface') return json({ items: options.resurface ?? [] });
     if (path === '/api/plan/generate') {
       plan = planned();
       return json(plan);
@@ -193,6 +194,57 @@ describe('Today', () => {
     expect(within(list).getByText(/12 cards are due now/u)).toBeInTheDocument();
     expect(within(list).queryByText('CS301 Coursework 1')).toBeNull();
     expect(screen.getByRole('link', { name: 'Open the plan' })).toHaveAttribute('href', '/plan');
+  });
+
+  it('brings up the weak spots before a lecture, with the notes to reread', async () => {
+    const CONCEPT = 'con_01J9Z3K4M2Q8R5T7V9X1Y3Z5C1';
+    const server = fakeServer({
+      withPlan: true,
+      resurface: [
+        {
+          kind: 'lecture',
+          title: 'CS301 L4 — Consensus',
+          date: '2026-10-10',
+          daysUntil: 1,
+          module: {
+            id: 'mod_01J9Z3K4M2Q8R5T7V9X1Y3Z5M1',
+            code: 'CS301',
+            title: 'Distributed Systems',
+          },
+          lectureId: 'lec_01J9Z3K4M2Q8R5T7V9X1Y3Z5L1',
+          concepts: [
+            {
+              concept: { id: CONCEPT, name: 'Raft log matching' },
+              mastery: 0.31,
+              stage: 'learning',
+              reason: 'Mastery 0.31 with medium confidence.',
+            },
+          ],
+          notes: [{ id: 'note_01J9Z3K4M2Q8R5T7V9X1Y3Z5N1', path: 'Raft.md', title: 'Raft' }],
+        },
+      ],
+    });
+    renderApp('/', server.fetch);
+    const list = await screen.findByRole('list', { name: 'Before what’s next' });
+    expect(within(list).getByRole('link', { name: 'CS301 L4 — Consensus' })).toHaveAttribute(
+      'href',
+      '/lectures/lec_01J9Z3K4M2Q8R5T7V9X1Y3Z5L1',
+    );
+    expect(within(list).getByText('tomorrow')).toBeInTheDocument();
+    expect(within(list).getByText('Mastery 0.31 with medium confidence.')).toBeInTheDocument();
+    expect(
+      within(list).getByRole('button', { name: 'Practise Raft log matching' }),
+    ).toBeInTheDocument();
+    expect(within(list).getByRole('link', { name: 'Raft' })).toHaveAttribute(
+      'href',
+      '/notes/note_01J9Z3K4M2Q8R5T7V9X1Y3Z5N1',
+    );
+  });
+
+  it('shows nothing about what is next when nothing is near', async () => {
+    renderApp('/', fakeServer({ withPlan: true }).fetch);
+    await screen.findByRole('list', { name: 'Today’s plan' });
+    expect(screen.queryByRole('list', { name: 'Before what’s next' })).toBeNull();
   });
 
   it('invites a first plan', async () => {

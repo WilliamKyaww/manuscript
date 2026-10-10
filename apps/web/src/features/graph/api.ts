@@ -2,6 +2,7 @@ import {
   createRelationEndpoint,
   deleteRelationEndpoint,
   type GraphFilterInput,
+  graphConnectionsEndpoint,
   graphEndpoint,
   graphPathEndpoint,
   graphReportEndpoint,
@@ -23,7 +24,16 @@ export const graphKeys = {
   local: (node: string, depth: number) => ['graph', 'local', node, depth] as const,
   path: (from: string, to: string) => ['graph', 'path', from, to] as const,
   report: (module: string | null) => ['graph', 'report', module] as const,
+  connections: () => ['graph', 'connections'] as const,
 };
+
+/** Concepts shared by modules and relations that cross them. */
+export const connectionsQuery = (api: ApiClient) =>
+  queryOptions({
+    queryKey: graphKeys.connections(),
+    queryFn: () => api.request(graphConnectionsEndpoint, { query: {} }),
+    staleTime: 30_000,
+  });
 
 export const relationsKeys = {
   all: ['relations'] as const,

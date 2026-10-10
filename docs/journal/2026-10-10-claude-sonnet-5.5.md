@@ -236,3 +236,67 @@ Phase 14 — tutor and study planner (`phase/14-tutor-planner`); task 14.02 owns
 ### Next steps
 
 Phase 15 — integration (`phase/15-integration`).
+
+## Session 18 — Phase 15: knowledge–learning integration
+
+- **Time:** about 09:30–13:30
+- **Phase:** 15 — Knowledge–learning integration (branch `phase/15-integration`)
+- **Work performed:** built and verified Phase 15 end to end; merged at the gate.
+
+### What was done
+
+1. **Credit and at-risk (15.03).** `propagateCredit` in core: correct answers give a little credit to the prerequisites
+   a concept builds on (accepted `prerequisite_for` edges, default 0.2, at most 0.3, two steps), dropped where the
+   student's own accuracy is under 0.6; a wrong answer on a prerequisite marks its dependents at risk (priority × 1.25,
+   a weak-area signal, no change of score). `conceptMastery` takes the credit as extra weighted answers; the explanation
+   lists where it came from.
+2. **Lecture pipeline (15.01, 15.02).** `ai.pipeline`: note, concepts, cards, questions and a quiz as one job through the
+   same generation code, a stored result per step (`pipeline_runs`, migration `0015`), optional run on attaching material.
+   Lecture page "Make study materials…" with progress; Settings → Lecture pipeline.
+3. **Mistakes back to notes (15.07).** A new proposal kind, `addition`, and a follow-up after an attempt finishes: each
+   wrong answer on a concept with a note becomes a suggestion for "Common mistakes" (no AI needed).
+4. **Graph (15.04, 15.05).** Concept nodes carry mastery; "Colour by mastery" with a shape per stage and ⚠; a
+   "Between modules" panel from a pure `crossModuleConnections`.
+5. **Targeted practice (15.06).** A concept is a generation scope (its note and the passages naming it); ✨ on Progress.
+6. **Resurfacing (15.08).** `/api/resurface` and "Before what's next" on Today.
+7. **Loop (15.09).** `loop.test.ts` (server) and `e2e/loop.spec.ts`.
+8. **Docs (15.10).** `docs/guide/study-loop.md`; mastery, graph and generation guides; ADR-0038; PRD; FEATURES; STATE.
+
+### Decisions
+
+- **Credit only along accepted prerequisites**, computed in the mastery pass, never stored, never for a concept with
+  nothing linked (ADR-0038).
+- **One job for the pipeline**, so one progress view; a step that fails is reported and the others go on.
+- **Suggestions, not edits**, for mistakes (principle 1: notes are the student's).
+- The first run's cards do not know concepts that are only proposals; the guide says to accept the concepts and run Cards
+  again (B-AI-34).
+
+### Problems encountered
+
+- **A lint error went unread**: I ran Biome's `--write` after the graph panel change, but did not read its output, and
+  `verify` failed on `useSemanticElements` (a `role="group"` on a `div`). The panel's switch is a `fieldset` now. The
+  habit to keep: read Biome's output, not just whether it ran.
+- **Heredocs and backslashes again** (regexes in generated code); nested template literals in a Node script; a `sed`
+  that prefixed a backtick to every line of `DECISIONS.md` (restored from git). Editor tools and script files avoid all
+  three.
+- **Fixture ids with an `I`** (not in the ULID alphabet) made a page show nothing in a web test; ids in fixtures must
+  use Crockford's letters.
+- **`TaskOutcome` did not carry the ids** of what it made, which the quiz step needed; it does now.
+
+### Tests run
+
+| Command | Result |
+|---|---|
+| `npm run verify` | **Pass** — type-check, Biome, **789** Vitest tests (core 225, server 395, web 169), build, smoke |
+| `npm run test:e2e` | **Pass** — **88/88** (new: `loop.spec.ts`; the full suite ran before the one lint fix, then the graph, loop and shell specs and `verify` ran again after it) |
+| `npm run test:perf:mastery` | **Pass** — mastery pass over a year of learning (1,000 concepts): 254 ms median (budget 500 ms; 201 ms at Phase 9 on a quieter machine) |
+| `npm run test:perf` | Not run: Phase 15 touches neither indexing nor search; the last figures and their caveat stand (STATE → Broken) |
+
+### Unresolved issues
+
+- The pipeline, credit and tutor with a **real provider** are unchecked by me (no provider here).
+- Performance budgets still need a quiet run on mains power.
+
+### Next steps
+
+Phase 16 — portability (`phase/16-portability`).

@@ -1,6 +1,7 @@
-import type { Community, GraphNodeType } from '@skb/core';
+import { type Community, type GraphNodeType, MASTERY_STAGES } from '@skb/core';
 import { cn } from '../../lib/cn';
-import { EdgeStyleMark, NODE_TYPE_PLURALS } from './nodes';
+import { STAGE_LABELS } from '../practice/format';
+import { EdgeStyleMark, NODE_TYPE_PLURALS, STAGE_GLYPHS, WEAK_GLYPH } from './nodes';
 
 /**
  * The graph's key: clusters (each can be hidden) or node types, and what the line styles mean.
@@ -40,12 +41,26 @@ export function Legend({
   communities: readonly Community[];
   hidden: ReadonlySet<number>;
   onToggle(id: number): void;
-  colourBy: 'community' | 'type';
+  colourBy: 'community' | 'type' | 'mastery';
 }) {
   const shown = communities.slice(0, MAX_CLUSTERS);
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-      {colourBy === 'type' ? (
+      {colourBy === 'mastery' ? (
+        <ul aria-label="Mastery" className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          {MASTERY_STAGES.map((stage) => (
+            <li key={stage} className="flex items-center gap-1.5">
+              <Swatch colour={`var(--skb-stage-${stage})`} />
+              <span aria-hidden="true">{STAGE_GLYPHS[stage]}</span>
+              {STAGE_LABELS[stage]}
+            </li>
+          ))}
+          <li className="flex items-center gap-1.5">
+            <span aria-hidden="true">{WEAK_GLYPH}</span> worth studying now
+          </li>
+          <li className="text-muted">Only concepts are coloured.</li>
+        </ul>
+      ) : colourBy === 'type' ? (
         <ul aria-label="Node types" className="flex flex-wrap items-center gap-x-3 gap-y-1">
           {TYPE_COLOURS.map(([type, colour]) => (
             <li key={type} className="flex items-center gap-1.5">

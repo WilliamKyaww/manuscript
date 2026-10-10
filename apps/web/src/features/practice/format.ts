@@ -58,7 +58,11 @@ export function explainMastery(components: MasteryComponents): string[] {
     );
   if (components.accuracy !== null)
     parts.push(
-      `questions ${percent(components.accuracy)} over ${decimal(components.answerWeight, 1)} weighted answers`,
+      `questions ${percent(components.accuracy)} over ${decimal(components.answerWeight, 1)} weighted answers${
+        components.implicitWeight > 0
+          ? ` (${decimal(components.implicitWeight, 1)} of it implicit credit)`
+          : ''
+      }`,
     );
   if (components.itemsLinked > 0)
     parts.push(

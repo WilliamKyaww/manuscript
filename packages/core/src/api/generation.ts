@@ -28,6 +28,8 @@ export const GenerationScopeSchema = z.discriminatedUnion('kind', [
   }),
   z.object({ kind: z.literal('lecture'), lectureId: LectureIdSchema }),
   z.object({ kind: z.literal('note'), noteId: NoteIdSchema }),
+  /** A concept: its own note and the passages of the sources that name it (task 15.06). */
+  z.object({ kind: z.literal('concept'), conceptId: idSchema('concept') }),
   z.object({
     kind: z.literal('selection'),
     text: z.string().trim().min(1).max(20_000),
@@ -100,6 +102,7 @@ export const PROPOSAL_KINDS = [
   'link',
   'note',
   'correction',
+  'addition',
 ] as const;
 export type ProposalKind = (typeof PROPOSAL_KINDS)[number];
 export const ProposalStatusSchema = z.enum(['pending', 'accepted', 'rejected', 'superseded']);
@@ -168,6 +171,16 @@ export const ProposalPayloadSchema = z.discriminatedUnion('kind', [
     replacement: z.string(),
     /** Why, in the tutor's words. */
     explanation: z.string(),
+  }),
+  /** Something worth keeping in a note after a mistake in practice (Phase 15). */
+  z.object({
+    kind: z.literal('addition'),
+    noteId: z.string(),
+    noteTitle: z.string(),
+    /** The section it goes under (made if the note has none like it). */
+    heading: z.string(),
+    /** Markdown to add at the end of that section. */
+    text: z.string(),
   }),
 ]);
 export type ProposalPayload = z.infer<typeof ProposalPayloadSchema>;

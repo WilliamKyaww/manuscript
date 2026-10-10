@@ -1,10 +1,13 @@
 import {
   DEFAULT_NOTES_SETTINGS,
+  DEFAULT_PIPELINE_SETTINGS,
   DEFAULT_PLAN_SETTINGS,
   DEFAULT_REVIEW_SETTINGS,
   issuesFromZod,
   type NotesSettings,
   NotesSettingsSchema,
+  type PipelineSettings,
+  PipelineSettingsSchema,
   type PlanSettings,
   PlanSettingsSchema,
   type ReviewSettings,
@@ -28,6 +31,8 @@ export interface SettingsService {
   onNotesChange(listener: (next: NotesSettings, previous: NotesSettings) => void): () => void;
   review(): ReviewSettings;
   updateReview(changes: Partial<ReviewSettings>): ReviewSettings;
+  pipeline(): PipelineSettings;
+  updatePipeline(changes: Partial<PipelineSettings>): PipelineSettings;
   plan(): PlanSettings;
   updatePlan(changes: Partial<PlanSettings>): PlanSettings;
 }
@@ -111,7 +116,16 @@ export function createSettingsService(deps: SettingsDependencies): SettingsServi
     'review',
   );
   const plan = settingsGroup(deps, 'plan', PlanSettingsSchema, DEFAULT_PLAN_SETTINGS, 'study plan');
+  const pipeline = settingsGroup(
+    deps,
+    'pipeline',
+    PipelineSettingsSchema,
+    DEFAULT_PIPELINE_SETTINGS,
+    'lecture pipeline',
+  );
   return {
+    pipeline: () => pipeline.get(),
+    updatePipeline: (changes) => pipeline.update(changes),
     plan: () => plan.get(),
     updatePlan: (changes) => plan.update(changes),
     notes: () => notes.get(),

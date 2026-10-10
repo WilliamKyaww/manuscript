@@ -39,6 +39,7 @@ const REFRESHED = [
   'inbox',
   'learning',
   'plan',
+  'pipeline',
 ] as const;
 
 /** Refetches everything the assistant (or an undo) may have changed. */

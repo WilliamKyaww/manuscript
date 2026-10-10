@@ -5,6 +5,7 @@ import { Card } from '../../components/Card';
 import { Page, StickySection } from '../../components/Page';
 import { formatLongDate, greeting } from '../../lib/format';
 import { DeadlinesWidget, ReviewsWidget, TargetWidget, WeakAreasWidget } from './LearningWidgets';
+import { ResurfaceWidget } from './ResurfaceWidget';
 import { PlanWidget } from './TodayPlanWidget';
 
 export function TodayPage({ now = new Date() }: { now?: Date }) {
@@ -19,6 +20,7 @@ export function TodayPage({ now = new Date() }: { now?: Date }) {
         <TargetWidget now={now} />
         <WeakAreasWidget />
         <PlanWidget />
+        <ResurfaceWidget />
       </div>
 
       <StickySection title="Available now" className="mt-8">

@@ -13,6 +13,7 @@ const SIGNAL_LABELS: Record<WeakSignalView['kind'], string> = {
   slipping: 'Slipping',
   lapsing: 'Lapsing',
   forgotten: 'Forgotten',
+  at_risk: 'At risk',
   no_material: 'No material',
 };
 

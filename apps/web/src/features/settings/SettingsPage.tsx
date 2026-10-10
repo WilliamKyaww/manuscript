@@ -14,6 +14,7 @@ import { healthQuery } from '../../lib/queries';
 import { AgentSettingsSection } from '../agent/AgentSettingsSection';
 import { AiSettingsSection } from '../ai/settings/AiSettingsSection';
 import { NotesSettingsSection } from './NotesSettingsSection';
+import { PipelineSettingsSection } from './PipelineSettingsSection';
 import { PlanSettingsSection } from './PlanSettingsSection';
 import { ReviewSettingsSection } from './ReviewSettingsSection';
 
@@ -49,6 +50,7 @@ export function SettingsPage() {
       <ReviewSettingsSection />
       <PlanSettingsSection />
       <AiSettingsSection />
+      <PipelineSettingsSection />
       <AgentSettingsSection />
       <AppearanceSection />
       <KeyboardSection />

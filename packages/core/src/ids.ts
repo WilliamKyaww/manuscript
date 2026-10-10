@@ -34,6 +34,7 @@ export const ID_PREFIXES = {
   action: 'act',
   job: 'job',
   proposal: 'prp',
+  pipelineRun: 'run',
   usage: 'use',
 } as const;
 

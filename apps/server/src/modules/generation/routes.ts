@@ -4,18 +4,24 @@ import {
   aiGradeEndpoint,
   bulkProposalsEndpoint,
   estimateGenerationEndpoint,
+  getPipelineEndpoint,
+  getPipelineSettingsEndpoint,
   inboxCountsEndpoint,
   listDraftsEndpoint,
   listProposalsEndpoint,
   rejectDraftsEndpoint,
   rejectProposalEndpoint,
+  runPipelineEndpoint,
   startGenerationEndpoint,
   suggestLinksEndpoint,
+  updatePipelineSettingsEndpoint,
 } from '@skb/core';
 import { type ApiRegistry, registerEndpoint } from '../../http/endpoint';
+import type { SettingsService } from '../settings/service';
 import type { DraftsService } from './drafts';
 import type { GradingService } from './grading';
 import type { LinkSuggester } from './links';
+import type { PipelineService } from './pipeline';
 import type { ProposalsService } from './proposals';
 import type { GenerationService } from './service';
 
@@ -25,13 +31,26 @@ export interface GenerationRouteServices {
   proposals: ProposalsService;
   grading: GradingService;
   links: LinkSuggester;
+  pipeline: PipelineService;
+  settings: SettingsService;
 }
 
 export function registerGenerationRoutes(
   registry: ApiRegistry,
   services: GenerationRouteServices,
 ): void {
-  const { generation, drafts, proposals, grading, links } = services;
+  const { generation, drafts, proposals, grading, links, pipeline, settings } = services;
+
+  registerEndpoint(registry, getPipelineSettingsEndpoint, () => settings.pipeline());
+  registerEndpoint(registry, updatePipelineSettingsEndpoint, ({ body }) =>
+    settings.updatePipeline(body),
+  );
+  registerEndpoint(registry, runPipelineEndpoint, ({ params, body }) =>
+    pipeline.start(params.id, body.steps, 'manual'),
+  );
+  registerEndpoint(registry, getPipelineEndpoint, ({ params }) => ({
+    run: pipeline.latest(params.id),
+  }));
 
   registerEndpoint(registry, estimateGenerationEndpoint, ({ body }) => generation.estimate(body));
   registerEndpoint(registry, startGenerationEndpoint, ({ body }) => generation.start(body));

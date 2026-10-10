@@ -119,6 +119,25 @@ function fakeServer() {
     if (path === '/api/health') return json(HEALTH);
     if (path === '/api/graph') return json(payload);
     if (path === '/api/graph/report') return json(report);
+    if (path === '/api/graph/connections')
+      return json({
+        shared: [
+          {
+            node: { ...node(RAFT, 'concept', 'Raft', 0), modules: ['COC251', 'COC300'] },
+            modules: ['COC251', 'COC300'],
+          },
+        ],
+        links: [
+          {
+            edge: edge('rel-cross', PAXOS, GOSSIP, 'prerequisite_for'),
+            source: node(PAXOS, 'concept', 'Paxos', 0),
+            target: { ...node(GOSSIP, 'concept', 'Gossip', null), modules: ['COC300'] },
+            sourceModules: ['COC251'],
+            targetModules: ['COC300'],
+            why: 'Paxos (COC251) is a prerequisite for Gossip (COC300).',
+          },
+        ],
+      });
     if (path === '/api/graph/local') return json(payload);
     if (path === '/api/graph/path')
       return json({
@@ -245,6 +264,42 @@ describe('graph page', () => {
     );
     await user.click(screen.getByRole('button', { name: /Paxos/, pressed: true }));
     expect(screen.getByRole('button', { name: /Paxos/, pressed: false })).toBeInTheDocument();
+  });
+});
+
+describe('the mastery overlay and connections across modules', () => {
+  it('keys the overlay by stage with a shape for each, not by colour alone', async () => {
+    renderApp('/graph', fakeServer().fetch);
+    const user = userEvent.setup();
+    await user.selectOptions(await screen.findByRole('combobox', { name: 'Colour by' }), 'mastery');
+    const key = await screen.findByRole('list', { name: 'Mastery' });
+    expect(
+      within(key)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual([
+      '○New',
+      '◔Learning',
+      '◑Practised',
+      '◕Confident',
+      '●Mastered',
+      '⚠ worth studying now',
+      'Only concepts are coloured.',
+    ]);
+  });
+
+  it('lists the concepts in several modules and the relations between modules', async () => {
+    renderApp('/graph', fakeServer().fetch);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Between modules' }));
+    const shared = await screen.findByRole('region', { name: 'Concepts in more than one module' });
+    expect(within(shared).getByText('Raft')).toBeInTheDocument();
+    expect(within(shared).getByText('COC300')).toBeInTheDocument();
+    const between = screen.getByRole('region', { name: 'Relations between modules' });
+    expect(
+      within(between).getByText('Paxos (COC251) is a prerequisite for Gossip (COC300).'),
+    ).toBeInTheDocument();
+    expect(within(between).getByText('Stated')).toBeInTheDocument();
   });
 });
 

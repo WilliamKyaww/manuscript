@@ -247,6 +247,17 @@ w (default 0.2, max 0.3, depth ≤ 2):
   (explicit practice required).
 Shown in mastery explanations as "implicit credit from …".
 
+**As built (Phase 15, ADR-0038).** `propagateCredit` (`@skb/core`, `learning/credit.ts`) walks accepted `prerequisite_for`
+concept edges: a correct answer (score ≥ 0.75) on B gives implicit evidence to each prerequisite A within two
+steps, weighted by the product of the edges' weights (the relation's own weight, default 0.2, at most 0.3);
+credit to A is dropped when A's own recency-weighted accuracy is below 0.6; a failed answer (< 0.5) on A in the
+last 14 days marks each direct dependent `at risk` (priority × 1.25, a weak-area signal, no change of score).
+Implicit answers join the explicit ones in the accuracy and answer weight with the same age and assistance
+weights times the factor, count only for concepts with something linked, and are reported in the concept's
+`credit` list and `implicitWeight`. Cross-module connections are computed from the graph payload
+(`crossModuleConnections`); resurfacing looks two days ahead for lectures and a chosen number of days for exams
+and deadlines.
+
 ## 11. Study sessions and progress (Phases 8–9, 14)
 
 Sessions record kind, scope, duration and stats. Progress views: reviews per day, true retention vs

@@ -10,6 +10,7 @@ import {
   STORED_RELATIONS,
 } from '../graph/vocabulary';
 import { idSchema } from '../ids';
+import { MASTERY_STAGES } from '../learning/mastery';
 import { LocatorSchema } from '../sources/types';
 import { defineEndpoint } from './contract';
 
@@ -94,6 +95,15 @@ export const GraphNodeSchema = z.object({
   modules: z.array(z.string()),
   /** Vault path, for notes and sources. */
   path: z.string().nullable(),
+  /** How well the student knows a concept (concepts only; the mastery overlay). */
+  mastery: z
+    .object({
+      stage: z.enum(MASTERY_STAGES),
+      value: z.number().nullable(),
+      /** Weak, slipping, lapsing, forgotten or at risk: worth studying now. */
+      weak: z.boolean(),
+    })
+    .nullish(),
 });
 export type GraphNode = z.infer<typeof GraphNodeSchema>;
 
@@ -262,6 +272,27 @@ export const localGraphEndpoint = defineEndpoint({
     depth: z.coerce.number().int().min(1).max(2).default(1),
   }),
   response: GraphPayloadSchema,
+});
+export const CrossModuleConnectionsSchema = z.object({
+  /** Concepts that belong to more than one module. */
+  shared: z.array(z.object({ node: GraphNodeSchema, modules: z.array(z.string()) })),
+  /** Stated relations between concepts of different modules, strongest first. */
+  links: z.array(
+    z.object({
+      edge: GraphEdgeSchema,
+      source: GraphNodeSchema,
+      target: GraphNodeSchema,
+      sourceModules: z.array(z.string()),
+      targetModules: z.array(z.string()),
+      why: z.string(),
+    }),
+  ),
+});
+export const graphConnectionsEndpoint = defineEndpoint({
+  method: 'GET',
+  path: '/api/graph/connections',
+  query: z.object({ limit: z.coerce.number().int().min(1).max(200).default(50) }),
+  response: CrossModuleConnectionsSchema,
 });
 export const graphPathEndpoint = defineEndpoint({
   method: 'GET',

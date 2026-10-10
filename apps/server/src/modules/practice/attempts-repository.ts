@@ -212,6 +212,15 @@ export function createAttemptsRepository(db: SqlDatabase) {
         ],
       );
     },
+    answersByIds(ids: readonly string[]): AnswerRow[] {
+      if (ids.length === 0) return [];
+      return db
+        .all<Raw>(
+          `SELECT * FROM answers WHERE id IN (SELECT value FROM json_each(?)) ORDER BY answered_at`,
+          [JSON.stringify(ids)],
+        )
+        .map(toAnswer);
+    },
     answer(id: string): AnswerRow | null {
       const raw = db.get<Raw>('SELECT * FROM answers WHERE id = ?', [id]);
       return raw ? toAnswer(raw) : null;

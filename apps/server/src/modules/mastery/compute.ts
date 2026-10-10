@@ -2,12 +2,14 @@ import {
   type AnswerEvidence,
   type CardEvidence,
   type ConceptProgress,
+  type CreditAnswer,
   conceptMastery,
   conceptPriority,
   createScheduler,
   type Exposure,
   MASTERY,
   moduleExposures,
+  propagateCredit,
   type ReviewSettings,
   type RollUp,
   rollUp,
@@ -47,6 +49,31 @@ const push = <K, V>(map: Map<K, V[]>, key: K, value: V) => {
   if (list) list.push(value);
   else map.set(key, [value]);
 };
+
+/** Where a concept's credit came from, one line for each concept it was earned on. */
+function creditSummary(
+  implicit: readonly { fromId: string; factor: number; hops: number }[],
+  info: ReadonlyMap<string, { id: string; name: string }>,
+): ConceptProgress['credit'] {
+  const byConcept = new Map<string, { factor: number; hops: number; answers: number }>();
+  for (const answer of implicit) {
+    const known = byConcept.get(answer.fromId);
+    byConcept.set(answer.fromId, {
+      factor: answer.factor,
+      hops: answer.hops,
+      answers: (known?.answers ?? 0) + 1,
+    });
+  }
+  return [...byConcept]
+    .flatMap(([id, line]) => {
+      const name = info.get(id)?.name;
+      return name ? [{ concept: { id: id as never, name }, ...line }] : [];
+    })
+    .sort(
+      (a, b) =>
+        b.factor * b.answers - a.factor * a.answers || a.concept.name.localeCompare(b.concept.name),
+    );
+}
 
 const mean = (values: readonly number[]) =>
   values.length === 0 ? null : values.reduce((a, b) => a + b, 0) / values.length;
@@ -112,6 +139,24 @@ export function computeSnapshot(
   for (const link of repo.conceptTopics())
     if (info.has(link.conceptId)) push(conceptsOfTopic, link.topicId, link.conceptId);
 
+  // Credit along accepted prerequisite edges (learning-system.md §10): first each concept's own
+  // accuracy, which decides whether it takes credit, then what flows between concepts.
+  const ownAnswers = new Map<string, CreditAnswer[]>();
+  const ownAccuracy = new Map<string, number | null>();
+  for (const concept of concepts) {
+    const evidence = evidenceOf(answers.get(concept.id) ?? []);
+    ownAnswers.set(concept.id, evidence);
+    ownAccuracy.set(
+      concept.id,
+      conceptMastery({ cards: [], answers: evidence, itemsLinked: 0, itemsPractised: 0 }).accuracy,
+    );
+  }
+  const credit = propagateCredit({
+    edges: repo.prerequisites().filter((edge) => info.has(edge.from) && info.has(edge.to)),
+    answers: ownAnswers,
+    accuracy: ownAccuracy,
+  });
+
   const progress = new Map<string, ConceptProgress>();
   for (const concept of concepts) {
     const counts = items.get(concept.id) ?? {
@@ -124,13 +169,21 @@ export function computeSnapshot(
     const evidence = evidenceOf(own);
     const itemsLinked = counts.cards + counts.questions;
     const itemsPractised = counts.cardsPractised + counts.questionsPractised;
+    // Credit only helps a concept that has something to practise: it never makes one from nothing.
+    const implicit = itemsLinked > 0 ? (credit.implicit.get(concept.id) ?? []) : [];
     const mastery = conceptMastery({
       cards: cards.get(concept.id) ?? [],
       answers: evidence,
       itemsLinked,
       itemsPractised,
+      implicit,
+    });
+    const atRiskFrom = (credit.atRisk.get(concept.id) ?? []).flatMap(({ id }) => {
+      const name = info.get(id)?.name;
+      return name ? [name] : [];
     });
     const signals = weakSignals({
+      atRiskFrom,
       mastery,
       answers: evidence,
       lapses: lapses.get(concept.id) ?? 0,
@@ -156,8 +209,11 @@ export function computeSnapshot(
         mastery: mastery.mastery,
         importance: concept.importance,
         exposure,
+        atRisk: atRiskFrom.length > 0,
       }),
       exposure: exposure as ConceptProgress['exposure'],
+      credit: creditSummary(implicit, info),
+      atRisk: atRiskFrom.length > 0,
     });
   }
 
