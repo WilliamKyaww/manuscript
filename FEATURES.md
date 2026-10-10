@@ -21,7 +21,7 @@ _Last updated: 10 October 2026 (end of Phase 16)._
 | F-PL-07 | `run-web.bat` one-click Windows launcher | Complete | 1 |
 | F-PL-08 | Persistent job queue with progress events | Complete | 5 |
 | F-PL-09 | Automatic database backups and crash recovery | Partial — daily backups, a copy before each migration and Back up now are done (17.01); the crash-safety audit is 17.02 | 17 |
-| F-PL-10 | Diagnostics page and log viewer | Planned | 17 |
+| F-PL-10 | Diagnostics page (state of the installation, failed jobs, log viewer with level and text filters) and a support bundle without notes or keys | Complete | 17 |
 
 ## Knowledge — notes and Markdown
 

@@ -13,6 +13,7 @@ import { recordOpened } from './modules/portability/registry';
 import { loadOrCreateToken } from './security/token';
 import { type Clock, systemClock } from './shared/clock';
 import { createEventBus } from './shared/events';
+import type { DeferredLogFile } from './shared/log-file';
 import type { Logger } from './shared/logger';
 import { openVault, type Vault } from './vault/vault';
 import { VERSION } from './version';
@@ -40,6 +41,8 @@ export interface StartServerOptions {
   watch?: boolean;
   /** How the process can be restarted on another vault; absent in tests. */
   restart?: RestartControl;
+  /** The log file to start writing once the vault is open (its `.skb/logs` folder). */
+  logFile?: DeferredLogFile;
 }
 
 export class StartupError extends Error {
@@ -64,6 +67,7 @@ export async function startServer(
     ids,
     appVersion: VERSION,
   });
+  options.logFile?.attach(vault.paths.logs);
   let db: SqlDatabase | undefined;
   try {
     db = openDatabase(vault.paths.database);

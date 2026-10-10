@@ -40,6 +40,15 @@ const settingsRoute = createRoute({
   component: lazyRouteComponent(() => import('./features/settings/SettingsPage'), 'SettingsPage'),
 });
 
+const diagnosticsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/diagnostics',
+  component: lazyRouteComponent(
+    () => import('./features/diagnostics/DiagnosticsPage'),
+    'DiagnosticsPage',
+  ),
+});
+
 const NotesPage = lazyRouteComponent(() => import('./features/notes/NotesPage'), 'NotesPage');
 const notesRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -220,6 +229,7 @@ const placeholderRoutes = SECTIONS.filter((section) => !IMPLEMENTED.has(section.
 export const routeTree = rootRoute.addChildren([
   todayRoute,
   settingsRoute,
+  diagnosticsRoute,
   notesRoute,
   noteRoute,
   searchRoute,

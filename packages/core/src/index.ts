@@ -14,6 +14,7 @@ export * from './api/code';
 export * from './api/concepts';
 export * from './api/contract';
 export * from './api/course';
+export * from './api/diagnostics';
 export * from './api/generation';
 export * from './api/graph';
 export * from './api/jobs';

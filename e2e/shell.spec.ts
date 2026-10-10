@@ -7,6 +7,7 @@ import { E2E_TOKEN } from './constants';
 const ROUTES = [
   ...SECTIONS.map((section) => ({ path: section.path, title: section.label })),
   { path: '/practice/questions', title: 'Question bank' },
+  { path: '/diagnostics', title: 'Diagnostics' },
   { path: '/no/such/page', title: 'Page not found' },
 ];
 

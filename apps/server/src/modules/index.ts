@@ -26,6 +26,7 @@ import { type CodeService, createCodeService } from './code/service';
 import { createConceptMergeRepository } from './concepts/merge-repository';
 import { createConceptsRepository } from './concepts/repository';
 import { type ConceptsService, createConceptsService } from './concepts/service';
+import { createDiagnosticsService, type DiagnosticsService } from './diagnostics/service';
 import { createDraftsService, type DraftsService } from './generation/drafts';
 import { createExtractor } from './generation/extract';
 import { createGradingService, type GradingService } from './generation/grading';
@@ -109,6 +110,7 @@ export interface AppModules {
   readonly portability: PortabilityService;
   readonly code: CodeService;
   readonly backup: BackupService;
+  readonly diagnostics: DiagnosticsService;
   start(options: { watch: boolean }): Promise<void>;
   close(): Promise<void>;
 }
@@ -495,6 +497,9 @@ export function createModules(ctx: AppContext): AppModules {
     logger: ctx.logger,
   });
 
+  // The Diagnostics page and its bundle (Phase 17).
+  const diagnostics = createDiagnosticsService({ ctx, backups: backup });
+
   // Export, restore and switching vault (Phase 16) read every part of the vault, so they come last.
   const portability = createPortabilityService({
     db: ctx.db,
@@ -559,6 +564,7 @@ export function createModules(ctx: AppContext): AppModules {
     portability,
     code,
     backup,
+    diagnostics,
     async start(options) {
       await notes.start(options);
       jobs.start();
