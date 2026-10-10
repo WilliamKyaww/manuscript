@@ -47,6 +47,33 @@ The same three choices as in [AI](./ai.md#2-asking-about-your-material): **My so
 notes**, **General knowledge too**. The mode and this choice belong to the conversation; change them
 between messages if you like.
 
+## Tutor mode
+
+Choose **Tutor** as the mode and the assistant stops answering and starts guiding. It follows a ladder,
+and Manuscript — not the model — decides which rung a reply may use:
+
+1. **A question first.** It asks what you already know and where you are stuck. It never opens with the
+   solution.
+2. **A hint**, then **a stronger hint**, if you are still stuck.
+3. **The first part of the solution**, leaving the last step to you.
+4. **The full worked solution — only when you ask for it** in so many words ("show me the solution",
+   "I give up"). It always ends with a **Check question:** for you to answer, and the ladder starts again
+   afterwards.
+
+It uses your own notes and lecture material, with citations.
+
+**Quiz me.** Say "quiz me on Raft" and it puts questions from your own question bank one at a time,
+showing the question and its options but never the answer. When you reply, it asks to **record your answer**
+as evidence for your mastery. You see exactly what will be recorded and can approve it once, approve it for
+the rest of the chat, or decline. Recording is permanent — an answer is evidence and cannot be undone — and is
+marked as *assisted*, so it counts for less than an answer you gave unaided. The tutor then shows the right
+answer and the explanation. The questions of a tutored chat are kept in a quiz of their own (not listed with
+yours) so they appear in the concept's answers on the Progress page.
+
+**Check my notes.** Ask "check my notes on Raft against the lectures". If a note says something the lecture
+material contradicts, the tutor puts a **suggested correction** in your Inbox, with the lecture's words as
+evidence. Your note is not changed until you accept it, and you can decline.
+
 ## What you see
 
 - **Citations.** A claim from your material ends in **[S2]**. Click it to open the PDF page, the

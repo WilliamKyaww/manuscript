@@ -180,6 +180,11 @@ const chatThreadRoute = createRoute({
   path: '/chat/$threadId',
   component: chatComponent,
 });
+const planRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/plan',
+  component: lazyRouteComponent(() => import('./features/plan/PlanPage'), 'PlanPage'),
+});
 const conceptRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/concepts/$conceptId',
@@ -200,6 +205,7 @@ const IMPLEMENTED = new Set([
   'progress',
   'inbox',
   'chat',
+  'plan',
   'settings',
 ]);
 const placeholderRoutes = SECTIONS.filter((section) => !IMPLEMENTED.has(section.id)).map(
@@ -236,6 +242,7 @@ export const routeTree = rootRoute.addChildren([
   inboxRoute,
   chatRoute,
   chatThreadRoute,
+  planRoute,
   ...placeholderRoutes,
 ]);
 

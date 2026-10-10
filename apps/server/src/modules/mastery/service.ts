@@ -134,6 +134,13 @@ export function createMasteryService(deps: MasteryDependencies) {
       };
     },
 
+    /** Every active concept with its mastery, signals and priority, most pressing first. */
+    concepts(): ConceptProgress[] {
+      return [...current().concepts.values()].sort(
+        (a, b) => b.priority - a.priority || byName(a, b),
+      );
+    },
+
     /** Priority and stage of every active concept, for a Learn session's start. */
     states(): { id: string; name: string; priority: number; stage: MasteryStage }[] {
       const s = current();

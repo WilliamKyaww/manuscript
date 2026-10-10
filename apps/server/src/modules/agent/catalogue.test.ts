@@ -27,7 +27,9 @@ describe('the tool catalogue', () => {
 
   it('gives every tool that changes anything a way to undo it, and a one-line description', () => {
     for (const tool of ALL_TOOLS) {
-      if (tool.risk !== 'read') expect(tool.undo, tool.name).toBeTypeOf('function');
+      if (tool.risk !== 'read' && !tool.permanent)
+        expect(tool.undo, tool.name).toBeTypeOf('function');
+      if (tool.permanent) expect(tool.undo, tool.name).toBeUndefined();
       expect(tool.name).toMatch(/^[a-z]+(_[a-z]+)+$/u);
       expect(tool.description.length, tool.name).toBeGreaterThan(30);
       expect(tool.describe, tool.name).toBeTypeOf('function');

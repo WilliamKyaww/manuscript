@@ -46,6 +46,8 @@ export const ToolInfoSchema = z.object({
   permission: ToolPermissionSchema.nullable(),
   /** Offered to MCP clients (read and write tools; never destructive ones). */
   mcp: z.boolean(),
+  /** Cannot be undone, so it always asks (recording an answer). */
+  permanent: z.boolean().default(false),
 });
 export type ToolInfo = z.infer<typeof ToolInfoSchema>;
 

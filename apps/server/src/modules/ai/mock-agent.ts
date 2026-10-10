@@ -1,5 +1,6 @@
 import type { LanguageModelV4CallOptions, LanguageModelV4Prompt } from '@ai-sdk/provider';
 import { mockCards } from './mock-generation';
+import { mockPlanTurn, mockTutorTurn } from './mock-tutor';
 
 /**
  * The test model as an agent (`SKB_AI_PROVIDER=mock`, agent-system.md §14): given a conversation
@@ -12,7 +13,7 @@ import { mockCards } from './mock-generation';
 
 export type AgentTurn = { calls: { name: string; input: unknown }[] } | { text: string };
 
-interface Call {
+export interface Call {
   name: string;
   input: Record<string, unknown>;
   /** What the tool returned (`result` of its reply), or undefined if it did not run. */
@@ -30,37 +31,29 @@ const asText = (content: unknown): string =>
         .join('\n')
     : '';
 
-/** The person's latest message, and the tool calls made since it. */
-function turnOf(prompt: LanguageModelV4Prompt): {
-  request: string;
-  calls: Call[];
-  passages: boolean;
-} {
-  let last = -1;
-  prompt.forEach((message, index) => {
-    if (message.role === 'user') last = index;
-  });
-  const message = prompt[last];
-  const raw = message?.role === 'user' ? asText(message.content) : '';
-  const request = (raw.match(/Question: ([\s\S]*)$/u)?.[1] ?? raw).trim();
-  const results = new Map<string, { value: unknown; ran: boolean }>();
-  for (const later of prompt.slice(last + 1)) {
-    if (later.role !== 'tool') continue;
-    for (const part of later.content) {
-      if (part.type !== 'tool-result') continue;
-      results.set(part.toolCallId, {
-        value: part.output.type === 'json' ? part.output.value : undefined,
-        ran: part.output.type === 'json',
-      });
-    }
-  }
+/**
+ * The tool calls in part of a conversation, in order, each with what came back. A call's result is
+ * the tool message after it; call ids repeat from one model step to the next, so they are paired
+ * within a step only.
+ */
+function callsIn(prompt: LanguageModelV4Prompt, from: number, to: number): Call[] {
   const calls: Call[] = [];
-  for (const later of prompt.slice(last + 1)) {
-    if (later.role !== 'assistant') continue;
-    for (const part of later.content) {
+  for (let index = from; index < to; index += 1) {
+    const message = prompt[index];
+    if (message?.role !== 'assistant') continue;
+    const results = new Map<string, unknown>();
+    for (let next = index + 1; next < to && prompt[next]?.role === 'tool'; next += 1) {
+      const reply = prompt[next];
+      if (reply?.role !== 'tool') continue;
+      for (const part of reply.content)
+        if (part.type === 'tool-result' && part.output.type === 'json')
+          results.set(part.toolCallId, part.output.value);
+    }
+    for (const part of message.content) {
       if (part.type !== 'tool-call') continue;
-      const reply = results.get(part.toolCallId);
-      const value = reply?.value as { ok?: boolean; result?: Record<string, unknown> } | undefined;
+      const value = results.get(part.toolCallId) as
+        | { ok?: boolean; result?: Record<string, unknown> }
+        | undefined;
       calls.push({
         name: part.toolName,
         input: (typeof part.input === 'object' && part.input ? part.input : {}) as Record<
@@ -72,14 +65,49 @@ function turnOf(prompt: LanguageModelV4Prompt): {
       });
     }
   }
-  return { request, calls, passages: /<untrusted_source id="S\d+"/u.test(raw) };
+  return calls;
+}
+
+const systemText = (prompt: LanguageModelV4Prompt) =>
+  prompt.flatMap((message) => (message.role === 'system' ? [message.content] : [])).join('\n');
+
+const requestOf = (raw: string) => (raw.match(/Question: ([\s\S]*)$/u)?.[1] ?? raw).trim();
+
+/** The person's latest message, the tool calls made since it, and those made in earlier turns. */
+export function turnOf(prompt: LanguageModelV4Prompt): {
+  request: string;
+  first: string;
+  calls: Call[];
+  earlier: Call[];
+  system: string;
+  passages: boolean;
+} {
+  let last = -1;
+  let first = -1;
+  prompt.forEach((message, index) => {
+    if (message.role === 'user') {
+      last = index;
+      if (first < 0) first = index;
+    }
+  });
+  const message = prompt[last];
+  const raw = message?.role === 'user' ? asText(message.content) : '';
+  const firstMessage = prompt[first];
+  return {
+    request: requestOf(raw),
+    first: requestOf(firstMessage?.role === 'user' ? asText(firstMessage.content) : ''),
+    calls: callsIn(prompt, last + 1, prompt.length),
+    earlier: callsIn(prompt, 0, Math.max(last, 0)),
+    system: systemText(prompt),
+    passages: /<untrusted_source id="S\d+"/u.test(raw),
+  };
 }
 
 const INNER =
   /<untrusted_source id="([^"]*)" title="[^"]*" location="([^"]*)">\n([\s\S]*?)\n<\/untrusted_source>/gu;
 
 /** The wrapped passages in a tool result, as plain pieces. */
-function unwrap(text: string): { key: string; location: string; text: string }[] {
+export function unwrap(text: string): { key: string; location: string; text: string }[] {
   return [...text.matchAll(INNER)].map(([, key = '', location = '', body = '']) => ({
     key,
     location,
@@ -87,7 +115,7 @@ function unwrap(text: string): { key: string; location: string; text: string }[]
   }));
 }
 
-const sentences = (text: string) =>
+export const sentences = (text: string) =>
   text
     .replace(/^#+\s*/gmu, '')
     .split(/(?<=[.!?])\s+|\n+/u)
@@ -99,11 +127,11 @@ const range = (text: string): [number, number] | null => {
   return match ? [Number(match[1]), Number(match[2] ?? match[1])] : null;
 };
 
-const asList = (value: unknown): Record<string, unknown>[] =>
+export const asList = (value: unknown): Record<string, unknown>[] =>
   Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
 
-const call = (name: string, input: unknown): AgentTurn => ({ calls: [{ name, input }] });
-const calls = (list: { name: string; input: unknown }[]): AgentTurn => ({ calls: list });
+export const call = (name: string, input: unknown): AgentTurn => ({ calls: [{ name, input }] });
+export const calls = (list: { name: string; input: unknown }[]): AgentTurn => ({ calls: list });
 
 /** The locator a passage label points to ("Slide 2", "p. 3"), for cards made from it. */
 function locatorOf(key: string, location: string): Record<string, unknown> | undefined {
@@ -265,8 +293,14 @@ function deleteNote(request: string, taken: Call[]): AgentTurn {
 /** What the test model does next in an agent conversation, or null if it is not one. */
 export function mockAgentTurn(options: LanguageModelV4CallOptions): AgentTurn | null {
   if (!options.tools?.length) return null;
-  const { request, calls: taken, passages } = turnOf(options.prompt);
+  const turn = turnOf(options.prompt);
+  const { request, calls: taken, passages } = turn;
   if (!request) return null;
+  // A tutor conversation has its own rules (the server names the step), then plans on request.
+  const tutored = mockTutorTurn(turn);
+  if (tutored) return tutored;
+  const planned = mockPlanTurn(turn);
+  if (planned) return planned;
   if (/flash\s?cards?/iu.test(request) && range(request)) return flashcards(request, taken);
   if (/\b(summary|summarise|summarize)\b/iu.test(request)) return summary(request, taken);
   if (/\bdelete\b.*\bnote\b/iu.test(request)) return deleteNote(request, taken);

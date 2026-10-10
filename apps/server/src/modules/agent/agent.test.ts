@@ -61,7 +61,13 @@ describe('the tool registry', () => {
     });
     // There is no tool that sets mastery or answers for the student.
     expect(tools.some((tool) => /mastery/u.test(tool.name) && tool.risk !== 'read')).toBe(false);
-    expect(tools.some((tool) => tool.name === 'record_answer')).toBe(false);
+    // The one tool that records an answer does so only for the student, permanently: it always asks,
+    // and MCP clients never get it.
+    expect(tools.find((tool) => tool.name === 'record_answer')).toMatchObject({
+      risk: 'write',
+      permanent: true,
+      mcp: false,
+    });
   });
 
   it('logs writes with what is needed to undo them, and not reads', async () => {

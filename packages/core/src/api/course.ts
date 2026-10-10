@@ -214,6 +214,8 @@ export const AssessmentSchema = z.object({
   weight: z.number(),
   dueAt: z.string().nullable(),
   durationMinutes: z.number().int().nullable(),
+  /** Hours the student reckons are left to do; the study planner spreads them to the deadline. */
+  remainingHours: z.number().nullable(),
   status: AssessmentStatusSchema,
   markAchieved: z.number().nullable(),
   notes: z.string(),
@@ -395,6 +397,7 @@ export const AssessmentInputSchema = z.object({
     .min(0)
     .max(24 * 60)
     .nullish(),
+  remainingHours: z.number().min(0).max(1000).nullish(),
   status: AssessmentStatusSchema.optional(),
   markAchieved: PercentSchema.nullish(),
   notes: z.string().max(20_000).optional(),

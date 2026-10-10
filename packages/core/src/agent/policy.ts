@@ -9,6 +9,10 @@
  * | destructive | asks every time                      | deny (never auto)|
  *
  * A write that touches more than `BULK_THRESHOLD` items in one call counts as destructive.
+ *
+ * A *permanent* write cannot be undone (recording an answer as evidence of what the student knows):
+ * it always asks, but unlike a destructive call it may be approved for the rest of a chat, because
+ * the student is the one giving the answer and sees exactly what is recorded.
  */
 
 export const TOOL_RISKS = ['read', 'write', 'destructive'] as const;
@@ -39,6 +43,8 @@ export function decideApproval(input: {
   /** How many things the call touches (cards, notes, files…); 1 when it is a single thing. */
   items?: number;
   override?: ToolPermission | undefined;
+  /** The call cannot be taken back. */
+  permanent?: boolean | undefined;
 }): PolicyResult {
   const items = input.items ?? 1;
   const risk = effectiveRisk(input.risk, items);
@@ -54,6 +60,12 @@ export function decideApproval(input: {
         : 'This cannot be done without your approval.',
     };
   }
+  if (input.permanent)
+    return {
+      decision: 'ask',
+      risk,
+      reason: 'This is recorded permanently as evidence of what you know, and cannot be undone.',
+    };
   if (input.override === 'ask')
     return { decision: 'ask', risk, reason: 'You asked to approve this tool each time.' };
   return { decision: 'approve', risk, reason: null };

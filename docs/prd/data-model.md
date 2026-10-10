@@ -344,10 +344,11 @@ for quizzes and Learn, answered, correct and score). Quiz attempts open a `quiz`
 recomputed (after a review, answer or link change, or when a quarter of an hour old); never edited
 directly.
 
-**study_plans** `id` · `title` · `start_date` · `end_date` · `params_json` · `generated_by` ·
-`created_at` — **plan_items** `id` · `plan_id` · `date`† · `kind` (`review` | `practice` | `learn` |
-`coursework` | `mock_exam`) · `target_type` · `target_id` · `minutes` · `reason` · `status`
-(`planned` | `done` | `skipped`)
+**study_plans** (migration `0014`) `id` · `title` · `start_date` · `end_date` · `params_json` · `generated_by` (`planner` | `agent`) ·
+`unscheduled_json` · `created_at` · `updated_at` — **plan_items** `id` · `plan_id` · `date`† · `ordinal` · `kind` (`review` | `practice` | `learn` |
+`coursework` | `mock_exam`) · `target_type` · `target_id` · `title` · `minutes` · `reason` · `status`
+(`planned` | `done` | `skipped`) · `completed_at` — **tutor_sessions** `thread_id` · `quiz_id` · `attempt_id` (the quiz and attempt a tutored chat records answers in) —
+`assessments.remaining_hours` (the student's estimate of work left) — proposals gain the kind `correction`.
 
 ### 5.9 AI, agent and operations
 

@@ -49,7 +49,7 @@ export function toolCatalogue(tools: readonly AnyTool[]): string {
       '|---|---|---|---|---|',
       ...members.map(
         (tool) =>
-          `| \`${tool.name}\` | ${cell(tool.description)} | ${inputs(tool)} | ${RISK_TEXT[tool.risk]} | ${offeredToMcp(tool) ? 'yes' : 'no'} |`,
+          `| \`${tool.name}\` | ${cell(tool.description)} | ${inputs(tool)} | ${tool.permanent ? 'Records permanently (always asks)' : RISK_TEXT[tool.risk]} | ${offeredToMcp(tool) ? 'yes' : 'no'} |`,
       ),
       '',
     ];

@@ -24,8 +24,10 @@ Two more rules:
   or *off*, but no setting lets a delete or merge run without asking.
 
 There is deliberately **no tool that sets what you have mastered**: mastery comes only from your own
-reviews and answers. There is also no tool that records an answer for you, runs commands, or opens
-files outside your vault.
+reviews and answers. The one tool that touches an answer is `record_answer`, used by the tutor: it
+records only what *you* answered to a question it put to you, only after you approve it (it always
+asks; it cannot be undone, so it is the one change without an Undo), and marks it as assisted. There is no
+tool that runs commands or opens files outside your vault.
 
 ### Approvals
 
@@ -170,6 +172,12 @@ connected programs are offered the tool.
 | `create_flashcards` | Create flashcards in a set (an existing setId, or a new set by title). By default they are drafts that wait in the Inbox for the student to accept; use status "active" only when asked. Write one fact per card with a short answer. A cloze card’s front holds {{c1::gaps}} and its back is empty. Give each card the locator of its source when you know it. More than 20 cards at once needs approval. | `setId`?, `setTitle`?, `moduleId`?, `lectureId`?, `status`?, `cards` | Changes (logged, undoable) | yes |
 | `create_quiz` | Create a practice quiz from the question bank by scope (module, lectures, topics, concepts, tags), count, kinds and difficulty. It does not start it. Undo deletes it if it has not been attempted. | `title`?, `config` | Changes (logged, undoable) | yes |
 | `delete_cards` | Delete flashcards by id. Their review history is kept, and undo brings them back with their schedule. Always needs the student’s approval. | `cardIds` | Deletes or merges (always asks) | no |
+| `get_study_plan` | Read the student’s current study plan: what is planned for each of the coming days, how long each item takes and why it is there, and what has been done. Returns exists: false when no plan has been made yet. | `days`? | Reads | yes |
+| `create_study_plan` | Make the student’s study plan for the next few days from their availability, due reviews, deadlines, weak concepts and lectures not yet studied. Anything already done or skipped stays; the rest is planned again. Every item says why it is there. Undo puts the plan back as it was. | `days`? | Changes (logged, undoable) | yes |
+| `update_study_plan` | Mark one item of the study plan done, skipped, or planned again. Use it when the student tells you they have done something from the plan. | `itemId`, `status` | Changes (logged, undoable) | yes |
+| `get_questions` | Pick questions from the student’s own question bank to put to them, by concept, module, lecture or words in the question. Returns only the question and its options, never the answer, and leaves out what this conversation has asked already. Show the question to the student and wait for their reply before calling record_answer. | `conceptId`?, `moduleId`?, `lectureId`?, `query`?, `limit`? | Reads | yes |
+| `record_answer` | Record the answer the STUDENT gave to a question you put to them, exactly as they gave it, as evidence for their mastery (marked as assisted, since a tutor was helping). Only call it after the student has replied. It is permanent and cannot be undone, so it always asks the student first. Returns the score, the right answer and the explanation to talk through. | `questionId`, `response`, `confidence`? | Records permanently (always asks) | no |
+| `propose_note_correction` | Flag something in the student’s own note that the lecture material contradicts. Give the exact words from the note (copy them), the corrected words, a short explanation, and a quote from the lecture source that shows it. It becomes a suggestion in the Inbox for the student to accept; the note is not changed. Use it only when the material clearly disagrees, not for style or for things the material does not cover. | `noteId`, `text`, `replacement`, `explanation`, `sourceId`, `quote` | Changes (logged, undoable) | yes |
 
 ### Files
 

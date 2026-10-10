@@ -93,7 +93,14 @@ const DraftIds = z.object({
 // --- Proposals ----------------------------------------------------------------------------------
 
 export const ProposalIdSchema = idSchema('proposal');
-export const PROPOSAL_KINDS = ['concept', 'relation', 'alias', 'link', 'note'] as const;
+export const PROPOSAL_KINDS = [
+  'concept',
+  'relation',
+  'alias',
+  'link',
+  'note',
+  'correction',
+] as const;
 export type ProposalKind = (typeof PROPOSAL_KINDS)[number];
 export const ProposalStatusSchema = z.enum(['pending', 'accepted', 'rejected', 'superseded']);
 
@@ -149,6 +156,18 @@ export const ProposalPayloadSchema = z.discriminatedUnion('kind', [
     title: z.string(),
     folder: z.string(),
     content: z.string(),
+  }),
+  /** Something the student wrote that the lecture material contradicts (Phase 14). */
+  z.object({
+    kind: z.literal('correction'),
+    noteId: z.string(),
+    noteTitle: z.string(),
+    /** The words in the note that are wrong, exactly as they are written there. */
+    text: z.string(),
+    /** What to put in their place. */
+    replacement: z.string(),
+    /** Why, in the tutor's words. */
+    explanation: z.string(),
   }),
 ]);
 export type ProposalPayload = z.infer<typeof ProposalPayloadSchema>;

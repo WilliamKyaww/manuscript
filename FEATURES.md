@@ -95,7 +95,7 @@ _Last updated: 9 October 2026 (end of Phase 10)._
 | F-FC-05 | Review statistics (due forecast, history, true retention) and session summaries | Complete | 8 |
 | F-FC-06 | Anki notes-in-plain-text import and export per set | Complete | 8 |
 | F-FC-07 | AI flashcard generation with provenance and review | Complete | 11 |
-| F-FC-08 | Exam-aware retention policy | Planned | 14 |
+| F-FC-08 | Exam-aware retention policy | Complete — 0.93 within 14 days of a module's exam or test, switchable in Settings → Study plan | 14 |
 
 ## Learning — questions, quizzes and mastery
 
@@ -113,10 +113,10 @@ _Last updated: 9 October 2026 (end of Phase 10)._
 
 | ID | Feature | Status | Phase |
 |---|---|---|---|
-| F-PN-01 | Guardrailed Socratic tutor mode | Planned | 14 |
-| F-PN-02 | Misconception check against the knowledge base | Planned | 14 |
-| F-PN-03 | Rolling study planner with reasons | Planned | 14 |
-| F-PN-04 | Today dashboard | Partial — reviews due (Phase 8), upcoming deadlines and progress towards the target average (Phase 6) and weak areas (Phase 9) work; the plan arrives in Phase 14 | 14 |
+| F-PN-01 | Guardrailed Socratic tutor mode | Complete — the ladder is decided by the server; quiz-me records assisted answers after approval; tested with transcripts (a real model is checked by hand, `docs/guide/chat.md`) | 14 |
+| F-PN-02 | Misconception check against the knowledge base | Complete — contradictions become correction suggestions in the Inbox, with the lecture's words as evidence | 14 |
+| F-PN-03 | Rolling study planner with reasons | Complete — `/plan`, deterministic, keeps what was done (`docs/guide/planning.md`) | 14 |
+| F-PN-04 | Today dashboard | Complete — reviews due, deadlines, progress towards the target, weak areas and today's plan | 14 |
 
 ## AI and agent
 

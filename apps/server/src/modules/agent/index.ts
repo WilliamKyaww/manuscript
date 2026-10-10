@@ -11,7 +11,9 @@ import { conceptTools } from './tools/concepts';
 import { fileTools } from './tools/files';
 import { knowledgeTools } from './tools/knowledge';
 import { learningTools } from './tools/learning';
+import { planningTools } from './tools/planning';
 import { sourceTools } from './tools/sources';
+import { tutoringTools } from './tools/tutoring';
 import type { AgentServices, AnyTool } from './types';
 
 /** The agent's tool layer, built over the domain services (Phase 12). */
@@ -21,6 +23,8 @@ export const ALL_TOOLS: readonly AnyTool[] = [
   ...conceptTools,
   ...sourceTools,
   ...learningTools,
+  ...planningTools,
+  ...tutoringTools,
   ...fileTools,
 ];
 

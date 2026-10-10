@@ -130,6 +130,8 @@ export const QuizConfigSchema = z.object({
   timeLimitMinutes: z.number().int().min(1).max(600).optional(),
   /** Mock exams only: the assessment the exam rehearses. */
   assessmentId: AssessmentIdSchema.optional(),
+  /** A tutored chat's quiz: kept out of the quiz list, its answers are evidence like any other. */
+  tutor: z.object({ threadId: z.string() }).optional(),
   /**
    * Learn sessions only: the concepts as they stood when the session began (priority and stage), so
    * the session replays the same way however mastery moves while it runs.

@@ -101,6 +101,7 @@ export function createAttemptsRepository(db: SqlDatabase) {
       db
         .all<Raw>(
           `SELECT * FROM quizzes WHERE deleted_at IS NULL AND kind != 'adaptive'
+             AND json_extract(config_json, '$.tutor') IS NULL
            ORDER BY created_at DESC, id DESC`,
         )
         .map(toQuiz),
@@ -132,6 +133,18 @@ export function createAttemptsRepository(db: SqlDatabase) {
           questionId,
         ]);
       });
+    },
+    /** Puts one more question into a quiz (a tutored chat grows its quiz as it asks). */
+    addItem(quizId: string, questionId: string): void {
+      const next = db.get<{ n: number }>(
+        'SELECT coalesce(max(ordinal) + 1, 0) AS n FROM quiz_items WHERE quiz_id = ?',
+        [quizId],
+      );
+      db.run('INSERT INTO quiz_items (quiz_id, ordinal, question_id) VALUES (?, ?, ?)', [
+        quizId,
+        next?.n ?? 0,
+        questionId,
+      ]);
     },
     deleteQuiz: (id: string, at: string) =>
       db.run('UPDATE quizzes SET deleted_at = ? WHERE id = ?', [at, id]),

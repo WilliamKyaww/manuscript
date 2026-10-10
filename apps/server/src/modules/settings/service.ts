@@ -1,9 +1,12 @@
 import {
   DEFAULT_NOTES_SETTINGS,
+  DEFAULT_PLAN_SETTINGS,
   DEFAULT_REVIEW_SETTINGS,
   issuesFromZod,
   type NotesSettings,
   NotesSettingsSchema,
+  type PlanSettings,
+  PlanSettingsSchema,
   type ReviewSettings,
   ReviewSettingsSchema,
   ValidationError,
@@ -25,6 +28,8 @@ export interface SettingsService {
   onNotesChange(listener: (next: NotesSettings, previous: NotesSettings) => void): () => void;
   review(): ReviewSettings;
   updateReview(changes: Partial<ReviewSettings>): ReviewSettings;
+  plan(): PlanSettings;
+  updatePlan(changes: Partial<PlanSettings>): PlanSettings;
 }
 
 export interface SettingsDependencies {
@@ -105,7 +110,10 @@ export function createSettingsService(deps: SettingsDependencies): SettingsServi
     DEFAULT_REVIEW_SETTINGS,
     'review',
   );
+  const plan = settingsGroup(deps, 'plan', PlanSettingsSchema, DEFAULT_PLAN_SETTINGS, 'study plan');
   return {
+    plan: () => plan.get(),
+    updatePlan: (changes) => plan.update(changes),
     notes: () => notes.get(),
     updateNotes: (changes) => notes.update(changes),
     onNotesChange: (listener) => notes.onChange(listener),
