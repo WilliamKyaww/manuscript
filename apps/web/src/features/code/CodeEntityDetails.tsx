@@ -14,7 +14,7 @@ export function CodeEntityDetails({ entityId }: { entityId: string }) {
   const { entity: item, concepts } = entity.data;
   return (
     <section className="space-y-2" aria-label="About this code">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">The code</h3>
+      <h3 className="eyebrow">The code</h3>
       <dl className="grid grid-cols-[5rem_1fr] gap-x-2 gap-y-1 text-sm">
         <dt className="text-muted">Graph</dt>
         <dd>{item.graphName}</dd>

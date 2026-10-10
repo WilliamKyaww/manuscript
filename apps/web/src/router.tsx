@@ -49,6 +49,15 @@ const diagnosticsRoute = createRoute({
   ),
 });
 
+const designSystemRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/design-system',
+  component: lazyRouteComponent(
+    () => import('./features/design/DesignSystemPage'),
+    'DesignSystemPage',
+  ),
+});
+
 const NotesPage = lazyRouteComponent(() => import('./features/notes/NotesPage'), 'NotesPage');
 const notesRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -230,6 +239,7 @@ export const routeTree = rootRoute.addChildren([
   todayRoute,
   settingsRoute,
   diagnosticsRoute,
+  designSystemRoute,
   notesRoute,
   noteRoute,
   searchRoute,

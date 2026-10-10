@@ -37,13 +37,7 @@ export function Pane({
         data-pane-header
         className="flex h-10 flex-none items-center justify-between gap-2 border-b border-border bg-surface px-3"
       >
-        <h2
-          id={headingId}
-          className={cn(
-            'truncate text-xs font-semibold uppercase tracking-wide text-muted',
-            hideTitle && 'sr-only',
-          )}
-        >
+        <h2 id={headingId} className={cn('eyebrow truncate', hideTitle && 'sr-only')}>
           {title}
         </h2>
         {actions && <div className="flex shrink-0 items-center gap-1">{actions}</div>}

@@ -201,7 +201,7 @@ export function GraphPage() {
                   type="button"
                   aria-pressed={aside === value}
                   className={cn(
-                    'rounded px-2 py-0.5 text-xs capitalize hover:bg-surface-hover',
+                    'rounded px-2 py-0.5 text-xs hover:bg-surface-hover',
                     aside === value && 'bg-accent-subtle',
                   )}
                   onClick={() => setAside(value)}

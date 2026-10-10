@@ -20,7 +20,7 @@ export function ContextMenuContent({
     <RadixMenu.Portal>
       <RadixMenu.Content
         className={cn(
-          'z-50 min-w-48 rounded-md border border-border bg-surface-raised p-1 text-sm shadow-md',
+          'z-50 min-w-48 animate-fade-in rounded-md border border-border bg-surface-raised p-1 text-sm shadow-md',
           className,
         )}
       >

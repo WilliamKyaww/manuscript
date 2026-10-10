@@ -137,9 +137,7 @@ export function ImageViewer({
         />
         {text ? (
           <section aria-label="Text read from the image" className="rounded-md bg-surface p-4">
-            <h3 className="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">
-              Read by AI — check against the image
-            </h3>
+            <h3 className="eyebrow mb-2">Read by AI — check against the image</h3>
             <p className="text-sm leading-relaxed whitespace-pre-wrap">{text}</p>
           </section>
         ) : (

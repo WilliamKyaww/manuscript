@@ -70,7 +70,7 @@ export function NodeDetails({
       {node.type === 'code' && <CodeEntityDetails entityId={node.id} />}
 
       <section className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">Connections</h3>
+        <h3 className="eyebrow">Connections</h3>
         {groups.size === 0 ? (
           <p className="text-sm text-muted">No connections among what is shown.</p>
         ) : (
@@ -154,9 +154,7 @@ function PathFinder({
 
   return (
     <section className="space-y-2">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">
-        How does it relate to…
-      </h3>
+      <h3 className="eyebrow">How does it relate to…</h3>
       <form className="flex gap-2" onSubmit={submit}>
         <Input
           aria-label="Find a path to"

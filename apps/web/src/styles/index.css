@@ -39,6 +39,24 @@
   --shadow-sm: var(--skb-shadow-sm);
   --shadow-md: var(--skb-shadow-md);
   --shadow-lg: var(--skb-shadow-lg);
+  /*
+   * Micro-interactions (task 20.21): overlays fade and lift into place. The durations are tokens that
+   * are 0 ms under prefers-reduced-motion, so nothing moves for someone who has asked it not to.
+   */
+  --animate-fade-in: skb-fade-in var(--skb-duration-normal) var(--skb-ease);
+  --animate-rise-in: skb-rise-in var(--skb-duration-normal) var(--skb-ease);
+
+  @keyframes skb-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes skb-rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.25rem) scale(0.98);
+    }
+  }
 }
 
 @layer base {
@@ -68,6 +86,16 @@
   ::selection {
     background-color: var(--skb-accent-subtle);
   }
+}
+
+/* The small label above a group in a panel or card ("Connections", "Why"): one style everywhere. */
+@utility eyebrow {
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--skb-text-muted);
 }
 
 @layer components {

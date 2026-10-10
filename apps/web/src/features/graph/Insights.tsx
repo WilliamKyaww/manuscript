@@ -71,7 +71,7 @@ function NodeList({
 }) {
   return (
     <section className="space-y-1.5">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">{title}</h3>
+      <h3 className="eyebrow">{title}</h3>
       {nodes.length === 0 ? (
         <p className="text-sm text-muted">{empty}</p>
       ) : (
@@ -112,7 +112,7 @@ export function Insights({
   return (
     <div className="space-y-5 p-3">
       <section className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">Study prompts</h3>
+        <h3 className="eyebrow">Study prompts</h3>
         {data.prompts.length === 0 ? (
           <p className="text-sm text-muted">
             Nothing stands out yet. Prompts appear as concepts, links and relations grow.

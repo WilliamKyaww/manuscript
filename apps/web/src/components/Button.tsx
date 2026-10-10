@@ -3,14 +3,24 @@ import { type ButtonHTMLAttributes, forwardRef } from 'react';
 import { cn } from '../lib/cn';
 import { Spinner } from './Spinner';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'ghost'
+  | 'link'
+  | 'danger'
+  | 'danger-outline';
 export type ButtonSize = 'sm' | 'md';
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: 'bg-accent text-accent-contrast hover:bg-accent-hover border border-transparent',
   secondary: 'bg-surface text-text border border-border-strong hover:bg-surface-hover',
   ghost: 'bg-transparent text-text border border-transparent hover:bg-surface-hover',
+  // A way to another page, among buttons: coloured as a link so it does not read as a heading.
+  link: 'bg-transparent text-accent border border-transparent hover:bg-surface-hover',
   danger: 'bg-danger text-danger-contrast border border-transparent hover:opacity-90',
+  // In a page's header: a way to delete that is there, but is not the first thing the eye lands on.
+  'danger-outline': 'bg-surface text-danger border border-danger hover:bg-danger-subtle',
 };
 
 const SIZES: Record<ButtonSize, string> = {

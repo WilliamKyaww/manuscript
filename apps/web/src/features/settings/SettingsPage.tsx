@@ -219,11 +219,18 @@ function AboutSection() {
         />
       )}
       <DesktopAbout />
-      <p className="mt-3 text-sm">
-        <Link to="/diagnostics" className="text-accent underline">
-          Diagnostics, the log and a bundle for support
-        </Link>
-      </p>
+      <ul className="mt-3 space-y-1 text-sm">
+        <li>
+          <Link to="/diagnostics" className="text-accent underline">
+            Diagnostics, the log and a bundle for support
+          </Link>
+        </li>
+        <li>
+          <Link to="/design-system" className="text-accent underline">
+            Design system: the colours, type and components
+          </Link>
+        </li>
+      </ul>
     </StickySection>
   );
 }

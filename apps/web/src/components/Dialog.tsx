@@ -40,10 +40,10 @@ export function Dialog({
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
-        <RadixDialog.Overlay className="fixed inset-0 z-40 bg-overlay" />
+        <RadixDialog.Overlay className="fixed inset-0 z-40 animate-fade-in bg-overlay" />
         <RadixDialog.Content
           className={cn(
-            'fixed top-[12vh] left-1/2 z-50 flex max-h-[76vh] w-[calc(100vw-2rem)] -translate-x-1/2 flex-col',
+            'fixed top-[12vh] left-1/2 z-50 flex max-h-[76vh] w-[calc(100vw-2rem)] -translate-x-1/2 flex-col animate-rise-in',
             'rounded-lg border border-border bg-surface-raised shadow-lg focus:outline-none',
             SIZES[size],
             className,

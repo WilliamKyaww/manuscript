@@ -70,8 +70,9 @@ export function Page({
         className={cn('flex-none border-b border-border bg-surface px-6 pt-4', !toolbar && 'pb-4')}
       >
         {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} />}
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
+        {/* The actions move below the title, rather than cut it short, when the window is narrow. */}
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <div className="min-w-0 flex-1 basis-80">
             <h1
               data-page-title
               tabIndex={-1}
@@ -150,7 +151,7 @@ export function StickySection({
     <section aria-labelledby={headingId} className={cn('mb-8', className)}>
       <div
         data-sticky-header
-        className="sticky top-0 z-10 -mx-6 flex items-center justify-between gap-4 border-b border-border bg-bg px-6 py-2"
+        className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-border bg-bg py-2"
       >
         <div className="min-w-0">
           <h2 id={headingId} className="text-sm font-semibold">
