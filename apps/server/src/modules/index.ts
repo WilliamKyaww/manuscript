@@ -2,6 +2,7 @@ import type { AppContext } from '../context';
 import { createJobQueue, type JobQueue } from '../jobs/queue';
 import { createJobsRepository } from '../jobs/repository';
 import { notifyingAfter } from '../shared/change-events';
+import { type AgentModule, createAgentModule } from './agent/index';
 import { type AskService, createAskService } from './ai/ask';
 import { createEmbeddingsRepository } from './ai/embeddings/repository';
 import { createEmbeddingService, type EmbeddingService } from './ai/embeddings/service';
@@ -15,6 +16,7 @@ import { createUsageRepository } from './ai/usage';
 import { createCardsRepository } from './cards/repository';
 import { createReviewService, type ReviewService } from './cards/reviews';
 import { type CardsService, createCardsService } from './cards/service';
+import { createConceptMergeRepository } from './concepts/merge-repository';
 import { createConceptsRepository } from './concepts/repository';
 import { type ConceptsService, createConceptsService } from './concepts/service';
 import { createDraftsService, type DraftsService } from './generation/drafts';
@@ -80,6 +82,7 @@ export interface AppModules {
   readonly proposals: ProposalsService;
   readonly grading: GradingService;
   readonly links: LinkSuggester;
+  readonly agent: AgentModule;
   start(options: { watch: boolean }): Promise<void>;
   close(): Promise<void>;
 }
@@ -156,13 +159,14 @@ export function createModules(ctx: AppContext): AppModules {
   const concepts = notifyingAfter(
     createConceptsService({
       repo: createConceptsRepository(ctx.db),
+      merges: createConceptMergeRepository(ctx.db),
       notesRepo: notes.repo,
       indexer: notes.indexer,
       search,
       clock: ctx.clock,
       ids: ctx.ids,
     }),
-    ['create', 'update', 'remove'],
+    ['create', 'update', 'remove', 'merge', 'unmerge'],
     changed('concepts'),
   );
   const relationsRepo = createRelationsRepository(ctx.db);
@@ -336,6 +340,36 @@ export function createModules(ctx: AppContext): AppModules {
     proposalsRepo,
   });
 
+  // The agent's tool layer wraps the services above (Phase 12).
+  const agent = createAgentModule({
+    db: ctx.db,
+    vault: ctx.vault,
+    services: {
+      notes,
+      search,
+      sources,
+      learning,
+      lectures,
+      concepts,
+      relations,
+      graph,
+      cards,
+      reviews,
+      questions,
+      quizzes,
+      mastery,
+      proposals,
+      generation,
+      jobs,
+      clock: ctx.clock,
+      vault: ctx.vault,
+    },
+    ai: aiCore,
+    clock: ctx.clock,
+    ids: ctx.ids,
+    logger: ctx.logger,
+  });
+
   return {
     settings,
     notes,
@@ -363,6 +397,7 @@ export function createModules(ctx: AppContext): AppModules {
     proposals,
     grading,
     links,
+    agent,
     async start(options) {
       await notes.start(options);
       jobs.start();

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TOOL_PERMISSIONS } from '../agent/policy';
 import { LocatorSchema } from '../sources/types';
 import { ConceptIdSchema } from './concepts';
 import { defineEndpoint } from './contract';
@@ -113,6 +114,8 @@ export const AiPreferencesSchema = z.object({
   /** Passages and context sent with one question, in tokens. */
   contextTokens: z.number().int().min(1_000).max(200_000),
   autoAccept: AutoAcceptSchema.default(() => ({ ...NO_AUTO_ACCEPT })),
+  /** The person's override per agent tool (Phase 12); a tool without an entry has its risk's default. */
+  toolPermissions: z.record(z.string(), z.enum(TOOL_PERMISSIONS)).default(() => ({})),
 });
 export type AiPreferences = z.infer<typeof AiPreferencesSchema>;
 
@@ -126,6 +129,7 @@ export const DEFAULT_AI_PREFERENCES: AiPreferences = {
   monthlyBudget: 10,
   contextTokens: 12_000,
   autoAccept: { ...NO_AUTO_ACCEPT },
+  toolPermissions: {},
 };
 
 /**

@@ -128,9 +128,9 @@ _Last updated: 9 October 2026 (end of Phase 10)._
 | F-AI-04 | Prompt-injection defences for source content | Complete | 10 |
 | F-AI-05 | Generation of notes, summaries, cards and questions | Complete — from a lecture, source range, note or selection, with an estimate first | 11 |
 | F-AI-06 | Proposals Inbox (AI proposes, user decides) | Complete — drafts and suggestions, batch decisions, per-kind auto-accept | 11 |
-| F-AI-07 | Typed tool registry with risk levels and approvals | Planned | 12 |
-| F-AI-08 | Action log with snapshots and undo | Planned | 12 |
-| F-AI-09 | MCP server for external agents | Planned | 12 |
+| F-AI-07 | Typed tool registry with risk levels and approvals | Complete — 29 tools; approvals bound to their arguments; per-tool overrides in Settings | 12 |
+| F-AI-08 | Action log with snapshots and undo | Complete — Settings → Assistant actions; undo refuses once the target has changed | 12 |
+| F-AI-09 | MCP server for external agents | Complete — Streamable HTTP and a stdio bridge; no destructive tools offered | 12 |
 | F-AI-10 | Agentic chat with activity timeline, approvals and result cards | Planned | 13 |
 | F-AI-11 | Chat side panel with page context and @mentions | Planned | 13 |
 | F-AI-12 | Link suggestions for a note (unlinked mentions, notes close in meaning) as Inbox proposals | Complete — per note; vault-wide in the background is B-AI-15 | 11 |

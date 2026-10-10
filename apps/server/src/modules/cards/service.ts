@@ -255,6 +255,10 @@ export function createCardsService(deps: CardsDependencies) {
       requireCard(id);
       repo.setStatus([id], 'deleted', now());
     },
+    /** Brings deleted cards back (an undo), keeping their review history and schedules. */
+    restore(cardIds: readonly string[], status: 'draft' | 'active' | 'suspended'): number {
+      return repo.transaction(() => repo.restore(cardIds, status, now()));
+    },
     bulk(
       cardIds: readonly string[],
       action: 'activate' | 'suspend' | 'delete' | 'move',

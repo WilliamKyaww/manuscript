@@ -13,6 +13,7 @@ import {
   type ProviderInputSchema,
   type ProviderUpdateSchema,
   type RoleSettings,
+  type ToolPermission,
   type UsageReport,
   ValidationError,
 } from '@skb/core';
@@ -38,6 +39,8 @@ type PreferencesPatch = {
   monthlyBudget?: number | null;
   contextTokens?: number;
   autoAccept?: Partial<AutoAccept>;
+  /** Per-tool overrides; null returns a tool to the default for its risk. */
+  toolPermissions?: Record<string, ToolPermission | null>;
 };
 
 export interface AiServiceDependencies {
@@ -237,6 +240,10 @@ export function createAiService(deps: AiServiceDependencies) {
       if (patch.contextTokens !== undefined) preferences.contextTokens = patch.contextTokens;
       if (patch.autoAccept)
         preferences.autoAccept = { ...preferences.autoAccept, ...patch.autoAccept };
+      for (const [tool, permission] of Object.entries(patch.toolPermissions ?? {})) {
+        if (permission === null) delete preferences.toolPermissions[tool];
+        else preferences.toolPermissions[tool] = permission;
+      }
       store.write({ ...config, preferences });
       return settings();
     },

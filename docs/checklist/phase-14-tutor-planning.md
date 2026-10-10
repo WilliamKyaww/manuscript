@@ -16,7 +16,7 @@ Phase 13.
 
 ## Atomic tasks
 - [ ] **14.01** Tutor mode instructions and guardrails (diagnose → hint ladder → worked solution on request → check question); tests with mock transcripts
-- [ ] **14.02** "Quiz me" flow using `record_answer` with the assisted flag; tests
+- [ ] **14.02** "Quiz me" flow using `record_answer` with the assisted flag; tests — `record_answer` is built here, not in Phase 12 (ADR-0035): answers are append-only evidence and cannot be undone, so it needs a tutor session to attach them to
 - [ ] **14.03** Misconception check: explain from my knowledge base and flag where my notes are wrong (as proposals); tests (mock)
 - [ ] **14.04** Migration: `study_plans`, `plan_items`; availability settings
 - [ ] **14.05** Priority computation in `@skb/core` (`learning-system.md` §9); tests

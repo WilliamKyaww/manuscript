@@ -1,21 +1,21 @@
 # State — Manuscript
 
-_Last updated: 9 October 2026 — Claude Opus 5.5._
+_Last updated: 10 October 2026 — Claude Sonnet 5.5._
 
 ## Current phase
 
-**Phase 12 — Agent runtime, tool layer and MCP: next.** Phases 0 (research), 1 (foundation), 2
-(application shell), 3 (notes and Markdown knowledge base), 4 (lexical search and quick
-navigation), 5 (source library and ingestion pipeline), 6 (course structure and concepts), 7
-(knowledge graph), 8 (flashcards and spaced repetition), 9 (questions, quizzes and mastery), 10 (AI
-foundation) and 11 (AI generation and knowledge extraction) are complete and merged into `main`.
+**Phase 13 — Chat: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
+and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
+ingestion pipeline), 6 (course structure and concepts), 7 (knowledge graph), 8 (flashcards and
+spaced repetition), 9 (questions, quizzes and mastery), 10 (AI foundation), 11 (AI generation and
+knowledge extraction) and 12 (agent runtime, tool layer and MCP) are complete and merged into `main`.
 
 ## What works
 
 - **Local server** (`apps/server`): Hono on `127.0.0.1` with token (cookie or bearer), Host allowlist,
   Origin and Fetch-Metadata checks; `/auth` sign-in link; RFC 9457 problem details (with `details`);
   CSP and security headers; production SPA serving; server-sent events at `/api/events`.
-- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0011`), vault (`.skb/` layout,
+- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0012`), vault (`.skb/` layout,
   lock with crash recovery, strict path containment), atomic writes, vault-scoped settings.
 - **Notes** (Phase 3): Markdown files are canonical; the index (notes, aliases, tags, links,
   attachments, FTS5) is rebuilt from the files and follows edits made in other programs. Ids are
@@ -77,13 +77,24 @@ foundation) and 11 (AI generation and knowledge extraction) are complete and mer
   written answers, recorded only when accepted. **Recordings** (audio and video) are transcribed into
   timed sections and play beside their transcript; **images** and **scanned PDF pages** are read by
   the chat model; without AI they import unread and can be read again later (ADR-0034).
+- **Assistant tools and MCP** (Phase 12): 29 typed tools over the same services as the app (notes,
+  concepts and the graph, sources, course and mastery, flashcards and quizzes, files), each with a
+  risk. Reads run; changes run, are logged and can be undone; deleting, merging and anything over
+  twenty items always ask, and an approval is bound to the exact arguments, enforced by the server
+  whatever a model has been talked into (ADR-0035). **Settings → Assistant actions** shows what was
+  done (by the assistant or an MCP client) with Undo, which refuses once something has changed since,
+  and a permission per tool. **MCP** at `/api/mcp` (Streamable HTTP, token) and the `mcp.mjs` stdio
+  bridge let Claude Code or Claude Desktop search and read the knowledge base and make logged,
+  undoable changes; destructive tools are never offered to them. The agent runner (modes ask,
+  tutor, agent; 12 steps, 120 s) is built and tested with scripted models, but has no HTTP route or
+  screen yet: the chat in Phase 13 is its interface. Setup: `docs/guide/agent-tools.md`.
 - **Application shell:** sidebar, sticky page headers (per pane on paned pages), themes, command
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 636 Vitest tests and 82 Playwright tests (sticky headers on every route and pane,
-  axe in both themes, the library, the course, the graph, reviewing, practice, asking and generating
-  with the test model) — all green. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
+- **Tests:** 689 Vitest tests and 83 Playwright tests (sticky headers on every route and pane,
+  axe in both themes, the library, the course, the graph, reviewing, practice, asking, generating and an MCP client
+  using the stdio bridge) — all green. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
   p95 404 ms, median 51 ms (provisional budget 500 ms).
   Reviewing: 7 ms median between cards over 100 (budget 50 ms). Mastery pass over a year of learning
   (1,000 concepts, 5,000 reviewed cards, 20,000 answers): 201 ms (budget 500 ms). On mains power at 10,000
@@ -97,8 +108,12 @@ foundation) and 11 (AI generation and knowledge extraction) are complete and mer
 
 ## Incomplete / not started
 
-- Phases 12–22: the agent and chat, the planner and the desktop app do not exist yet; their
-  sections show placeholders.
+- Phases 13–22: the chat, the tutor and planner and the desktop app do not exist yet; their sections
+  show placeholders.
+- Not in Phase 12 (backlog): MCP resources and prompts (B-AI-20), a token per MCP client (B-AI-21),
+  logging MCP reads (B-AI-22), undoing a whole run (B-AI-23), MCP elicitation so destructive tools
+  could be offered (B-AI-24); `record_answer` moved to Phase 14 (14.02, ADR-0035); old copies in
+  `.skb/history/` are never pruned (TD-10).
 - Not in Phase 11 (backlog): recordings over 25 MB (B-AI-13), generating from long material in
   parts (B-AI-14), vault-wide link suggestions (B-AI-15), undoing a whole generation (B-AI-16), an
   Inbox history (B-AI-17), scans with image-only models (B-AI-18), cards from a recording's time
@@ -133,10 +148,9 @@ foundation) and 11 (AI generation and knowledge extraction) are complete and mer
 
 ## Next steps
 
-1. Create `phase/12-agent-tools` from `main`.
-2. Phase 12: the agent runtime and a typed tool layer with risk levels, approvals, an action log
-   with undo, and an MCP server — tools wrapping the services built so far (search, notes,
-   generation, the Inbox).
+1. Create `phase/13-chat` from `main`.
+2. Phase 13: the chat interface for the agent runner — threads, streaming, activity rows for tool
+   calls, approval cards, the page context and @mentions.
 
 ## Relevant decisions
 
@@ -149,8 +163,9 @@ knowledge graph is computed; only relations are stored · ADR-0011 FSRS-6 via ts
 flashcards are scheduled by face, and review logs are never changed · ADR-0021 transparent mastery ·
 ADR-0032 mastery recomputed from evidence in one pass; answers written once; Learn replayed from
 its answers · ADR-0012 AI SDK 7 · **ADR-0033** AI configuration outside the vault, answers as JSON lines,
-fusion in retrieval · **ADR-0034** generated material waits as drafts and proposals; AI reads media
-through injected readers.
+fusion in retrieval · ADR-0034 generated material waits as drafts and proposals; AI reads media
+through injected readers · **ADR-0035** tools are the only way to act; the server enforces
+approvals; every change is logged and undoable.
 
 ## Technical debt
 

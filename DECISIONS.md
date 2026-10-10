@@ -40,6 +40,7 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 | [0032](#adr-0032--mastery-is-recomputed-from-evidence-in-one-pass-answers-are-written-once) | Mastery is recomputed from evidence in one pass; answers are written once | Accepted | 2026-10-09 |
 | [0033](#adr-0033--ai-configuration-outside-the-vault-answers-streamed-as-json-lines-fusion-in-retrieval) | AI configuration outside the vault; answers streamed as JSON lines; fusion in retrieval | Accepted | 2026-10-09 |
 | [0034](#adr-0034--generated-material-waits-as-drafts-and-proposals-ai-reads-media-through-injected-readers) | Generated material waits as drafts and proposals; AI reads media through injected readers | Accepted | 2026-10-09 |
+| [0035](#adr-0035--tools-are-the-only-way-to-act-the-server-enforces-approvals-every-change-is-logged-and-undoable) | Tools are the only way to act; the server enforces approvals; every change is logged and undoable | Accepted | 2026-10-10 |
 
 ---
 
@@ -654,3 +655,60 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   Recordings over 25 MB cannot be transcribed until chunking arrives (backlog). Images and scans need
   a chat model that accepts images and PDFs. Costs remain estimates from user-entered prices.
 - **Date.** 9 October 2026.
+
+## ADR-0035 — Tools are the only way to act; the server enforces approvals; every change is logged and undoable
+
+- **Context.** Phase 12 lets a model, and external programs over MCP, act on the knowledge base
+  (ADR-0012, ADR-0013, ADR-0014). The founding constraints: the agent must not have unlimited
+  destructive access; the knowledge must not be held hostage by the application; text in the
+  student's own files must not be able to turn the assistant against them.
+- **Options.** Safety by prompting the model, or by rules the server enforces. Approvals as a UI
+  flag the client sets, or as tokens the server checks. Undo as a database transaction log, or per
+  tool from a small record. Concept merging as a status (`merged`, a tombstone row), or as a
+  redirect and delete. An MCP server as a second process opening the vault, or inside the app. The
+  agent loop as `ToolLoopAgent`, or `generateText` with `stopWhen` and `prepareStep`.
+- **Decision.**
+  - A tool is `{ name, input, output, risk, execute, undo }` over a domain service
+    (`modules/agent`); writes must declare an undo (`defineTool` refuses otherwise). The agent and
+    MCP call only `registry.call`, which validates input and output and applies the policy.
+  - The policy is pure and in `@skb/core` (`decideApproval`): reads run; writes run, are logged and
+    can be undone; destructive calls always ask; a write touching more than 20 items counts as
+    destructive; the person's per-tool overrides (stored in `ai.json`) may only make a tool
+    stricter, and never lift a destructive tool's approval.
+  - An approval is an HMAC of the tool name and the validated arguments under a per-process
+    secret; the registry refuses a call that needs one without a matching token. The agent loop
+    maps the policy onto the AI SDK's `toolApproval`, pauses when a call needs the person, asks an
+    `approve` callback and mints the token only for the approved call. MCP clients cannot approve:
+    destructive tools are not offered to them, and a call that would ask is refused.
+  - Migration 0012 `agent_actions` is append-only (triggers allow only marking a row undone). It
+    records changes, refusals and failures, not reads. Its statuses are `executed`, `denied`,
+    `failed`, `undone`, with the approval (`auto` or `user`) in a column of its own — a
+    simplification of the data model's earlier six-valued status.
+  - Undo is per tool, from a small JSON record and, for files, copies under `.skb/history/<action>/`.
+    `canUndo` refuses once the target has changed since (a note's hash, a quiz's attempts), so an
+    undo never overwrites the student's later work.
+  - Merging concepts redirects every reference (cards, questions, relations, memberships) to the
+    kept concept, turns the merged name and aliases into aliases of it, and deletes the merged row,
+    with a full snapshot for undo. The `merged` status stays unused: a tombstone would hold the
+    name in the unique namespace.
+  - Everything from the student's files that a tool returns (source passages, note text, search
+    snippets, other files) is wrapped as untrusted data with sentinels neutralised; the system
+    prompt says wrapped text is never to be obeyed. This is a second line: the first is that the
+    server enforces the policy whatever the model has been talked into.
+  - MCP is served inside the app at `/api/mcp` (Streamable HTTP, stateless, behind the token and
+    Host guards) using the SDK's web-standard transport. `mcp.mjs` (stdio) only relays to it,
+    because the app keeps the vault locked to a single process.
+  - `record_answer` is not built in this phase. Answers are append-only evidence (ADR-0032), so
+    recording one cannot be undone, which this phase's rule forbids for any write; the tutor's
+    "quiz me" flow (14.02) will own it, with a tutor session to hang the answers on.
+- **Reason.** A model can be persuaded; a server-side rule cannot. Binding approvals to arguments
+  means what ran is what was shown. Reads left out of the log keep it readable and small. Undo
+  with a guard is safer than undo that always succeeds. Delete-and-snapshot keeps the concept
+  tables free of rows that look alive but are not. A relay for stdio avoids two processes fighting
+  for the vault.
+- **Consequences.** Every new write tool needs an undo and a test for it. The MCP bridge needs the
+  app running. Approval tokens live only in memory, so a restart forgets pending approvals (the
+  call simply asks again). The catalogue in the user guide is generated from the registry
+  (`npm run docs:tools`, checked by a test). Phase 13 turns the runner's approval callback into the
+  chat's approval cards; Phase 14 adds `record_answer` and the planning tools.
+- **Date.** 10 October 2026.

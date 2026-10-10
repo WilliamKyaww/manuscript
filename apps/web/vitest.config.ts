@@ -10,5 +10,9 @@ export default defineProject({
     environmentOptions: { happyDOM: { settings: { disableIframePageLoading: true } } },
     include: ['src/**/*.test.{ts,tsx}'],
     setupFiles: ['./src/test/setup.ts'],
+    // Timings on a laptop vary two- to three-fold with load and battery (AGENTS.md): the default
+    // 5 s fails tests that take 2 s alone when the whole suite runs at once. A real hang still fails.
+    testTimeout: 20_000,
+    hookTimeout: 20_000,
   },
 });

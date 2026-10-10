@@ -253,6 +253,15 @@ export function createCardsRepository(db: SqlDatabase) {
         ).changes,
       );
     },
+    /** Brings deleted cards back with the given status (their schedules were never touched). */
+    restore(ids: readonly string[], status: CardStatus, at: string): number {
+      return Number(
+        db.run(
+          `UPDATE cards SET status = ?, updated_at = ? WHERE id IN (SELECT value FROM json_each(?)) AND status = 'deleted'`,
+          [status, at, JSON.stringify(ids)],
+        ).changes,
+      );
+    },
     moveCards(ids: readonly string[], setId: string, at: string): number {
       return Number(
         db.run(
