@@ -26,7 +26,8 @@
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build && npm run test:smoke",
     "test:smoke": "node scripts/smoke-server.mjs",
     "test:perf": "tsx apps/server/test/perf/notes-perf.ts",
-    "test:perf:mastery": "tsx apps/server/test/perf/mastery-perf.ts"
+    "test:perf:mastery": "tsx apps/server/test/perf/mastery-perf.ts",
+    "docs:tools": "tsx scripts/write-tool-catalogue.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",

@@ -66,6 +66,7 @@ All verified on 4 October 2026 (Phase 1):
 | `npm run verify` | typecheck → lint → test → build → smoke — **run before every commit** |
 | `npm run test:perf` | Generates 10,000 notes (and a library of 10,000 PDF pages) and checks the performance budgets (`architecture.md` §14); run before a gate that touches indexing or search |
 | `npm run test:perf:mastery` | Generates a year of learning (1,000 concepts, 5,000 reviewed cards, 20,000 answers) and times the mastery pass (budget 500 ms); run before a gate that touches mastery |
+| `npm run docs:tools` | Regenerates the tool catalogue in `docs/guide/agent-tools.md` from the tool registry (a test fails when it is out of date); run after changing a tool |
 | `run-web.bat` | One-click Windows launcher for daily use (`SKB_NO_BROWSER=1` to suppress the browser) |
 
 ### Environment pitfalls (seen in the Claude Code / VS Code environment)
@@ -75,8 +76,8 @@ All verified on 4 October 2026 (Phase 1):
 - `NoDefaultCurrentDirectoryInExePath=1` stops `cmd.exe` finding `run-web.bat` by a relative name; call
   batch files by their full path in automation (double-clicking in Explorer is unaffected).
 - Another local project may already use Vite's default port 5173 — this project's dev server uses 5317.
-  E2E ports: 4399 for the shared Playwright server, 4398, 4397, 4396, 4395 and 4394 for the tests that
-  run a server of their own (`e2e/server.ts`, which can pass extra environment such as
+  E2E ports: 4399 for the shared Playwright server, 4398, 4397, 4396, 4395, 4394 and 4393 for the tests
+  that run a server of their own (`e2e/server.ts`, which can pass extra environment such as
   `SKB_AI_PROVIDER=mock`).
 - axe (`@axe-core/playwright`) only checks colour contrast for elements inside the viewport, and page
   bodies scroll internally: grow the viewport to the page height first (`seriousViolations` and

@@ -369,9 +369,12 @@ proposals: they are `cards` and `questions` rows with status `draft` and `create
 **chat_threads** `id` · `title` · `mode` · `scope_json` · `created_at` · `updated_at` —
 **chat_messages** `id` · `thread_id`† · `role` · `parts_json` (AI SDK UI message parts) · `created_at`
 
-**agent_actions** (append-only audit) `id` · `thread_id` · `message_id` · `tool` · `risk` ·
-`input_json` · `output_json` · `status` (`auto_approved` | `approved` | `denied` | `executed` |
-`failed` | `undone`) · `snapshot_ref` · `created_at`
+**agent_actions** (canonical, migration `0012`, ADR-0035; append-only by trigger — only an undo may mark a
+row) `id` (`act_…`) · `thread_id` · `message_id` (chat, Phase 13) · `actor` (`agent` | `mcp`) · `tool` · `risk`
+(`read` | `write` | `destructive`, after escalation) · `approval` (`auto` | `user`) · `status` (`executed` |
+`denied` | `failed` | `undone`) · `summary` · `input_json` · `output_json` · `error` · `undo_json` (what the tool
+needs to undo it) · `snapshot_ref` (the `.skb/history/<id>/` folder holding copies of changed files) ·
+`created_at` · `undone_at`. Reads are not logged.
 
 **jobs** (migration `0005`) `id` · `kind` (e.g. `source.ingest`) · `subject` (the entity worked on) ·
 `payload_json` · `status` (`queued` | `running` | `succeeded` | `failed` | `cancelled`) · `progress`

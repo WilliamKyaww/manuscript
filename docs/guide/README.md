@@ -9,6 +9,7 @@ feature it describes is complete.
 | [Lecture material: the library](./sources.md) | Importing slides, PDFs and documents, supported formats and limits, reading them, searching them down to the page or slide, organising the `Sources` folder by hand, retrying and deleting |
 | [Your course](./course.md) | Courses, modules and their codes, assessments and the mark calculator, lectures and their material, topics, concepts and links to them, the Today widgets |
 | [Flashcards and reviewing](./flashcards.md) | Card sets, basic, reversed and cloze cards, writing good cards, cards from notes and sources, the keyboard review session, statistics, review settings, Anki import and export |
+| [The assistant's tools, approvals, undo and MCP](./agent-tools.md) | What the assistant may do and what always asks you first, seeing and undoing its changes, connecting Claude Code or Claude Desktop over MCP, the full tool list |
 | [AI](./ai.md) | Setting up providers and models, asking about your material with citations, semantic search and similar notes, privacy, costs and the monthly budget, test mode |
 | [Generating with AI and the Inbox](./generation.md) | Flashcards, questions, lecture notes and concepts from a lecture, source, note or selection; the estimate; quality rules; reviewing drafts and suggestions; auto-accept; link suggestions; AI grading; recordings, images and scanned pages |
 | [Practice](./practice.md) | Writing questions of each kind, the question bank, practice quizzes, mock exams, Learn sessions, grading your own answers, retakes and Markdown export |

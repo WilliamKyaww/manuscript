@@ -25,7 +25,6 @@ export function scriptedModel(turns: readonly Turn[]): ScriptedModel {
   const queue = [...turns];
   const prompts: LanguageModelV4Prompt[] = [];
   const offered: string[][] = [];
-  let count = 0;
   const usage = {
     inputTokens: { total: 10, noCache: 10, cacheRead: 0, cacheWrite: 0 },
     outputTokens: { total: 5, text: 5, reasoning: 0 },
@@ -43,9 +42,9 @@ export function scriptedModel(turns: readonly Turn[]): ScriptedModel {
         return {
           content: [
             ...(turn.text ? [{ type: 'text' as const, text: turn.text }] : []),
-            ...turn.calls.map((call) => ({
+            ...turn.calls.map((call, index) => ({
               type: 'tool-call' as const,
-              toolCallId: `call_${(count += 1)}`,
+              toolCallId: `call_${prompts.length}_${index}`,
               toolName: call.name,
               input: JSON.stringify(call.input),
             })),

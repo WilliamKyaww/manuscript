@@ -10,7 +10,7 @@ import {
 import type { Logger } from '../../shared/logger';
 import { describeProviderError } from '../ai/errors';
 import type { AiService } from '../ai/service';
-import { offeredToMcp, type ToolRegistry } from './registry';
+import type { ToolRegistry } from './registry';
 import type { AnyTool } from './types';
 
 /**
@@ -84,7 +84,7 @@ const MODE_INSTRUCTIONS: Record<AgentMode, string> = {
 
 /** The tools a mode may use. */
 export function toolsForMode(mode: AgentMode, tools: readonly AnyTool[]): AnyTool[] {
-  if (mode === 'agent') return tools.filter(offeredToAgent);
+  if (mode === 'agent') return [...tools];
   if (mode === 'tutor')
     return tools.filter(
       (candidate) =>
@@ -92,8 +92,6 @@ export function toolsForMode(mode: AgentMode, tools: readonly AnyTool[]): AnyToo
     );
   return tools.filter((candidate) => candidate.risk === 'read');
 }
-
-const offeredToAgent = (_tool: AnyTool) => true;
 
 export function systemPrompt(mode: AgentMode, context: string | undefined): string {
   return [

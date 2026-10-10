@@ -1,6 +1,6 @@
 # Phase 12 — Agent runtime, tool layer and MCP
 
-**Status:** Not started · **Branch:** `phase/12-agent-tools`
+**Status:** In progress — tasks done, gate pending · **Branch:** `phase/12-agent-tools`
 
 ## Objective
 A typed tool registry over the domain services with risk levels, a policy engine mapped to AI SDK tool
@@ -13,27 +13,28 @@ The controlled action layer between models and data (ADR-0012, ADR-0013, ADR-001
 Phase 11.
 
 ## Atomic tasks
-- [ ] **12.01** Migration: `agent_actions`
-- [ ] **12.02** `ToolDefinition` contract, registry and input/output validation; tests
-- [ ] **12.03** Policy engine (risk defaults, per-tool overrides, bulk escalation) → AI SDK `toolApproval`; tests
-- [ ] **12.04** Action log, snapshot store (`.skb/history/`) and undo framework; tests
-- [ ] **12.05** Knowledge tools: `search_knowledge`, `get_note`, `list_notes`, `create_note`, `update_note`, `link_notes`, `move_note`, `delete_note`; tests incl. undo
-- [ ] **12.06** Concept/graph tools: `get_concept`, `search_graph`, `create_concept`, `propose_relations`, `merge_concepts`; tests
-- [ ] **12.07** Source tools: `search_sources`, `get_source`, `read_source`, `extract_concepts`; tests
-- [ ] **12.08** Learning tools: `list_modules`, `get_module`, `get_lecture`, `get_mastery`, `get_weak_areas`, `get_due_reviews`, `get_deadlines`, `create_flashcards`, `create_quiz`, `record_answer`, `delete_cards`; tests
-- [ ] **12.09** File tools: `read_file`, `move_file` with vault containment; traversal tests
-- [ ] **12.10** Agent runner (ToolLoopAgent, per-mode instructions, `prepareStep` context, step/time limits); tests with scripted mock models
-- [ ] **12.11** MCP server adapter (stdio + localhost Streamable HTTP with token; non-destructive subset); tests with an MCP client
-- [ ] **12.12** Settings page: recent agent actions with undo; per-tool permission overrides
-- [ ] **12.13** Security tests: instructions injected in sources cannot run destructive tools without approval
-- [ ] **12.14** Docs: tool catalogue (generated from the registry), MCP setup for Claude Code/Desktop; STATE/FEATURES/journal updated
+- [x] **12.01** Migration: `agent_actions` — `0012_agent_actions.sql`, append-only by trigger (only an undo may mark a row); changes, refusals and failures are logged, reads are not (ADR-0035)
+- [x] **12.02** `ToolDefinition` contract, registry and input/output validation; tests — `modules/agent/{types,registry}.ts`; a write must declare an undo (`defineTool` refuses otherwise); bad calls come back as results the model can read
+- [x] **12.03** Policy engine (risk defaults, per-tool overrides, bulk escalation) → AI SDK `toolApproval`; tests — `decideApproval` in `@skb/core` (reads run, writes run and are logged, destructive always asks, more than 20 items counts as destructive, overrides only stricten); approvals are HMAC tokens bound to the tool and its exact arguments
+- [x] **12.04** Action log, snapshot store (`.skb/history/`) and undo framework; tests — per-tool undo records, file copies under `.skb/history/<action>/`, `canUndo` refuses once the target has changed since
+- [x] **12.05** Knowledge tools: `search_knowledge`, `get_note`, `list_notes`, `create_note`, `update_note`, `link_notes`, `move_note`, `delete_note`; tests incl. undo
+- [x] **12.06** Concept/graph tools: `get_concept`, `search_graph`, `create_concept`, `propose_relations`, `merge_concepts`; tests — merge redirects cards, questions, relations and memberships, keeps the merged name and aliases as aliases of the kept concept, and restores everything on undo
+- [x] **12.07** Source tools: `search_sources`, `get_source`, `read_source`, `extract_concepts`; tests — source text arrives wrapped as untrusted data
+- [x] **12.08** Learning tools: `list_modules`, `get_module`, `get_lecture`, `get_mastery`, `get_weak_areas`, `get_due_reviews`, `get_deadlines`, `create_flashcards`, `create_quiz`, `delete_cards`; tests — `record_answer` moves to Phase 14 (task 14.02): answers are append-only evidence and cannot be undone, which this phase's rule for writes forbids (ADR-0035)
+- [x] **12.09** File tools: `read_file`, `move_file` with vault containment; traversal tests — `..`, absolute and Windows paths, hidden `.skb`, notes, binaries and over-size files all refused
+- [x] **12.10** Agent runner (ToolLoopAgent, per-mode instructions, `prepareStep` context, step/time limits); tests with scripted mock models — `generateText` with `stopWhen`/`prepareStep` (what `ToolLoopAgent` wraps), modes ask/tutor/agent, 12 steps and 120 s, approvals through the SDK's `toolApproval`
+- [x] **12.11** MCP server adapter (stdio + localhost Streamable HTTP with token; non-destructive subset); tests with an MCP client — `/api/mcp` inside the app; `mcp.mjs` stdio bridge (relay, because the app holds the vault lock); tested with the official client, in-process and, in E2E, through the built bridge
+- [x] **12.12** Settings page: recent agent actions with undo; per-tool permission overrides — Settings → Assistant actions
+- [x] **12.13** Security tests: instructions injected in sources cannot run destructive tools without approval — `security.test.ts`, with a model that obeys text planted in a slide
+- [x] **12.14** Docs: tool catalogue (generated from the registry), MCP setup for Claude Code/Desktop; STATE/FEATURES/journal updated — `docs/guide/agent-tools.md` (catalogue generated by `npm run docs:tools` and checked by a test); ADR-0035; PRDs
 
 ## Acceptance criteria
-Every write is undoable; destructive tools always pause for approval; MCP clients can search and read
-the knowledge base.
+- [x] Every write is undoable — `defineTool` refuses a write without an undo; a catalogue test checks it for every tool; each tool's undo is tested
+- [x] Destructive tools always pause for approval — in the registry (not the model): no token, no run; tested with forged and reused tokens, changed arguments, extra fields, declined calls and a model that obeys planted instructions
+- [x] MCP clients can search and read the knowledge base — tested with the official client over HTTP and, in E2E, through the built stdio bridge
 
 ## Gate
-- [ ] All tasks `[x]` · [ ] verify green · [ ] docs updated · [ ] merged
+- [x] All tasks `[x]` · [ ] verify green · [ ] docs updated · [ ] merged
 
 ## Recommended commit messages
 ```text

@@ -115,7 +115,8 @@ Tools wrap **services**, so the HTTP API and the agent share validation and busi
 | Sources | `search_sources`, `get_source`, `read_source` (page/slide ranges) | read | 12 |
 | | `extract_concepts` (→ proposals) | write | 12 |
 | Learning | `list_modules`, `get_module`, `get_lecture`, `get_mastery`, `get_weak_areas`, `get_due_reviews`, `get_deadlines` | read | 12 |
-| | `create_flashcards` (drafts by default), `create_quiz`, `record_answer` (tutor "quiz me") | write | 12 |
+| | `create_flashcards` (drafts by default), `create_quiz` | write | 12 |
+| | `record_answer` (tutor "quiz me"; answers are append-only evidence, so not undoable) | write | 14 |
 | | `delete_cards` | destructive | 12 |
 | Planning | `get_study_plan` | read | 14 |
 | | `create_study_plan`, `update_study_plan` | write | 14 |
@@ -145,6 +146,16 @@ Every executed write/destructive call creates an `agent_actions` row with input,
 reference (prior file content in `.skb/history/`, or prior rows serialised as JSON). Activity rows offer
 **Undo** while the target has not changed since; undo is itself logged. A Settings page lists recent
 actions.
+
+Built in Phase 12 (ADR-0035, `docs/guide/agent-tools.md`): `modules/agent` holds the registry, the
+HMAC-bound approvals, the action log (`agent_actions`, append-only by trigger; changes, refusals and
+failures are logged, reads are not), the snapshot store (`.skb/history/<action>/`) and the tools.
+Undo is per tool and refuses once the target has changed since. The statuses are `executed`, `denied`,
+`failed`, `undone`, with how it was allowed (`auto` or `user`) in its own column. Text returned from
+files is wrapped as untrusted data. The runner (`runner.ts`) is `generateText` with `stopWhen`,
+`prepareStep` (the last step may only answer) and the policy mapped onto `toolApproval`; modes are
+`ask` (read tools), `tutor` (plus flashcards and quizzes) and `agent` (all). Limits are 12 steps,
+120 s in total, 60 s per step and 30 s per tool.
 
 ## 9. Activity UI protocol (Phase 13)
 
@@ -207,6 +218,11 @@ warning at 80 %; generation jobs show estimated cost before starting when large.
 Exposes read tools and safe write tools over stdio (`skb mcp`) and Streamable HTTP on localhost with the
 app token. Destructive tools are not exposed by default. Targets the MCP 2026-07-28 specification via the
 official TypeScript SDK.
+
+Built in Phase 12: Streamable HTTP at `/api/mcp` inside the app (stateless, behind the token and Host
+guards), offering read and write tools only; `mcp.mjs` is a stdio bridge that relays to it, because the
+running app holds the vault lock. MCP calls are logged as the `mcp` actor; a call that would need
+approval is refused. The SDK is `@modelcontextprotocol/sdk` 1.32.1 (MIT).
 
 ## 14. Testing AI features
 
