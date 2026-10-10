@@ -37,7 +37,7 @@ function ConceptRow({ row }: { row: ConceptProgress }) {
           </span>
         </summary>
         <div className="mt-2 space-y-2 pl-4">
-          <MasteryExplanation components={components} />
+          <MasteryExplanation components={components} credit={row.credit} />
           {row.signals.map((signal) => (
             <p key={signal.kind} className="text-xs text-muted">
               {signal.reason}

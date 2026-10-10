@@ -24,6 +24,8 @@ export const MasteryComponentsSchema = z.object({
   /** Recency-weighted accuracy of the last 20 answers, and their total weight. */
   accuracy: z.number().nullable(),
   answerWeight: z.number(),
+  /** The part of the answer weight that is credit from concepts that build on this one. */
+  implicitWeight: z.number().default(0),
   /** E = faces + 1.5 × answer weight. */
   evidence: z.number(),
   coverage: z.number().nullable(),
@@ -56,6 +58,19 @@ export const ConceptProgressSchema = z.object({
   signals: z.array(WeakSignalSchema),
   priority: z.number(),
   exposure: ExposureSchema,
+  /** Where implicit credit came from, for the explanation (learning-system.md §10). */
+  credit: z
+    .array(
+      z.object({
+        concept: ConceptRefSchema,
+        hops: z.number().int(),
+        factor: z.number(),
+        answers: z.number().int(),
+      }),
+    )
+    .default([]),
+  /** Raised priority because a prerequisite was answered wrongly lately. */
+  atRisk: z.boolean().default(false),
 });
 export type ConceptProgress = z.infer<typeof ConceptProgressSchema>;
 

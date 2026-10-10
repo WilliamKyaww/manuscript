@@ -16,7 +16,14 @@ export const WEAKNESS = {
   forgottenNow: 0.7,
 } as const;
 
-export const WEAK_SIGNALS = ['weak', 'slipping', 'lapsing', 'forgotten', 'no_material'] as const;
+export const WEAK_SIGNALS = [
+  'weak',
+  'slipping',
+  'lapsing',
+  'forgotten',
+  'at_risk',
+  'no_material',
+] as const;
 export type WeakSignalKind = (typeof WEAK_SIGNALS)[number];
 
 export interface WeakSignal {
@@ -34,6 +41,8 @@ export interface WeaknessEvidence {
   recallBefore: number | null;
   /** Cards and questions linked to the concept. */
   itemsLinked: number;
+  /** Prerequisites answered wrongly lately (names), if any (learning-system.md §10). */
+  atRiskFrom?: readonly string[];
 }
 
 const percent = (value: number) => `${Math.round(value * 100)} %`;
@@ -98,6 +107,12 @@ export function weakSignals(evidence: WeaknessEvidence): WeakSignal[] {
     signals.push({
       kind: 'forgotten',
       reason: `Recall fell from ${evidence.recallBefore.toFixed(2)} to ${mastery.recall.toFixed(2)} since ${days} days ago.`,
+    });
+
+  if (evidence.atRiskFrom && evidence.atRiskFrom.length > 0)
+    signals.push({
+      kind: 'at_risk',
+      reason: `You answered ${evidence.atRiskFrom.map((name) => `“${name}”`).join(' and ')}, which this builds on, wrongly lately.`,
     });
 
   return signals;

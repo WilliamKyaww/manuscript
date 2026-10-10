@@ -60,7 +60,7 @@ export function ConceptMasteryPanel({ conceptId }: { conceptId: string }) {
               {formatCount(data.questions.linked, 'question')} ({data.questions.answered} answered)
             </p>
           </div>
-          <MasteryExplanation components={data.components} />
+          <MasteryExplanation components={data.components} credit={data.credit} />
           {data.signals.length > 0 && (
             <ul aria-label="Signals" className="space-y-1 text-sm">
               {data.signals.map((signal) => (

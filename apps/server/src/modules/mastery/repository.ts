@@ -48,8 +48,28 @@ export interface CacheRow {
 
 export type MasteryRepository = ReturnType<typeof createMasteryRepository>;
 
+/** An accepted `prerequisite_for` relation between two concepts, with its own weight if it has one. */
+export interface PrerequisiteRow {
+  from: string;
+  to: string;
+  weight: number | null;
+}
+
 export function createMasteryRepository(db: SqlDatabase) {
   return {
+    prerequisites: (): PrerequisiteRow[] =>
+      db
+        .all<Raw>(
+          `SELECT from_id, to_id, weight FROM relations
+            WHERE relation = 'prerequisite_for' AND status = 'accepted'
+              AND from_type = 'concept' AND to_type = 'concept'
+            ORDER BY from_id, to_id`,
+        )
+        .map((raw) => ({
+          from: String(raw.from_id),
+          to: String(raw.to_id),
+          weight: raw.weight === null || raw.weight === undefined ? null : Number(raw.weight),
+        })),
     concepts: (): ConceptInfo[] =>
       db
         .all<Raw>(

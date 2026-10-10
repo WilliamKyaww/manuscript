@@ -29,6 +29,7 @@ export * from './graph/vocabulary';
 export * from './ids';
 export * from './learning/anki';
 export * from './learning/cards';
+export * from './learning/credit';
 export * from './learning/fsrs';
 export * from './learning/marks';
 export * from './learning/mastery';
