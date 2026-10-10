@@ -56,9 +56,17 @@ describe('the list of vaults on this machine', () => {
     expect(activeVault(dataDir)).toBeNull();
     setActive(dataDir, second);
     expect(activeVault(dataDir)).toBe(second);
-    // A vault that has gone is not opened by surprise.
+    // A vault that was opened before and has gone is not replaced by an empty one by surprise.
     rmSync(second, { recursive: true });
     expect(activeVault(dataDir)).toBeNull();
+    // One that was only chosen, in a folder that exists, is made when it is opened.
+    const fresh = path.join(path.dirname(first), 'fresh vault');
+    setActive(dataDir, fresh);
+    expect(activeVault(dataDir)).toBe(fresh);
+    // …but not under a parent that is not there (a drive that is not connected).
+    setActive(dataDir, path.join(path.dirname(first), 'no such drive', 'vault'));
+    expect(activeVault(dataDir)).toBeNull();
+    setActive(dataDir, second);
 
     forget(dataDir, first);
     expect(readRegistry(dataDir).recent.map((entry) => entry.path)).toEqual([second]);
@@ -163,7 +171,8 @@ describe('opening another vault', () => {
       restarting: false,
       path: path.resolve(other),
     });
-    expect(activeVault(harness.ctx.config.dataDir)).toBeNull(); // not there yet, so not opened by surprise
+    // A folder chosen but not made yet is a new vault to make there, once the parent exists.
+    expect(activeVault(harness.ctx.config.dataDir)).toBe(path.resolve(other));
     mkdirSync(other);
     expect(activeVault(harness.ctx.config.dataDir)).toBe(path.resolve(other));
   });
