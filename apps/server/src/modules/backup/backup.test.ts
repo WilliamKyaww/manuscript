@@ -119,6 +119,18 @@ describe('the daily backup', () => {
   });
 });
 
+describe('after a crash', () => {
+  it('removes a backup that was cut short, and keeps the real ones', () => {
+    const { db, folder } = database();
+    const backups = path.join(folder, 'backups');
+    const real = createBackup(db, backups, new Date('2026-10-10T09:00:00Z'), 'daily');
+    writeFileSync(path.join(backups, 'skb-20261010-100000-daily.db.partial'), 'half');
+    const clock = new FixedClock('2026-10-10T10:00:00.000Z');
+    createBackupService({ db, directory: backups, clock, logger: silentLogger });
+    expect(readdirSync(backups)).toEqual([real.name]);
+  });
+});
+
 describe('before a migration', () => {
   it('keeps the database as it was, and only when there is something to keep', async () => {
     const root = temp();

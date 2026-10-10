@@ -1,6 +1,7 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { NotFoundError } from '@skb/core';
+import { writeFileAtomic } from '../../vault/atomic';
 import type { Vault } from '../../vault/vault';
 import type { SnapshotReader, SnapshotWriter } from './types';
 
@@ -33,7 +34,8 @@ export function createSnapshotStore(vault: Vault): SnapshotStore {
           const reference = `${actionId}/${count}`;
           const target = absolute(reference);
           mkdirSync(path.dirname(target), { recursive: true });
-          copyFileSync(source, target);
+          // Written whole or not at all: undo trusts what is here.
+          writeFileAtomic(target, readFileSync(source));
           return reference;
         },
       };

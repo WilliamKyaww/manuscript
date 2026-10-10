@@ -14,7 +14,7 @@ Phase 16.
 
 ## Atomic tasks
 - [x] **17.01** Automatic daily SQLite backups (`VACUUM INTO`, rotation) and pre-migration backups
-- [ ] **17.02** Crash-safety audit: atomic writes everywhere, WAL checkpointing, startup recovery of interrupted jobs
+- [x] **17.02** Crash-safety audit: atomic writes everywhere, WAL checkpointing, startup recovery of interrupted jobs
 - [ ] **17.03** Performance pass against budgets with a 10k-note / 100k-chunk fixture
 - [ ] **17.04** Security review (localhost threat model re-check, CSP, dependency audit, secrets handling)
 - [ ] **17.05** Error-handling audit (every API error mapped; UI messages actionable)

@@ -1,5 +1,11 @@
 import type { Backup, Backups } from '@skb/core';
-import { BACKUP_KEEP, createBackup, listBackups, pruneBackups } from '../../db/backup';
+import {
+  BACKUP_KEEP,
+  createBackup,
+  listBackups,
+  pruneBackups,
+  removeUnfinishedBackups,
+} from '../../db/backup';
 import type { SqlDatabase } from '../../db/sqlite';
 import type { Clock } from '../../shared/clock';
 import type { Logger } from '../../shared/logger';
@@ -27,6 +33,8 @@ export type BackupService = ReturnType<typeof createBackupService>;
 
 export function createBackupService(deps: BackupDependencies) {
   const { db, directory, clock, logger } = deps;
+  // A crash during a backup leaves a .partial file; nothing is writing one now.
+  removeUnfinishedBackups(directory);
   let first: ReturnType<typeof setTimeout> | null = null;
   let repeat: ReturnType<typeof setInterval> | null = null;
 

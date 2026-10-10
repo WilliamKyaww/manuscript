@@ -141,6 +141,15 @@ apps/web/src/
 Writes: Markdown via write-to-temp + rename (atomic); SQLite in WAL mode with `foreign_keys=ON`; a lock
 file in `.skb/` prevents two servers opening the same vault.
 
+**Crash safety (audited in Phase 17).** Every file the application writes is written whole or not at all:
+vault files, settings, tokens and the saved copies kept for undo go through `writeFileAtomic`
+(temp file, fsync, rename); exports, database backups and a restored vault are built under a `.partial` /
+`.restoring` name and renamed at the end, and what a crash left behind is removed at the next start. The
+database is in WAL mode and is folded into one file on a clean close; every multi-row change is one
+transaction. After a crash: interrupted jobs are queued again, sources that were `processing` are read
+again, the lock of a dead process is taken over, and the index is reconciled with the files. A copy of the
+database is made daily and before a migration (`db/backup.ts`).
+
 ## 6. Key flows
 
 ### 6.1 Saving a note

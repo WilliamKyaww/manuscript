@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -134,6 +134,23 @@ describe('openDatabase', () => {
     expect(db.get<{ journal_mode: string }>('PRAGMA journal_mode')?.journal_mode).toBe('wal');
     expect(db.get<{ foreign_keys: number }>('PRAGMA foreign_keys')?.foreign_keys).toBe(1);
     expect(sqliteVersion(db)).toMatch(/^3\.\d+\.\d+$/);
+  });
+
+  it('leaves the file whole on its own when it is closed (the write-ahead log is folded in)', () => {
+    const folder = mkdtempSync(path.join(tmpdir(), 'skb-wal-'));
+    try {
+      const file = path.join(folder, 'wal.db');
+      const db = openDatabase(file);
+      db.exec('CREATE TABLE t (id INTEGER PRIMARY KEY, v TEXT NOT NULL) STRICT');
+      for (let n = 0; n < 50; n += 1) db.run('INSERT INTO t (v) VALUES (?)', [`row ${n}`]);
+      db.close();
+      expect(existsSync(`${file}-wal`)).toBe(false);
+      const again = openDatabase(file, { readOnly: true });
+      expect(again.get<{ n: number }>('SELECT count(*) AS n FROM t')?.n).toBe(50);
+      again.close();
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
+    }
   });
 
   it('is safe to close twice', () => {

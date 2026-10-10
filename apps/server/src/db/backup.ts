@@ -69,6 +69,18 @@ export function listBackups(directory: string): Backup[] {
   );
 }
 
+/** Removes copies a crash left half-made (nothing is making one when the application starts). */
+export function removeUnfinishedBackups(directory: string): string[] {
+  if (!existsSync(directory)) return [];
+  const removed: string[] = [];
+  for (const entry of readdirSync(directory)) {
+    if (!entry.endsWith('.partial')) continue;
+    rmSync(path.join(directory, entry), { force: true });
+    removed.push(entry);
+  }
+  return removed;
+}
+
 /** Removes the oldest backups of each reason beyond what is kept; returns the names removed. */
 export function pruneBackups(
   directory: string,
