@@ -148,16 +148,30 @@ if (await alreadyRunning()) {
   process.exit(0);
 }
 
-// 5. Start
+// 5. Start. The server exits with 75 when the student asks to open another vault (Settings → Data);
+// the vault is chosen at start-up, so it is started again here, without opening another tab.
+const RESTART_EXIT_CODE = 75;
+const startServer = (first) => {
+  const serverArgs = [
+    '--enable-source-maps',
+    serverBundle,
+    ...(openTheBrowser && first ? ['--open'] : []),
+    ...process.argv.slice(2),
+  ];
+  const server = spawn(process.execPath, serverArgs, {
+    cwd: root,
+    stdio: 'inherit',
+    env: { ...process.env, SKB_RESTARTABLE: '1' },
+  });
+  server.on('exit', (code) => {
+    if (code === RESTART_EXIT_CODE) {
+      say('Opening the other vault...');
+      startServer(false);
+    } else process.exit(code ?? 0);
+  });
+  server.on('error', (error) => fail(`Could not start the server: ${error.message}`));
+};
 say('Starting...');
-const serverArgs = [
-  '--enable-source-maps',
-  serverBundle,
-  ...(openTheBrowser ? ['--open'] : []),
-  ...process.argv.slice(2),
-];
-const server = spawn(process.execPath, serverArgs, { cwd: root, stdio: 'inherit' });
 // Ctrl+C reaches the server directly (same console); just wait for it to finish.
 process.on('SIGINT', () => {});
-server.on('exit', (code) => process.exit(code ?? 0));
-server.on('error', (error) => fail(`Could not start the server: ${error.message}`));
+startServer(true);

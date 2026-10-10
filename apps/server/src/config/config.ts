@@ -38,6 +38,11 @@ export interface ConfigInput {
   bundledWebDir: string | null;
   /** Whether a path exists (injectable for tests; defaults to the file system). */
   exists?: (path: string) => boolean;
+  /**
+   * The vault the student last switched to, given the data directory. Used only in production, and
+   * only when neither `--vault` nor `SKB_VAULT` names one (task 16.08).
+   */
+  activeVault?: (dataDir: string) => string | null;
 }
 
 export class ConfigError extends Error {
@@ -73,13 +78,20 @@ export function resolveConfig(input: ConfigInput): ServerConfig {
   const resolvePath = (value: string) => path.resolve(input.cwd, value);
 
   const port = parsePort(values.port ?? env.SKB_PORT);
-  const vaultPath = resolvePath(
-    values.vault ?? env.SKB_VAULT ?? defaultVaultPath(mode, input.homeDir, input.cwd, input.exists),
-  );
   const dataDir = resolvePath(
     values['data-dir'] ??
       env.SKB_DATA_DIR ??
       defaultDataDir(input.platform, input.env, input.homeDir, input.exists),
+  );
+  const remembered =
+    mode === 'production' && values.vault === undefined && env.SKB_VAULT === undefined
+      ? (input.activeVault?.(dataDir) ?? null)
+      : null;
+  const vaultPath = resolvePath(
+    values.vault ??
+      env.SKB_VAULT ??
+      remembered ??
+      defaultVaultPath(mode, input.homeDir, input.cwd, input.exists),
   );
   const webDirValue = values['web-dir'] ?? env.SKB_WEB_DIR;
   const webDir =

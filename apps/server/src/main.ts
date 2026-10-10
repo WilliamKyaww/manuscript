@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { APP_NAME, AppError, LEGACY_APP_NAMES } from '@skb/core';
 import { ConfigError, resolveConfig, type ServerConfig } from './config/config';
+import { activeVault } from './modules/portability/registry';
 import { openInBrowser } from './platform/browser';
 import { type RunningServer, StartupError, startServer } from './server';
 import { createLogger, type Logger } from './shared/logger';
@@ -14,6 +15,9 @@ function bundledWebDir(): string | null {
   const dir = fileURLToPath(new URL('./web/', import.meta.url));
   return existsSync(path.join(dir, 'index.html')) ? dir : null;
 }
+
+/** `EX_TEMPFAIL`: "try again" — what a launcher takes to mean "start me once more". */
+const RESTART_EXIT_CODE = 75;
 
 function exitWithMessage(message: string, code: number): never {
   process.stderr.write(`\n${APP_NAME}: ${message}\n\n`);
@@ -86,6 +90,7 @@ async function main(): Promise<void> {
       homeDir: os.homedir(),
       cwd: process.cwd(),
       bundledWebDir: bundledWebDir(),
+      activeVault,
     });
   } catch (error) {
     if (error instanceof ConfigError) exitWithMessage(error.message, 2);
@@ -95,9 +100,20 @@ async function main(): Promise<void> {
   const pretty = config.mode === 'development' || process.stdout.isTTY === true;
   const logger = createLogger({ level: config.logLevel, format: pretty ? 'pretty' : 'json' });
 
+  // The launcher (run-web) and the desktop shell relaunch the process on this exit code, which is how
+  // opening another vault works: the vault is chosen when the process starts.
+  let requestStop: (reason: string, code?: number) => void = () => {};
+  const restart = {
+    available: process.env.SKB_RESTARTABLE === '1',
+    request: () => {
+      // Let the response that asked for the restart reach the browser first.
+      setTimeout(() => requestStop('restart requested', RESTART_EXIT_CODE), 400).unref();
+    },
+  };
+
   let running: RunningServer;
   try {
-    running = await startServer(config, { logger });
+    running = await startServer(config, { logger, restart });
   } catch (error) {
     if (error instanceof StartupError || error instanceof AppError)
       exitWithMessage(error.message, 1);
@@ -124,6 +140,7 @@ async function main(): Promise<void> {
     );
   };
 
+  requestStop = stop;
   for (const signal of ['SIGINT', 'SIGTERM', 'SIGBREAK', 'SIGHUP'] as const) {
     process.on(signal, () => stop(signal));
   }

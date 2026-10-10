@@ -4,10 +4,11 @@ import { serve } from '@hono/node-server';
 import { APP_NAME, createIdFactory, type IdFactory } from '@skb/core';
 import { createApp } from './app';
 import type { ServerConfig } from './config/config';
-import type { AppContext } from './context';
+import type { AppContext, RestartControl } from './context';
 import { loadMigrations, migrate } from './db/migrate';
 import { openDatabase, type SqlDatabase } from './db/sqlite';
 import { type AppModules, createModules } from './modules/index';
+import { recordOpened } from './modules/portability/registry';
 import { loadOrCreateToken } from './security/token';
 import { type Clock, systemClock } from './shared/clock';
 import { createEventBus } from './shared/events';
@@ -36,6 +37,8 @@ export interface StartServerOptions {
   migrationsDir?: string;
   /** Watch the vault for external edits (default true). */
   watch?: boolean;
+  /** How the process can be restarted on another vault; absent in tests. */
+  restart?: RestartControl;
 }
 
 export class StartupError extends Error {
@@ -67,6 +70,13 @@ export async function startServer(
     if (result.applied.length > 0)
       logger.info('Applied database migrations', { applied: result.applied });
 
+    try {
+      recordOpened(config.dataDir, vault.root, clock.now());
+    } catch (error) {
+      // The recent list is a convenience; never stop the app for it.
+      logger.warn('Could not update the list of recent vaults', { error });
+    }
+
     const token = loadOrCreateToken(config.dataDir, config.authTokenOverride);
     const context: AppContext = {
       config,
@@ -78,6 +88,7 @@ export async function startServer(
       events: createEventBus((error) => logger.error('An event listener failed', { error })),
       version: VERSION,
       startedAt: clock.now(),
+      ...(options.restart ? { restart: options.restart } : {}),
     };
     let boundPort = config.port;
     const modules = createModules(context);

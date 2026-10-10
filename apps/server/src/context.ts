@@ -7,6 +7,15 @@ import type { Logger } from './shared/logger';
 import type { Vault } from './vault/vault';
 
 /**
+ * How the running process can be asked to start again (to open another vault). `available` is
+ * true only when something watches the process and relaunches it: the launcher or the desktop shell.
+ */
+export interface RestartControl {
+  readonly available: boolean;
+  request(): void;
+}
+
+/**
  * Explicit dependency container passed to route and service factories (architecture.md §3).
  * Tests build one with an in-memory database, a temporary vault and a fixed clock.
  */
@@ -20,4 +29,5 @@ export interface AppContext {
   readonly events: EventBus;
   readonly version: string;
   readonly startedAt: Date;
+  readonly restart?: RestartControl;
 }
