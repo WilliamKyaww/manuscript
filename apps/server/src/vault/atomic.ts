@@ -1,6 +1,23 @@
 import { randomBytes } from 'node:crypto';
 import { closeSync, fsyncSync, mkdirSync, openSync, renameSync, rmSync, writeSync } from 'node:fs';
 import path from 'node:path';
+import { ValidationError } from '@skb/core';
+
+/** Windows refuses a path of 260 characters or more unless long paths are switched on system-wide. */
+export const WINDOWS_PATH_LIMIT = 259;
+
+/**
+ * Says so, in words, when a path cannot be written on Windows. Without this the operating system
+ * answers "file not found" for a file that was about to be created.
+ */
+export function assertPathFits(target: string, platform: NodeJS.Platform = process.platform): void {
+  if (platform !== 'win32' || target.startsWith('\\\\?\\')) return;
+  if (target.length > WINDOWS_PATH_LIMIT)
+    throw new ValidationError(
+      'That would make the full path of a file longer than Windows allows (260 characters). ' +
+        'Use a shorter name or a shallower folder, or keep the vault closer to the top of the drive.',
+    );
+}
 
 /**
  * Writes a file so that readers never see a partial write and a crash never leaves a truncated
@@ -21,11 +38,13 @@ export function writeFileAtomic(
   options: AtomicWriteOptions = {},
 ): void {
   const directory = path.dirname(target);
-  mkdirSync(directory, { recursive: true });
   const temporary = path.join(
     directory,
     `.${path.basename(target)}.${process.pid}.${randomBytes(4).toString('hex')}.tmp`,
   );
+  // The temporary sibling is the longer name: if it fits, the target does.
+  assertPathFits(temporary);
+  mkdirSync(directory, { recursive: true });
   const bytes = typeof data === 'string' ? Buffer.from(data, 'utf8') : data;
   const fd = openSync(temporary, 'wx', options.mode ?? 0o666);
   try {

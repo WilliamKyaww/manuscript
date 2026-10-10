@@ -10,6 +10,7 @@ const TITLES: Record<string, string> = {
   forbidden: 'Forbidden',
   not_found: 'Not found',
   conflict: 'Conflict',
+  locked: 'Cannot be changed',
   unavailable: 'Service unavailable',
   internal: 'Internal error',
 };
@@ -74,16 +75,17 @@ export function systemProblem(
     case 'EACCES':
     case 'EPERM':
     case 'EROFS':
+      // Not 409: the editor reads a 409 on save as "the file changed on disk".
       return {
-        status: 409,
-        code: 'conflict',
+        status: 423,
+        code: 'locked',
         detail:
           'Manuscript is not allowed to change that file or folder: it may be read-only, or open in another program.',
       };
     case 'EBUSY':
       return {
-        status: 409,
-        code: 'conflict',
+        status: 423,
+        code: 'locked',
         detail: 'That file is in use by another program. Close it there and try again.',
       };
     case 'ENOSPC':

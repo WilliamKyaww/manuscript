@@ -38,9 +38,9 @@ describe('problem details', () => {
       });
     const cases: [unknown, number, string, RegExp][] = [
       [fileError('ENOENT'), 404, 'not_found', /no longer there/u],
-      [fileError('EACCES'), 409, 'conflict', /read-only, or open in another program/u],
-      [fileError('EPERM'), 409, 'conflict', /read-only/u],
-      [fileError('EBUSY'), 409, 'conflict', /in use by another program/u],
+      [fileError('EACCES'), 423, 'locked', /read-only, or open in another program/u],
+      [fileError('EPERM'), 423, 'locked', /read-only/u],
+      [fileError('EBUSY'), 423, 'locked', /in use by another program/u],
       [fileError('ENOSPC'), 503, 'unavailable', /disk is full/u],
       [fileError('EMFILE'), 503, 'unavailable', /Too many files/u],
       [fileError('ENAMETOOLONG'), 400, 'validation_failed', /too long/u],

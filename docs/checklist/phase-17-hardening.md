@@ -19,7 +19,7 @@ Phase 16.
 - [x] **17.04** Security review (localhost threat model re-check, CSP, dependency audit, secrets handling)
 - [x] **17.05** Error-handling audit (every API error mapped; UI messages actionable)
 - [x] **17.06** Diagnostics page (log viewer; export a diagnostics bundle without secrets)
-- [ ] **17.07** Edge cases: huge PDFs, unusual encodings, Unicode and long Windows paths, read-only files
+- [x] **17.07** Edge cases: huge PDFs, unusual encodings, Unicode and long Windows paths, read-only files
 - [ ] **17.08** Offline audit: everything non-AI works without network; AI degrades gracefully
 - [ ] **17.09** Accessibility re-check of all screens built since Phase 2
 - [ ] **17.10** Docs: troubleshooting guide; STATE/FEATURES/journal updated

@@ -56,27 +56,38 @@ describe('following files in Sources/', () => {
     expect((await bed.sourceHits('leases')).length).toBe(1);
   });
 
-  it('registers supported files dropped into the folder and ignores everything else', async () => {
+  it('registers supported files dropped into the folder, lists unreadable ones as failed, and ignores everything else', async () => {
     bed = createSourcesTestbed();
     await bed.start();
     bed.write('Sources/COC254/Lecture 1.pdf', makePdf([['Gradient descent basics.']]));
     bed.write('Sources/COC254/diagram.png', new Uint8Array([0x89, 0x50, 0x4e, 0x47]));
     bed.write('Sources/COC254/fake.pdf', encode('<html>not a pdf</html>'));
+    bed.write('Sources/COC254/results.xlsx', encode('not read by this application'));
     bed.changed([
       'Sources/COC254/Lecture 1.pdf',
       'Sources/COC254/diagram.png',
       'Sources/COC254/fake.pdf',
+      'Sources/COC254/results.xlsx',
     ]);
     await bed.settle();
     const sources = await bed.list();
-    expect(sources.map((source) => [source.path, source.moduleCode, source.status])).toEqual([
-      ['Sources/COC254/Lecture 1.pdf', 'COC254', 'ready'],
-    ]);
+    // A kind of file that is not read at all is just a file; a supported kind that cannot be read is
+    // listed as failed, with the reason, rather than being quietly missing.
+    expect(sources.map((source) => [source.path, source.moduleCode, source.status]).sort()).toEqual(
+      [
+        ['Sources/COC254/Lecture 1.pdf', 'COC254', 'ready'],
+        ['Sources/COC254/diagram.png', 'COC254', 'failed'],
+        ['Sources/COC254/fake.pdf', 'COC254', 'failed'],
+      ],
+    );
+    expect(sources.find((source) => source.path.endsWith('fake.pdf'))?.error).toMatch(
+      /do not match its \.pdf extension/u,
+    );
     // A copy of a source that is still in place does not become a second source.
     bed.write('Sources/Inbox/Lecture 1 copy.pdf', bed.read('Sources/COC254/Lecture 1.pdf'));
     bed.changed(['Sources/Inbox/Lecture 1 copy.pdf']);
     await bed.settle();
-    expect(await bed.list()).toHaveLength(1);
+    expect(await bed.list()).toHaveLength(3);
   });
 
   it('rebuilds the library from the folder when the database is new', async () => {

@@ -87,7 +87,10 @@ The library follows the `Sources` folder, so you can organise files in Explorer 
   Moving it into `Sources/COC251/` files it under that module.
 - **Edit or replace** a file — it is read again.
 - **Copy a supported file into `Sources`** — it is added to the library and read automatically (an
-  exact copy of a file that is already in the library is left alone).
+  exact copy of a file that is already in the library is left alone). A file of a kind Manuscript does not
+  read (a spreadsheet, say) is just a file and is not listed. A file of a supported kind that cannot be read
+  — empty, not what its extension says, or over 200 MB — **is** listed, as *failed* with the reason, so it
+  is not quietly missing; fix or replace the file and it is read again.
 - **Delete a file** — the source is marked *File missing* and leaves search; put the file back (or the
   same file anywhere in `Sources`) and it returns.
 

@@ -1,5 +1,6 @@
 import { cpSync, mkdirSync, renameSync, rmSync, statSync } from 'node:fs';
 import path from 'node:path';
+import { assertPathFits } from './atomic';
 
 /**
  * Moves a file or folder within the vault. Renames are retried briefly because Windows refuses to
@@ -15,6 +16,7 @@ function sleepSync(milliseconds: number): void {
 }
 
 export function movePath(from: string, to: string): void {
+  assertPathFits(to);
   mkdirSync(path.dirname(to), { recursive: true });
   for (let attempt = 0; ; attempt += 1) {
     try {
