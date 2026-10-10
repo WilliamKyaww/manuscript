@@ -212,7 +212,8 @@ export function SetPage() {
           <table className="w-full text-sm">
             <thead className="text-left text-xs text-muted">
               <tr>
-                <th className="w-8 py-1.5">
+                {/* The gap keeps each checkbox a target of its own beside the card's button (WCAG 2.5.8). */}
+                <th className="py-1.5 pr-3">
                   <input
                     type="checkbox"
                     aria-label="Select all cards"
@@ -235,7 +236,7 @@ export function SetPage() {
             <tbody>
               {data.cards.map((card) => (
                 <tr key={card.id} className="border-t border-border">
-                  <td className="py-2">
+                  <td className="py-2 pr-3">
                     <input
                       type="checkbox"
                       aria-label={`Select ${glimpse(card.front)}`}

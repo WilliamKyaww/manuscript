@@ -1,6 +1,6 @@
 import { X } from 'lucide-react';
 import { Dialog as RadixDialog, VisuallyHidden } from 'radix-ui';
-import type { ReactNode } from 'react';
+import { type ReactNode, useLayoutEffect, useState } from 'react';
 import { cn } from '../lib/cn';
 import { IconButton } from './IconButton';
 
@@ -21,6 +21,31 @@ export interface DialogProps {
 
 const SIZES = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' };
 
+const FOCUSABLE =
+  'a[href], button, input, select, textarea, summary, [contenteditable="true"], [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Whether a dialogue's body must take focus itself to be scrolled from the keyboard: it scrolls, and
+ * nothing inside it can take focus (a form's fields already bring it along). A callback ref, because
+ * Radix mounts a dialogue's content after the dialogue first renders; rechecked on resizes.
+ */
+function useNeedsFocus(): [(node: HTMLDivElement | null) => void, boolean] {
+  const [node, setNode] = useState<HTMLDivElement | null>(null);
+  const [needs, setNeeds] = useState(false);
+  useLayoutEffect(() => {
+    if (!node) return;
+    const check = () =>
+      setNeeds(node.scrollHeight > node.clientHeight + 1 && !node.querySelector(FOCUSABLE));
+    check();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(check);
+    observer.observe(node);
+    for (const child of node.children) observer.observe(child);
+    return () => observer.disconnect();
+  }, [node]);
+  return [setNode, needs];
+}
+
 /** Modal dialogue built on Radix: focus trap, Escape to close, focus return, labelled by its title. */
 export function Dialog({
   open,
@@ -34,6 +59,7 @@ export function Dialog({
   className,
   showClose = true,
 }: DialogProps) {
+  const [body, needsFocus] = useNeedsFocus();
   const titleNode = (
     <RadixDialog.Title className="text-lg font-semibold">{title}</RadixDialog.Title>
   );
@@ -68,7 +94,15 @@ export function Dialog({
             </div>
           )}
           {hideTitle && !showClose && <VisuallyHidden.Root>{titleNode}</VisuallyHidden.Root>}
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+          <div
+            ref={body}
+            // A body that scrolls with nothing inside it to focus (the shortcuts cheat sheet) is a
+            // named region in the tab order, so that it can be scrolled from the keyboard.
+            {...(needsFocus ? { tabIndex: 0, role: 'region', 'aria-label': title } : {})}
+            className="min-h-0 flex-1 overflow-y-auto px-5 py-4 focus-visible:outline-offset-[-2px]"
+          >
+            {children}
+          </div>
           {footer && (
             <div className="flex justify-end gap-2 border-t border-border px-5 py-3">{footer}</div>
           )}
