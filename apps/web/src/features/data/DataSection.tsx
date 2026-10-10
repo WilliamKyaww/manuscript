@@ -5,7 +5,7 @@ import {
   type VaultInspection,
 } from '@skb/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Download, FolderOpen, RefreshCw, Trash2 } from 'lucide-react';
+import { Copy, Download, FolderOpen, RefreshCw, Trash2 } from 'lucide-react';
 import { type FormEvent, type ReactNode, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '../../components/Badge';
@@ -28,6 +28,16 @@ import { CodeGraphsPanel } from './CodeGraphsPanel';
  * formats and come back — export, restore, concepts as notes, switching vault, and importing the
  * graph of a coursework repository. Nothing here depends on an AI model.
  */
+
+/** Revealing the folder in the file manager is a desktop feature (Phase 18); here the path is copied. */
+async function copyPath(path: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(path);
+    toast.success('Path copied');
+  } catch {
+    toast.error('The path could not be copied', { description: path });
+  }
+}
 
 const DATA_JOBS = new Set(['data.export', 'data.restore', 'data.rescan']);
 const finished = (job: JobSummary) =>
@@ -292,7 +302,13 @@ function VaultsPanel({ overview }: { overview: Overview }) {
     >
       <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[8rem_1fr]">
         <dt className="text-muted">In use now</dt>
-        <dd className="break-all font-mono text-xs">{overview.vault.path}</dd>
+        <dd className="flex flex-wrap items-center gap-2">
+          <span className="break-all font-mono text-xs">{overview.vault.path}</span>
+          <Button size="sm" variant="ghost" onClick={() => void copyPath(overview.vault.path)}>
+            <Copy aria-hidden="true" size={14} />
+            Copy path
+          </Button>
+        </dd>
       </dl>
       {overview.recentVaults.filter((entry) => !entry.current).length > 0 && (
         <ul
