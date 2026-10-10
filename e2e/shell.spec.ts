@@ -131,6 +131,23 @@ test.describe('navigation and keyboard', () => {
     await expect(dialog).toHaveCount(0);
   });
 
+  test('visiting every section makes no request to any other address (it works offline)', async ({
+    page,
+  }) => {
+    const outside: string[] = [];
+    page.on('request', (request) => {
+      const url = new URL(request.url());
+      if (['data:', 'blob:', 'about:'].includes(url.protocol)) return;
+      if (url.origin !== new URL(page.url() === 'about:blank' ? request.url() : page.url()).origin)
+        outside.push(`${url.origin}${url.pathname}`);
+    });
+    for (const route of ROUTES) {
+      await page.goto(route.path);
+      await expect(page.getByRole('heading', { level: 1, name: route.title })).toBeVisible();
+    }
+    expect(outside).toEqual([]);
+  });
+
   test('visiting every section produces no console errors', async ({ page }) => {
     const problems: string[] = [];
     page.on('console', (message) => {

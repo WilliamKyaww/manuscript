@@ -12,7 +12,36 @@ export function scrubSecrets(text: string): string {
   return text.replace(KEY_LIKE, '[hidden]');
 }
 
+/** Codes that mean the network, or the machine the provider runs on, could not be reached. */
+const UNREACHABLE = new Set([
+  'ECONNREFUSED',
+  'ECONNRESET',
+  'ENOTFOUND',
+  'EAI_AGAIN',
+  'ENETUNREACH',
+  'EHOSTUNREACH',
+  'ETIMEDOUT',
+  'UND_ERR_CONNECT_TIMEOUT',
+  'UND_ERR_SOCKET',
+]);
+
+/** The first network error code on an error or anywhere down its causes. */
+function networkCode(error: unknown): string | null {
+  let current: unknown = error;
+  for (let depth = 0; depth < 5 && current !== null && typeof current === 'object'; depth += 1) {
+    const code = (current as { code?: unknown }).code;
+    if (typeof code === 'string' && UNREACHABLE.has(code)) return code;
+    current = (current as { cause?: unknown }).cause;
+  }
+  return null;
+}
+
 export function describeProviderError(error: unknown): string {
+  // Being offline (or the provider's server being down) is not a problem with the key or the model:
+  // say so, and that everything that does not need the model still works.
+  const unreachable = networkCode(error);
+  if (unreachable !== null)
+    return `Could not reach the provider (${unreachable}). If you are offline, or a local model is not running, AI features wait; everything else still works.`;
   if (APICallError.isInstance(error)) {
     const status = error.statusCode;
     const detail = scrubSecrets(error.message).slice(0, 300);

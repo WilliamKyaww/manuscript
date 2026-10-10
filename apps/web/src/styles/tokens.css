@@ -30,6 +30,7 @@
   --skb-warning: #8a4f00;
   --skb-warning-subtle: #f8ecd8;
   --skb-danger: #a8231b;
+  --skb-danger-contrast: #ffffff;
   --skb-danger-subtle: #f8e3e1;
   --skb-info: #2a5aa0;
   --skb-info-subtle: #e2ebf7;
@@ -82,6 +83,7 @@
   --skb-warning: #e8ae55;
   --skb-warning-subtle: #3a2a12;
   --skb-danger: #f28a82;
+  --skb-danger-contrast: #2a0a07;
   --skb-danger-subtle: #3d1a17;
   --skb-info: #8db3ec;
   --skb-info-subtle: #19283d;
