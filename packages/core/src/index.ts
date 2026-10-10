@@ -17,6 +17,7 @@ export * from './api/graph';
 export * from './api/jobs';
 export * from './api/mastery';
 export * from './api/notes';
+export * from './api/pipeline';
 export * from './api/plan';
 export * from './api/questions';
 export * from './api/search';

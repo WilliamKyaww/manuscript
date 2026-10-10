@@ -36,6 +36,10 @@ export interface AttemptsDependencies {
   quizzes: QuizzesService;
   clock: Clock;
   ids: IdFactory;
+  /** An attempt has just finished (the follow-up looks at what was wrong). */
+  onFinished?: (attemptId: string) => void;
+  /** A pending answer has just been graded. */
+  onGraded?: (answerId: string) => void;
 }
 
 export type AttemptsService = ReturnType<typeof createAttemptsService>;
@@ -143,6 +147,7 @@ export function createAttemptsService(deps: AttemptsDependencies) {
           score,
         });
     });
+    deps.onFinished?.(attempt.id);
   };
 
   const insert = (
@@ -318,6 +323,7 @@ export function createAttemptsService(deps: AttemptsDependencies) {
       // A finished attempt's score includes answers graded afterwards.
       if (attempt.finishedAt) repo.setScore(attempt.id, scoreOf(repo.answersOf([attempt.id])));
       const question = questionMap([answer.questionId]).get(answer.questionId) as Question;
+      deps.onGraded?.(answerId);
       return resultOf(repo.answer(answerId) as AnswerRow, question);
     },
 

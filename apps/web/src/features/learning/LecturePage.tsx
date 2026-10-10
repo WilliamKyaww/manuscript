@@ -16,6 +16,7 @@ import { GenerateDialog } from '../inbox/GenerateDialog';
 import { sourcesQuery } from '../library/api';
 import { SourceIcon } from '../library/SourceRow';
 import { templatesQuery, treeQuery, useCreateNote } from '../notes/api';
+import { PipelineSection } from '../pipeline/PipelineSection';
 import { lectureQuery, useLearningActions } from './api';
 import { LectureDialog } from './dialogs';
 import { selectClasses } from './Field';
@@ -101,6 +102,7 @@ export function LecturePage() {
       }
     >
       <LectureSources lecture={data} />
+      <PipelineSection lectureId={data.id} hasSources={data.sources.length > 0} />
       <LectureNotes lecture={data} />
       <StickySection title="Concepts" description="Concepts linked from this lecture's notes.">
         {data.concepts.length === 0 ? (

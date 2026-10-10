@@ -60,6 +60,7 @@ const ORDER: Record<ProposalKind, number> = {
   link: 3,
   note: 4,
   correction: 5,
+  addition: 6,
 };
 
 export function createProposalsService(deps: ProposalsDependencies) {
@@ -212,6 +213,27 @@ export function createProposalsService(deps: ProposalsDependencies) {
     return { kind: 'note', id: note.id };
   }
 
+  /** Adds the text at the end of the heading's section, making the section if the note has none. */
+  function applyAddition(payload: Extract<ProposalPayload, { kind: 'addition' }>) {
+    const note = notes.get(payload.noteId);
+    const lines = note.content.replace(/\s+$/u, '').split('\n');
+    const heading = lines.findIndex(
+      (line) =>
+        /^##\s+/u.test(line) &&
+        normaliseKey(line.replace(/^##\s+/u, '')) === normaliseKey(payload.heading),
+    );
+    if (heading === -1) lines.push('', `## ${payload.heading}`, '', payload.text);
+    else {
+      let end = heading + 1;
+      while (end < lines.length && !/^#{1,2}\s/u.test(lines[end] ?? '')) end += 1;
+      // Before trailing blank lines of the section.
+      while (end > heading + 1 && (lines[end - 1] ?? '').trim() === '') end -= 1;
+      lines.splice(end, 0, '', payload.text);
+    }
+    notes.update(note.id, { content: `${lines.join('\n')}\n`, baseHash: note.hash });
+    return { kind: 'note', id: note.id };
+  }
+
   function appendRelated(payload: Extract<ProposalPayload, { kind: 'link' }>) {
     const note = notes.get(payload.noteId);
     const link = `- ${formatWikilink({ target: payload.target.title })}`;
@@ -292,6 +314,9 @@ export function createProposalsService(deps: ProposalsDependencies) {
         break;
       case 'correction':
         result = applyCorrection(payload);
+        break;
+      case 'addition':
+        result = applyAddition(payload);
         break;
       default:
         result = acceptNote(row, payload, edit);

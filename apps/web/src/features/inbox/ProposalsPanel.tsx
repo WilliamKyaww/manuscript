@@ -165,6 +165,25 @@ function Summary({ proposal, editing }: { proposal: Proposal; editing: ReactNode
           : list it under “Related”.
         </p>
       );
+    case 'addition':
+      return (
+        <div className="space-y-2 text-sm">
+          <p>
+            Add to{' '}
+            <Link
+              to="/notes/$noteId"
+              params={{ noteId: payload.noteId }}
+              className="font-medium underline"
+            >
+              {payload.noteTitle}
+            </Link>
+            , under “{payload.heading}”:
+          </p>
+          <p className="whitespace-pre-wrap rounded-md bg-success-subtle px-3 py-1.5 text-success">
+            {payload.text}
+          </p>
+        </div>
+      );
     case 'correction':
       return (
         <div className="space-y-2 text-sm">

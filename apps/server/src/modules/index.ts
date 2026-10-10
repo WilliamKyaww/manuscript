@@ -27,6 +27,8 @@ import { createExtractor } from './generation/extract';
 import { createGradingService, type GradingService } from './generation/grading';
 import { createLinkSuggester, type LinkSuggester } from './generation/links';
 import { createMaterialService } from './generation/material';
+import { createPipelineService, type PipelineService } from './generation/pipeline';
+import { createPipelineRepository } from './generation/pipeline-repository';
 import { createProposalsService, type ProposalsService } from './generation/proposals';
 import { createProposalsRepository } from './generation/proposals-repository';
 import { createGenerationService, type GenerationService } from './generation/service';
@@ -46,6 +48,7 @@ import { createExamRetention } from './plan/retention';
 import { createPlanService, type PlanService } from './plan/service';
 import { type AttemptsService, createAttemptsService } from './practice/attempts';
 import { createAttemptsRepository } from './practice/attempts-repository';
+import { createFollowUp, type FollowUp } from './practice/follow-up';
 import { createLearnService, type LearnService } from './practice/learn';
 import { createQuestionsService, type QuestionsService } from './practice/questions';
 import { createQuestionsRepository } from './practice/questions-repository';
@@ -90,6 +93,7 @@ export interface AppModules {
   readonly proposals: ProposalsService;
   readonly grading: GradingService;
   readonly links: LinkSuggester;
+  readonly pipeline: PipelineService;
   readonly agent: AgentModule;
   readonly chat: ChatService;
   readonly plan: PlanService;
@@ -247,6 +251,15 @@ export function createModules(ctx: AppContext): AppModules {
     clock: ctx.clock,
     ids: ctx.ids,
   });
+  // What a session got wrong is suggested for the concepts' notes (task 15.07); the service that
+  // does so needs the Inbox, which is built after the attempts, so it is filled in below.
+  let followUp: FollowUp | null = null;
+  const suggestMistakes = (answerIds: readonly string[], quizId: string | null) => {
+    if (!followUp) return;
+    const quiz = quizId ? attemptsRepo.quiz(quizId, true) : null;
+    const rows = attemptsRepo.answersByIds(answerIds);
+    followUp.afterAnswers(rows, quiz ? `Mistakes in “${quiz.title}”` : 'Mistakes in practice');
+  };
   const attempts = notifyingAfter(
     createAttemptsService({
       repo: attemptsRepo,
@@ -255,6 +268,19 @@ export function createModules(ctx: AppContext): AppModules {
       quizzes,
       clock: ctx.clock,
       ids: ctx.ids,
+      onFinished: (attemptId) => {
+        const attempt = attemptsRepo.attempt(attemptId);
+        suggestMistakes(
+          attemptsRepo.answersOf([attemptId]).map((answer) => answer.id),
+          attempt?.quizId ?? null,
+        );
+      },
+      onGraded: (answerId) => {
+        const answer = attemptsRepo.answer(answerId);
+        const attempt = answer ? attemptsRepo.attempt(answer.attemptId) : null;
+        // Only once the attempt is over: an open one is looked at when it finishes.
+        if (attempt?.finishedAt) suggestMistakes([answerId], attempt.quizId);
+      },
     }),
     ['answer', 'submit', 'grade'],
     stale,
@@ -367,6 +393,28 @@ export function createModules(ctx: AppContext): AppModules {
     proposalsRepo,
   });
 
+  const pipeline = createPipelineService({
+    repo: createPipelineRepository(ctx.db),
+    generation,
+    quizzes,
+    lectures,
+    learning,
+    jobs,
+    settings,
+    events: ctx.events,
+    clock: ctx.clock,
+    ids: ctx.ids,
+    logger: ctx.logger,
+  });
+
+  followUp = createFollowUp({
+    questions,
+    concepts,
+    notes: notes.notes,
+    proposals,
+    logger: ctx.logger,
+  });
+
   // The agent's tool layer wraps the services above (Phase 12).
   const agent = createAgentModule({
     db: ctx.db,
@@ -437,6 +485,7 @@ export function createModules(ctx: AppContext): AppModules {
     proposals,
     grading,
     links,
+    pipeline,
     agent,
     chat,
     plan,
