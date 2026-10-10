@@ -313,6 +313,8 @@ describe('modules', () => {
       server.calls.filter((call) => call.method === 'DELETE' && call.path.includes(LECTURE));
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: 'Delete' }));
+    // Dates read as dates, not as ISO strings.
+    expect(screen.getByText('Lecture · week 3 · Mon 12 Oct')).toBeInTheDocument();
     let dialog = await screen.findByRole('dialog', { name: 'Delete L03?' });
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     expect(deletes()).toHaveLength(0);

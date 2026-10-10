@@ -7,6 +7,7 @@ import { Button } from '../../../components/Button';
 import { StickySection } from '../../../components/Page';
 import { formatCount } from '../../../lib/format';
 import { LectureDialog } from '../dialogs';
+import { formatDue } from '../format';
 
 /** The next free key in the module's style, e.g. after L01 and L02 comes L03. */
 export function nextLectureKey(lectures: readonly Lecture[]): string {
@@ -55,7 +56,10 @@ export function LecturesSection({
                 <span className="min-w-0 flex-1 truncate font-medium">{lecture.title}</span>
                 {lecture.kind !== 'lecture' && <Badge>{lecture.kind}</Badge>}
                 <span className="shrink-0 text-xs text-muted">
-                  {[lecture.week !== null ? `Week ${lecture.week}` : null, lecture.heldOn]
+                  {[
+                    lecture.week !== null ? `Week ${lecture.week}` : null,
+                    lecture.heldOn ? formatDue(lecture.heldOn) : null,
+                  ]
                     .filter(Boolean)
                     .join(' · ')}
                 </span>

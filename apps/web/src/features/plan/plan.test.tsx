@@ -82,9 +82,11 @@ interface Call {
   body: Record<string, unknown> | null;
 }
 
-function fakeServer(options: { withPlan?: boolean; resurface?: unknown[] } = {}) {
+function fakeServer(options: { withPlan?: boolean; endDate?: string; resurface?: unknown[] } = {}) {
   const calls: Call[] = [];
-  let plan: ReturnType<typeof planned> | null = options.withPlan ? planned() : null;
+  let plan: ReturnType<typeof planned> | null = options.withPlan
+    ? { ...planned(), ...(options.endDate ? { endDate: options.endDate } : {}) }
+    : null;
   let settings = { ...SETTINGS };
   const fetch: FakeFetch = async (input, init) => {
     const url = new URL(String(input), 'http://localhost');
@@ -174,6 +176,12 @@ describe('the Plan page', () => {
     );
     expect(await within(row).findByText('· skipped')).toBeInTheDocument();
     expect(screen.getByText(/3 items · .* · 1 done/u)).toBeInTheDocument();
+  });
+
+  it('offers to plan again for as many days as the plan in hand', async () => {
+    renderApp('/plan', fakeServer({ withPlan: true, endDate: '2026-10-22' }).fetch);
+    expect(await screen.findByRole('button', { name: /Plan again/u })).toBeInTheDocument();
+    expect(screen.getByLabelText('Days to plan')).toHaveValue('14');
   });
 
   it('can be read as a list', async () => {

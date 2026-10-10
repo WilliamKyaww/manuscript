@@ -12,15 +12,24 @@ export function Bars({
   days,
   describe,
   tone = 'accent',
+  empty,
 }: {
   label: string;
   days: readonly { date: string; value: number; secondary?: number }[];
   describe(day: { date: string; value: number; secondary?: number }): string;
   tone?: 'accent' | 'info';
+  /** Said over the chart when every day is zero, instead of a row of empty bars. */
+  empty?: string;
 }) {
   const max = Math.max(1, ...days.map((day) => day.value));
+  const blank = days.every((day) => day.value === 0);
   return (
-    <figure>
+    <figure className="relative">
+      {blank && empty && (
+        <p className="absolute inset-x-0 top-0 flex h-24 items-center justify-center px-4 text-center text-xs text-muted">
+          {empty}
+        </p>
+      )}
       <ol aria-label={label} className="flex h-24 items-end gap-0.5">
         {days.map((day) => {
           const text = `${dayLabel(day.date)}: ${describe(day)}`;

@@ -34,6 +34,7 @@ export const PAGE_SHORTCUTS: readonly ReferenceSection[] = [
     items: [
       { keys: ['mod+s'], description: 'Save now (notes also save as you type)' },
       { keys: ['[['], description: 'Link to a note or concept, with suggestions' },
+      { keys: ['#'], description: 'Tag, with suggestions' },
       { keys: ['mod+click'], description: 'Follow a link' },
       { keys: ['mod+f'], description: 'Find and replace in the note' },
       { keys: ['mod+z'], description: 'Undo' },
@@ -48,7 +49,8 @@ export const PAGE_SHORTCUTS: readonly ReferenceSection[] = [
       { keys: ['arrowright', 'arrowleft'], description: 'Open or close a folder' },
       { keys: ['enter'], description: 'Open' },
       { keys: ['f2'], description: 'Rename' },
-      { keys: ['delete'], description: 'Move to the bin' },
+      { keys: ['delete'], description: 'Move to the trash' },
+      { keys: ['shift+f10'], description: 'More actions (the context menu)' },
     ],
   },
   { title: 'Review session', items: merge(Object.values(REVIEW_KEYS)) },

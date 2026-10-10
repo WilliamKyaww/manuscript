@@ -233,10 +233,10 @@ export function SetPage() {
                     }
                   />
                 </th>
-                <th className="py-1.5 pr-3 font-medium">Card</th>
-                <th className="py-1.5 pr-3 font-medium">Kind</th>
-                <th className="py-1.5 pr-3 font-medium">Status</th>
-                <th className="py-1.5 pr-3 font-medium">Next</th>
+                <th className="w-full py-1.5 pr-3 font-medium">Card</th>
+                <th className="py-1.5 pr-6 font-medium">Kind</th>
+                <th className="py-1.5 pr-6 font-medium">Status</th>
+                <th className="py-1.5 font-medium whitespace-nowrap">Next</th>
               </tr>
             </thead>
             <tbody>
@@ -264,14 +264,16 @@ export function SetPage() {
                       </span>
                     )}
                   </td>
-                  <td className="py-2 pr-3 text-xs text-muted">
+                  <td className="py-2 pr-6 text-xs whitespace-nowrap text-muted">
                     {card.kind}
                     {card.faces.length > 1 && ` · ${card.faces.length} faces`}
                   </td>
-                  <td className="py-2 pr-3">
+                  <td className="py-2 pr-6">
                     <Badge tone={STATUS[card.status].tone}>{STATUS[card.status].label}</Badge>
                   </td>
-                  <td className="py-2 pr-3 text-xs text-muted">{nextDue(card, now)}</td>
+                  <td className="py-2 text-xs whitespace-nowrap text-muted">
+                    {nextDue(card, now)}
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -13,6 +13,7 @@ import { GenerateDialog } from '../inbox/GenerateDialog';
 import { PipelineSection } from '../pipeline/PipelineSection';
 import { lectureQuery, useLearningActions } from './api';
 import { LectureDialog } from './dialogs';
+import { formatDue } from './format';
 import { LectureNotes, LectureSources } from './LectureSections';
 
 /** One lecture with its sources, notes and concepts (task 6.12). */
@@ -58,7 +59,7 @@ export function LecturePage() {
   const facts = [
     data.kind[0]?.toUpperCase() + data.kind.slice(1),
     data.week !== null ? `week ${data.week}` : null,
-    data.heldOn,
+    data.heldOn ? formatDue(data.heldOn) : null,
   ].filter(Boolean);
   return (
     <Page
