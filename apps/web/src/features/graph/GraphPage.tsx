@@ -14,6 +14,7 @@ import { formatCount } from '../../lib/format';
 import { modulesQuery } from '../learning/api';
 import { selectClasses } from '../learning/Field';
 import { graphQuery } from './api';
+import { Connections } from './Connections';
 import { GraphView } from './GraphView';
 import { Insights } from './Insights';
 import { Legend } from './Legend';
@@ -37,13 +38,14 @@ export function GraphPage() {
   const [moduleId, setModuleId] = useState('');
   const [proposed, setProposed] = useState(false);
   const [isolated, setIsolated] = useState(false);
-  const [colourBy, setColourBy] = useState<'community' | 'type'>('community');
+  const [colourBy, setColourBy] = useState<'community' | 'type' | 'mastery'>('community');
   const [hidden, setHidden] = useState<ReadonlySet<number>>(new Set());
   const [selected, setSelected] = useState<string | null>(search.focus ?? null);
   const [focus, setFocus] = useState<{ id: string; nonce: number } | null>(
     search.focus ? { id: search.focus, nonce: 0 } : null,
   );
   const [highlight, setHighlight] = useState<ReadonlySet<string> | null>(null);
+  const [aside, setAside] = useState<'insights' | 'connections'>('insights');
 
   const filter: GraphFilterInput = {
     types,
@@ -116,10 +118,11 @@ export function GraphPage() {
         aria-label="Colour by"
         className={cn(selectClasses, 'h-8 w-auto')}
         value={colourBy}
-        onChange={(event) => setColourBy(event.target.value as 'community' | 'type')}
+        onChange={(event) => setColourBy(event.target.value as 'community' | 'type' | 'mastery')}
       >
         <option value="community">Colour by cluster</option>
         <option value="type">Colour by type</option>
+        <option value="mastery">Colour by mastery</option>
       </select>
     </div>
   );
@@ -186,8 +189,28 @@ export function GraphPage() {
         )}
       </Pane>
       <Pane
-        title={selectedNode ? 'Details' : 'Insights'}
+        title={selectedNode ? 'Details' : aside === 'connections' ? 'Connections' : 'Insights'}
         className="w-80 flex-none border-l border-border"
+        actions={
+          !selectedNode && (
+            <div role="group" aria-label="Beside the graph" className="flex gap-1">
+              {(['insights', 'connections'] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={aside === value}
+                  className={cn(
+                    'rounded px-2 py-0.5 text-xs capitalize hover:bg-surface-hover',
+                    aside === value && 'bg-accent-subtle',
+                  )}
+                  onClick={() => setAside(value)}
+                >
+                  {value === 'insights' ? 'Insights' : 'Between modules'}
+                </button>
+              ))}
+            </div>
+          )
+        }
       >
         {selectedNode && payload ? (
           <NodeDetails
@@ -199,6 +222,8 @@ export function GraphPage() {
             onHighlight={setHighlight}
             onClose={() => setSelected(null)}
           />
+        ) : aside === 'connections' ? (
+          <Connections onShowInGraph={showInGraph} />
         ) : (
           <Insights moduleId={moduleId || null} onShowInGraph={showInGraph} />
         )}

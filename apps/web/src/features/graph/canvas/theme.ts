@@ -1,3 +1,5 @@
+import { MASTERY_STAGES, type MasteryStage } from '@skb/core';
+
 /** Graph colours read from the design tokens (tokens.css), which differ by theme. */
 
 export interface GraphColours {
@@ -9,6 +11,8 @@ export interface GraphColours {
   label: string;
   background: string;
   surface: string;
+  /** The mastery overlay's colour for each stage. */
+  stages: Record<MasteryStage, string>;
 }
 
 export function readGraphColours(element: Element = document.documentElement): GraphColours {
@@ -24,6 +28,9 @@ export function readGraphColours(element: Element = document.documentElement): G
     label: token('text', '#1f1c18'),
     background: token('bg', '#f7f5f1'),
     surface: token('surface-raised', '#ffffff'),
+    stages: Object.fromEntries(
+      MASTERY_STAGES.map((stage) => [stage, token(`stage-${stage}`, '#9c958b')]),
+    ) as Record<MasteryStage, string>,
   };
 }
 

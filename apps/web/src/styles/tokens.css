@@ -45,6 +45,12 @@
   --skb-graph-8: #5f7a2a;
   --skb-graph-9: #7a6250;
   --skb-graph-10: #4a5a7a;
+  /* Mastery overlay: stages from not started to mastered, light to dark in lightness as well as hue. */
+  --skb-stage-new: #a49d92;
+  --skb-stage-learning: #b5412d;
+  --skb-stage-practised: #b8861a;
+  --skb-stage-confident: #2f6fa5;
+  --skb-stage-mastered: #1f6b4a;
   --skb-graph-node: #9c958b;
   --skb-graph-structure: #57514a;
   --skb-graph-edge: #bcb3a5;
@@ -90,6 +96,11 @@
   --skb-graph-8: #a3c46a;
   --skb-graph-9: #c2ab95;
   --skb-graph-10: #93a3c4;
+  --skb-stage-new: #8a8378;
+  --skb-stage-learning: #f08a76;
+  --skb-stage-practised: #e5bd5a;
+  --skb-stage-confident: #7fb4e6;
+  --skb-stage-mastered: #6fcf9f;
   --skb-graph-node: #7d766c;
   --skb-graph-structure: #b5aea4;
   --skb-graph-edge: #4d4a45;

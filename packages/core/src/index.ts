@@ -26,6 +26,7 @@ export * from './api/system';
 export * from './api/vault';
 export * from './app';
 export * from './errors';
+export * from './graph/connections';
 export * from './graph/vocabulary';
 export * from './ids';
 export * from './learning/anki';
