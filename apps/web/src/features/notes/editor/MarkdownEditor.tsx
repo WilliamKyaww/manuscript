@@ -1,8 +1,9 @@
-import { Annotation, ChangeSet, EditorState, Transaction } from '@codemirror/state';
+import { Annotation, ChangeSet, Compartment, EditorState, Transaction } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { changedRange } from '../../../lib/diff';
 import { type CompletionData, createExtensions, type EditorCallbacks } from './extensions';
+import { livePreview } from './live-preview';
 
 /**
  * Positions and ranges passed to the handle count every line break as one character (as CodeMirror
@@ -39,6 +40,8 @@ export interface MarkdownEditorProps extends EditorCallbacks {
   readOnly: boolean;
   lineSeparator: '\r\n' | null;
   completions: CompletionData;
+  /** Hide the marks of Markdown outside the element under the cursor. */
+  livePreview?: boolean;
   className?: string;
 }
 
@@ -47,7 +50,16 @@ const LINE_BREAK = /\r\n?|\n/g;
 /** CodeMirror 6 Markdown editor (task 3.14); the view is created once and reused across notes. */
 export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
   function MarkdownEditor(
-    { docKey, initialText, readOnly, lineSeparator, completions, className, ...callbacks },
+    {
+      docKey,
+      initialText,
+      readOnly,
+      lineSeparator,
+      completions,
+      livePreview: live = false,
+      className,
+      ...callbacks
+    },
     ref,
   ) {
     const host = useRef<HTMLDivElement>(null);
@@ -56,6 +68,9 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
     latest.current = callbacks;
     const data = useRef(completions);
     data.current = completions;
+    const liveCompartment = useRef(new Compartment());
+    const liveNow = useRef(live);
+    liveNow.current = live;
     const checkpoints = useRef(new Map<number, ChangeSet>());
     const nextCheckpoint = useRef(1);
 
@@ -72,6 +87,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
             callbacks: () => latest.current,
             readOnly,
             lineSeparator,
+            extra: [liveCompartment.current.of(liveNow.current ? livePreview : [])],
           }),
           EditorView.updateListener.of((update) => {
             if (!update.docChanged) return;
@@ -92,6 +108,13 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
         view.current = null;
       };
     }, []);
+
+    // Switching live preview on or off keeps the text, the cursor and the undo history.
+    useEffect(() => {
+      view.current?.dispatch({
+        effects: liveCompartment.current.reconfigure(live ? livePreview : []),
+      });
+    }, [live]);
 
     const first = useRef(true);
     // biome-ignore lint/correctness/useExhaustiveDependencies: a new state is built only when the note, its read-only flag or line endings change.

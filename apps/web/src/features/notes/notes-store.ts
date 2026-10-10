@@ -3,7 +3,7 @@ import { readPreference, writePreference } from '../../lib/storage';
 
 /**
  * UI preferences for the notes page, remembered in this browser: which folders are open, whether
- * attachments show in the tree, the editor mode and the side panel tab.
+ * attachments show in the tree, the editor mode, live preview and the side panel tab.
  */
 
 export type EditorMode = 'edit' | 'split' | 'preview';
@@ -14,6 +14,7 @@ const KEYS = {
   attachments: 'skb.notes.showAttachments',
   mode: 'skb.notes.mode',
   panel: 'skb.notes.panel',
+  livePreview: 'skb.notes.livePreview',
 };
 
 function readList(key: string): string[] {
@@ -37,12 +38,14 @@ interface NotesUiState {
   showAttachments: boolean;
   mode: EditorMode;
   panel: SidePanel;
+  livePreview: boolean;
   toggleFolder(path: string): void;
   expandFolders(paths: readonly string[]): void;
   collapseAll(): void;
   setShowAttachments(show: boolean): void;
   setMode(mode: EditorMode): void;
   setPanel(panel: SidePanel): void;
+  setLivePreview(on: boolean): void;
 }
 
 export const useNotesUi = create<NotesUiState>((set, get) => {
@@ -55,6 +58,8 @@ export const useNotesUi = create<NotesUiState>((set, get) => {
     showAttachments: readPreference(KEYS.attachments) === 'true',
     mode: readEnum(KEYS.mode, ['edit', 'split', 'preview'], 'edit'),
     panel: readEnum(KEYS.panel, ['outline', 'backlinks', 'properties'], 'outline'),
+    // On unless it has been turned off: the marks come back wherever the cursor is.
+    livePreview: readPreference(KEYS.livePreview) !== 'false',
     toggleFolder(path) {
       const expanded = new Set(get().expanded);
       if (expanded.has(path)) expanded.delete(path);
@@ -80,6 +85,10 @@ export const useNotesUi = create<NotesUiState>((set, get) => {
     setPanel(panel) {
       writePreference(KEYS.panel, panel);
       set({ panel });
+    },
+    setLivePreview(on) {
+      writePreference(KEYS.livePreview, String(on));
+      set({ livePreview: on });
     },
   };
 });

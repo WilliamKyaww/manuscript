@@ -8,8 +8,15 @@ import {
 } from '@skb/core/markdown';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Columns2, Eye, Link2, PenLine, Sparkles, SquarePlus } from 'lucide-react';
-import { ToggleGroup } from 'radix-ui';
+import {
+  ArrowLeftFromLine,
+  Link2,
+  ListTree,
+  Network,
+  Sparkles,
+  SquarePlus,
+  Tags,
+} from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 import { IconButton } from '../../components/IconButton';
@@ -29,11 +36,12 @@ import { useUploadAttachment } from './api';
 import { ConflictBanner } from './editor/ConflictBanner';
 import { MarkdownEditor, type MarkdownEditorHandle } from './editor/MarkdownEditor';
 import { type SaveStatus, useNoteSession } from './editor/useNoteSession';
-import { type EditorMode, type SidePanel, useNotesUi } from './notes-store';
+import { type SidePanel, useNotesUi } from './notes-store';
 import { BacklinksPanel } from './panels/BacklinksPanel';
 import { OutlinePanel } from './panels/OutlinePanel';
 import { PropertiesPanel } from './panels/PropertiesPanel';
 import type { PreviewTarget } from './preview/remark-obsidian';
+import { LivePreviewToggle, ModeToggle } from './ViewControls';
 
 /**
  * One open note (tasks 3.14–3.18): the editor and/or preview, save status and conflicts, and the
@@ -85,7 +93,7 @@ export function NoteWorkspace({
   const editor = useRef<MarkdownEditorHandle>(null);
   const preview = useRef<HTMLDivElement>(null);
   const session = useNoteSession(note, editor);
-  const { mode, setMode, panel, setPanel } = useNotesUi();
+  const { mode, setMode, panel, setPanel, livePreview, setLivePreview } = useNotesUi();
   const upload = useUploadAttachment();
   const [liveText, setLiveText] = useState(session.editorText);
   const liveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -284,6 +292,9 @@ export function NoteWorkspace({
                 disabled={inbox.suggestLinks.isPending}
                 onClick={suggestLinks}
               />
+              {mode !== 'preview' && (
+                <LivePreviewToggle on={livePreview} onChange={setLivePreview} />
+              )}
               <ModeToggle mode={mode} onChange={setMode} />
             </>
           }
@@ -318,6 +329,7 @@ export function NoteWorkspace({
               readOnly={session.readOnly}
               lineSeparator={session.lineSeparator}
               completions={completions}
+              livePreview={livePreview}
               className="h-full"
               onChange={onChange}
               onSave={() => void session.saveNow()}
@@ -370,10 +382,18 @@ export function NoteWorkspace({
             title="Details"
             toolbar={
               <TabsList label="Note details" className="-mb-1.5 border-b-0">
-                <TabsTrigger value="outline">Outline</TabsTrigger>
-                <TabsTrigger value="backlinks">Backlinks</TabsTrigger>
-                <TabsTrigger value="properties">Properties</TabsTrigger>
-                <TabsTrigger value="graph">Graph</TabsTrigger>
+                <TabsTrigger value="outline" icon={<ListTree size={14} />}>
+                  Outline
+                </TabsTrigger>
+                <TabsTrigger value="backlinks" icon={<ArrowLeftFromLine size={14} />}>
+                  Backlinks
+                </TabsTrigger>
+                <TabsTrigger value="properties" icon={<Tags size={14} />}>
+                  Properties
+                </TabsTrigger>
+                <TabsTrigger value="graph" icon={<Network size={14} />}>
+                  Graph
+                </TabsTrigger>
               </TabsList>
             }
           >
@@ -402,36 +422,5 @@ export function NoteWorkspace({
         </Tabs>
       </Panel>
     </Group>
-  );
-}
-
-const MODES: { value: EditorMode; label: string; icon: typeof PenLine }[] = [
-  { value: 'edit', label: 'Edit', icon: PenLine },
-  { value: 'split', label: 'Split', icon: Columns2 },
-  { value: 'preview', label: 'Preview', icon: Eye },
-];
-
-function ModeToggle({ mode, onChange }: { mode: EditorMode; onChange(mode: EditorMode): void }) {
-  return (
-    <ToggleGroup.Root
-      type="single"
-      value={mode}
-      onValueChange={(value) => value && onChange(value as EditorMode)}
-      aria-label="View"
-      className="flex rounded-md border border-border bg-surface p-0.5"
-    >
-      {MODES.map(({ value, label, icon: Icon }) => (
-        <ToggleGroup.Item
-          key={value}
-          value={value}
-          aria-label={label}
-          title={label}
-          className="flex h-6 items-center gap-1 rounded-sm px-2 text-xs text-muted hover:text-text data-[state=on]:bg-accent-subtle data-[state=on]:text-text"
-        >
-          <Icon aria-hidden="true" size={13} />
-          <span className="hidden lg:inline">{label}</span>
-        </ToggleGroup.Item>
-      ))}
-    </ToggleGroup.Root>
   );
 }
