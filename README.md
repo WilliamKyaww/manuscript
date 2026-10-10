@@ -76,7 +76,7 @@ npm install
 | **Production server** | `npm run build` then `npm start` | Serves the built app and API on port 4317. |
 | **Desktop (development)** | `npm run desktop:dev` | The same application in its own window (Electron 44): the server runs in a background process of the window, you are signed in, and **Settings → Data** gets *Browse…* and *Show in folder*. Needs the built application (it builds it when missing). |
 | Desktop (unpacked build) | `npm run desktop:build` | Lays out `apps/desktop/release/<platform>-unpacked/Manuscript.exe`: Electron's distribution plus the shell and the server. Runs without Node.js installed. |
-| Windows installer | `npm run desktop:dist` | Phase 19 |
+| **Windows installer** | `npm run desktop:dist` | Writes `apps/desktop/release/Manuscript-Setup-<version>.exe` (NSIS, per user, no administrator prompt; your vault and data are not part of it and are kept on uninstall). It is **not code-signed** unless `CSC_LINK` and `CSC_KEY_PASSWORD` are set, so Windows SmartScreen shows "Windows protected your PC" the first time: choose *More info → Run anyway*. See [Installing](./docs/guide/installing.md). |
 
 **Where data lives (web and desktop):** the vault (your notes and sources) defaults to
 `Documents\Manuscript`; settings and the local sign-in token live in

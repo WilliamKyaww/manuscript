@@ -10,6 +10,8 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "devDependencies": {
-    "electron": "44.5.1"
-  }
+    "electron": "44.5.1",
+    "electron-builder": "26.17.0"
+  },
+  "author": "Manuscript contributors"
 }
