@@ -71,6 +71,21 @@ describe('app integration', () => {
     );
   });
 
+  it('refuses a JSON body far larger than anything the application sends', async () => {
+    const harness = createTestApp();
+    try {
+      const response = await harness.request('/api/notes', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ title: 'Big', content: 'x'.repeat(9 * 1024 * 1024) }),
+      });
+      expect(response.status).toBe(400);
+      expect(((await response.json()) as { detail: string }).detail).toMatch(/too large/u);
+    } finally {
+      harness.cleanup();
+    }
+  });
+
   it('returns problem details for unknown API routes', async () => {
     const { request } = setup();
     const response = await request('/api/does-not-exist');

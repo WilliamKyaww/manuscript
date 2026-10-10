@@ -238,6 +238,11 @@ working.
   and mapped to RFC 9457 problem-details JSON by one error middleware.
 - Structured JSON logs to `.skb/logs/` (rotated) and the console in development; secrets redacted.
 - The UI shows actionable messages; technical details go to the log.
+- Trouble with the machine is mapped too (Phase 17, `systemProblem`): a file that is gone, read-only or in
+  use, a full disk, too many open files, a name that is too long, a database that is busy, full or
+  damaged each become a problem with a `detail` that says what to do and repeats no path or SQL; only a
+  truly unexpected error is an `internal` 500. JSON bodies over 8 MB are refused; uploads have limits of
+  their own.
 
 ## 11. Electron architecture (Phase 18; de-risked by a Phase 1 spike)
 

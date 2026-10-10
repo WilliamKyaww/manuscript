@@ -31,6 +31,35 @@ describe('problem details', () => {
     });
   });
 
+  it('says what to do about trouble with the disk, files and database, without repeating paths or SQL', () => {
+    const fileError = (code: string) =>
+      Object.assign(new Error(`${code}: operation failed, open 'C:\\Users\\will\\Vault\\a.md'`), {
+        code,
+      });
+    const cases: [unknown, number, string, RegExp][] = [
+      [fileError('ENOENT'), 404, 'not_found', /no longer there/u],
+      [fileError('EACCES'), 409, 'conflict', /read-only, or open in another program/u],
+      [fileError('EPERM'), 409, 'conflict', /read-only/u],
+      [fileError('EBUSY'), 409, 'conflict', /in use by another program/u],
+      [fileError('ENOSPC'), 503, 'unavailable', /disk is full/u],
+      [fileError('EMFILE'), 503, 'unavailable', /Too many files/u],
+      [fileError('ENAMETOOLONG'), 400, 'validation_failed', /too long/u],
+      [{ code: 'ERR_SQLITE_ERROR', errcode: 5 }, 503, 'unavailable', /database is busy/u],
+      [{ code: 'ERR_SQLITE_ERROR', errcode: 13 }, 503, 'unavailable', /disk is full/u],
+      [{ code: 'ERR_SQLITE_ERROR', errcode: 11 }, 503, 'unavailable', /damaged.*backups/u],
+      [{ code: 'ERR_SQLITE_ERROR', errcode: 26 }, 503, 'unavailable', /damaged/u],
+    ];
+    for (const [error, status, code, detail] of cases) {
+      const problem = toProblem(error, '/api/x');
+      expect([problem.status, problem.code]).toEqual([status, code]);
+      expect(problem.detail).toMatch(detail);
+      expect(JSON.stringify(problem)).not.toContain('Vault');
+    }
+    // A constraint violation or anything else unknown stays an internal error.
+    expect(toProblem({ code: 'ERR_SQLITE_ERROR', errcode: 19 }).code).toBe('internal');
+    expect(toProblem(new Error('x')).code).toBe('internal');
+  });
+
   it('hides unexpected errors from clients but logs them', async () => {
     const logged: string[] = [];
     const logger = createLogger({

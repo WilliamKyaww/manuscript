@@ -17,7 +17,7 @@ Phase 16.
 - [x] **17.02** Crash-safety audit: atomic writes everywhere, WAL checkpointing, startup recovery of interrupted jobs
 - [ ] **17.03** Performance pass against budgets with a 10k-note / 100k-chunk fixture
 - [x] **17.04** Security review (localhost threat model re-check, CSP, dependency audit, secrets handling)
-- [ ] **17.05** Error-handling audit (every API error mapped; UI messages actionable)
+- [x] **17.05** Error-handling audit (every API error mapped; UI messages actionable)
 - [ ] **17.06** Diagnostics page (log viewer; export a diagnostics bundle without secrets)
 - [ ] **17.07** Edge cases: huge PDFs, unusual encodings, Unicode and long Windows paths, read-only files
 - [ ] **17.08** Offline audit: everything non-AI works without network; AI degrades gracefully

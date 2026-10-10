@@ -1,5 +1,6 @@
-import { NotFoundError } from '@skb/core';
+import { NotFoundError, ValidationError } from '@skb/core';
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import type { AppContext } from './context';
 import type { ApiRegistry } from './http/endpoint';
 import { securityHeaders } from './http/headers';
@@ -26,6 +27,9 @@ import { registerSettingsRoutes } from './modules/settings/routes';
 import { registerSourcesRoutes } from './modules/sources/routes';
 import { registerSystemRoutes } from './modules/system/routes';
 import { apiGuard, authBootstrapHandler, hostGuard, type SecurityContext } from './security/guards';
+
+/** The largest JSON body accepted (the longest note is a fraction of this). */
+export const MAX_JSON_BODY_BYTES = 8 * 1024 * 1024;
 
 export interface AuthOptions {
   token: string;
@@ -58,6 +62,19 @@ export function createApp(ctx: AppContext, modules: AppModules, auth: AuthOption
   app.get('/auth', authBootstrapHandler(security));
   // 4. Every API route is authenticated unless registered as public.
   app.use('/api/*', apiGuard(security));
+
+  // 5. JSON bodies are small; uploads (multipart) have limits of their own on their routes.
+  const jsonLimit = bodyLimit({
+    maxSize: MAX_JSON_BODY_BYTES,
+    onError: () => {
+      throw new ValidationError('That request is too large to be what this application sent.');
+    },
+  });
+  app.use('/api/*', (c, next) =>
+    c.req.header('content-type')?.toLowerCase().includes('application/json')
+      ? jsonLimit(c, next)
+      : next(),
+  );
 
   const registry: ApiRegistry = {
     app,
