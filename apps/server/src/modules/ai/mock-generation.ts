@@ -72,7 +72,8 @@ function longestWord(text: string): string | null {
 
 const definition = (text: string) => text.match(/^(.{3,60}?) (is|are) (.{3,})$/u);
 
-function cards(user: string, system: string) {
+/** Cards from the wrapped passages in `user` (also used by the test agent). */
+export function mockCards(user: string, system: string) {
   const kinds = system.match(/Card kinds allowed: ([a-z, ]+)\./u)?.[1]?.split(', ') ?? ['basic'];
   return sentences(user)
     .slice(0, count(user, 10))
@@ -274,7 +275,7 @@ export function mockStructured(prompt: LanguageModelV4Prompt): string | null {
   const task = system.match(/^Task: ([\w-]+)/mu)?.[1];
   switch (task) {
     case 'cards':
-      return JSON.stringify({ cards: cards(user, system) });
+      return JSON.stringify({ cards: mockCards(user, system) });
     case 'questions':
       return JSON.stringify({ questions: questions(user, system) });
     case 'note':
