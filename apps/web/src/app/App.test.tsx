@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SectionPlaceholder } from '../features/placeholder/SectionPlaceholder';
 import { healthyFetch, renderApp, resetUiState } from '../test/renderApp';
+import { NARROW_QUERY } from './layout-store';
 import { SECTIONS } from './sections';
 
 beforeEach(() => {
@@ -121,6 +122,27 @@ describe('keyboard and command palette', () => {
     );
   });
 
+  it('shows the sidebar as a rail in a narrow window, without changing the choice for wide ones', async () => {
+    const media = vi.spyOn(window, 'matchMedia').mockImplementation(
+      (query: string) =>
+        ({
+          matches: query === NARROW_QUERY,
+          media: query,
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        }) as unknown as MediaQueryList,
+    );
+    const user = userEvent.setup();
+    const { container } = renderApp('/');
+    await screen.findByRole('heading', { level: 1, name: 'Today' });
+    const sidebar = container.querySelector('[data-sidebar]');
+    await waitFor(() => expect(sidebar).toHaveAttribute('data-collapsed', 'true'));
+    await user.click(screen.getByRole('button', { name: 'Expand sidebar' }));
+    expect(sidebar).toHaveAttribute('data-collapsed', 'false');
+    expect(localStorage.getItem('skb.sidebar.collapsed')).toBeNull();
+    media.mockRestore();
+  });
+
   it('opens the shortcuts cheat sheet with ? and lists registered shortcuts', async () => {
     const user = userEvent.setup();
     renderApp('/');
@@ -129,6 +151,11 @@ describe('keyboard and command palette', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Keyboard shortcuts' });
     expect(within(dialog).getByText('Open the command palette')).toBeInTheDocument();
     expect(within(dialog).getByText('Collapse or expand the sidebar')).toBeInTheDocument();
+    // The keys of each page are listed too, wherever the sheet is opened.
+    const review = within(dialog).getByRole('region', { name: 'Review session' });
+    expect(within(review).getByText('Rate Good')).toBeInTheDocument();
+    expect(within(review).getAllByText('Show the answer')).toHaveLength(1);
+    expect(within(dialog).getByRole('region', { name: 'Notes list' })).toHaveTextContent('F2');
   });
 });
 

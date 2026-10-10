@@ -275,7 +275,7 @@ export function CardEditor({
             aria-label="Preview"
             className="rounded-lg border border-border bg-surface-sunken p-3"
           >
-            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
+            <p className="eyebrow mb-1">
               Preview{faces.length > 1 ? ` (face 1 of ${faces.length})` : ''}
             </p>
             <CardMarkdown content={preview.front} cardId={card?.id ?? 'new-card'} />

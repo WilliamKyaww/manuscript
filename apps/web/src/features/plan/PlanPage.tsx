@@ -204,8 +204,13 @@ export function PlanPage() {
   const api = useApi();
   const current = useQuery(planQuery(api));
   const actions = usePlanActions();
-  const [days, setDays] = useState<number>(7);
   const plan = current.data?.plan ?? null;
+  // Planning again keeps the plan's length unless another is chosen.
+  const [chosen, setDays] = useState<number | null>(null);
+  const length = plan
+    ? Math.round((Date.parse(plan.endDate) - Date.parse(plan.startDate)) / 86_400_000) + 1
+    : null;
+  const days = chosen ?? HORIZONS.find((value) => value === length) ?? 7;
   const make = () => actions.generate.mutate(days, { onError: notifyError });
 
   return (

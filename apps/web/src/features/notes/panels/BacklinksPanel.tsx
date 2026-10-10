@@ -24,10 +24,7 @@ export function BacklinksPanel({ noteId }: { noteId: string }) {
   return (
     <div className="space-y-6 p-3 text-sm">
       <section aria-labelledby="backlinks-linked">
-        <h3
-          id="backlinks-linked"
-          className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted"
-        >
+        <h3 id="backlinks-linked" className="eyebrow mb-2">
           Linked mentions
           {linked.data
             ? ` (${linked.data.linked.reduce((total, entry) => total + entry.mentions.length, 0)})`
@@ -73,10 +70,7 @@ export function BacklinksPanel({ noteId }: { noteId: string }) {
       </section>
 
       <section aria-labelledby="backlinks-unlinked">
-        <h3
-          id="backlinks-unlinked"
-          className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted"
-        >
+        <h3 id="backlinks-unlinked" className="eyebrow mb-2">
           Unlinked mentions
         </h3>
         {!showMentions && (

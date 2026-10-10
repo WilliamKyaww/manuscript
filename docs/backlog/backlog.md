@@ -138,3 +138,4 @@ _Last reviewed: 10 October 2026 (Phase 15)._
 | B-PL-06 | Auto-update | Painless upgrades | Phase 19 |
 | B-PL-07 | A password-protected export (an export holds chats and usage as well as notes) | The archive is plain; it must be kept as safely as the vault | Phase 16 |
 | B-PL-08 | Scheduled automatic exports, and keeping the last few | Exports are made by hand | Phase 16 |
+| B-PL-09 | Side panels (a note's details, the graph's insights) as drawers below 1024 px | At 768 px they are narrow resizable panes: usable, but cramped beside the editor or canvas | Phase 20 (ui.md §9) |

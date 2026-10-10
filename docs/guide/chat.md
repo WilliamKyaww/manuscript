@@ -5,6 +5,8 @@ from lectures, write a summary note from your slides and your own notes, turn a 
 Answers come from your sources and notes, with citations. Anything the assistant changes is shown as
 it happens and can be undone, and anything that deletes asks you first.
 
+![A chat in which the assistant asks before moving the note “Scratch” to the trash: Approve or Decline, with the step before it listed](../screenshots/chat-approval-light.png)
+
 Chat needs an AI model. Without one, you can still read your old conversations, and the message box
 says what is missing; everything else in Manuscript works as before. Set a model up in
 **Settings → AI** ([AI](./ai.md)).

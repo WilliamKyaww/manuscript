@@ -264,7 +264,7 @@ export function NoteTree({ root, activePath, ...actions }: NoteTreeProps) {
                     aria-hidden="true"
                     size={14}
                     className={cn(
-                      'shrink-0 text-subtle transition-transform',
+                      'shrink-0 text-subtle transition-transform duration-(--skb-duration-fast)',
                       !isFolder && 'invisible',
                       isOpen && 'rotate-90',
                     )}

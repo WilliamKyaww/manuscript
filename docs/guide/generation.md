@@ -6,6 +6,8 @@ scanned pages so they can be searched and cited. Nothing it makes enters your kn
 you accept it: everything waits in the **Inbox**. Without AI, all of this is simply absent; the rest
 of the app works as before.
 
+![Three flashcards made from lecture slides, waiting in the Inbox: each with its slide, to accept, edit or reject](../screenshots/inbox-drafts-light.png)
+
 ## 1. Generating
 
 Choose **Generate…** on:

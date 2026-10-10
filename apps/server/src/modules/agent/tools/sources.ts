@@ -1,7 +1,7 @@
 import { idSchema, type Locator } from '@skb/core';
 import { z } from 'zod';
 import { defineTool, type Json } from '../types';
-import { clip, plain, untrusted } from './shared';
+import { clip, count, plain, untrusted } from './shared';
 
 /**
  * Source tools (task 12.07): search and read the student's lecture material, and start concept
@@ -153,7 +153,9 @@ export const readSource = defineTool({
     return { output: { title: source.title, passages, truncated } };
   },
   describe: (_input, output) =>
-    output ? `Read ${output.passages.length} passages of “${output.title}”` : 'Reading a source',
+    output
+      ? `Read ${count(output.passages.length, 'passage')} of “${output.title}”`
+      : 'Reading a source',
 });
 
 export const extractConcepts = defineTool({

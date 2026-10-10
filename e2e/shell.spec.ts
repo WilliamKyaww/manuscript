@@ -8,6 +8,7 @@ const ROUTES = [
   ...SECTIONS.map((section) => ({ path: section.path, title: section.label })),
   { path: '/practice/questions', title: 'Question bank' },
   { path: '/diagnostics', title: 'Diagnostics' },
+  { path: '/design-system', title: 'Design system' },
   { path: '/no/such/page', title: 'Page not found' },
 ];
 
@@ -120,6 +121,39 @@ test.describe('navigation and keyboard', () => {
     await expect(skip).toBeInViewport();
     await page.keyboard.press('Enter');
     await expect(page.locator('#main')).toBeFocused();
+  });
+
+  test('dialogues ease in, and appear at once with reduced motion', async ({ page }) => {
+    for (const [motion, duration] of [
+      ['no-preference', '0.2s'],
+      ['reduce', '0s'],
+    ] as const) {
+      await page.emulateMedia({ reducedMotion: motion });
+      await page.keyboard.press('?');
+      const dialog = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
+      await expect(dialog).toBeVisible();
+      expect(await dialog.evaluate((element) => getComputedStyle(element).animationDuration)).toBe(
+        duration,
+      );
+      await page.keyboard.press('Escape');
+      await expect(dialog).toHaveCount(0);
+    }
+  });
+
+  test('a narrow window keeps every page usable: a rail for a sidebar, nothing wider than the window', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 800, height: 700 });
+    for (const route of ROUTES) {
+      await page.goto(route.path);
+      await expect(page.getByRole('heading', { level: 1, name: route.title })).toBeVisible();
+      await expect(page.locator('[data-sidebar]')).toHaveAttribute('data-collapsed', 'true');
+      const widths = await page.locator('[data-page]').evaluate((element) => ({
+        page: element.scrollWidth - element.clientWidth,
+        window: document.documentElement.scrollWidth - window.innerWidth,
+      }));
+      expect(widths, route.path).toEqual({ page: 0, window: 0 });
+    }
   });
 
   test('the cheat sheet opens with ? and closes with Escape', async ({ page }) => {

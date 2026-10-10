@@ -164,6 +164,7 @@ function fakeServer() {
         concepts: [],
       });
     }
+    if (path === `/api/lectures/${LECTURE}` && method === 'DELETE') return json({ ok: true });
     if (path === `/api/lectures/${LECTURE}`)
       return json({ ...lecture, module: ref, sources: [], notes: [], concepts: [] });
     if (path === '/api/deadlines') return json({ deadlines: [summary.nextDeadline] });
@@ -303,6 +304,25 @@ describe('modules', () => {
         server.calls.find((call) => call.path === `/api/lectures/${LECTURE}/notes`)?.body,
       ).toEqual({ noteId: NOTE }),
     );
+  });
+
+  it('asks before deleting a lecture', async () => {
+    const server = fakeServer();
+    renderApp(`/lectures/${LECTURE}`, server.fetch);
+    const deletes = () =>
+      server.calls.filter((call) => call.method === 'DELETE' && call.path.includes(LECTURE));
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
+    // Dates read as dates, not as ISO strings.
+    expect(screen.getByText('Lecture · week 3 · Mon 12 Oct')).toBeInTheDocument();
+    let dialog = await screen.findByRole('dialog', { name: 'Delete L03?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(deletes()).toHaveLength(0);
+
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    dialog = await screen.findByRole('dialog', { name: 'Delete L03?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Delete lecture' }));
+    await waitFor(() => expect(deletes()).toHaveLength(1));
   });
 });
 

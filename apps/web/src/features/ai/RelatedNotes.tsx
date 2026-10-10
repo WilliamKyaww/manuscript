@@ -22,10 +22,7 @@ export function RelatedNotes({ noteId }: { noteId: string }) {
   if (!related.data?.available) return null;
   return (
     <section aria-labelledby="related-notes">
-      <h3
-        id="related-notes"
-        className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted"
-      >
+      <h3 id="related-notes" className="eyebrow mb-2">
         Similar notes
       </h3>
       {related.data.notes.length === 0 ? (

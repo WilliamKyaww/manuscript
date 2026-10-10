@@ -149,6 +149,7 @@ export function ReviewPage() {
                 <h3 className="mb-2 text-sm font-medium">Due in the next 30 days</h3>
                 <Bars
                   label="Due in the next 30 days"
+                  empty="Nothing scheduled yet: a card joins the forecast after its first review."
                   days={stats.data.forecast.map((day) => ({ date: day.date, value: day.count }))}
                   describe={(day) => formatCount(day.value, 'face')}
                 />
@@ -157,6 +158,7 @@ export function ReviewPage() {
                 <h3 className="mb-2 text-sm font-medium">Reviews in the last 30 days</h3>
                 <Bars
                   label="Reviews in the last 30 days"
+                  empty="No reviews in the last 30 days."
                   tone="info"
                   days={stats.data.history.map((day) => ({
                     date: day.date,

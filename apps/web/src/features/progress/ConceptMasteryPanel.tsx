@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { StickySection } from '../../components/Page';
-import { LoadingState } from '../../components/States';
+import { InlineError, LoadingState } from '../../components/States';
 import { useApi } from '../../lib/api/context';
 import { formatCount, formatDateTime } from '../../lib/format';
 import { conceptMasteryQuery } from '../practice/api';
@@ -48,6 +48,12 @@ export function ConceptMasteryPanel({ conceptId }: { conceptId: string }) {
       }
     >
       {mastery.isPending && <LoadingState label="Working out mastery" />}
+      {mastery.isError && (
+        <InlineError
+          message="Mastery could not be worked out."
+          onRetry={() => void mastery.refetch()}
+        />
+      )}
       {data && (
         <Card className="space-y-4 p-5">
           <div className="flex flex-wrap items-center gap-4">

@@ -33,6 +33,9 @@ export default defineConfig({
   use: {
     baseURL: E2E_ORIGIN,
     trace: 'retain-on-failure',
+    // Dialogues fade in; with reduced motion they appear at once, so axe never measures colour
+    // contrast half-way through a fade. `shell.spec.ts` checks the motion with the setting off.
+    contextOptions: { reducedMotion: 'reduce' },
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {

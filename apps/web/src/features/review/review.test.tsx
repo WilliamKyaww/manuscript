@@ -281,6 +281,24 @@ describe('writing cards', () => {
       }),
     );
   });
+
+  it('asks before deleting selected cards', async () => {
+    const server = fakeServer();
+    renderApp(`/review/sets/${SET}`, server.fetch);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('checkbox', { name: 'Select all cards' }));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Delete 2 cards?' });
+    expect(server.calls.some((call) => call.path === '/api/cards/bulk')).toBe(false);
+    await user.click(within(dialog).getByRole('button', { name: 'Delete cards' }));
+    await waitFor(() =>
+      expect(server.calls.find((call) => call.path === '/api/cards/bulk')?.body).toEqual({
+        ids: [CARD_A, CARD_B],
+        action: 'delete',
+      }),
+    );
+    expect(await screen.findByText('2 cards deleted')).toBeInTheDocument();
+  });
 });
 
 describe('today', () => {
@@ -289,5 +307,17 @@ describe('today', () => {
     const start = await screen.findByRole('link', { name: 'Review now' });
     expect(start).toHaveAttribute('href', '/review/session');
     expect(screen.getByText(/1 new card/)).toBeInTheDocument();
+  });
+
+  it('says when the reviews could not be loaded, rather than that nothing is due', async () => {
+    const server = fakeServer();
+    const failing: FakeFetch = async (input, init) =>
+      new URL(String(input), 'http://localhost').pathname === '/api/review/stats'
+        ? json({ title: 'Internal error', status: 500, code: 'internal' }, 500)
+        : server.fetch(input, init);
+    renderApp('/', failing);
+    const widget = await screen.findByText('Your reviews could not be loaded.');
+    expect(widget.closest('[role="alert"]')).not.toBeNull();
+    expect(screen.queryByText('Nothing is due. Well done.')).not.toBeInTheDocument();
   });
 });

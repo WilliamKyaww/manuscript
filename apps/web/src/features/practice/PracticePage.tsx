@@ -74,7 +74,7 @@ function QuizRow({ quiz, onDelete }: { quiz: QuizSummary; onDelete(): void }) {
         <Link
           to="/practice/attempts/$attemptId"
           params={{ attemptId: quiz.lastAttempt.id }}
-          className={buttonClasses('ghost', 'sm')}
+          className={buttonClasses('link', 'sm')}
         >
           Last result
         </Link>

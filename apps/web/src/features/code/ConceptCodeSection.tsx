@@ -67,9 +67,7 @@ export function ConceptCodeSection({ conceptId }: { conceptId: string }) {
       )}
       {proposed.length > 0 && (
         <div className="mt-3 space-y-1">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">
-            Suggested from names
-          </h3>
+          <h3 className="eyebrow">Suggested from names</h3>
           <ul aria-label="Suggested code" className="divide-y divide-border">
             {proposed.map((link) => (
               <li key={link.entity.id} className="flex items-start gap-3 py-2 text-sm">

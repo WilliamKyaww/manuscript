@@ -25,7 +25,7 @@ export function PopoverContent({
         sideOffset={6}
         aria-label={label}
         className={cn(
-          'z-50 w-72 rounded-md border border-border bg-surface-raised p-4 text-sm shadow-md',
+          'z-50 w-72 animate-fade-in rounded-md border border-border bg-surface-raised p-4 text-sm shadow-md',
           className,
         )}
       >

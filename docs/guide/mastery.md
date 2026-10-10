@@ -5,6 +5,8 @@ flashcards and answering questions. Nothing is set by hand or by AI, and every f
 numbers it came from, so you can check it yourself. This page explains them. (The design is in
 `docs/prd/learning-system.md` §7–9 and ADR-0021.)
 
+![A concept page: its mastery, stage and evidence, the sum it comes from, and its relations](../screenshots/concept-light.png)
+
 ## 1. One concept
 
 Two kinds of evidence count, both from items **linked to the concept**:

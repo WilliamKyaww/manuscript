@@ -5,7 +5,7 @@ import { CalendarClock, Layers, Play, Sparkles, Target, TrendingDown } from 'luc
 import type { ReactNode } from 'react';
 import { Button, buttonClasses } from '../../components/Button';
 import { Card } from '../../components/Card';
-import { LoadingState } from '../../components/States';
+import { InlineError, LoadingState } from '../../components/States';
 import { useApi } from '../../lib/api/context';
 import { formatCount } from '../../lib/format';
 import { coursesQuery, deadlinesQuery, modulesQuery } from '../learning/api';
@@ -59,6 +59,14 @@ export function ReviewsWidget() {
     <WidgetCard title="Reviews due" icon={<Layers size={18} />}>
       {stats.isPending || sets.isPending ? (
         <LoadingState label="Loading reviews" />
+      ) : stats.isError || sets.isError ? (
+        <InlineError
+          message="Your reviews could not be loaded."
+          onRetry={() => {
+            void stats.refetch();
+            void sets.refetch();
+          }}
+        />
       ) : (sets.data?.sets.length ?? 0) === 0 ? (
         <p className="text-sm text-muted">
           Make your first{' '}
@@ -97,6 +105,14 @@ export function DeadlinesWidget({ now }: { now: Date }) {
     <WidgetCard title="Upcoming deadlines" icon={<CalendarClock size={18} />}>
       {deadlines.isPending ? (
         <LoadingState label="Loading deadlines" />
+      ) : deadlines.isError || modules.isError ? (
+        <InlineError
+          message="Your deadlines could not be loaded."
+          onRetry={() => {
+            void deadlines.refetch();
+            void modules.refetch();
+          }}
+        />
       ) : (modules.data?.modules.length ?? 0) === 0 ? (
         <p className="text-sm text-muted">
           Add your{' '}
@@ -152,6 +168,11 @@ export function TargetWidget({ now }: { now: Date }) {
     <WidgetCard title="Towards your target" icon={<Target size={18} />}>
       {courses.isPending ? (
         <LoadingState label="Loading progress" />
+      ) : courses.isError ? (
+        <InlineError
+          message="Your courses could not be loaded."
+          onRetry={() => void courses.refetch()}
+        />
       ) : !course ? (
         <p className="text-sm text-muted">
           Create a course with a target average in{' '}
@@ -190,6 +211,11 @@ export function WeakAreasWidget() {
     <WidgetCard title="Weak areas" icon={<TrendingDown size={18} />}>
       {weak.isPending ? (
         <LoadingState label="Loading weak areas" />
+      ) : weak.isError ? (
+        <InlineError
+          message="Weak areas could not be worked out."
+          onRetry={() => void weak.refetch()}
+        />
       ) : items.length === 0 ? (
         <p className="text-sm text-muted">
           Nothing weak, slipping or being forgotten.{' '}

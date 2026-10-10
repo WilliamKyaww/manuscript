@@ -4,6 +4,7 @@ import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
+import { studyDay } from './days';
 import { startServer, stopServer } from './server';
 
 /**
@@ -17,12 +18,7 @@ import { startServer, stopServer } from './server';
 const PORTS = { plan: 4391, tutor: 4390 };
 const auth = { Authorization: `Bearer ${E2E_TOKEN}` };
 
-const pad = (value: number) => String(value).padStart(2, '0');
-const inDays = (days: number) => {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-};
+const inDays = studyDay;
 
 async function post<T>(
   request: import('@playwright/test').APIRequestContext,

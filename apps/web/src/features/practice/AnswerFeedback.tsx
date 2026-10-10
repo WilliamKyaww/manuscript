@@ -130,7 +130,7 @@ function KeyView({
     default:
       return (
         <div>
-          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
+          <p className="eyebrow mb-1">
             {answer.kind === 'code' ? 'Model solution' : 'Model answer'}
           </p>
           <CardMarkdown
@@ -143,9 +143,7 @@ function KeyView({
           />
           {question.rubric && (
             <>
-              <p className="mt-3 mb-1 text-xs font-medium uppercase tracking-wide text-muted">
-                A good answer
-              </p>
+              <p className="eyebrow mt-3 mb-1">A good answer</p>
               <CardMarkdown content={question.rubric} cardId={question.id} />
             </>
           )}
@@ -248,7 +246,7 @@ export function AnswerFeedback({
       </p>
       {mine !== null && (
         <div>
-          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">Your answer</p>
+          <p className="eyebrow mb-1">Your answer</p>
           <p
             className={cn(
               'whitespace-pre-wrap rounded-md bg-surface-sunken px-3 py-2 text-sm',
@@ -262,7 +260,7 @@ export function AnswerFeedback({
       <KeyView question={question} response={result.response} />
       {question.explanation && (
         <div>
-          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">Why</p>
+          <p className="eyebrow mb-1">Why</p>
           <CardMarkdown content={question.explanation} cardId={question.id} />
         </div>
       )}

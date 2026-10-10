@@ -3,7 +3,7 @@ import { formatWikilink, normaliseKey } from '@skb/core/markdown';
 import { z } from 'zod';
 import { findMentions } from '../../notes/mentions';
 import { defineTool, type Json } from '../types';
-import { clip, plain, rewriteNote, untrusted } from './shared';
+import { clip, count, plain, rewriteNote, untrusted } from './shared';
 
 /**
  * Knowledge tools (task 12.05, agent-system.md §6.2): search, read and change notes. Every change
@@ -161,7 +161,8 @@ export const listNotes = defineTool({
       },
     };
   },
-  describe: (_input, output) => (output ? `Listed ${output.total} notes` : 'Listing notes'),
+  describe: (_input, output) =>
+    output ? `Listed ${count(output.total, 'note')}` : 'Listing notes',
 });
 
 export const createNote = defineTool({
@@ -191,7 +192,8 @@ export const createNote = defineTool({
       undo: { noteId: note.id, hash: note.hash } as Json,
     };
   },
-  describe: (input, output) => `Created the note “${output?.title ?? input.title}”`,
+  describe: (input, output) =>
+    output ? `Created the note “${output.title}”` : `Create the note “${input.title}”`,
   canUndo(context, record) {
     const { noteId, hash } = record.undo as { noteId: string; hash: string };
     try {
@@ -259,8 +261,11 @@ export const updateNote = defineTool({
       undo: { noteId: input.id, before: result.before, afterHash: result.hash } as Json,
     };
   },
-  describe: (input, output) =>
-    `${output && !output.changed ? 'No change to' : 'Updated'} the note ${output?.path ?? input.id}`,
+  describe: (_input, output) =>
+    output
+      ? `${output.changed ? 'Updated' : 'No change to'} the note ${output.path}`
+      : 'Updating a note',
+  ask: (services, input) => `Change the note “${services.notes.notes.get(input.id).title}”`,
   canUndo(context, record) {
     const { noteId, afterHash } = record.undo as { noteId: string; afterHash: string };
     try {
@@ -376,6 +381,8 @@ export const moveNote = defineTool({
     };
   },
   describe: (_input, output) => (output ? `Moved ${output.from} to ${output.to}` : 'Moving a note'),
+  ask: (services, input) =>
+    `Move the note “${services.notes.notes.get(input.id).title}” to ${input.to}`,
   canUndo(context, record) {
     const { noteId, to } = record.undo as { noteId: string; to: string };
     try {
@@ -408,7 +415,10 @@ export const deleteNote = defineTool({
       undo: { trashId: item.id } as Json,
     };
   },
-  describe: (input, output) => `Moved the note ${output?.title ?? input.id} to the trash`,
+  describe: (_input, output) =>
+    output ? `Moved the note “${output.title}” to the trash` : 'Moving a note to the trash',
+  ask: (services, input) =>
+    `Move the note “${services.notes.notes.get(input.id).title}” to the trash`,
   canUndo(context, record) {
     const { trashId } = record.undo as { trashId: string };
     return context.services.notes.entries.listTrash().items.some((item) => item.id === trashId)

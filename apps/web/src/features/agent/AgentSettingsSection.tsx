@@ -72,9 +72,7 @@ function ToolsTable({ tools }: { tools: readonly ToolInfo[] }) {
     <div className="space-y-4">
       {categories.map((category) => (
         <section key={category} aria-label={CATEGORY_TITLES[category] ?? category}>
-          <h4 className="mb-1 text-xs font-semibold tracking-wide text-muted uppercase">
-            {CATEGORY_TITLES[category] ?? category}
-          </h4>
+          <h4 className="eyebrow mb-1">{CATEGORY_TITLES[category] ?? category}</h4>
           <ul className="divide-y divide-border rounded-lg border border-border bg-surface">
             {tools
               .filter((tool) => tool.category === category)

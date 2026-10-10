@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { PanelLeftClose, PanelLeftOpen, Search, Sparkles } from 'lucide-react';
+import { useEffect } from 'react';
 import { IconButton } from '../components/IconButton';
 import { Kbd } from '../components/Kbd';
 import { Tooltip } from '../components/Tooltip';
@@ -9,15 +10,29 @@ import { inboxCountsQuery } from '../features/inbox/api';
 import { useApi } from '../lib/api/context';
 import { cn } from '../lib/cn';
 import { isApplePlatform } from '../lib/platform';
-import { useLayoutStore } from './layout-store';
+import { NARROW_QUERY, selectSidebarCollapsed, useLayoutStore } from './layout-store';
 import { sectionIcon } from './section-icons';
 import { GROUP_LABELS, SECTIONS, type Section, type SectionGroup } from './sections';
 import { keyLabels } from './shortcuts/registry';
 
 const NAV_GROUPS: SectionGroup[] = ['home', 'knowledge', 'learning', 'assistant'];
 
+/** Follows the window's width, so that the sidebar becomes a rail in a narrow window. */
+function useNarrowWindow() {
+  const setNarrow = useLayoutStore((state) => state.setNarrow);
+  useEffect(() => {
+    const query = window.matchMedia?.(NARROW_QUERY);
+    if (!query) return;
+    setNarrow(query.matches);
+    const changed = (event: MediaQueryListEvent) => setNarrow(event.matches);
+    query.addEventListener('change', changed);
+    return () => query.removeEventListener('change', changed);
+  }, [setNarrow]);
+}
+
 export function Sidebar() {
-  const collapsed = useLayoutStore((state) => state.sidebarCollapsed);
+  useNarrowWindow();
+  const collapsed = useLayoutStore(selectSidebarCollapsed);
   const toggleSidebar = useLayoutStore((state) => state.toggleSidebar);
   const openPalette = useLayoutStore((state) => state.setCommandPaletteOpen);
   const settings = SECTIONS.find((section) => section.id === 'settings');

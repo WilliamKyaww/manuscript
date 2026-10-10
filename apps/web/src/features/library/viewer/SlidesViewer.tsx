@@ -89,9 +89,7 @@ export function SlidesViewer({
                   targeted && !notes ? 'border-accent ring-2 ring-accent/30' : 'border-border',
                 )}
               >
-                <p className="text-xs font-medium tracking-wide text-muted uppercase">
-                  Slide {number}
-                </p>
+                <p className="eyebrow">Slide {number}</p>
                 <h2 className={cn('mt-1 text-lg font-semibold', !title && 'text-muted italic')}>
                   {title ?? 'Untitled slide'}
                 </h2>

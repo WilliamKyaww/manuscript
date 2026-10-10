@@ -21,7 +21,7 @@ export function DropdownMenuContent({
         align={align}
         sideOffset={6}
         className={cn(
-          'z-50 min-w-44 rounded-md border border-border bg-surface-raised p-1 text-sm shadow-md',
+          'z-50 min-w-44 animate-fade-in rounded-md border border-border bg-surface-raised p-1 text-sm shadow-md',
           className,
         )}
       >

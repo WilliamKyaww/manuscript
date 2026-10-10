@@ -37,7 +37,7 @@ _Last updated: 10 October 2026 (end of Phase 19)._
 | F-KN-08 | Attachments (upload, embed, serve) | Complete | 3 |
 | F-KN-09 | Live pick-up of external edits (VS Code, Obsidian) | Complete | 3 |
 | F-KN-11 | Frontmatter properties panel and notes settings (ids, ignore patterns, folders, trash) | Complete | 3 |
-| F-KN-10 | Live-preview editing decorations | Planned | 20 |
+| F-KN-10 | Live-preview editing decorations | Complete — the marks of headings, emphasis, inline code and links are hidden away from the cursor (a toolbar toggle, on by default); front matter is shown small and muted | 20 |
 
 ## Knowledge — search
 
@@ -173,7 +173,9 @@ _Last updated: 10 October 2026 (end of Phase 19)._
 | F-UI-03 | Command palette and keyboard shortcut registry with cheat sheet | Complete | 2 |
 | F-UI-04 | Accessible primitives and state components (axe-clean in both themes) | Complete | 2 |
 | F-UI-06 | Paned pages (each pane with its own fixed header) and lazily loaded routes | Complete | 3 |
-| F-UI-05 | Final visual polish across all screens | Planned | 20 |
+| F-UI-05 | Final visual polish across all screens | Complete — tokens and components polished, a design-system page, every screen reviewed in both themes and at 768 px, error states in widgets, a complete cheat sheet, motion and a narrow-window rail | 20 |
+| F-UI-07 | Design-system reference page (`/design-system`): every token with its value, every shared component live | Complete | 20 |
+| F-UI-08 | Narrow windows (768–1023 px): the sidebar as a rail, header actions that wrap, icon tabs in narrow panels | Complete — side panels stay resizable panes (drawers: B-PL-09) | 20 |
 
 ## Deferred
 

@@ -251,9 +251,7 @@ export function PropertiesPanel({ text, readOnly, onChange }: Props) {
 
       {others.length > 0 && !editingYaml && (
         <div>
-          <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
-            Other properties
-          </h3>
+          <h3 className="eyebrow mb-1">Other properties</h3>
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
             {others.map(([key, value]) => (
               <div key={key} className="contents">

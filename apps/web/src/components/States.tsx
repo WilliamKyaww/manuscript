@@ -88,6 +88,32 @@ export function ErrorState({
   );
 }
 
+/**
+ * A failed request inside a card, widget or panel, where the full ErrorState would be too big: one
+ * line saying what could not be loaded, and Try again. Never a blank or a zero in its place.
+ */
+export function InlineError({
+  message,
+  onRetry,
+  className,
+}: {
+  message: string;
+  onRetry?: () => void;
+  className?: string;
+}) {
+  return (
+    <div role="alert" className={cn('flex flex-wrap items-center gap-2 text-sm', className)}>
+      <TriangleAlert aria-hidden="true" size={16} className="shrink-0 text-danger" />
+      <span className="text-muted">{message}</span>
+      {onRetry && (
+        <Button size="sm" variant="ghost" onClick={onRetry}>
+          Try again
+        </Button>
+      )}
+    </div>
+  );
+}
+
 /** Placeholder block shaped like the content that is loading. */
 export function Skeleton({ className }: { className?: string }) {
   return (

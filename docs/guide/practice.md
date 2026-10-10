@@ -4,6 +4,8 @@
 is evidence for the concepts the question is linked to, and moves their mastery
 ([how mastery is worked out](./mastery.md)).
 
+![Practice: starting a Learn session, and the quizzes and mock exams](../screenshots/practice-light.png)
+
 ## 1. Writing questions
 
 **New question** (on Practice, in the **Question bank**, or on a concept page) opens the editor.

@@ -5,6 +5,7 @@ import { Download, Pencil, Play, SquarePlus, Trash2, Upload } from 'lucide-react
 import { useRef, useState } from 'react';
 import { Badge, type BadgeTone } from '../../components/Badge';
 import { Button, buttonClasses } from '../../components/Button';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Dialog } from '../../components/Dialog';
 import { Page, StickySection } from '../../components/Page';
 import { EmptyState, ErrorState, LoadingState } from '../../components/States';
@@ -16,6 +17,7 @@ import { notifyError, notifySuccess } from '../../lib/notify';
 import { selectClasses } from '../learning/Field';
 import { cardSetQuery, cardSetsQuery, useCardActions } from './api';
 import { CardEditor } from './CardEditor';
+import { glimpse } from './glimpse';
 import { SetDialog } from './SetDialog';
 
 /** One card set (task 8.06): its cards, editing, bulk actions, and Anki import and export. */
@@ -26,14 +28,6 @@ const STATUS: Record<Card['status'], { label: string; tone: BadgeTone }> = {
   suspended: { label: 'Suspended', tone: 'warning' },
   deleted: { label: 'Deleted', tone: 'danger' },
 };
-
-/** A one-line glimpse of a card's front, without Markdown or cloze syntax. */
-export const glimpse = (text: string) =>
-  text
-    .replace(/\{\{c\d+::((?:(?!\}\}).)*?)(?:::(?:(?!\}\}).)*?)?\}\}/g, '[$1]')
-    .replace(/[#*_`>$]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
 
 function nextDue(card: Card, now: number): string {
   const learnt = card.faces.filter((face) => face.state !== 'new');
@@ -53,6 +47,7 @@ export function SetPage() {
   const [editing, setEditing] = useState<Card | 'new' | null>(null);
   const [editingSet, setEditingSet] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deletingCards, setDeletingCards] = useState(false);
   const [moveTo, setMoveTo] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -72,13 +67,15 @@ export function SetPage() {
   const data = set.data;
   const now = Date.now();
   const ids = [...selected];
+  const DONE = { activate: 'activated', suspend: 'suspended', delete: 'deleted', move: 'moved' };
   const bulk = (action: 'activate' | 'suspend' | 'delete' | 'move') =>
     actions.bulk.mutate(
       { ids, action, ...(action === 'move' ? { setId: moveTo } : {}) },
       {
         onSuccess: ({ changed }) => {
-          notifySuccess(`${formatCount(changed, 'card')} updated`);
+          notifySuccess(`${formatCount(changed, 'card')} ${DONE[action]}`);
           setSelected(new Set());
+          setDeletingCards(false);
         },
         onError: notifyError,
       },
@@ -158,7 +155,7 @@ export function SetPage() {
             event.target.value = '';
           }}
         />
-        <Button size="sm" variant="danger" onClick={() => setDeleting(true)}>
+        <Button size="sm" variant="danger-outline" onClick={() => setDeleting(true)}>
           <Trash2 aria-hidden="true" size={14} /> Delete set
         </Button>
       </div>
@@ -194,7 +191,7 @@ export function SetPage() {
               <Button size="sm" disabled={!moveTo} onClick={() => bulk('move')}>
                 Move
               </Button>
-              <Button size="sm" variant="danger" onClick={() => bulk('delete')}>
+              <Button size="sm" variant="danger-outline" onClick={() => setDeletingCards(true)}>
                 Delete
               </Button>
             </div>
@@ -215,7 +212,8 @@ export function SetPage() {
           <table className="w-full text-sm">
             <thead className="text-left text-xs text-muted">
               <tr>
-                <th className="w-8 py-1.5">
+                {/* The gap keeps each checkbox a target of its own beside the card's button (WCAG 2.5.8). */}
+                <th className="py-1.5 pr-3">
                   <input
                     type="checkbox"
                     aria-label="Select all cards"
@@ -229,16 +227,16 @@ export function SetPage() {
                     }
                   />
                 </th>
-                <th className="py-1.5 pr-3 font-medium">Card</th>
-                <th className="py-1.5 pr-3 font-medium">Kind</th>
-                <th className="py-1.5 pr-3 font-medium">Status</th>
-                <th className="py-1.5 pr-3 font-medium">Next</th>
+                <th className="w-full py-1.5 pr-3 font-medium">Card</th>
+                <th className="py-1.5 pr-6 font-medium">Kind</th>
+                <th className="py-1.5 pr-6 font-medium">Status</th>
+                <th className="py-1.5 font-medium whitespace-nowrap">Next</th>
               </tr>
             </thead>
             <tbody>
               {data.cards.map((card) => (
                 <tr key={card.id} className="border-t border-border">
-                  <td className="py-2">
+                  <td className="py-2 pr-3">
                     <input
                       type="checkbox"
                       aria-label={`Select ${glimpse(card.front)}`}
@@ -260,14 +258,16 @@ export function SetPage() {
                       </span>
                     )}
                   </td>
-                  <td className="py-2 pr-3 text-xs text-muted">
+                  <td className="py-2 pr-6 text-xs whitespace-nowrap text-muted">
                     {card.kind}
                     {card.faces.length > 1 && ` · ${card.faces.length} faces`}
                   </td>
-                  <td className="py-2 pr-3">
+                  <td className="py-2 pr-6">
                     <Badge tone={STATUS[card.status].tone}>{STATUS[card.status].label}</Badge>
                   </td>
-                  <td className="py-2 pr-3 text-xs text-muted">{nextDue(card, now)}</td>
+                  <td className="py-2 text-xs whitespace-nowrap text-muted">
+                    {nextDue(card, now)}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -282,6 +282,16 @@ export function SetPage() {
         />
       )}
       {editingSet && <SetDialog set={data} onClose={() => setEditingSet(false)} />}
+      <ConfirmDialog
+        open={deletingCards}
+        title={`Delete ${formatCount(ids.length, 'card')}?`}
+        confirmLabel="Delete cards"
+        busy={actions.bulk.isPending}
+        onCancel={() => setDeletingCards(false)}
+        onConfirm={() => bulk('delete')}
+      >
+        <p>They leave your reviews. Their review history is kept.</p>
+      </ConfirmDialog>
       <Dialog
         open={deleting}
         onOpenChange={(open) => !open && setDeleting(false)}

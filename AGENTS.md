@@ -87,9 +87,17 @@ All verified on 4 October 2026 (Phase 1):
 - `NoDefaultCurrentDirectoryInExePath=1` stops `cmd.exe` finding `run-web.bat` by a relative name; call
   batch files by their full path in automation (double-clicking in Explorer is unaffected).
 - Another local project may already use Vite's default port 5173 — this project's dev server uses 5317.
-  E2E ports: 4399 for the shared Playwright server, and 4398 down to 4388 for the tests that run a
+  E2E ports: 4399 for the shared Playwright server, and 4398 down to 4387 for the tests that run a
   server of their own (`e2e/server.ts`, which can pass extra environment such as
-  `SKB_AI_PROVIDER=mock`; the next free one is 4387).
+  `SKB_AI_PROVIDER=mock`; the next free one is 4386).
+- **The application's day starts at 04:00** local time (as in Anki, `modules/cards/days.ts`): between midnight
+  and 04:00 it is still the previous day. A test that seeds dates relative to today must use `studyDay()` from
+  `e2e/days.ts`, not the calendar, or it fails when a run passes midnight (it happened in the Phase 20 gate).
+- End-to-end tests run with **reduced motion** (`playwright.config.ts`), so dialogues appear at once and axe never
+  measures colour contrast half-way through a fade; a test that checks motion turns it back on itself.
+- **Screenshots of every screen**: `SKB_SCREENSHOTS=<folder> npx playwright test e2e/screens.spec.ts
+  e2e/screens-assistant.spec.ts` (after `npm run build`; `SKB_SCREENSHOT_WIDTH` sets the width). Both are skipped
+  otherwise; read the pictures before and after a visual change.
 - Switching vault exits the server with code 75 and `scripts/run-web.mjs` starts it again when
   `SKB_RESTARTABLE=1` (the launcher sets it); under `npm run dev` or in tests there is no launcher, so the
   choice is only recorded in the data directory's `vaults.json`.

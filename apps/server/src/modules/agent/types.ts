@@ -89,8 +89,16 @@ export interface ToolDefinition<I, O> {
   /** How many things a call touches (for bulk escalation); 1 when absent. */
   items?(input: I): number;
   execute(context: ToolContext, input: I): Promise<ToolResult<O>> | ToolResult<O>;
-  /** One line for the activity list: "Found Lecture 3 — Consensus". */
+  /**
+   * One line for the activity list: what was done, in the past tense, once there is an output
+   * ("Found Lecture 3 — Consensus"), and what is being done before ("Searching for “Raft”").
+   */
   describe(input: I, output?: O): string;
+  /**
+   * The question on an approval card, naming what will change as the student knows it ("Move the
+   * note “Scratch” to the trash"), for the tools that ask first. `describe(input)` when absent.
+   */
+  ask?(services: AgentServices, input: I): string;
   /** Required for tools that change anything. */
   undo?(context: UndoContext, record: UndoRecord<I, O>): Promise<void> | void;
   /** Why the call can no longer be undone (the target changed since), or null. */

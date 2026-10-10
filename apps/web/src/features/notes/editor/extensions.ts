@@ -40,6 +40,7 @@ import {
 } from '@codemirror/view';
 import { tags as t } from '@lezer/highlight';
 import { analyseNote } from '@skb/core/markdown';
+import { frontmatterStyle } from './frontmatter';
 
 /**
  * CodeMirror 6 set-up for notes (task 3.14, ADR-0009): Markdown with GFM and highlighted code
@@ -245,6 +246,8 @@ export interface EditorSetup {
   readOnly: boolean;
   /** `'\r\n'` keeps Windows line endings when saving; `null` uses `\n`. */
   lineSeparator: '\r\n' | null;
+  /** Extensions the host reconfigures later (live preview), kept in their own compartment. */
+  extra?: Extension[];
 }
 
 export function createExtensions({
@@ -252,6 +255,7 @@ export function createExtensions({
   callbacks,
   readOnly,
   lineSeparator,
+  extra = [],
 }: EditorSetup): Extension[] {
   return [
     highlightSpecialChars(),
@@ -267,6 +271,8 @@ export function createExtensions({
     EditorView.lineWrapping,
     markdown({ base: markdownLanguage, codeLanguages: languages, addKeymap: true }),
     syntaxHighlighting(highlighting),
+    frontmatterStyle,
+    ...extra,
     decorationPlugin(WIKILINK, 'cm-wikilink'),
     decorationPlugin(HASHTAG, 'cm-hashtag'),
     autocompletion({ override: [completionSource(data)], icons: false }),

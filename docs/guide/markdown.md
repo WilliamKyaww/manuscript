@@ -4,6 +4,8 @@ Your notes are ordinary Markdown files in your vault folder. You can edit them h
 VS Code or in any text editor — Manuscript picks up changes made elsewhere within about a
 second. This page describes the Markdown it understands and how notes behave.
 
+![A note in the editor with live preview on: the heading and bold text without their marks, front matter small and grey, the files on the left and the outline on the right](../screenshots/note-light.png)
+
 ## Contents
 
 1. [The Markdown dialect](#1-the-markdown-dialect)
@@ -141,6 +143,11 @@ your behalf — and are shown as a link instead.
   the view switcher shows *Saved*, *Unsaved changes* or *Saving…*.
 - **Edit**, **Split** and **Preview** switch between the editor, both side by side, and the rendered
   note. **Outline** jumps to headings.
+- **Live preview** (the ¶ button, on unless you turn it off): the editor hides the marks of Markdown —
+  a heading's `#`, the `**` and `_` of emphasis, `~~`, the backticks of inline code, a link's brackets
+  and address — wherever the cursor is not, so the note reads as it will look. Move the cursor into a
+  line or a link and its marks come back to be edited. Only the display changes, never the file;
+  `[[wikilinks]]` are always shown as written. Front matter at the top is shown small and grey.
 - If the note is changed **outside the editor** (Obsidian, VS Code, a sync tool) while you have no
   unsaved changes, the editor quietly shows the new version.
 - If it changes while you **do** have unsaved changes, nothing is overwritten: a banner offers
@@ -184,6 +191,9 @@ when something needs them). Behaviour differs in a few places (ADR-0026):
 | An id may be added as `id:` (or `skb-id:`) to notes other data refers to | — |
 
 ## 11. Keyboard
+
+Press `?` (or `Ctrl+/`) anywhere for the cheat sheet: the shortcuts that work everywhere, then the keys
+of each page.
 
 | Keys | Where | Action |
 |---|---|---|

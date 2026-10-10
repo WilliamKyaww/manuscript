@@ -5,6 +5,7 @@ import { type APIRequestContext, expect, test } from '@playwright/test';
 import { makePptx } from '../apps/server/test/fixtures/sources/builders';
 import { seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
+import { studyDay } from './days';
 import { startServer, stopServer } from './server';
 
 /**
@@ -41,11 +42,7 @@ async function post<T>(request: APIRequestContext, url: string, data: unknown): 
   return (await response.json()) as T;
 }
 
-const day = (offset: number) => {
-  const date = new Date();
-  date.setDate(date.getDate() + offset);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-};
+const day = studyDay;
 
 test('a lecture becomes concepts, cards, mastery and a plan', async ({ page }) => {
   test.setTimeout(180_000);

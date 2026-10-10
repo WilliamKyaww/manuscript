@@ -68,6 +68,7 @@ const KEY_LABELS: Record<string, string> = {
   backspace: 'Backspace',
   delete: 'Delete',
   tab: 'Tab',
+  click: 'Click',
 };
 
 /** Human-readable key caps, e.g. `["Ctrl", "Shift", "F"]`. */
@@ -79,7 +80,10 @@ export function keyLabels(keys: string, apple: boolean): string[] {
       if (token === 'ctrl') return apple ? '⌃' : 'Ctrl';
       if (token === 'alt') return apple ? '⌥' : 'Alt';
       if (token === 'shift') return apple ? '⇧' : 'Shift';
-      return KEY_LABELS[token] ?? (token.length === 1 ? token.toUpperCase() : token);
+      return (
+        KEY_LABELS[token] ??
+        (token.length === 1 || /^f\d{1,2}$/.test(token) ? token.toUpperCase() : token)
+      );
     });
 }
 

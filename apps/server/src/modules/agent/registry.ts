@@ -108,6 +108,16 @@ export function createToolRegistry(deps: ToolRegistryDependencies) {
     }
   }
 
+  /** A call that has not run: the question an approval card asks, when the tool has one. */
+  function describePending(tool: AnyTool, input: unknown): string {
+    try {
+      if (tool.ask) return clip(tool.ask(services, input));
+    } catch {
+      // The target may not exist; the call itself will say so. Fall back to the plain line.
+    }
+    return describeSafely(tool, input);
+  }
+
   function record(
     tool: AnyTool,
     row: Pick<ActionRow, 'status' | 'summary' | 'input' | 'output' | 'error' | 'approval'> &
@@ -214,7 +224,7 @@ export function createToolRegistry(deps: ToolRegistryDependencies) {
         decision: policy.decision,
         risk: policy.risk,
         reason: policy.reason,
-        summary: describeSafely(tool, input),
+        summary: describePending(tool, input),
         input,
       };
     },
@@ -232,7 +242,7 @@ export function createToolRegistry(deps: ToolRegistryDependencies) {
         override: deps.permissions()[tool.name],
         permanent: tool.permanent,
       });
-      const summary = describeSafely(tool, input);
+      const summary = describePending(tool, input);
 
       if (options.actor === 'mcp' && (!offeredToMcp(tool) || policy.decision !== 'approve')) {
         const reason =
@@ -399,7 +409,7 @@ export function createToolRegistry(deps: ToolRegistryDependencies) {
         tool,
         {
           status: 'denied',
-          summary: describeSafely(tool, input),
+          summary: describePending(tool, input),
           input,
           output: undefined,
           error: reason,

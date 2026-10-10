@@ -62,6 +62,11 @@ describe('the progress page', () => {
     expect(within(weak).getByText('Exam in 9 days, 70 % of COC251')).toBeInTheDocument();
     expect(within(weak).getByRole('button', { name: 'Practise Raft' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Write a question for Paxos' })).toBeInTheDocument();
+    const bare = screen.getByRole('list', { name: 'Concepts with no cards or questions' });
+    expect(within(bare).getByRole('link', { name: 'Paxos' })).toHaveAttribute(
+      'href',
+      expect.stringMatching(/^\/concepts\//),
+    );
 
     const concepts = screen.getByRole('list', { name: 'Concepts in COC251' });
     await user.click(within(concepts).getByText('Raft'));
