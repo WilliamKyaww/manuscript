@@ -62,6 +62,8 @@ describe('rankCandidates', () => {
     );
     const started = performance.now();
     rankCandidates('topic 42', many, { limit: 20 });
-    expect(performance.now() - started).toBeLessThan(250);
+    // A tripwire for an accidental quadratic, not a budget (those are in the perf suite): this takes
+    // a few tens of milliseconds alone and several times that on a loaded laptop.
+    expect(performance.now() - started).toBeLessThan(1_500);
   });
 });
