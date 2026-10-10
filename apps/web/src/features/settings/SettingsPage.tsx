@@ -10,6 +10,7 @@ import { Page, StickySection } from '../../components/Page';
 import { ErrorState, LoadingState } from '../../components/States';
 import { useApi } from '../../lib/api/context';
 import { cn } from '../../lib/cn';
+import { desktopBridge } from '../../lib/desktop';
 import { formatUptime } from '../../lib/format';
 import { healthQuery } from '../../lib/queries';
 import { AgentSettingsSection } from '../agent/AgentSettingsSection';
@@ -162,6 +163,35 @@ function KeyboardSection() {
   );
 }
 
+/** Rows that only the desktop app has: which shell this is, and how AI keys are protected. */
+function DesktopAbout() {
+  const bridge = desktopBridge();
+  const info = useQuery({
+    queryKey: ['desktop', 'info'],
+    queryFn: () => bridge?.appInfo() ?? null,
+    enabled: bridge !== null,
+  });
+  if (!bridge || !info.data) return null;
+  return (
+    <div className="mt-3">
+      <Details
+        rows={[
+          [
+            'Desktop app',
+            `Manuscript ${info.data.version} on Electron ${info.data.electron} (${info.data.platform})`,
+          ],
+          [
+            'AI keys',
+            info.data.secrets === 'encrypted'
+              ? 'Encrypted, with a key that this computer’s account protects'
+              : 'Kept in a file that only you can read (this system offers no protection for them)',
+          ],
+        ]}
+      />
+    </div>
+  );
+}
+
 function AboutSection() {
   const health = useHealth();
   return (
@@ -188,6 +218,7 @@ function AboutSection() {
           ]}
         />
       )}
+      <DesktopAbout />
       <p className="mt-3 text-sm">
         <Link to="/diagnostics" className="text-accent underline">
           Diagnostics, the log and a bundle for support
