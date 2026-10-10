@@ -4,7 +4,7 @@ import { PanelLeftClose, PanelLeftOpen, Search, Sparkles } from 'lucide-react';
 import { IconButton } from '../components/IconButton';
 import { Kbd } from '../components/Kbd';
 import { Tooltip } from '../components/Tooltip';
-import { useAsk } from '../features/ai/ask-store';
+import { useChat } from '../features/chat/chat-store';
 import { inboxCountsQuery } from '../features/inbox/api';
 import { useApi } from '../lib/api/context';
 import { cn } from '../lib/cn';
@@ -56,7 +56,7 @@ export function Sidebar() {
 
       <div className="flex-none px-3 pb-2">
         <SidebarSearchButton collapsed={collapsed} onClick={() => openPalette(true)} />
-        <SidebarAskButton collapsed={collapsed} />
+        <SidebarChatButton collapsed={collapsed} />
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
@@ -138,12 +138,12 @@ function InboxCount({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-function SidebarAskButton({ collapsed }: { collapsed: boolean }) {
-  const open = () => useAsk.getState().setOpen(true);
+function SidebarChatButton({ collapsed }: { collapsed: boolean }) {
+  const open = () => useChat.getState().openPanel();
   if (collapsed)
     return (
       <IconButton
-        label="Ask about your material"
+        label="Chat about your material"
         icon={<Sparkles size={18} />}
         shortcut="mod+j"
         tooltipSide="right"
@@ -158,7 +158,7 @@ function SidebarAskButton({ collapsed }: { collapsed: boolean }) {
       className="mt-1 flex h-9 w-full items-center gap-2 rounded-md px-2.5 text-sm text-muted hover:bg-surface-hover hover:text-text"
     >
       <Sparkles aria-hidden="true" size={16} />
-      <span className="min-w-0 flex-1 truncate text-left">Ask…</span>
+      <span className="min-w-0 flex-1 truncate text-left">Chat…</span>
       <span className="flex gap-0.5" aria-hidden="true">
         {keyLabels('mod+j', isApplePlatform()).map((label) => (
           <Kbd key={label}>{label}</Kbd>

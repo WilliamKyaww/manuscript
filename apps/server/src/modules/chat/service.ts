@@ -172,9 +172,17 @@ export function createChatService(deps: ChatDependencies) {
 
   function instructionsFor(
     thread: ThreadRow,
-    input: { mentions: readonly Mention[]; selection: string | undefined },
+    input: {
+      mentions: readonly Mention[];
+      selection: string | undefined;
+      noteId: string | undefined;
+    },
   ): string {
     const lines = [SCOPE_RULES[thread.scope], CITING];
+    if (input.noteId)
+      lines.push(
+        `The note the student has open has the id ${input.noteId}; read it with the tools when it helps.`,
+      );
     if (thread.summary) lines.push(`Earlier in this conversation (summarised): ${thread.summary}`);
     if (input.mentions.length > 0)
       lines.push(
@@ -571,6 +579,7 @@ export function createChatService(deps: ChatDependencies) {
         instructions: instructionsFor(thread, {
           mentions: input.mentions,
           selection: input.context?.selection,
+          noteId: input.context?.noteId,
         }),
         userIndex,
         request: input.text,

@@ -3,12 +3,14 @@ import { useRouterState } from '@tanstack/react-router';
 import type { z } from 'zod';
 
 /**
- * What the current page is about, offered as the Ask panel's default scope: the source being read,
- * the module, lecture or concept open — so "explain this" means this.
+ * What the current page is about, offered to the chat as its default scope: the source being read,
+ * the module, lecture, concept or note open — so "explain this" means this.
  */
 export interface PageScope {
   label: string;
   filter: z.input<typeof AskFilterSchema>;
+  /** The open note, which the assistant can read. */
+  noteId?: string;
 }
 
 export function usePageScope(): PageScope | null {
@@ -23,6 +25,8 @@ export function usePageScope(): PageScope | null {
   });
   if (!match) return null;
   const { routeId, params } = match;
+  if (routeId === '/notes/$noteId' && params.noteId)
+    return { label: 'this note', filter: {}, noteId: params.noteId };
   if (routeId === '/library/$sourceId' && params.sourceId)
     return { label: 'this source', filter: { sourceIds: [params.sourceId] } };
   if (routeId === '/modules/$moduleId' && params.moduleId)

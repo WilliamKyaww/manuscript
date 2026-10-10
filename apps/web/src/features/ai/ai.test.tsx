@@ -4,10 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { json, notFound } from '../../test/practice-fixtures';
 import { type FakeFetch, HEALTH, renderApp, resetUiState } from '../../test/renderApp';
-import { useAsk } from './ask-store';
 
 const KEY = 'sk-secret-0123456789abcdefghij';
-const SOURCE = 'src_01J9Z3K4M2Q8R5T7V9X1Y3Z5H1';
 
 const role = (ready: boolean, reason: string | null, label: string | null = null) => ({
   ready,
@@ -48,7 +46,7 @@ interface Call {
   body: Record<string, unknown> | null;
 }
 
-function fakeServer(options: { enabled?: boolean; answer?: string } = {}) {
+function fakeServer(options: { enabled?: boolean } = {}) {
   const calls: Call[] = [];
   const providers: Record<string, unknown>[] = [];
   const fetch: FakeFetch = async (input, init) => {
@@ -87,37 +85,6 @@ function fakeServer(options: { enabled?: boolean; answer?: string } = {}) {
       });
     if (path === '/api/ai/preferences')
       return json({ providers, preferences: DEFAULT_AI_PREFERENCES, status: status(true) });
-    if (path === '/api/ai/ask') {
-      const lines = [
-        {
-          type: 'passages',
-          passages: [
-            {
-              key: 'S1',
-              kind: 'source',
-              title: 'Lecture 3',
-              label: 'p. 4',
-              locator: { kind: 'pdf', sourceId: SOURCE, page: 4 },
-              text: 'Raft elects a leader for each term.',
-            },
-          ],
-        },
-        { type: 'text', delta: 'Raft elects a leader ' },
-        { type: 'text', delta: 'for each term [S1].' },
-        {
-          type: 'done',
-          text: options.answer ?? 'Raft elects a leader for each term [S1].',
-          cited: ['S1'],
-          dropped: [],
-          grounding: 'sources',
-          usage: { requests: 1, inputTokens: 1200, outputTokens: 40, cost: 0.0042 },
-        },
-      ];
-      return new Response(lines.map((line) => JSON.stringify(line)).join('\n'), {
-        status: 200,
-        headers: { 'content-type': 'application/x-ndjson' },
-      });
-    }
     return notFound();
   };
   return {
@@ -133,15 +100,6 @@ beforeAll(() => {
 });
 beforeEach(() => {
   resetUiState();
-  useAsk.setState({
-    open: false,
-    phase: 'idle',
-    question: '',
-    passages: [],
-    text: '',
-    done: null,
-    error: null,
-  });
 });
 
 describe('Settings → AI', () => {
@@ -183,49 +141,4 @@ describe('Settings → AI', () => {
     });
     // Typing a long key character by character is slow when the whole suite runs at once.
   }, 15_000);
-});
-
-describe('the Ask panel', () => {
-  it('explains how to set up AI when there is no model', async () => {
-    const user = userEvent.setup();
-    renderApp('/', fakeServer().fetch);
-    await screen.findByRole('heading', { level: 1, name: 'Today' });
-    await user.keyboard('{Control>}j{/Control}');
-    const dialog = await screen.findByRole('dialog', { name: 'Ask your material' });
-    expect(await within(dialog).findByText(/Asking needs an AI model/u)).toBeInTheDocument();
-    expect(within(dialog).getByRole('link', { name: 'Set up AI in Settings' })).toHaveAttribute(
-      'href',
-      '/settings',
-    );
-  });
-
-  it('streams a cited answer whose citations open the passage', async () => {
-    const user = userEvent.setup();
-    const server = fakeServer({ enabled: true });
-    renderApp(`/library/${SOURCE}`, server.fetch);
-    await user.click(await screen.findByRole('button', { name: /Ask…/u }));
-    const dialog = await screen.findByRole('dialog', { name: 'Ask your material' });
-    // On a source's page, the question is about that source unless widened.
-    expect(await within(dialog).findByRole('checkbox', { name: 'Only this source' })).toBeChecked();
-    await user.type(
-      within(dialog).getByRole('textbox', { name: 'Question' }),
-      'How does Raft elect a leader?',
-    );
-    await user.click(within(dialog).getByRole('button', { name: /^Ask/u }));
-    const answer = await within(dialog).findByRole('region', { name: 'Answer' });
-    expect(await within(answer).findByText('From your sources')).toBeInTheDocument();
-    const citation = within(answer).getByRole('link', { name: '[S1]' });
-    expect(citation).toHaveAttribute('href', `/library/${SOURCE}?page=4`);
-    expect(citation).toHaveAttribute('title', 'Lecture 3 · p. 4');
-    expect(within(answer).getByText(/1,200 tokens in/u)).toBeInTheDocument();
-    expect(server.find('POST', '/api/ai/ask')[0]?.body).toEqual({
-      question: 'How does Raft elect a leader?',
-      scope: 'sources',
-      filter: { sourceIds: [SOURCE] },
-    });
-    await user.click(citation);
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog', { name: 'Ask your material' })).not.toBeInTheDocument(),
-    );
-  });
 });
