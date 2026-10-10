@@ -208,6 +208,20 @@ Threats for a localhost app that can read/write the vault and spend API credit:
 | Electron renderer compromise | `contextIsolation`, `sandbox`, no `nodeIntegration`, strict CSP, navigation restricted to the app origin, external links opened via validated `shell.openExternal` |
 | Malformed files (zip bombs, huge PDFs) | Size limits, timeouts and memory caps in parsers; parsing in the job worker |
 
+**Review (Phase 17, 10 October 2026).** The threat model was re-checked against everything added since
+Phase 1 (assistant tools and MCP, chat, the Inbox, export and restore, vault switching, code graphs):
+
+| Check | Result |
+|---|---|
+| Every registered API route (about 190, including the MCP endpoint and the file routes) without a token, with a wrong one, as a cross-site fetch, as a cookie-only state change from a foreign origin and under a foreign `Host` | Refused in every case; only `GET /api/ping` is public. A test walks the registered routes (`security/surface.test.ts`), so a route added later is covered without being listed |
+| Content Security Policy and headers | Unchanged and strict (`default-src 'self'`, no inline scripts, `frame-ancestors 'none'`, `nosniff`, `no-referrer`); files served from the vault carry their own sandbox policy |
+| Paths supplied by a request | Vault paths through `resolveInVault`; export names must match the exporter's own pattern; restore refuses archive entries that are absolute, climb out, or name `.skb`, builds the vault beside its target and renames at the end |
+| Untrusted files | Zip entries, Graphify `graph.json` and sources are size-capped and shape-checked; labels are cleaned; nothing from them is executed or rendered as HTML |
+| Secrets | Provider keys only in the data directory (mode 0600), never in the vault, exports, logs or responses; a test asserts the archive holds no `.skb` or database |
+| What an export holds | Everything except keys — chats and usage included — so the guide says to keep it as carefully as the vault; encryption is B-PL-07 |
+| Dependencies | `npm audit` (production and development): no known vulnerabilities |
+| Destructive actions by the assistant | Unchanged (ADR-0035): restoring, switching vault, importing a graph and writing notes for concepts are not tools |
+
 Bootstrap: the launcher opens `http://127.0.0.1:<port>/auth?token=…`; the server sets the cookie and
 redirects to `/` (the pattern used by Jupyter). The token persists in the app data dir so bookmarks keep
 working.
