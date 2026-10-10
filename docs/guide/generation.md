@@ -15,6 +15,7 @@ Choose **Generate…** on:
 | A lecture's page | Every source attached to the lecture, and its notes |
 | A source in the library | The whole source, or a range of pages or slides (e.g. slides 1–3) |
 | A note (the ✨ button above the editor) | The whole note |
+| A concept (the ✨ beside a concept with no cards or questions on the Progress page) | The concept's note and the passages of your sources that name it |
 | Any of these with text selected | Only the selection |
 
 Then pick what to make:
@@ -95,6 +96,26 @@ Accepting a relation whose end is a proposed concept accepts that concept too; r
 withdraws the relations that needed it. When you accept many at once, concepts are accepted first,
 then merges, relations, links and notes. Accepted relations become yours (solid lines in the
 graph), keeping their evidence.
+
+### Study materials from a lecture in one go
+
+On a lecture's page, **Make study materials…** runs the steps you choose, one after another, as a
+background job: a summary note, concepts and links, flashcards, questions, and a quiz of those questions.
+Each step reports what it made (or why it made nothing). Everything waits in the Inbox as usual; the
+quiz can be taken straight away, and a question you reject drops out of new attempts.
+
+Cards are made from the concepts you already have, so the best order is: run it once, accept the
+concepts, then run **Cards** again from **Make them again…** so that the new cards know the concepts —
+which is what lets reviews show up as mastery. In **Settings → Lecture pipeline** you choose which
+steps run by default and whether it runs by itself when material is attached to a lecture (off by
+default: each run asks your AI model several times, and the same material is never run twice).
+
+### Mistakes go back to your notes
+
+When you finish a quiz or a Learn session, each question you got wrong, on a concept that has a note of
+its own, becomes a suggestion in the Inbox (**Additions**): the question and its right answer, to add
+under *Common mistakes* in that note. Nothing changes until you accept it. It needs no AI, and the same
+mistake is suggested once.
 
 ### Skipping the Inbox
 

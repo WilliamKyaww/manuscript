@@ -193,7 +193,8 @@ export function GraphPage() {
         className="w-80 flex-none border-l border-border"
         actions={
           !selectedNode && (
-            <div role="group" aria-label="Beside the graph" className="flex gap-1">
+            <fieldset className="m-0 flex gap-1 border-0 p-0">
+              <legend className="sr-only">Beside the graph</legend>
               {(['insights', 'connections'] as const).map((value) => (
                 <button
                   key={value}
@@ -208,7 +209,7 @@ export function GraphPage() {
                   {value === 'insights' ? 'Insights' : 'Between modules'}
                 </button>
               ))}
-            </div>
+            </fieldset>
           )
         }
       >

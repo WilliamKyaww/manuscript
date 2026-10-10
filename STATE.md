@@ -4,18 +4,18 @@ _Last updated: 10 October 2026 — Claude Sonnet 5.5._
 
 ## Current phase
 
-**Phase 15 — Integration: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
+**Phase 16 — Portability: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
 and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
 ingestion pipeline), 6 (course structure and concepts), 7 (knowledge graph), 8 (flashcards and
 spaced repetition), 9 (questions, quizzes and mastery), 10 (AI foundation), 11 (AI generation and
-knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat) and 14 (tutor and study planner) are complete and merged into `main`.
+knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tutor and study planner) and 15 (knowledge–learning integration) are complete and merged into `main`.
 
 ## What works
 
 - **Local server** (`apps/server`): Hono on `127.0.0.1` with token (cookie or bearer), Host allowlist,
   Origin and Fetch-Metadata checks; `/auth` sign-in link; RFC 9457 problem details (with `details`);
   CSP and security headers; production SPA serving; server-sent events at `/api/events`.
-- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0014`), vault (`.skb/` layout,
+- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0015`), vault (`.skb/` layout,
   lock with crash recovery, strict path containment), atomic writes, vault-scoped settings.
 - **Notes** (Phase 3): Markdown files are canonical; the index (notes, aliases, tags, links,
   attachments, FTS5) is rebuilt from the files and follows edits made in other programs. Ids are
@@ -105,28 +105,39 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat) and 14 (
   lectures to work through and practice on the concepts that matter most, each item with its reason;
   tick, skip, put back, plan again without losing what is done; Today shows today's items. Flashcards come
   back sooner for a module's exam fortnight (93 % recall). Guide: `docs/guide/planning.md`.
+- **The study loop** (Phase 15, `docs/guide/study-loop.md`): **Make study materials…** on a lecture runs a
+  summary note, concepts and links, flashcards, questions and a quiz as one background job with a result per
+  step (all in the Inbox; optionally by itself when material is attached). Mastery now includes **credit along
+  accepted prerequisites** (a correct answer on a concept counts a little for what it builds on, with the sum
+  shown) and flags what builds on a prerequisite answered wrongly as **at risk**. The graph can be coloured by
+  **mastery** (a shape per stage, ⚠ for what to study now) and a **Between modules** panel lists shared
+  concepts and cross-module relations. A concept with nothing to practise can get questions from its note and the
+  passages naming it; wrong answers on a concept with a note are offered back as **Common mistakes** additions;
+  Today shows **the weak spots and notes to reread before a lecture, exam or deadline** (ADR-0038).
 - **Application shell:** sidebar, sticky page headers (per pane on paned pages), themes, command
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 760 Vitest tests and 87 Playwright tests (sticky headers on every route and pane,
+- **Tests:** 789 Vitest tests and 88 Playwright tests (sticky headers on every route and pane,
   axe in both themes, the library, the course, the graph, reviewing, practice, chat, generating and an MCP client
   using the stdio bridge) — all green. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
   p95 404 ms, median 51 ms (provisional budget 500 ms).
   Reviewing: 7 ms median between cards over 100 (budget 50 ms). Mastery pass over a year of learning
-  (1,000 concepts, 5,000 reviewed cards, 20,000 answers): 201 ms (budget 500 ms). On mains power at 10,000
+  (1,000 concepts, 5,000 reviewed cards, 20,000 answers): 254 ms with credit along prerequisites (budget 500 ms). On mains power at 10,000
   notes: search p95 28 ms (100 ms with 10,000 PDF pages; budget 150 ms); graph payload of 5,000 nodes
   97 ms from the cache (budget 500 ms), 2.1 s for a first build (budget 3 s), 674 ms after a note
   edit (budget 1 s).
 
 ## In progress
 
-- Nothing; Phase 15 not yet started.
+- Nothing; Phase 16 not yet started.
 
 ## Incomplete / not started
 
-- Phases 15–22: integration (FIRe-style credit, mastery on the graph), export, hardening and the desktop
-  app do not exist yet.
+- Phases 16–22: export and import, hardening and the desktop app do not exist yet.
+- Not in Phase 15 (backlog): cards that know their concepts in the pipeline's first run (B-AI-34), linking
+  generated questions to concepts (B-AI-35), suggesting prerequisite relations (B-KM-21), drawn node shapes
+  for the overlay (B-KM-22), additions for concepts without a note (B-LE-37).
 - Not in Phase 14 (backlog): a retention pass from simulated reviews (B-LE-33), moving or adding plan items
   and a calendar export (B-LE-34), remaking the plan each morning (B-LE-35), time per concept from real
   durations (B-LE-36), asking the model again when a tutor reply breaks its step (B-AI-31), a page for
@@ -175,8 +186,8 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat) and 14 (
 
 ## Next steps
 
-1. Create `phase/15-integration` from `main`.
-2. Phase 15: see `docs/checklist/phase-15-integration.md`.
+1. Create `phase/16-portability` from `main`.
+2. Phase 16: see `docs/checklist/phase-16-portability.md`.
 
 ## Relevant decisions
 
@@ -192,8 +203,10 @@ its answers · ADR-0012 AI SDK 7 · **ADR-0033** AI configuration outside the va
 fusion in retrieval · ADR-0034 generated material waits as drafts and proposals; AI reads media
 through injected readers · ADR-0035 tools are the only way to act; the server enforces
 approvals; every change is logged and undoable · ADR-0036 chat streams JSON lines from the
-server's own runner; a paused run is saved with its thread · **ADR-0037** the plan is a pure function,
-the server decides the tutor's rung, answers recorded by a tutor are permanent and ask.
+server's own runner; a paused run is saved with its thread · ADR-0037 the plan is a pure function,
+the server decides the tutor's rung, answers recorded by a tutor are permanent and ask · **ADR-0038**
+credit flows only along accepted prerequisites; the pipeline is a job that fills the Inbox; mistakes
+go back to notes as suggestions.
 
 ## Technical debt
 
@@ -220,6 +233,9 @@ background load — compare against a worktree of the previous gate (`AGENTS.md`
   modules are assessed. Then relate a few concepts and look at the graph (`docs/guide/graph.md`), make the first
   flashcards (`docs/guide/flashcards.md`), and write a few questions for a module to try Learn and
   Progress (`docs/guide/practice.md`, `docs/guide/mastery.md`).
+- To try the study loop: attach slides to a lecture and press **Make study materials…** (`docs/guide/study-loop.md`);
+  state which concepts are prerequisites for which so that mastery can use it. The check with a real provider is
+  yours to do (the automated tests use the test model).
 - To try chat: add a provider in Settings → AI (`docs/guide/ai.md`), then follow the short checklist at
   the end of `docs/guide/chat.md` — the check of chat against a real provider (Phase 13's acceptance
   criterion) is yours to do; the automated tests use the built-in test model.

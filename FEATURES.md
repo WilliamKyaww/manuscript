@@ -73,7 +73,7 @@ _Last updated: 9 October 2026 (end of Phase 10)._
 | F-GR-05 | Study prompts generated from graph analytics, with actions | Complete | 7 |
 | F-GR-06 | WebGL global graph (clusters, filters, search-to-focus, paths) and local graph panels on concept and note pages | Complete | 7 |
 | F-GR-07 | AI concept/relation extraction with de-duplication | Complete — proposals with evidence and Graphify confidence; merges for near names; merging two existing concepts in Phase 15 | 11 |
-| F-GR-08 | Mastery overlay on the graph | Planned | 15 |
+| F-GR-08 | Mastery overlay on the graph | Complete — colour by mastery with a shape per stage and ⚠ for what is worth studying now | 15 |
 
 ## Learning — course structure
 
@@ -107,7 +107,7 @@ _Last updated: 9 October 2026 (end of Phase 10)._
 | F-QZ-04 | Transparent mastery with roll-ups, readiness and coverage | Complete | 9 |
 | F-QZ-05 | Weak-area detection (weak, slipping, lapsing, forgotten, no material) with priority and actions | Complete | 9 |
 | F-QZ-06 | AI question generation and AI rubric grading | Complete — grades are suggestions recorded only when accepted | 11 |
-| F-QZ-07 | FIRe-inspired implicit credit along prerequisite edges | Planned | 15 |
+| F-QZ-07 | FIRe-inspired implicit credit along prerequisite edges | Complete — credit, at-risk and the explanation (`docs/guide/mastery.md`) | 15 |
 
 ## Learning — tutoring and planning
 
@@ -139,10 +139,10 @@ _Last updated: 9 October 2026 (end of Phase 10)._
 
 | ID | Feature | Status | Phase |
 |---|---|---|---|
-| F-IN-01 | Lecture pipeline (import → notes, concepts, cards, quiz proposals) | Planned | 15 |
-| F-IN-02 | Cross-module connections view | Planned | 15 |
-| F-IN-03 | Weak concept → targeted practice in one click | Partial — Practise starts a Learn session for the concept (Phase 9); concepts with only cards (B-LE-24) wait for Phase 15; questions can now be generated from the material (Phase 11) | 15 |
-| F-IN-04 | Proactive resurfacing before lectures and exams | Planned | 15 |
+| F-IN-01 | Lecture pipeline (import → notes, concepts, cards, quiz proposals) | Complete — a background job with a result per step, optionally by itself when material is attached | 15 |
+| F-IN-02 | Cross-module connections view | Complete — shared concepts and relations that cross modules, beside the graph | 15 |
+| F-IN-03 | Weak concept → targeted practice in one click | Complete — Practise for a concept with material; questions made from the material for one without; mistakes offered back to the note (Learn with cards only is B-LE-24) | 15 |
+| F-IN-04 | Proactive resurfacing before lectures and exams | Complete — Today: the module's weakest concepts and notes to reread | 15 |
 
 ## Portability
 

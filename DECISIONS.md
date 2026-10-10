@@ -814,3 +814,46 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   filled in. A real model may still break its step; the guard only logs it (B-AI-31). Tutored sessions have
   no page of their own yet (B-AI-32).
 - **Date.** 10 October 2026.
+
+## ADR-0038 — Credit flows only along accepted prerequisites; the pipeline is a job that fills the Inbox; mistakes go back to notes as suggestions
+
+- **Context.** Phase 15 closes the loop from a lecture to better notes. Three questions: how a result on one
+  concept may count for another without inflating what the student knows (ADR-0021: mastery is a
+  transparent heuristic from the student's own evidence), how one request may spend several model calls on a
+  lecture without writing anything the student did not choose (ADR-0034), and how practice may improve the
+  notes (principle 1: notes are Markdown and the student's).
+- **Options.** Implicit credit along every relation, or only accepted `prerequisite_for`; credit as a new
+  table of derived evidence, or computed in the mastery pass; the pipeline as a synchronous request, a chain of
+  generation jobs, or one job running the steps; mistakes written into notes directly, or proposed.
+- **Decision.**
+  - Credit is computed in the mastery pass from accepted `prerequisite_for` edges between concepts, nothing
+    stored (`propagateCredit`, pure, in core). A correct answer (≥ 0.75) on B counts towards each prerequisite
+    within two steps with the product of the edge weights (default 0.2, at most 0.3); credit to a concept
+    whose own accuracy is below 0.6 is dropped; credit never makes mastery for a concept with nothing linked;
+    a wrong answer (< 0.5, within 14 days) on a prerequisite marks its dependents *at risk* (priority × 1.25, a
+    weak-area signal, scores untouched). Each concept lists where its credit came from and how much of the
+    answer weight it is, so every figure can still be checked by hand.
+  - The lecture pipeline is one background job (`ai.pipeline`) running the chosen steps in order through the
+    same generation code a single request uses, with a stored result per step (`pipeline_runs`). A failed or
+    empty step is reported and the rest go on; no model (or no budget) stops the run. Results are drafts and
+    proposals, or accepted where the student has switched on auto-accept for that kind. Running by itself on
+    attaching material is a setting, off by default, and the same material never runs twice. The quiz is made
+    from the run's question drafts (rejected questions drop out of new attempts).
+  - Concepts are a generation scope (the concept's note and the source passages naming it), so a concept with
+    nothing to practise can get questions in one click.
+  - After an attempt finishes (or an answer is graded afterwards), each wrong answer on a concept that has a
+    backing note becomes an `addition` proposal: the question, its right answer and explanation, to add under
+    "Common mistakes". It needs no model, is suggested once per question and note, and is skipped if the note
+    already holds the question. Accepting adds it under the heading (made if missing).
+  - Cross-module connections and the mastery overlay are computed per request from the graph payload and the
+    mastery snapshot; the overlay colours by stage with a shape for each and ⚠ for what is worth studying now.
+  - Resurfacing is a server query (lectures within two days, exams and deadlines within a chosen number of
+    days; the module's weakest concepts and their notes), no model.
+- **Reason.** Credit that is stored or spread over every relation would be hard to explain and easy to inflate;
+  limiting it to accepted prerequisites the student stated keeps it theirs. A single job gives one progress
+  view and one place to fail. Suggestions keep principle 1 intact while still closing the loop.
+- **Consequences.** A relation the student never states gives no credit. The best order for a first run is
+  pipeline → accept concepts → cards again (the cards of the first run do not know concepts that did not exist
+  yet). Migration 0015 widens the proposals CHECK again. Pipeline runs and plans are records in the database,
+  not in the vault.
+- **Date.** 10 October 2026.

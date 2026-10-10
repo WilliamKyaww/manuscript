@@ -1,6 +1,6 @@
 # Backlog items
 
-_Last reviewed: 10 October 2026 (Phase 13)._
+_Last reviewed: 10 October 2026 (Phase 15)._
 
 ## Knowledge (KM)
 
@@ -117,6 +117,11 @@ _Last reviewed: 10 October 2026 (Phase 13)._
 | B-AI-31 | When a tutor reply breaks its step (opens with the answer, asks nothing), ask the model again with a firmer instruction instead of only logging it | The ladder is enforced by instruction, and a guard only notices; a real model may slip | Phase 14 |
 | B-AI-32 | List tutored sessions (questions asked, answers recorded, hints used) on the Progress page | A tutored chat's answers count towards mastery but have no page of their own | Phase 14 |
 | B-AI-33 | Check a note against the lectures across the whole vault in the background, not one topic on request | Misconception checks run when asked, for one topic at a time | Phase 14 |
+| B-AI-34 | Run the pipeline's cards and questions after the concepts are accepted, by itself, so one request gives cards that know their concepts | Cards made in the first run do not know concepts that only exist once accepted, so the student runs Cards again | Phase 15 |
+| B-AI-35 | Link a generated question to the concepts it tests (the test model and some providers leave them out) | Questions from the pipeline usually carry no concept, so they do not yet count towards one | Phase 15 |
+| B-KM-21 | Suggest `prerequisite_for` relations from the lecture order and from wrong answers (A is often wrong when B is) | Credit and at-risk need stated prerequisites, and a student states few | Phase 15 |
+| B-KM-22 | Node shapes in the graph canvas for the mastery stages (a WebGL node program), not only glyphs in the labels | The overlay marks stages in the label text; a drawn shape would read at a glance | Phase 15 |
+| B-LE-37 | Offer a note addition for a mistake on a concept without a note (create the note) | A concept without a backing note gets no suggestion today | Phase 15 |
 
 ## Platform (PL)
 

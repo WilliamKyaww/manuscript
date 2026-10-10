@@ -27,6 +27,8 @@ const KIND_FILTERS: { value: ProposalKind | 'all'; label: string }[] = [
   { value: 'alias', label: 'Merges' },
   { value: 'link', label: 'Links' },
   { value: 'note', label: 'Notes' },
+  { value: 'correction', label: 'Corrections' },
+  { value: 'addition', label: 'Additions' },
 ];
 
 const percent = (value: number) => `${Math.round(value * 100)} %`;
