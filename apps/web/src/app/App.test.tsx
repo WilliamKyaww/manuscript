@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SectionPlaceholder } from '../features/placeholder/SectionPlaceholder';
 import { healthyFetch, renderApp, resetUiState } from '../test/renderApp';
+import { NARROW_QUERY } from './layout-store';
 import { SECTIONS } from './sections';
 
 beforeEach(() => {
@@ -119,6 +120,27 @@ describe('keyboard and command palette', () => {
       'aria-expanded',
       'false',
     );
+  });
+
+  it('shows the sidebar as a rail in a narrow window, without changing the choice for wide ones', async () => {
+    const media = vi.spyOn(window, 'matchMedia').mockImplementation(
+      (query: string) =>
+        ({
+          matches: query === NARROW_QUERY,
+          media: query,
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        }) as unknown as MediaQueryList,
+    );
+    const user = userEvent.setup();
+    const { container } = renderApp('/');
+    await screen.findByRole('heading', { level: 1, name: 'Today' });
+    const sidebar = container.querySelector('[data-sidebar]');
+    await waitFor(() => expect(sidebar).toHaveAttribute('data-collapsed', 'true'));
+    await user.click(screen.getByRole('button', { name: 'Expand sidebar' }));
+    expect(sidebar).toHaveAttribute('data-collapsed', 'false');
+    expect(localStorage.getItem('skb.sidebar.collapsed')).toBeNull();
+    media.mockRestore();
   });
 
   it('opens the shortcuts cheat sheet with ? and lists registered shortcuts', async () => {

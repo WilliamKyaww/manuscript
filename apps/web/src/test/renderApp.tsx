@@ -49,6 +49,8 @@ export function resetUiState(): void {
   localStorage.clear();
   useLayoutStore.setState({
     sidebarCollapsed: false,
+    narrow: false,
+    narrowExpanded: false,
     commandPaletteOpen: false,
     shortcutsOpen: false,
     quickSwitcherOpen: false,
