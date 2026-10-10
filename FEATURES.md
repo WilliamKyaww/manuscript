@@ -6,7 +6,7 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 10 October 2026 (end of Phase 17)._
+_Last updated: 10 October 2026 (end of Phase 18)._
 
 ## Platform and architecture
 
@@ -159,9 +159,9 @@ _Last updated: 10 October 2026 (end of Phase 17)._
 
 | ID | Feature | Status | Phase |
 |---|---|---|---|
-| F-DE-01 | Electron app with server in a utility process | Planned | 18 |
-| F-DE-02 | Native pickers and Explorer integration | Planned | 18 |
-| F-DE-03 | Encrypted secrets with `safeStorage` | Planned | 18 |
+| F-DE-01 | Electron app with server in a utility process (a token per launch, single instance, window state, menu, restart on switching vault, a prompt when the engine stops) | Complete — unpacked build; the installer is Phase 19 | 18 |
+| F-DE-02 | Native pickers and Explorer integration (the bridge has four calls; the page falls back to a file input or "Copy path") | Complete | 18 |
+| F-DE-03 | Encrypted secrets with `safeStorage` (a wrapped key; the server encrypts the keys file with it) | Complete — where the system offers protection; otherwise a file only the user can read, and Settings → About says which | 18 |
 | F-DE-04 | Windows NSIS installer | Planned | 19 |
 
 ## UI/UX

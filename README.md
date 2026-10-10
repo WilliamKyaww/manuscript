@@ -74,7 +74,8 @@ npm install
 | **Daily use (web)** | double-click **`run-web.bat`** | Installs dependencies and builds when needed, starts the server and opens your browser signed in. Running it again while the app is open just reopens the browser. |
 | **Development** | `npm run dev` | API server on `http://127.0.0.1:4317` (auto-restarts) and Vite on `http://127.0.0.1:5317` (hot reload). Open the sign-in link printed by the server. Uses a disposable vault in `.dev-vault/` and app data in `.dev-data/`. |
 | **Production server** | `npm run build` then `npm start` | Serves the built app and API on port 4317. |
-| Desktop (development) | `npm run desktop:dev` | Phase 18 |
+| **Desktop (development)** | `npm run desktop:dev` | The same application in its own window (Electron 44): the server runs in a background process of the window, you are signed in, and **Settings → Data** gets *Browse…* and *Show in folder*. Needs the built application (it builds it when missing). |
+| Desktop (unpacked build) | `npm run desktop:build` | Lays out `apps/desktop/release/<platform>-unpacked/Manuscript.exe`: Electron's distribution plus the shell and the server. Runs without Node.js installed. |
 | Windows installer | `npm run desktop:dist` | Phase 19 |
 
 **Where data lives (web and desktop):** the vault (your notes and sources) defaults to
@@ -99,7 +100,8 @@ HttpOnly cookie after you open the sign-in link). Requests with a foreign `Host`
 | `npm run lint` / `npm run format` | Biome lint and format (check / write) |
 | `npm run test:smoke` | Starts the built server bundle and checks ping, auth, health and the SPA |
 | `npm run test:e2e` | Builds, then Playwright end-to-end tests in Chromium (first run: `npx playwright install chromium`) |
-| `npm run test:perf` | Generates 10,000 notes and checks the indexing and note-opening budgets |
+| `npm run test:perf` | Generates 10,000 notes (and 10,000 PDF pages) and checks the indexing, search, graph and retrieval budgets |
+| `npx playwright test e2e/desktop.spec.ts` | Launches the desktop shell and its unpacked build with Playwright's Electron driver (needs `npm run build`, and `npm run desktop:build` for the second test) |
 | **`npm run verify`** | typecheck → lint → tests → build → smoke test (run before every commit) |
 
 ## Troubleshooting

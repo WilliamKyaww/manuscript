@@ -46,6 +46,7 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 | [0038](#adr-0038--credit-flows-only-along-accepted-prerequisites-the-pipeline-is-a-job-that-fills-the-inbox-mistakes-go-back-to-notes-as-suggestions) | Credit flows only along accepted prerequisites; the pipeline is a job that fills the Inbox; mistakes go back to notes as suggestions | Accepted | 2026-10-10 |
 | [0039](#adr-0039--one-archive-of-open-formats-restore-into-a-new-vault-a-vault-is-chosen-at-start-up-code-graphs-are-shown-not-analysed) | One archive of open formats; restore into a new vault; a vault is chosen at start-up; code graphs are shown, not analysed | Accepted | 2026-10-10 |
 | [0040](#adr-0040--backups-are-copies-sqlite-makes-logs-are-files-in-the-vault-trouble-with-the-machine-is-said-as-such) | Backups are copies SQLite makes; logs are files in the vault; trouble with the machine is said as such | Accepted | 2026-10-10 |
+| [0041](#adr-0041--the-desktop-shell-shows-only-the-server-a-token-per-launch-ai-keys-wrapped-not-handed-over) | The desktop shell shows only the server; a token per launch; AI keys wrapped, not handed over | Accepted | 2026-10-10 |
 
 ---
 
@@ -947,4 +948,44 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   requests for a moment (TD-13). Logs are per vault, so a problem before the vault opens is on the console only.
   The danger button's text colour became a per-theme token after the accessibility sweep found it unreadable in
   the dark theme.
+- **Date.** 10 October 2026.
+
+## ADR-0041 — The desktop shell shows only the server; a token per launch; AI keys wrapped, not handed over
+
+- **Context.** Phase 18 puts the application in a window of its own (ADR-0016). A renderer is a web page that
+  holds a token for a server that can read and write the whole vault, and Electron offers it much more than a
+  browser does. Three questions: what the window may show and do, how the window and server agree on a
+  credential, and how AI keys are protected when the server — not the main process — is what uses them.
+- **Options.** The window loads a file and talks to the server over IPC, or shows the server's origin; the token
+  persisted in the data folder (as for the browser), or made per launch; keys decrypted in the main process and
+  handed to the server on demand over IPC, or encrypted by the server with a key that the main process wraps.
+- **Decision.**
+  - The window **shows the server's origin and nothing else**. Navigation, redirects and `window.open` are
+    confined to it (anything else is refused, and plain `http(s)` links go to the system browser); `webview` is
+    refused; permissions are denied but clipboard writes and full screen; the renderer is sandboxed with context
+    isolation and no Node. The preload exposes four calls and the main process checks, for each, that the asking
+    frame is the application and that a path to show is inside the vault or data folder. These rules are pure
+    functions with tests (`policy.ts`).
+  - The main process makes a **random token for each launch** and gives it to the server (`SKB_AUTH_TOKEN`), then
+    sets the session cookie for the server's origin before the first load. Nothing is persisted, so the token of
+    the browser version is not shared and a stale one cannot be replayed. The server's sign-in line, which has the
+    token in it, is not forwarded to the console.
+  - **AI keys are encrypted by the server with a key the main process wraps.** `safeStorage` makes and unwraps a
+    random 32-byte key (`secrets.key`); the server receives it in its environment (`SKB_SECRETS_KEY`) and encrypts
+    `secrets.json` with AES-256-GCM. Keys saved earlier are encrypted when first read. A server without the key
+    cannot read the file and refuses to overwrite it. Where `safeStorage` is unavailable, the file stays as in
+    web mode, and Settings → About says so.
+  - **The server is the same bundle, with `--port 0`**, so desktop and web cannot drift apart. Switching vault
+    exits it with code 75 and the main process starts it again under the same window (`SKB_RESTARTABLE`); an
+    `SKB_VAULT` in the environment holds only until the student has chosen another vault.
+  - **The unpacked build is Electron's distribution laid out by a script** (`resources/app`, `resources/server`),
+    which the installer wraps in Phase 19.
+- **Reason.** A window that can show only one origin has the attack surface of that origin; a per-launch token
+  needs no file to protect; encrypting in the server with a wrapped key needs no synchronous round trip through
+  the main process for every key read, and still keeps the key out of the data folder in the clear.
+- **Consequences.** The keys file written by the desktop app cannot be used by the browser version on the same
+  data folder (it is not overwritten, and it says to change keys in the app that saved them). Electron's profile
+  lives in `<data>/desktop`. A test that launches the shell must replace the user's profile folders (the default
+  vault is the real one): the Playwright spec does. Code signing, the installer and automatic updates are
+  Phase 19.
 - **Date.** 10 October 2026.

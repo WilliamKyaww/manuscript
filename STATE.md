@@ -4,11 +4,11 @@ _Last updated: 10 October 2026 — Claude Sonnet 5.5._
 
 ## Current phase
 
-**Phase 18 — Electron desktop application: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
+**Phase 19 — Windows installer: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
 and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
 ingestion pipeline), 6 (course structure and concepts), 7 (knowledge graph), 8 (flashcards and
 spaced repetition), 9 (questions, quizzes and mastery), 10 (AI foundation), 11 (AI generation and
-knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tutor and study planner), 15 (knowledge–learning integration), 16 (portability) and 17 (hardening) are complete and merged into `main`.
+knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tutor and study planner), 15 (knowledge–learning integration), 16 (portability), 17 (hardening) and 18 (Electron desktop app) are complete and merged into `main`.
 
 ## What works
 
@@ -134,11 +134,19 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
   background jobs and failures, backups, the log by level and text, and a support bundle with no notes or keys. Every
   registered API route is tested against the guards (188 routes), and the pages with content are scanned for
   accessibility in both themes.
+- **Desktop app** (Phase 18, `apps/desktop`, `docs/guide/desktop.md`, ADR-0041): `npm run desktop:dev` and
+  `npm run desktop:build` (an unpacked `Manuscript.exe`, 394 MB, no Node needed). The server runs in a utility
+  process of the window with a token made for each launch; the window shows only the server's origin (web links
+  go to the system browser), is sandboxed with no Node, and offers four calls — pick files, pick a folder, show a
+  path in its folder, say which app this is — each checked in the main process. **Settings → Data** gets
+  *Browse…* and *Show in folder*; opening another vault restarts the engine under the same window; AI keys are
+  encrypted with a key that Electron's `safeStorage` wraps (Settings → About says whether the protection is in
+  place); one instance at a time; the window remembers where it was.
 - **Application shell:** sidebar, sticky page headers (per pane on paned pages), themes, command
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 849 Vitest tests (core 236, server 436, web 177) and 119 Playwright tests (sticky headers on every route and pane,
+- **Tests:** 863 Vitest tests (core 236, server 440, web 179, desktop 8) and 121 Playwright tests (two of them launch the Electron shell and its unpacked build) (sticky headers on every route and pane,
   axe in both themes, the library, the course, the graph, reviewing, practice, chat, generating and an MCP client
   using the stdio bridge) — all green. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
   p95 434 ms, median 71 ms (provisional budget 500 ms; Phase 17 run).
@@ -150,11 +158,13 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## In progress
 
-- Nothing; Phase 18 not yet started.
+- Nothing; Phase 19 not yet started.
 
 ## Incomplete / not started
 
-- Phases 18–22: the desktop app, the installer, polish, verification and the release do not exist yet.
+- Phases 19–22: the installer, polish, verification and the release do not exist yet.
+- Not in Phase 18: an installer, code signing and automatic updates (Phase 19); macOS and Linux builds were not run;
+  the application menu has no shortcuts of its own (the web app's work as in the browser).
 - Not in Phase 17 (debt): a backup runs on the main thread (TD-13); backups live inside the vault, so the guide says
   to export or copy the folder elsewhere for protection from a lost disk.
 - Not in Phase 16 (backlog and debt): agent tools for code graphs (B-KM-23), keeping the imported file and
@@ -213,8 +223,8 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## Next steps
 
-1. Create `phase/18-electron` from `main` (done).
-2. Phase 18: see `docs/checklist/phase-18-electron.md` (it needs the Electron binary; see the environment notes).
+1. Create `phase/19-installer` from `main` (done).
+2. Phase 19: see `docs/checklist/phase-19-installer.md` (electron-builder, NSIS, around the layout `desktop:build` makes).
 
 ## Relevant decisions
 
@@ -235,7 +245,8 @@ the server decides the tutor's rung, answers recorded by a tutor are permanent a
 credit flows only along accepted prerequisites; the pipeline is a job that fills the Inbox; mistakes
 go back to notes as suggestions · **ADR-0039** one archive of open formats, restore only into a new vault, a
 vault is chosen at start-up, code graphs are shown but not analysed · **ADR-0040** backups are copies SQLite makes,
-logs are files in the vault, trouble with the machine is said as such.
+logs are files in the vault, trouble with the machine is said as such · **ADR-0041** the desktop shell shows only
+the server, a token per launch, AI keys wrapped and not handed over.
 
 ## Technical debt
 
@@ -253,6 +264,13 @@ PowerShell strings (use Node scripts written with the editor tools for prose edi
 background load — compare against a worktree of the previous gate (`AGENTS.md` §5).
 
 ## Pending for the user
+
+- **Your real vault was opened once by a test** (10 October, 17:38): `Documents\Study Knowledge Base` — its database
+  was upgraded to the newest version, which the next start would have done anyway, and a backup was made first
+  (`.skb\backups\skb-20261010-163817-migration-0016_code_graphs.db`). No note was changed. The cause is fixed and
+  written into AGENTS.md; the journal has the account.
+- To try the desktop app: `npm run desktop:dev`, or `npm run desktop:build` and run `Manuscript.exe` from
+  `apps\desktop\release\win32-unpacked` (close the browser version first: a vault is open in one place only).
 
 - Rename the local project folder `study-knowledge-base` to `manuscript` (GitHub is already renamed;
   `origin` points at `WilliamKyaww/manuscript`).
