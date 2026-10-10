@@ -168,36 +168,42 @@ test('the desktop shell starts, shows the application, keeps the page confined, 
   removeQuietly(dir);
 });
 
-const packaged = path.join(
-  root,
-  'apps',
-  'desktop',
-  'release',
-  `${process.platform}-unpacked`,
-  process.platform === 'win32' ? 'Manuscript.exe' : 'Manuscript',
-);
+const exe = process.platform === 'win32' ? 'Manuscript.exe' : 'Manuscript';
+const release = path.join(root, 'apps', 'desktop', 'release');
+/** `desktop:build` (our own layout) and `desktop:dist` (electron-builder's, which the installer holds). */
+const packagedBuilds = [
+  {
+    name: 'the unpacked build',
+    folder: `${process.platform}-unpacked`,
+    how: 'npm run desktop:build',
+  },
+  { name: "the installer's payload", folder: 'win-unpacked', how: 'npm run desktop:dist' },
+];
 
-test('the unpacked build runs the same way, as a packaged application', async () => {
-  test.skip(!existsSync(packaged), 'Run "npm run desktop:build" first.');
-  test.setTimeout(180_000);
-  const dir = mkdtempSync(path.join(tmpdir(), 'skb-e2e-packaged-'));
-  const vault = path.join(dir, 'vault');
-  const env = isolatedEnvironment(dir, vault);
+for (const build of packagedBuilds) {
+  const packaged = path.join(release, build.folder, exe);
+  test(`${build.name} runs the same way, as a packaged application`, async () => {
+    test.skip(!existsSync(packaged), `Run "${build.how}" first.`);
+    test.setTimeout(180_000);
+    const dir = mkdtempSync(path.join(tmpdir(), 'skb-e2e-packaged-'));
+    const vault = path.join(dir, 'vault');
+    const env = isolatedEnvironment(dir, vault);
 
-  const app = await electron.launch({ executablePath: packaged, args: [], cwd: dir, env });
-  try {
-    const page = await app.firstWindow();
-    await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible({
-      timeout: 90_000,
-    });
-    expect(await app.evaluate(({ app: electronApp }) => electronApp.isPackaged)).toBe(true);
-    const health = await page.evaluate(async () => (await fetch('/api/health')).json());
-    expect((health as { status: string }).status).toBe('ok');
-  } finally {
-    await app.close();
-  }
-  await expect
-    .poll(() => existsSync(path.join(vault, '.skb', 'lock')), { timeout: 15_000 })
-    .toBe(false);
-  removeQuietly(dir);
-});
+    const app = await electron.launch({ executablePath: packaged, args: [], cwd: dir, env });
+    try {
+      const page = await app.firstWindow();
+      await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible({
+        timeout: 90_000,
+      });
+      expect(await app.evaluate(({ app: electronApp }) => electronApp.isPackaged)).toBe(true);
+      const health = await page.evaluate(async () => (await fetch('/api/health')).json());
+      expect((health as { status: string }).status).toBe('ok');
+    } finally {
+      await app.close();
+    }
+    await expect
+      .poll(() => existsSync(path.join(vault, '.skb', 'lock')), { timeout: 15_000 })
+      .toBe(false);
+    removeQuietly(dir);
+  });
+}

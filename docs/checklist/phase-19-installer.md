@@ -13,12 +13,15 @@ UC-15; surfaces packaging issues before polish so the release build is routine.
 Phase 18.
 
 ## Atomic tasks
-- [ ] **19.01** electron-builder configuration: NSIS, per-user install, choosable directory, shortcuts, uninstaller that keeps user data unless asked
-- [ ] **19.02** Application icon, product metadata, version from `package.json`
-- [ ] **19.03** `npm run desktop:dist` producing the installer
-- [ ] **19.04** Manual verification recorded: install, first-run vault creation, upgrade in place, uninstall
-- [ ] **19.05** Code-signing and SmartScreen notes in README
-- [ ] **19.06** Docs: installation guide; STATE/FEATURES/journal updated
+- [x] **19.01** electron-builder configuration: NSIS, per-user install, choosable directory, shortcuts, uninstaller that keeps user data unless asked
+- [x] **19.02** Application icon, product metadata, version from `package.json`
+- [x] **19.03** `npm run desktop:dist` producing the installer
+- [~] **19.04** Manual verification recorded: install, first-run vault creation, upgrade in place, uninstall
+  Remaining: running the installer, an update over it and the uninstaller on this machine. Done so far without installing
+  anything: the installer builds; its payload (`release\win-unpacked`, which the installer unpacks) is launched by
+  `e2e/desktop.spec.ts`, which checks start-up, sign-in, the vault and a clean quit with the user's profile replaced.
+- [x] **19.05** Code-signing and SmartScreen notes in README
+- [x] **19.06** Docs: installation guide; STATE/FEATURES/journal updated
 
 ## Gate
 - [ ] All tasks `[x]` · [ ] installer verified · [ ] docs updated · [ ] merged

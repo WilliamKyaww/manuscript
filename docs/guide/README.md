@@ -5,6 +5,7 @@ feature it describes is complete.
 
 | Guide | Covers |
 |---|---|
+| [Installing on Windows](./installing.md) | Building the installer, what it installs and what it leaves alone, the SmartScreen warning, first run, updating in place, uninstalling |
 | [The desktop app](./desktop.md) | Starting it, what the window adds (Browse…, Show in folder, restarting to open another vault), what it keeps to itself, how AI keys are protected, what to do if the engine stops |
 | [Your data: leaving, moving and bringing things in](./portability.md) | What lives where, exporting everything in open formats, restoring into a new vault, concepts as notes, opening another vault or an Obsidian vault in place, importing a Graphify graph of a repository |
 | [When something is wrong](./troubleshooting.md) | Messages at start-up and what to do, files that cannot be written or read, a damaged database and how to go back to a backup, AI that cannot be reached, the diagnostics bundle |

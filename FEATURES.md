@@ -162,7 +162,7 @@ _Last updated: 10 October 2026 (end of Phase 18)._
 | F-DE-01 | Electron app with server in a utility process (a token per launch, single instance, window state, menu, restart on switching vault, a prompt when the engine stops) | Complete — unpacked build; the installer is Phase 19 | 18 |
 | F-DE-02 | Native pickers and Explorer integration (the bridge has four calls; the page falls back to a file input or "Copy path") | Complete | 18 |
 | F-DE-03 | Encrypted secrets with `safeStorage` (a wrapped key; the server encrypts the keys file with it) | Complete — where the system offers protection; otherwise a file only the user can read, and Settings → About says which | 18 |
-| F-DE-04 | Windows NSIS installer | Planned | 19 |
+| F-DE-04 | Windows NSIS installer (per user, choosable folder, shortcuts, data kept on uninstall; unsigned unless a certificate is given) | Partial — built, and its payload is launched by the end-to-end test; install, update in place and uninstall on this machine are not yet verified (19.04) | 19 |
 
 ## UI/UX
 
