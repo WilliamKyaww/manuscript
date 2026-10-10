@@ -97,7 +97,7 @@ export function ChatPanel() {
           onClick={close}
         />
       </header>
-      <div className="min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 flex-col">
         <ChatWorkspace
           key={threadId ?? 'new'}
           threadId={threadId}

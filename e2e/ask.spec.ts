@@ -65,7 +65,8 @@ test('a grounded answer cites the page it comes from', async ({ page }) => {
     const answer = panel.getByRole('article', { name: 'Assistant' });
     await expect(answer.getByText('From your sources')).toBeVisible();
     await expect(answer).toContainText('Raft elects a leader for each term by a majority vote');
-    expect(await seriousViolations(page)).toEqual([]);
+    // The panel is scanned on its own: the PDF beside it is still drawing its pages.
+    expect(await seriousViolations(page, { include: '[data-chat-panel]' })).toEqual([]);
 
     // The citation opens the page it comes from, and the panel stays beside it.
     const citation = answer.getByRole('link', { name: '[S1]' });

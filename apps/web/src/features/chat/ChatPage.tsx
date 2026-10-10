@@ -179,7 +179,7 @@ export function ChatPage() {
       <Pane
         title={open.data?.title ?? 'New chat'}
         className="min-w-0 flex-1"
-        bodyClassName="overflow-hidden"
+        bodyClassName="flex flex-col overflow-hidden"
       >
         {threadId && open.isError ? (
           <EmptyState

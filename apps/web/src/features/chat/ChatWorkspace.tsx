@@ -121,7 +121,7 @@ export function ChatWorkspace({ threadId, onThreadCreated, compact }: ChatWorksp
       : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       {thread && <UsageLine usage={thread.usage} compacted={thread.compacted} />}
       {thread && thread.allowedTools.length > 0 && (
         <p className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-1 text-xs text-muted">
