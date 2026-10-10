@@ -26,6 +26,12 @@ export interface ServerConfig {
   authTokenOverride: string | null;
   /** `SKB_AI_PROVIDER=mock`: a built-in test model answers every AI role (tests and demos). */
   aiMock: boolean;
+  /**
+   * `SKB_SECRETS_KEY`: 32 bytes (base64) that AI keys are encrypted with at rest. The desktop app
+   * unwraps it with the operating system (Electron `safeStorage`) and passes it to the server; in
+   * web mode there is none and the keys file is readable by the user only.
+   */
+  secretsKey?: Buffer | null;
 }
 
 export interface ConfigInput {
@@ -105,6 +111,7 @@ export function resolveConfig(input: ConfigInput): ServerConfig {
     mode === 'development' ? parseOrigin(env.SKB_DEV_WEB_ORIGIN ?? DEFAULT_DEV_WEB_ORIGIN) : null;
   const authTokenOverride = parseTokenOverride(env.SKB_AUTH_TOKEN);
   const aiMock = parseAiProvider(env.SKB_AI_PROVIDER);
+  const secretsKey = parseSecretsKey(env.SKB_SECRETS_KEY);
 
   if (isInside(dataDir, vaultPath)) {
     throw new ConfigError(
@@ -124,6 +131,7 @@ export function resolveConfig(input: ConfigInput): ServerConfig {
     devWebOrigin,
     authTokenOverride,
     aiMock,
+    secretsKey,
   };
 }
 
@@ -212,6 +220,15 @@ function parseTokenOverride(value: string | undefined): string | null {
     throw new ConfigError(`SKB_AUTH_TOKEN must be at least ${MIN_TOKEN_LENGTH} characters long.`);
   }
   return value;
+}
+
+function parseSecretsKey(value: string | undefined): Buffer | null {
+  if (value === undefined || value === '') return null;
+  const key = Buffer.from(value, 'base64');
+  if (key.length !== 32) {
+    throw new ConfigError('SKB_SECRETS_KEY must be 32 bytes, base64-encoded.');
+  }
+  return key;
 }
 
 function parseAiProvider(value: string | undefined): boolean {

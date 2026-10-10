@@ -447,3 +447,80 @@ diagnostics page, edge cases from real vaults, an offline audit and an accessibi
 
 Phase 18 — Electron (`phase/18-electron`). It needs the Electron binary; the environment pitfalls in AGENTS.md
 (`ELECTRON_RUN_AS_NODE`) apply.
+
+---
+
+## Phase 18 — Electron desktop application (`phase/18-electron`)
+
+**Time:** 10 October 2026 (evening). **Model:** Claude Sonnet 5.5.
+**Work:** the desktop shell, its bridge, encrypted AI keys, an unpacked build and an Electron end-to-end test.
+
+### What was done
+
+1. **Scaffold and engine (18.01, 18.02).** `apps/desktop` (Electron 44.5.1, esbuild for the main process as ESM and
+   the preload as CommonJS). The server bundle runs in a `utilityProcess` with `--port 0`; the ready message the
+   server already sent is the handshake; exit code 75 restarts it (another vault), any other unexpected exit offers
+   to start it again. A single-instance lock brings the open window forward.
+2. **Window (18.03, 18.04).** Sandboxed, context-isolated, no Node; navigation, redirects and `window.open`
+   confined to the server's origin, web links to the system browser (plain `http(s)` only), permissions denied but
+   clipboard writes and full screen. A token is made for each launch and the cookie the server expects is set before
+   the first load; the server's sign-in line is not forwarded to the console.
+3. **Bridge (18.05).** Four calls (`pickFiles`, `pickFolder`, `revealInExplorer`, `appInfo`), each checked in the main
+   process (the frame's origin; a path to show must be inside the vault or data folder). The web app has
+   *Browse…* and *Show in folder* where the bridge exists, and the browser fallbacks otherwise.
+4. **Secrets (18.06).** `safeStorage` wraps a random key kept in the data folder; the server encrypts the keys file
+   with it (AES-256-GCM, `SKB_SECRETS_KEY`). Plain keys are encrypted when first read; a server without the key never
+   overwrites an encrypted file. Settings → About says whether the protection is in place.
+5. **State, menu (18.07).** Window bounds and maximised state (a position on a screen that is gone is dropped), an
+   application menu that claims no accelerator the page uses.
+6. **Scripts (18.08).** `desktop:dev` (builds what is missing, removes `ELECTRON_RUN_AS_NODE`, starts Electron) and
+   `desktop:build` (an unpacked build: Electron's distribution with `resources/app` and `resources/server`, 394 MB).
+7. **Smoke test (18.09).** `e2e/desktop.spec.ts` with Playwright's Electron driver, against the repository layout and
+   the unpacked build: launch, signed in, the bridge and no Node, a link that stays out, a note saved to the vault,
+   the vault switched with the engine restarted under the same window, a clean quit that releases the lock.
+8. **Docs (18.10).** README, `docs/guide/desktop.md`, ADR-0041, architecture §11, AGENTS.md, FEATURES, STATE.
+
+### Decisions
+
+- **ADR-0041:** the window shows only the server; a token per launch; AI keys encrypted by the server with a key the
+  main process wraps (not handed over one at a time through IPC).
+- **`SKB_VAULT` holds only until the student chooses another vault.** In the desktop shell an environment variable is a
+  developer's or a test's choice of where to start, not an order that overrides what the student does in the app.
+- **A folder chosen to be made is made** at the next start when its parent exists; a vault that was opened before and
+  has gone is still not replaced by an empty one (server, `activeVault`).
+
+### Problems encountered
+
+- **A test opened the user's real vault.** The first run of the switch-vault test chose a folder that did not exist
+  yet; `activeVault` ignored a non-existent path (my own rule from Phase 16), so the restarted engine fell back to the
+  default vault — `Documents\Study Knowledge Base`, the real one — and migrated its database to version 16. Nothing in
+  it was changed except that: the Phase 17 pre-migration backup was made first
+  (`.skb\backups\skb-20261010-163817-migration-0016_code_graphs.db`), the notes were not touched, and the lock was
+  released. Two fixes: `activeVault` now opens a chosen-but-new folder, and the Electron spec replaces `USERPROFILE`,
+  `HOME`, `APPDATA` and `LOCALAPPDATA` so that no fallback can reach a real folder. Written into AGENTS.md. The
+  user should know this happened.
+- **Two bugs the Electron driver found that unit tests could not:** a `Browse` fallback was fine, but the exit-code-75
+  restart had to drop `SKB_VAULT` to open the vault that had been chosen; and Chromium's helper processes hold a file
+  for a moment after quitting, so the test's own cleanup is best-effort.
+- **A script that built a shell command from an args array** (DEP0190); it is one quoted string now, as `run-web.mjs`
+  already did.
+- **Heredocs and template literals nested in generated scripts** (again): `.mjs` files written with the editor tool.
+
+### Tests run
+
+| Command | Result |
+|---|---|
+| `npm run verify` (two workers, below-normal priority) | **Pass** — type-check, Biome, **863** Vitest tests (core 236, server 440, web 179, desktop 8), build, smoke |
+| `node scripts/pack-desktop.mjs` | **Pass** — `apps\desktop\release\win32-unpacked\Manuscript.exe` (394 MB) |
+| `npx playwright test` | **Pass** — **121/121** (new since Phase 17: `desktop.spec.ts` — the shell from the repository and the unpacked build) |
+| Real vault check | `Documents\Study Knowledge Base\.skb\skb.db` last modified 17:38:18, the one accidental run; unchanged by the later runs |
+
+### Unresolved issues
+
+- No code signing, installer or auto-update yet (Phase 19). The unpacked build is 394 MB.
+- The shell was not run on macOS or Linux; the code has no platform-specific parts apart from `.exe`.
+- `safeStorage` on a system with no protection falls back to the plain file (said in Settings → About).
+
+### Next steps
+
+Phase 19 — the Windows installer (`phase/19-installer`): electron-builder (NSIS) around the layout this phase made.

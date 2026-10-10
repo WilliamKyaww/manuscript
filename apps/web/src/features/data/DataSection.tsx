@@ -16,6 +16,7 @@ import { StickySection } from '../../components/Page';
 import { ProgressBar } from '../../components/ProgressBar';
 import { ErrorState, LoadingState } from '../../components/States';
 import { useApi } from '../../lib/api/context';
+import { desktopBridge } from '../../lib/desktop';
 import { onServerEvent } from '../../lib/events';
 import { formatBytes, formatCount, formatDateTime } from '../../lib/format';
 import { notifyError } from '../../lib/notify';
@@ -29,7 +30,55 @@ import { CodeGraphsPanel } from './CodeGraphsPanel';
  * graph of a coursework repository. Nothing here depends on an AI model.
  */
 
-/** Revealing the folder in the file manager is a desktop feature (Phase 18); here the path is copied. */
+/** In the desktop app a path is shown in its folder; in a browser it is copied (the page cannot open it). */
+function ShowPath({ path }: { path: string }) {
+  const bridge = desktopBridge();
+  if (bridge)
+    return (
+      <Button size="sm" variant="ghost" onClick={() => void bridge.revealInExplorer(path)}>
+        <FolderOpen aria-hidden="true" size={14} />
+        Show in folder
+      </Button>
+    );
+  return (
+    <Button size="sm" variant="ghost" onClick={() => void copyPath(path)}>
+      <Copy aria-hidden="true" size={14} />
+      Copy path
+    </Button>
+  );
+}
+
+/** A native picker beside a path field, only where there is one (the desktop app). */
+function Browse({
+  kind,
+  title,
+  onPick,
+}: {
+  kind: 'folder' | 'export';
+  title: string;
+  onPick(path: string): void;
+}) {
+  const bridge = desktopBridge();
+  if (!bridge) return null;
+  const choose = async () => {
+    const picked =
+      kind === 'folder'
+        ? await bridge.pickFolder({ title })
+        : ((
+            await bridge.pickFiles({
+              title,
+              filters: [{ name: 'Manuscript export', extensions: ['zip'] }],
+            })
+          )[0] ?? null);
+    if (picked) onPick(picked);
+  };
+  return (
+    <Button type="button" size="sm" onClick={() => void choose()}>
+      Browse…
+    </Button>
+  );
+}
+
 async function copyPath(path: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(path);
@@ -157,6 +206,7 @@ function ExportPanel({ overview, busy }: { overview: Overview; busy: boolean }) 
         <span className="text-xs text-muted">
           Kept in <code className="font-mono">{overview.exportsFolder}</code>, outside your vault.
         </span>
+        <ShowPath path={overview.exportsFolder} />
       </div>
       {overview.exports.length === 0 ? (
         <p className="text-sm text-muted">No exports yet.</p>
@@ -213,15 +263,18 @@ function RestorePanel({ overview, busy }: { overview: Overview; busy: boolean })
         <Field label="Export">
           {(id) => (
             <>
-              <Input
-                id={id}
-                list="export-names"
-                value={archive}
-                placeholder={
-                  overview.exports[0]?.name ?? 'Name of an export, or the path of a .zip'
-                }
-                onChange={(event) => setArchive(event.target.value)}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id={id}
+                  list="export-names"
+                  value={archive}
+                  placeholder={
+                    overview.exports[0]?.name ?? 'Name of an export, or the path of a .zip'
+                  }
+                  onChange={(event) => setArchive(event.target.value)}
+                />
+                <Browse kind="export" title="Choose an export" onPick={setArchive} />
+              </div>
               <datalist id="export-names">
                 {overview.exports.map((entry) => (
                   <option key={entry.name} value={entry.name} />
@@ -232,12 +285,19 @@ function RestorePanel({ overview, busy }: { overview: Overview; busy: boolean })
         </Field>
         <Field label="New vault folder">
           {(id) => (
-            <Input
-              id={id}
-              value={target}
-              placeholder="C:\Users\you\Documents\Manuscript (restored)"
-              onChange={(event) => setTarget(event.target.value)}
-            />
+            <div className="flex gap-2">
+              <Input
+                id={id}
+                value={target}
+                placeholder="C:\Users\you\Documents\Manuscript (restored)"
+                onChange={(event) => setTarget(event.target.value)}
+              />
+              <Browse
+                kind="folder"
+                title="Choose an empty folder for the new vault"
+                onPick={setTarget}
+              />
+            </div>
           )}
         </Field>
         <div className="sm:col-span-2">
@@ -305,10 +365,7 @@ function VaultsPanel({ overview }: { overview: Overview }) {
         <dt className="text-muted">In use now</dt>
         <dd className="flex flex-wrap items-center gap-2">
           <span className="break-all font-mono text-xs">{overview.vault.path}</span>
-          <Button size="sm" variant="ghost" onClick={() => void copyPath(overview.vault.path)}>
-            <Copy aria-hidden="true" size={14} />
-            Copy path
-          </Button>
+          <ShowPath path={overview.vault.path} />
         </dd>
       </dl>
       {overview.recentVaults.filter((entry) => !entry.current).length > 0 && (
@@ -349,15 +406,25 @@ function VaultsPanel({ overview }: { overview: Overview }) {
       >
         <Field label="Open another folder as a vault" className="min-w-64 flex-1">
           {(id) => (
-            <Input
-              id={id}
-              value={folder}
-              placeholder="C:\Users\you\Documents\Obsidian\Uni"
-              onChange={(event) => {
-                setFolder(event.target.value);
-                setInspection(null);
-              }}
-            />
+            <div className="flex gap-2">
+              <Input
+                id={id}
+                value={folder}
+                placeholder="C:\Users\you\Documents\Obsidian\Uni"
+                onChange={(event) => {
+                  setFolder(event.target.value);
+                  setInspection(null);
+                }}
+              />
+              <Browse
+                kind="folder"
+                title="Choose the folder to open as a vault"
+                onPick={(picked) => {
+                  setFolder(picked);
+                  setInspection(null);
+                }}
+              />
+            </div>
           )}
         </Field>
         <Button type="submit" disabled={folder.trim() === ''} loading={actions.inspect.isPending}>

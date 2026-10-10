@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { json, notFound } from '../../test/practice-fixtures';
 import { type FakeFetch, HEALTH, renderApp, resetUiState } from '../../test/renderApp';
 
@@ -326,5 +326,51 @@ describe('a concept and its code', () => {
     expect(server.find('PUT', `/api/concepts/${CONCEPT}/code/${ENTITY_B}`)[0]?.body).toEqual({
       status: 'accepted',
     });
+  });
+});
+
+describe('in the desktop app', () => {
+  afterEach(() => {
+    delete window.skbDesktop;
+  });
+
+  it('browses with the native pickers and shows paths in their folder', async () => {
+    const user = userEvent.setup();
+    const revealed: string[] = [];
+    window.skbDesktop = {
+      pickFiles: async () => ['D:/Exports/manuscript-export-2026-10-01-09-00-00.zip'],
+      pickFolder: async () => 'D:/Restored vault',
+      revealInExplorer: async (path) => {
+        revealed.push(path);
+        return true;
+      },
+      appInfo: async () => null,
+    };
+    renderApp('/settings', fakeServer().fetch);
+    const form = await screen.findByRole('form', { name: 'Restore from an export' });
+    const browse = within(form).getAllByRole('button', { name: 'Browse…' });
+    await user.click(browse[0] as HTMLElement);
+    await user.click(browse[1] as HTMLElement);
+    expect(within(form).getByLabelText('Export')).toHaveValue(
+      'D:/Exports/manuscript-export-2026-10-01-09-00-00.zip',
+    );
+    expect(within(form).getByLabelText('New vault folder')).toHaveValue('D:/Restored vault');
+
+    // The vault and the exports folder are shown in the file manager rather than copied.
+    expect(screen.queryByRole('button', { name: 'Copy path' })).toBeNull();
+    const shows = screen.getAllByRole('button', { name: 'Show in folder' });
+    await user.click(shows[0] as HTMLElement);
+    await user.click(shows[1] as HTMLElement);
+    expect(revealed.sort()).toEqual([
+      'C:/Users/will/AppData/Roaming/Manuscript/exports',
+      'C:/Users/will/Documents/Study Vault',
+    ]);
+  });
+
+  it('has neither in a browser', async () => {
+    renderApp('/settings', fakeServer().fetch);
+    await screen.findByRole('form', { name: 'Restore from an export' });
+    expect(screen.queryByRole('button', { name: 'Browse…' })).toBeNull();
+    expect(screen.getAllByRole('button', { name: 'Copy path' }).length).toBeGreaterThan(0);
   });
 });

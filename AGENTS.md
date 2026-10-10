@@ -67,10 +67,21 @@ All verified on 4 October 2026 (Phase 1):
 | `npm run test:perf` | Generates 10,000 notes (and a library of 10,000 PDF pages) and checks the performance budgets (`architecture.md` §14); run before a gate that touches indexing or search |
 | `npm run test:perf:mastery` | Generates a year of learning (1,000 concepts, 5,000 reviewed cards, 20,000 answers) and times the mastery pass (budget 500 ms); run before a gate that touches mastery |
 | `npm run docs:tools` | Regenerates the tool catalogue in `docs/guide/agent-tools.md` from the tool registry (a test fails when it is out of date); run after changing a tool |
+| `npm run desktop:dev` | The desktop shell (Electron 44) against the built server; builds the application when it is missing and downloads Electron the first time |
+| `npm run desktop:build` | An unpacked desktop build in `apps/desktop/release/<platform>-unpacked` (Electron's distribution + `resources/app` + `resources/server`) |
+| `npx playwright test e2e/desktop.spec.ts` | Launches the shell and the unpacked build with Playwright's Electron driver; run `npm run build` (and `desktop:build`) first |
 | `run-web.bat` | One-click Windows launcher for daily use (`SKB_NO_BROWSER=1` to suppress the browser) |
 
 ### Environment pitfalls (seen in the Claude Code / VS Code environment)
 
+- **Anything that starts the application without `SKB_VAULT` opens the user's real vault** (the default is
+  `Documents\Manuscript`, or the old `Documents\Study Knowledge Base`). A test that launches the whole
+  application — the Electron spec, a script — must replace `USERPROFILE`, `HOME`, `APPDATA` and
+  `LOCALAPPDATA` with folders of its own as well as setting `SKB_VAULT` and `SKB_DATA_DIR`
+  (`isolatedEnvironment` in `e2e/desktop.spec.ts`), because `SKB_VAULT` is deliberately dropped once the
+  student has chosen another vault in the application. (This happened once: a test opened the real vault and
+  migrated its database; the pre-migration backup made by Phase 17 was what made it harmless. See the
+  10 October journal.)
 - `ELECTRON_RUN_AS_NODE=1` is inherited from VS Code's extension host and makes `electron` run as
   plain Node (`require('electron').app` is undefined). Unset it before launching Electron.
 - `NoDefaultCurrentDirectoryInExePath=1` stops `cmd.exe` finding `run-web.bat` by a relative name; call

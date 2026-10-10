@@ -15,7 +15,7 @@
     "dev": "concurrently --kill-others-on-fail --names server,web --prefix-colors cyan,magenta \"npm:dev:server\" \"npm:dev:web\"",
     "dev:server": "npm run dev --workspace @skb/server",
     "dev:web": "npm run dev --workspace @skb/web",
-    "build": "npm run build --workspace @skb/web && npm run build --workspace @skb/server",
+    "build": "npm run build --workspace @skb/web && npm run build --workspace @skb/server && npm run build --workspace @skb/desktop",
     "start": "node --enable-source-maps apps/server/dist/server.mjs",
     "typecheck": "npm run typecheck --workspaces --if-present && tsc -p e2e/tsconfig.json",
     "lint": "biome check .",
@@ -27,7 +27,9 @@
     "test:smoke": "node scripts/smoke-server.mjs",
     "test:perf": "tsx apps/server/test/perf/notes-perf.ts",
     "test:perf:mastery": "tsx apps/server/test/perf/mastery-perf.ts",
-    "docs:tools": "tsx scripts/write-tool-catalogue.ts"
+    "docs:tools": "tsx scripts/write-tool-catalogue.ts",
+    "desktop:dev": "node scripts/run-desktop.mjs",
+    "desktop:build": "node scripts/pack-desktop.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",

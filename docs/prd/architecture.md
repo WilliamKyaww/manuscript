@@ -248,16 +248,25 @@ working.
 ## 11. Electron architecture (Phase 18; de-risked by a Phase 1 spike)
 
 ```text
-Electron main ──fork──► utilityProcess: server.mjs (same bundle as web mode)
-     │  ◄── "ready" {port, token}
-     ├─ sets auth cookie for http://127.0.0.1:<port>
-     ├─ BrowserWindow(loadURL server origin; contextIsolation, sandbox, CSP)
-     ├─ preload: window.skbDesktop = { pickFiles, pickFolder, revealInExplorer, appInfo }
-     ├─ safeStorage: decrypts API keys → passes to server over the utilityProcess port
-     └─ single-instance lock, window state, external-link handling
+Electron main ──fork──► utilityProcess: server.mjs (same bundle as web mode; --port 0)
+     │  env: SKB_AUTH_TOKEN (made for the run), SKB_RESTARTABLE=1, SKB_SECRETS_KEY, SKB_DATA_DIR
+     │  ◄── "skb:ready" {port, origin}
+     ├─ sets the auth cookie skb_session_<port> for http://127.0.0.1:<port> before the first load
+     ├─ BrowserWindow(loadURL server origin; contextIsolation, sandbox, no nodeIntegration; the
+     │    server's CSP; navigation and window.open confined to the origin; permissions denied but
+     │    clipboard writes and full screen; links go to the system browser if plain http(s))
+     ├─ preload: window.skbDesktop = { pickFiles, pickFolder, revealInExplorer, appInfo }; every call is
+     │    checked in main (the frame's origin, the path inside the vault or data folder)
+     ├─ safeStorage wraps a random 32-byte key kept in <data>/secrets.key; the server encrypts
+     │    secrets.json with it (AES-256-GCM), so a copy of the data folder is not a copy of the keys
+     ├─ exit code 75 from the server (another vault chosen) → start it again, load the new origin
+     └─ single-instance lock, window state in <data>/window-state.json, Electron's own profile in
+          <data>/desktop (never in the vault)
 ```
 
-Packaging with electron-builder (NSIS). Because SQLite comes from Node's built-in `node:sqlite`, the
+The unpacked build (`npm run desktop:build`, Phase 18) is Electron's own distribution with
+`resources/app` (the shell) and `resources/server` (the server bundle and the web app); the installer
+(electron-builder, NSIS, Phase 19) wraps that layout. Because SQLite comes from Node's built-in `node:sqlite`, the
 package contains **no native Node modules** (ADR-0006, ADR-0016).
 
 ## 12. Extension points (internal, typed)

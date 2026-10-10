@@ -69,8 +69,16 @@ export function forget(dataDir: string, vaultPath: string): void {
   write(dataDir, registry);
 }
 
-/** For `resolveConfig`: the folder to open when nothing else says, if it is still there. */
+/**
+ * For `resolveConfig`: the folder to open when nothing else says. A vault that was opened before and
+ * has since gone is not opened by surprise (a drive that is not connected would otherwise be
+ * replaced by an empty vault); a folder that was chosen and has not been made yet is the student's
+ * decision to make a new vault there, as long as its parent exists.
+ */
 export function activeVault(dataDir: string): string | null {
-  const { active } = readRegistry(dataDir);
-  return active !== null && existsSync(active) ? active : null;
+  const { active, recent } = readRegistry(dataDir);
+  if (active === null) return null;
+  if (existsSync(active)) return active;
+  const openedBefore = recent.some((entry) => vaultKey(entry.path) === vaultKey(active));
+  return !openedBefore && existsSync(path.dirname(active)) ? active : null;
 }

@@ -119,7 +119,11 @@ export function createModules(ctx: AppContext): AppModules {
   const settings = createSettingsService(ctx);
   // AI configuration and keys live in the per-user data directory, never in the vault.
   const aiStore = createFileConfigStore(ctx.config.dataDir, ctx.logger);
-  const aiSecrets = createFileSecretStore(ctx.config.dataDir, ctx.logger);
+  const aiSecrets = createFileSecretStore(
+    ctx.config.dataDir,
+    ctx.logger,
+    ctx.config.secretsKey ?? null,
+  );
   const aiCore = createAiService({
     store: aiStore,
     secrets: aiSecrets,
