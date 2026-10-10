@@ -232,6 +232,10 @@ describe('export and restore', () => {
       `id: ${handId}`,
     );
     expect(existsSync(path.join(target, '.skb', 'skb.db'))).toBe(true);
+    // Before it has ever been opened, the folder is already known for what it is.
+    expect(
+      (await api.post<{ kind: string }>('/api/data/vaults/inspect', { path: target }, 200)).kind,
+    ).toBe('manuscript');
 
     // The student's own data is the same, table by table (what is read from sources is made again).
     const copy = openDatabase(path.join(target, '.skb', 'skb.db'), { readOnly: true });

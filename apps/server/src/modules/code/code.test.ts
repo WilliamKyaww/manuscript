@@ -60,13 +60,13 @@ describe('importing a Graphify graph', () => {
     });
 
     // Raft: the file raft.py (exact) and RaftNode (contains); Append entries: the function (exact).
-    const raftLinks = await api.get('/api/concepts/' + raft.id + '/code', Links);
+    const raftLinks = await api.get(`/api/concepts/${raft.id}/code`, Links);
     expect(raftLinks.links.map((link) => [link.entity.label, link.status, link.score])).toEqual([
       ['raft.py', 'proposed', 0.9],
       ['RaftNode', 'proposed', 0.6],
     ]);
     expect(raftLinks.links[0]?.reason).toBe('The name “raft.py” is the same as “Raft”.');
-    const appendLinks = await api.get('/api/concepts/' + append.id + '/code', Links);
+    const appendLinks = await api.get(`/api/concepts/${append.id}/code`, Links);
     expect(appendLinks.links.map((link) => link.entity.label)).toEqual(['append_entries()']);
 
     // Searching the code: by name, or by the file it is in.
@@ -132,7 +132,7 @@ describe('deciding which code implements a concept', () => {
     );
     await api.post(`/api/concepts/${paxos.id}/code`, { entityId: id('.elect_leader()') }, 409);
 
-    const shown = await api.get('/api/concepts/' + raft.id + '/code', Links);
+    const shown = await api.get(`/api/concepts/${raft.id}/code`, Links);
     expect(shown.links.map((link) => [link.entity.label, link.status])).toEqual([
       ['raft.py', 'accepted'],
     ]);
@@ -176,10 +176,10 @@ describe('deciding which code implements a concept', () => {
 
     // Merging Raft protocol into Raft: its code link moves, and undoing the merge puts it back.
     const { snapshot } = testbed.modules.concepts.merge(raft.id, second.id);
-    const kept = await api.get('/api/concepts/' + raft.id + '/code', Links);
+    const kept = await api.get(`/api/concepts/${raft.id}/code`, Links);
     expect(kept.links.map((link) => link.entity.label)).toContain('RaftNode');
     testbed.modules.concepts.unmerge(snapshot);
-    const restored = await api.get('/api/concepts/' + second.id + '/code', Links);
+    const restored = await api.get(`/api/concepts/${second.id}/code`, Links);
     expect(restored.links.map((link) => link.entity.label)).toEqual(['RaftNode']);
 
     // Deleting a concept takes its links with it; the code stays.
@@ -191,9 +191,9 @@ describe('deciding which code implements a concept', () => {
   it('is removed together with its links when the graph is deleted', async () => {
     const { api, imported, raft } = await setup();
     const graph = (await imported()).graph;
-    expect((await api.get('/api/concepts/' + raft.id + '/code', Links)).links).not.toHaveLength(0);
+    expect((await api.get(`/api/concepts/${raft.id}/code`, Links)).links).not.toHaveLength(0);
     await api.delete(`/api/code/graphs/${graph.id}`);
-    expect((await api.get('/api/concepts/' + raft.id + '/code', Links)).links).toEqual([]);
+    expect((await api.get(`/api/concepts/${raft.id}/code`, Links)).links).toEqual([]);
     expect((await api.get<{ total: number }>('/api/code/entities')).total).toBe(0);
   });
 });

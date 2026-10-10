@@ -64,6 +64,8 @@ export interface PortabilityDependencies {
 
 export type PortabilityService = ReturnType<typeof createPortabilityService>;
 
+const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? '' : 's'}`;
+
 function countFiles(root: string): { notes: number; files: number } {
   let notes = 0;
   let files = 0;
@@ -197,7 +199,10 @@ export function createPortabilityService(deps: PortabilityDependencies) {
     if (!statSync(resolved).isDirectory())
       throw new ValidationError('That is a file, not a folder.');
     const obsidian = existsSync(path.join(resolved, '.obsidian'));
-    const isManuscript = existsSync(path.join(resolved, VAULT_META_DIR, 'vault.json'));
+    // A restored vault has its database before it has ever been opened (which writes vault.json).
+    const isManuscript =
+      existsSync(path.join(resolved, VAULT_META_DIR, 'vault.json')) ||
+      existsSync(path.join(resolved, VAULT_META_DIR, 'skb.db'));
     const { notes: noteCount, files } = countFiles(resolved);
     const empty = readdirSync(resolved).length === 0;
     const kind: VaultKind = isManuscript
@@ -208,13 +213,13 @@ export function createPortabilityService(deps: PortabilityDependencies) {
           ? 'obsidian'
           : 'folder';
     const summaries: Record<VaultKind, string> = {
-      manuscript: `A Manuscript vault with ${noteCount} notes. It opens as it is.`,
+      manuscript: `A Manuscript vault with ${plural(noteCount, 'note')}. It opens as it is.`,
       obsidian:
-        `An Obsidian vault with ${noteCount} notes. Manuscript reads the notes where they are. It adds ` +
+        `An Obsidian vault with ${plural(noteCount, 'note')}. Manuscript reads the notes where they are. It adds ` +
         'an id line to the front matter of a note only when it needs to refer to it, and changes nothing ' +
         'else in your notes or in the .obsidian folder. Its own data goes in a hidden .skb folder.',
       folder:
-        `A folder with ${noteCount} Markdown notes and ${files} other files. It is opened in place as a ` +
+        `A folder with ${plural(noteCount, 'Markdown note')} and ${plural(files, 'other file')}. It is opened in place as a ` +
         'vault; notes are read where they are and only an id line is ever added to them.',
       empty: 'An empty folder. A new vault will be created in it.',
       missing: '',
