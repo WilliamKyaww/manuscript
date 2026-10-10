@@ -1,0 +1,15 @@
+{
+  "name": "@skb/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Electron shell for Manuscript: runs the server in a utility process and shows the web application.",
+  "type": "module",
+  "main": "dist/main.mjs",
+  "scripts": {
+    "build": "node ../../scripts/build-desktop.mjs",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "electron": "44.5.1"
+  }
+}
