@@ -300,3 +300,81 @@ Phase 15 — integration (`phase/15-integration`).
 ### Next steps
 
 Phase 16 — portability (`phase/16-portability`).
+
+---
+
+## Phase 16 — Portability (`phase/16-portability`)
+
+**Time:** 10 October 2026 (afternoon, after a stop for a hot laptop). **Model:** Claude Sonnet 5.5.
+**Work:** full export and restore, concepts as Markdown, graph exports, Obsidian in place, vault switching,
+Settings → Data, Graphify import.
+
+### What was done
+
+1. **Zip and tables (16.01).** A streaming zip writer and one-pass reader (`fflate`), with entry-name checks that
+   refuse an archive whole; a list of the canonical tables (parents first) and of the derived ones that are left out.
+2. **The archive (16.01, 16.04, 16.05).** `manifest.json` first, README, a schema document written from the live
+   schema, `data/*.json`, Anki text per set, the question bank and quizzes, the graph as node-link JSON and GraphML,
+   then the vault's files — a note without an id gains one *in the archive only*.
+3. **Restore (16.02).** Only into a new, empty folder: files with their times (checked against `data/files.json`),
+   tables loaded with foreign keys checked at the end, sources set back to `pending` so they are read again. A failure
+   removes what it made. The round-trip test exports, restores, opens the result with the whole application and
+   exports again, and compares the two archives.
+4. **Concepts as notes (16.03).** A pure formatter in core (`conceptNotes`) used for the archive and for writing
+   `Concepts/<name>.md` into the vault on request, which also links each concept to its new note.
+5. **Obsidian in place and vault switching (16.07, 16.08).** `inspect` says what a folder is and what opening it will
+   do; the recent list and the vault to open next live in `vaults.json` in the data directory; switching exits with
+   code 75 and `scripts/run-web.mjs` starts the server again (`SKB_RESTARTABLE=1`). Test: opening the Obsidian fixture,
+   indexing, searching, drawing the graph and exporting change no file.
+6. **Settings → Data (16.09).** Export with download, restore, vaults, concepts as notes, read the files again, code
+   graphs; "Copy path" stands in for "show in folder" until the desktop app.
+7. **Graphify import (16.06).** Migration 0016 (`code_graphs`, `code_entities`, `code_edges`, `code_links`); a `code`
+   node type; computed edges (`uses`, `part_of`, `implemented_in`); proposals from name matching (exact 0.9, contained
+   0.6, a stop-list of generic words, eight per concept); decisions on the concept's page; merges carry links with them
+   and undo puts them back.
+8. **Docs (16.10).** `docs/guide/portability.md`, ADR-0039, data-model and knowledge-system PRDs, FEATURES, STATE,
+   backlog and technical debt, THIRD_PARTY_NOTICES (format only).
+
+### Decisions
+
+- **Restore never merges** (ADR-0039): a new empty folder or nothing.
+- **Restart to switch vaults** rather than hot-swapping a database, a lock and a watcher.
+- **Code graphs as tables and computed edges**, not a new source kind (which would have meant rebuilding the heavily
+  referenced `sources` table) and not stored relations (which would have widened the `relations` CHECKs). Code is in
+  the graph but not in the semantic view, so a repository cannot take over communities, hubs or prompts.
+- **Names only for matching**: no model, nothing accepted without the student.
+
+### Problems encountered
+
+- **A stored zip entry could not be read back in one pass**: the streamed writer leaves sizes in a data descriptor,
+  and a reader cannot find the end of a *stored* entry that way, so the archived `.pptx` came back with the rest of
+  the archive appended. Caught by comparing the archived original with the file on disk. Entries are now deflated
+  (level 0 for formats already compressed), whose stream says where it ends.
+- **Modification times** are not in the streaming zip API, so the source library saw "changed" files after a restore
+  (the second export differed in `mtime_ms`). `data/files.json` carries size and time; restore puts them back and
+  checks sizes, which also detects a damaged archive.
+- **Code nodes broke the analytics** (`degree` and the surprising-connections pass assumed every node is in the
+  semantic view). Both now skip what is not in the view; the full graph suite found it on the first request.
+- **Heredocs and backslashes, again** (a regex and `'\n'` in generated test code): editor tools and script files.
+- **Biome's `noLabelWithoutControl`** does not see our `Input` component inside a `<label>`; the forms use the
+  existing `Field` helper.
+
+### Tests run
+
+| Command | Result |
+|---|---|
+| `npm run verify` (two workers) | **Pass** — type-check, Biome, **823** Vitest tests (core 236, server 412, web 175), build, smoke |
+| `npx playwright test` | **Pass** — **89/89** (new: `portability.spec.ts`; axe on Settings → Data and the concept page in both themes) |
+| `npm run test:perf`, `test:perf:mastery` | Not run: nothing in Phase 16 touches indexing, search or mastery; the graph gained a `code` type that is empty without an import (STATE → Broken still asks for a quiet-machine run) |
+
+### Unresolved issues
+
+- Notes with invalid front matter lose references on restore (TD-11).
+- The imported `graph.json` is not kept (TD-12); the agent has no code tools yet (B-KM-23).
+- Real-provider checks from earlier phases, a quiet-machine `npm run test:perf`, pushing, and renaming the folder
+  are still the user's (STATE → Pending for the user).
+
+### Next steps
+
+Phase 17 — hardening (`phase/17-hardening`): backups and startup recovery first (the export is a manual copy; the
+database needs its own automatic one).

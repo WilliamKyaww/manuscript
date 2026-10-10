@@ -97,7 +97,7 @@ re-processed (Graphify's cache lesson) and a parser upgrade can re-run selective
 | Images | 11 | one segment | Read or described by the chat model (image locator); imported unread without AI |
 | Audio / video | 11 | timed segments (about a minute each) | Transcription role (`whisper-1` gives timestamps; others are estimated); `media` locators; files up to 25 MB |
 | Scanned PDF pages | 11 | one per page | Pages without a text layer read by the chat model from the PDF (≤ 100 pages, 30 MB) |
-| Graphify `graph.json` | 16 | — | Imports a code graph for coursework repos |
+| Graphify `graph.json` | 16 | — | Imported as a code graph (its own tables and `code` graph nodes, ADR-0039), not as a library source |
 
 ### 5.3 Source viewer
 

@@ -9,6 +9,7 @@ import { registerAgentRoutes } from './modules/agent/routes';
 import { registerAiRoutes } from './modules/ai/routes';
 import { registerCardRoutes } from './modules/cards/routes';
 import { registerChatRoutes } from './modules/chat/routes';
+import { registerCodeRoutes } from './modules/code/routes';
 import { registerConceptRoutes } from './modules/concepts/routes';
 import { registerEventRoutes } from './modules/events/routes';
 import { registerGenerationRoutes } from './modules/generation/routes';
@@ -17,6 +18,7 @@ import type { AppModules } from './modules/index';
 import { registerLearningRoutes } from './modules/learning/routes';
 import { registerNotesRoutes } from './modules/notes/routes';
 import { registerPlanRoutes } from './modules/plan/routes';
+import { registerPortabilityRoutes } from './modules/portability/routes';
 import { registerPracticeRoutes } from './modules/practice/routes';
 import { registerSearchRoutes } from './modules/search/routes';
 import { registerSettingsRoutes } from './modules/settings/routes';
@@ -76,6 +78,8 @@ export function createApp(ctx: AppContext, modules: AppModules, auth: AuthOption
   registerAgentRoutes(registry, modules.agent);
   registerChatRoutes(registry, modules.chat, ctx.logger);
   registerPlanRoutes(registry, modules.plan, modules.settings, modules.resurface);
+  registerPortabilityRoutes(registry, modules.portability);
+  registerCodeRoutes(registry, modules.code);
   registerEventRoutes(registry, ctx);
 
   // Unknown API routes are problem-details 404s, never the SPA.

@@ -121,6 +121,14 @@ export function assembleGraph(data: GraphData): KnowledgeGraph {
       path: source.path,
     });
 
+  for (const entity of data.code.entities)
+    graph.addNode(entity.id, {
+      type: 'code',
+      label: entity.label,
+      ...membership(entity.moduleId ? [entity.moduleId] : []),
+      path: entity.file,
+    });
+
   // Course structure.
   for (const lecture of data.lectures) partOf(lecture.id, lecture.moduleId);
   for (const topic of data.topics) partOf(topic.id, topic.parentId ?? topic.moduleId);
@@ -184,6 +192,35 @@ export function assembleGraph(data: GraphData): KnowledgeGraph {
         weight: 1,
       });
 
+  // Imported code: what uses what (Graphify's "contains" is structure), and what implements a concept.
+  for (const link of data.code.edges) {
+    if (link.relation === 'contains')
+      edge(`code:${link.id}`, link.targetId, link.sourceId, {
+        relation: 'part_of',
+        kind: 'structure',
+        confidence: link.confidence,
+        score: link.score,
+        weight: link.weight,
+      });
+    else
+      edge(`code:${link.id}`, link.sourceId, link.targetId, {
+        relation: 'uses',
+        kind: 'link',
+        confidence: link.confidence,
+        score: link.score,
+        weight: link.weight,
+      });
+  }
+  for (const link of data.code.links)
+    edge(`implemented_in:${link.conceptId}:${link.entityId}`, link.conceptId, link.entityId, {
+      relation: 'implemented_in',
+      kind: 'link',
+      confidence: link.status === 'accepted' ? 'USER' : 'INFERRED',
+      status: link.status,
+      score: link.score,
+      weight: 1,
+    });
+
   // Stored relations (accepted and proposed; rejected ones are never drawn).
   for (const relation of data.relations)
     edge(relation.id, relation.fromId, relation.toId, {
@@ -223,7 +260,8 @@ export const isSemantic = (attributes: EdgeAttributes) =>
 export function semanticView(graph: KnowledgeGraph): UndirectedGraph<object, { weight: number }> {
   const view = new UndirectedGraph<object, { weight: number }>();
   graph.forEachNode((node, attributes) => {
-    if (!isStructural(attributes.type)) view.addNode(node);
+    // Code is shown, not analysed: a repository's calls would drown the ideas in communities and hubs.
+    if (!isStructural(attributes.type) && attributes.type !== 'code') view.addNode(node);
   });
   graph.forEachEdge((_edge, attributes, source, target) => {
     if (!isSemantic(attributes) || !view.hasNode(source) || !view.hasNode(target)) return;

@@ -47,6 +47,7 @@ const LABEL_QUERIES: Record<GraphNodeType, string> = {
             JOIN modules m ON m.id = l.module_id WHERE l.id IN (SELECT value FROM json_each(?))`,
   module: `SELECT id, code || ' ' || title AS label FROM modules WHERE id IN (SELECT value FROM json_each(?))`,
   topic: `SELECT id, title AS label FROM topics WHERE id IN (SELECT value FROM json_each(?))`,
+  code: `SELECT id, label FROM code_entities WHERE id IN (SELECT value FROM json_each(?))`,
 };
 
 export type RelationsRepository = ReturnType<typeof createRelationsRepository>;

@@ -1,3 +1,4 @@
+import path from 'node:path';
 import type { AppContext } from '../context';
 import { createJobQueue, type JobQueue } from '../jobs/queue';
 import { createJobsRepository } from '../jobs/repository';
@@ -19,6 +20,8 @@ import { createReviewService, type ReviewService } from './cards/reviews';
 import { type CardsService, createCardsService } from './cards/service';
 import { createChatRepository } from './chat/repository';
 import { type ChatService, createChatService } from './chat/service';
+import { createCodeRepository } from './code/repository';
+import { type CodeService, createCodeService } from './code/service';
 import { createConceptMergeRepository } from './concepts/merge-repository';
 import { createConceptsRepository } from './concepts/repository';
 import { type ConceptsService, createConceptsService } from './concepts/service';
@@ -47,6 +50,8 @@ import { createPlanRepository } from './plan/repository';
 import { createResurfaceService, type ResurfaceService } from './plan/resurface';
 import { createExamRetention } from './plan/retention';
 import { createPlanService, type PlanService } from './plan/service';
+import { createExporter } from './portability/exporter';
+import { createPortabilityService, type PortabilityService } from './portability/service';
 import { type AttemptsService, createAttemptsService } from './practice/attempts';
 import { createAttemptsRepository } from './practice/attempts-repository';
 import { createFollowUp, type FollowUp } from './practice/follow-up';
@@ -100,6 +105,8 @@ export interface AppModules {
   readonly plan: PlanService;
   readonly resurface: ResurfaceService;
   readonly tutor: TutorService;
+  readonly portability: PortabilityService;
+  readonly code: CodeService;
   start(options: { watch: boolean }): Promise<void>;
   close(): Promise<void>;
 }
@@ -468,6 +475,44 @@ export function createModules(ctx: AppContext): AppModules {
     logger: ctx.logger,
   });
 
+  // Imported code graphs and their links to concepts (Phase 16).
+  const code = createCodeService({
+    db: ctx.db,
+    repo: createCodeRepository(ctx.db),
+    concepts,
+    events: ctx.events,
+    clock: ctx.clock,
+    ids: ctx.ids,
+  });
+
+  // Export, restore and switching vault (Phase 16) read every part of the vault, so they come last.
+  const portability = createPortabilityService({
+    db: ctx.db,
+    vault: ctx.vault,
+    dataDir: ctx.config.dataDir,
+    notes,
+    concepts,
+    graph,
+    sources,
+    exporter: createExporter({
+      db: ctx.db,
+      vault: ctx.vault,
+      notesRepo: notes.repo,
+      graph,
+      cards,
+      concepts,
+      questions,
+      quizzes,
+      clock: ctx.clock,
+      version: ctx.version,
+      exportsDir: path.join(ctx.config.dataDir, 'exports'),
+    }),
+    jobs,
+    clock: ctx.clock,
+    logger: ctx.logger,
+    restart: ctx.restart,
+  });
+
   return {
     settings,
     notes,
@@ -501,6 +546,8 @@ export function createModules(ctx: AppContext): AppModules {
     plan,
     resurface,
     tutor,
+    portability,
+    code,
     async start(options) {
       await notes.start(options);
       jobs.start();

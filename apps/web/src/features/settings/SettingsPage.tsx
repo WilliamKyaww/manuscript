@@ -13,6 +13,7 @@ import { formatUptime } from '../../lib/format';
 import { healthQuery } from '../../lib/queries';
 import { AgentSettingsSection } from '../agent/AgentSettingsSection';
 import { AiSettingsSection } from '../ai/settings/AiSettingsSection';
+import { DataSection } from '../data/DataSection';
 import { NotesSettingsSection } from './NotesSettingsSection';
 import { PipelineSettingsSection } from './PipelineSettingsSection';
 import { PlanSettingsSection } from './PlanSettingsSection';
@@ -46,6 +47,7 @@ export function SettingsPage() {
       description="Vault, notes, review, AI, assistant actions, appearance and information about this installation."
     >
       <VaultSection />
+      <DataSection />
       <NotesSettingsSection />
       <ReviewSettingsSection />
       <PlanSettingsSection />

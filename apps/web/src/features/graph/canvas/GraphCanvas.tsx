@@ -68,6 +68,7 @@ const TYPE_COLOUR: Record<GraphNodeType, (colours: GraphColours) => string> = {
   source: (colours) => colours.communities[1] ?? colours.node,
   lecture: (colours) => colours.communities[3] ?? colours.node,
   topic: (colours) => colours.communities[4] ?? colours.node,
+  code: (colours) => colours.communities[5] ?? colours.node,
   module: (colours) => colours.structure,
 };
 

@@ -36,6 +36,8 @@ export const ID_PREFIXES = {
   proposal: 'prp',
   pipelineRun: 'run',
   usage: 'use',
+  codeGraph: 'cgr',
+  codeEntity: 'cod',
 } as const;
 
 export type EntityKind = keyof typeof ID_PREFIXES;

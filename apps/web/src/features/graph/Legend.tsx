@@ -19,6 +19,7 @@ const TYPE_COLOURS: [GraphNodeType, string][] = [
   ['source', 'var(--skb-graph-2)'],
   ['lecture', 'var(--skb-graph-4)'],
   ['topic', 'var(--skb-graph-5)'],
+  ['code', 'var(--skb-graph-6)'],
   ['module', 'var(--skb-graph-structure)'],
 ];
 

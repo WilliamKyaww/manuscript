@@ -27,6 +27,7 @@ export const NODE_TYPE_LABELS: Record<GraphNodeType, string> = {
   lecture: 'Lecture',
   module: 'Module',
   topic: 'Topic',
+  code: 'Code',
 };
 
 export const NODE_TYPE_PLURALS: Record<GraphNodeType, string> = {
@@ -36,10 +37,11 @@ export const NODE_TYPE_PLURALS: Record<GraphNodeType, string> = {
   lecture: 'Lectures',
   module: 'Modules',
   topic: 'Topics',
+  code: 'Code',
 };
 
-/** Whether a node has a page of its own (topics live on their module's page). */
-export const hasPage = (type: GraphNodeType) => type !== 'topic';
+/** Whether a node has a page of its own (topics live on their module's page, code in its panel). */
+export const hasPage = (type: GraphNodeType) => type !== 'topic' && type !== 'code';
 
 /** Opens a node's page; `relations` jumps to a concept's connections. */
 export function useOpenNode() {
@@ -61,6 +63,7 @@ export function useOpenNode() {
       case 'module':
         return void navigate({ to: '/modules/$moduleId', params: { moduleId: node.id } });
       case 'topic':
+      case 'code':
         return undefined;
     }
   };

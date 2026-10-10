@@ -4,18 +4,18 @@ _Last updated: 10 October 2026 — Claude Sonnet 5.5._
 
 ## Current phase
 
-**Phase 16 — Portability: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
+**Phase 17 — Web application hardening: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
 and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
 ingestion pipeline), 6 (course structure and concepts), 7 (knowledge graph), 8 (flashcards and
 spaced repetition), 9 (questions, quizzes and mastery), 10 (AI foundation), 11 (AI generation and
-knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tutor and study planner) and 15 (knowledge–learning integration) are complete and merged into `main`.
+knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tutor and study planner), 15 (knowledge–learning integration) and 16 (portability) are complete and merged into `main`.
 
 ## What works
 
 - **Local server** (`apps/server`): Hono on `127.0.0.1` with token (cookie or bearer), Host allowlist,
   Origin and Fetch-Metadata checks; `/auth` sign-in link; RFC 9457 problem details (with `details`);
   CSP and security headers; production SPA serving; server-sent events at `/api/events`.
-- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0015`), vault (`.skb/` layout,
+- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0016`), vault (`.skb/` layout,
   lock with crash recovery, strict path containment), atomic writes, vault-scoped settings.
 - **Notes** (Phase 3): Markdown files are canonical; the index (notes, aliases, tags, links,
   attachments, FTS5) is rebuilt from the files and follows edits made in other programs. Ids are
@@ -114,11 +114,22 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
   concepts and cross-module relations. A concept with nothing to practise can get questions from its note and the
   passages naming it; wrong answers on a concept with a note are offered back as **Common mistakes** additions;
   Today shows **the weak spots and notes to reread before a lecture, exam or deadline** (ADR-0038).
+- **Portability** (Phase 16, **Settings → Data**, `docs/guide/portability.md`): **Export everything** writes one zip
+  — the vault's files as they are, a JSON file per table of your own data with a schema document, flashcards as Anki
+  text, the graph as JSON and GraphML, the question bank and quizzes, concepts as Markdown notes, a README — to the
+  data folder, with a download; a note without an id gains one in the zip only. **Restore** goes into a new, empty
+  folder only (a newer export, an unsafe archive or a damaged one is refused, and a failure leaves nothing behind);
+  export → restore → export says the same. **Concepts as notes** writes a note for each concept that has none.
+  **Vaults on this computer**: the folder is described first (an Obsidian vault is opened in place; only an `id` line
+  is ever added to a note), then opened by restarting under `run-web.bat` (exit code 75) or at the next start.
+  **Read the files again**. **Code graphs**: a Graphify `graph.json` becomes `code` nodes in the graph (off by
+  default), `uses` edges, and name-match suggestions that wait on the concept's page (**Implemented in**) to be
+  accepted or rejected (ADR-0039).
 - **Application shell:** sidebar, sticky page headers (per pane on paned pages), themes, command
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 789 Vitest tests and 88 Playwright tests (sticky headers on every route and pane,
+- **Tests:** 823 Vitest tests (core 236, server 412, web 175) and 89 Playwright tests (sticky headers on every route and pane,
   axe in both themes, the library, the course, the graph, reviewing, practice, chat, generating and an MCP client
   using the stdio bridge) — all green. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
   p95 404 ms, median 51 ms (provisional budget 500 ms).
@@ -130,11 +141,16 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## In progress
 
-- Nothing; Phase 16 not yet started.
+- Nothing; Phase 17 not yet started.
 
 ## Incomplete / not started
 
-- Phases 16–22: export and import, hardening and the desktop app do not exist yet.
+- Phases 17–22: hardening (automatic backups among it) and the desktop app do not exist yet.
+- Not in Phase 16 (backlog and debt): agent tools for code graphs (B-KM-23), keeping the imported file and
+  re-importing with decisions kept (B-KM-24), grouping code by file and other graph formats (B-KM-25), a
+  password-protected export (B-PL-07), scheduled exports (B-PL-08); a note with invalid front matter loses
+  references on restore (TD-11); the imported graph.json is not kept (TD-12); "show in folder" waits for the
+  desktop app (the page copies the path).
 - Not in Phase 15 (backlog): cards that know their concepts in the pipeline's first run (B-AI-34), linking
   generated questions to concepts (B-AI-35), suggesting prerequisite relations (B-KM-21), drawn node shapes
   for the overlay (B-KM-22), additions for concepts without a note (B-LE-37).
@@ -186,8 +202,8 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## Next steps
 
-1. Create `phase/16-portability` from `main`.
-2. Phase 16: see `docs/checklist/phase-16-portability.md`.
+1. Create `phase/17-hardening` from `main`.
+2. Phase 17: see `docs/checklist/phase-17-hardening.md` (backups and startup recovery first).
 
 ## Relevant decisions
 
@@ -206,13 +222,15 @@ approvals; every change is logged and undoable · ADR-0036 chat streams JSON lin
 server's own runner; a paused run is saved with its thread · ADR-0037 the plan is a pure function,
 the server decides the tutor's rung, answers recorded by a tutor are permanent and ask · **ADR-0038**
 credit flows only along accepted prerequisites; the pipeline is a job that fills the Inbox; mistakes
-go back to notes as suggestions.
+go back to notes as suggestions · **ADR-0039** one archive of open formats, restore only into a new vault, a
+vault is chosen at start-up, code graphs are shown but not analysed.
 
 ## Technical debt
 
 TD-01 launcher duplicates the data-directory logic · TD-05 KaTeX override · TD-06 file tree not
 virtualised · TD-07 `shell-quote` override (for `concurrently`) · TD-08 parsing on the main thread ·
-TD-09 PDF viewer estimates page sizes from page 1. No new debt in Phases 6–9.
+TD-09 PDF viewer estimates page sizes from page 1 · TD-10 undo copies are never pruned · TD-11 a note with
+invalid front matter has no id in an export · TD-12 the imported graph.json is not kept.
 
 ## Environment notes for agents
 
@@ -229,6 +247,9 @@ background load — compare against a worktree of the previous gate (`AGENTS.md`
 - Optional: rename `Documents\Study Knowledge Base` and `%APPDATA%\StudyKnowledgeBase` to `Manuscript`
   while the app is closed (`docs/guide/README.md`).
 - Push `main` and the phase branches when convenient (the agent never pushes).
+- To try leaving and coming back: **Settings → Data → Export everything**, then restore it into a new folder and open
+  that vault from the list (`docs/guide/portability.md`). Keep the zip as carefully as the vault: it holds chats too.
+  If you have a coursework repository, map it with Graphify and import its `graph.json` there.
 - Try entering this semester's modules and assessments (`docs/guide/course.md`); RQ-02 asks how your
   modules are assessed. Then relate a few concepts and look at the graph (`docs/guide/graph.md`), make the first
   flashcards (`docs/guide/flashcards.md`), and write a few questions for a module to try Learn and

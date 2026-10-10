@@ -105,6 +105,28 @@ describe('resolveConfig', () => {
     ).toThrow(/must not be inside the vault/);
   });
 
+  it('opens the vault last switched to, unless one is named', () => {
+    const remembered = path.resolve('/vaults/obsidian');
+    const activeVault = (dataDir: string) => {
+      expect(dataDir).toBe(path.join(home, '.config', 'manuscript'));
+      return remembered;
+    };
+    expect(resolveConfig(input({ activeVault })).vaultPath).toBe(remembered);
+    // A vault named on the command line or in the environment always wins, and development ignores it.
+    expect(resolveConfig(input({ activeVault, argv: ['--vault', 'elsewhere'] })).vaultPath).toBe(
+      path.join(cwd, 'elsewhere'),
+    );
+    expect(resolveConfig(input({ activeVault, env: { SKB_VAULT: 'named' } })).vaultPath).toBe(
+      path.join(cwd, 'named'),
+    );
+    expect(resolveConfig(input({ activeVault, argv: ['--dev'] })).vaultPath).toBe(
+      path.join(cwd, '.dev-vault'),
+    );
+    expect(resolveConfig(input({ activeVault: () => null })).vaultPath).toBe(
+      path.join(home, 'Documents', 'Manuscript'),
+    );
+  });
+
   it('only allows loopback http development origins', () => {
     expect(() =>
       resolveConfig(input({ argv: ['--dev'], env: { SKB_DEV_WEB_ORIGIN: 'http://evil.example' } })),

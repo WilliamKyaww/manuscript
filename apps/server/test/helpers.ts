@@ -4,7 +4,7 @@ import path from 'node:path';
 import { createIdFactory } from '@skb/core';
 import { createApp } from '../src/app';
 import type { ServerConfig } from '../src/config/config';
-import type { AppContext } from '../src/context';
+import type { AppContext, RestartControl } from '../src/context';
 import { loadMigrations, migrate } from '../src/db/migrate';
 import { openDatabase } from '../src/db/sqlite';
 import { createModules } from '../src/modules/index';
@@ -22,6 +22,8 @@ export const TEST_ORIGIN = `http://${TEST_HOST}`;
 export interface TestContextOptions {
   config?: Partial<ServerConfig>;
   clock?: FixedClock;
+  /** Makes the context restartable, as under the launcher or the desktop shell. */
+  restart?: RestartControl;
 }
 
 export interface TestContext {
@@ -63,6 +65,7 @@ export function createTestContext(options: TestContextOptions = {}): TestContext
     events: createEventBus(),
     version: '0.1.0-test',
     startedAt: clock.now(),
+    ...(options.restart ? { restart: options.restart } : {}),
   };
   return {
     ctx,
