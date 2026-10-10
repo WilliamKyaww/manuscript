@@ -51,7 +51,7 @@ Rules:
 | 9 | [Questions, quizzes and mastery](./phase-09-quizzes-mastery.md) | 8 | Complete |
 | 10 | [AI foundation: providers, retrieval and grounded Q&A](./phase-10-ai-foundation.md) | 7, 9 | Complete |
 | 11 | [AI generation and knowledge extraction](./phase-11-ai-generation.md) | 10 | Complete |
-| 12 | [Agent runtime, tool layer and MCP](./phase-12-agent-tools.md) | 11 | Not started |
+| 12 | [Agent runtime, tool layer and MCP](./phase-12-agent-tools.md) | 11 | Complete |
 | 13 | [Agentic chat interface](./phase-13-chat.md) | 12 | Not started |
 | 14 | [Tutor mode and study planning](./phase-14-tutor-planning.md) | 13 | Not started |
 | 15 | [Knowledge–learning integration](./phase-15-integration.md) | 14 | Not started |

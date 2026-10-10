@@ -99,6 +99,11 @@ _Last reviewed: 9 October 2026 (Phase 8)._
 | B-AI-17 | An Inbox history: accepted and rejected suggestions, with a way to reconsider a rejection | Rejections stick so they are not proposed again; there is no way back in the UI | Phase 11 |
 | B-AI-18 | Read scanned pages with models that do not accept PDFs, by rendering pages to images | Scans need a chat model that takes PDFs (Anthropic, OpenAI); local models usually take images only | Phase 11 |
 | B-AI-19 | Cards and questions straight from a recording's moment ("make cards from 12:30–15:00") | Generation from recordings works per source or selection, not by time range | Phase 11 |
+| B-AI-20 | Offer notes, sources and concepts as MCP resources (and common requests as MCP prompts), not only tools | Clients like Claude Desktop browse resources; today everything goes through tool calls | Phase 12 |
+| B-AI-21 | A separate token per MCP client, with a list of connected clients in Settings and the option to revoke one | One token gives every client the same access, and revoking means changing it for all | Phase 12 |
+| B-AI-22 | Log reads made by MCP clients (what was read, when), as an option | Reads are not logged for the in-app assistant (they would drown the log); a person may want to know what an external program looked at | Phase 12 |
+| B-AI-23 | Undo a whole run: "undo this and everything after it" in one step | Undoing a long agent run is one action at a time, newest first | Phase 12 |
+| B-AI-24 | MCP elicitation: let an MCP client that supports it show the approval request, so destructive tools can be offered to it | Destructive tools are not offered to MCP clients at all because they cannot ask | Phase 12 |
 
 ## Platform (PL)
 

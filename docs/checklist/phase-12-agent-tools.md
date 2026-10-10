@@ -1,6 +1,6 @@
 # Phase 12 — Agent runtime, tool layer and MCP
 
-**Status:** In progress — tasks done, gate pending · **Branch:** `phase/12-agent-tools`
+**Status:** Complete (10 October 2026) · **Branch:** `phase/12-agent-tools`
 
 ## Objective
 A typed tool registry over the domain services with risk levels, a policy engine mapped to AI SDK tool
@@ -34,7 +34,7 @@ Phase 11.
 - [x] MCP clients can search and read the knowledge base — tested with the official client over HTTP and, in E2E, through the built stdio bridge
 
 ## Gate
-- [x] All tasks `[x]` · [ ] verify green · [ ] docs updated · [ ] merged
+- [x] All tasks `[x]` · [x] verify green (689 Vitest tests) and E2E (83 Playwright tests) · [x] docs updated · [x] merged
 
 ## Recommended commit messages
 ```text
