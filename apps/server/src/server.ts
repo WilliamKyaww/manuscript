@@ -5,7 +5,8 @@ import { APP_NAME, createIdFactory, type IdFactory } from '@skb/core';
 import { createApp } from './app';
 import type { ServerConfig } from './config/config';
 import type { AppContext, RestartControl } from './context';
-import { loadMigrations, migrate } from './db/migrate';
+import { createBackup } from './db/backup';
+import { loadMigrations, migrate, pendingMigrations } from './db/migrate';
 import { openDatabase, type SqlDatabase } from './db/sqlite';
 import { type AppModules, createModules } from './modules/index';
 import { recordOpened } from './modules/portability/registry';
@@ -66,7 +67,15 @@ export async function startServer(
   let db: SqlDatabase | undefined;
   try {
     db = openDatabase(vault.paths.database);
-    const result = migrate(db, loadMigrations(options.migrationsDir), clock);
+    const migrations = loadMigrations(options.migrationsDir);
+    // A schema change is the one moment the whole database is rewritten: keep how it was.
+    const upcoming = pendingMigrations(db, migrations);
+    if (upcoming.existing && upcoming.pending.length > 0) {
+      const last = upcoming.pending.at(-1)?.name ?? 'migration';
+      const backup = createBackup(db, vault.paths.backups, clock.now(), 'migration', last);
+      logger.info('Backed up the database before migrating it', { name: backup.name });
+    }
+    const result = migrate(db, migrations, clock);
     if (result.applied.length > 0)
       logger.info('Applied database migrations', { applied: result.applied });
 

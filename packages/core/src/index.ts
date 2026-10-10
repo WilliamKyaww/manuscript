@@ -7,6 +7,7 @@ export * from './ai/terms';
 export * from './ai/untrusted';
 export * from './api/agent';
 export * from './api/ai';
+export * from './api/backups';
 export * from './api/cards';
 export * from './api/chat';
 export * from './api/code';

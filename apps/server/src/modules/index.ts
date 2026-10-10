@@ -15,6 +15,7 @@ import { createRetrievalRepository, type RetrievalRepository } from './ai/retrie
 import { type AiService, createAiService } from './ai/service';
 import { createFileConfigStore, createFileSecretStore } from './ai/store';
 import { createUsageRepository } from './ai/usage';
+import { type BackupService, createBackupService } from './backup/service';
 import { createCardsRepository } from './cards/repository';
 import { createReviewService, type ReviewService } from './cards/reviews';
 import { type CardsService, createCardsService } from './cards/service';
@@ -107,6 +108,7 @@ export interface AppModules {
   readonly tutor: TutorService;
   readonly portability: PortabilityService;
   readonly code: CodeService;
+  readonly backup: BackupService;
   start(options: { watch: boolean }): Promise<void>;
   close(): Promise<void>;
 }
@@ -485,6 +487,14 @@ export function createModules(ctx: AppContext): AppModules {
     ids: ctx.ids,
   });
 
+  // Daily backups of the database (Phase 17).
+  const backup = createBackupService({
+    db: ctx.db,
+    directory: ctx.vault.paths.backups,
+    clock: ctx.clock,
+    logger: ctx.logger,
+  });
+
   // Export, restore and switching vault (Phase 16) read every part of the vault, so they come last.
   const portability = createPortabilityService({
     db: ctx.db,
@@ -548,14 +558,17 @@ export function createModules(ctx: AppContext): AppModules {
     tutor,
     portability,
     code,
+    backup,
     async start(options) {
       await notes.start(options);
       jobs.start();
       await sources.start();
       // Catch up with anything imported or edited while the app was closed.
       embeddings.schedule(10_000);
+      backup.start();
     },
     async close() {
+      backup.close();
       graph.close();
       embeddings.close();
       mastery.close();

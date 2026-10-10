@@ -127,6 +127,24 @@ export function migrate(
   };
 }
 
+/**
+ * The migrations that would be applied, and whether the database already holds data (a new database
+ * has nothing to lose, so nothing to back up before building it).
+ */
+export function pendingMigrations(
+  db: SqlDatabase,
+  migrations: readonly Migration[],
+): { pending: Migration[]; existing: boolean } {
+  ensureMigrationsTable(db);
+  const applied = new Set(
+    db.all<{ name: string }>('SELECT name FROM _migrations').map((row) => row.name),
+  );
+  return {
+    pending: migrations.filter((migration) => !applied.has(migration.name)),
+    existing: applied.size > 0,
+  };
+}
+
 export interface MigrationStatus {
   appliedMigrations: number;
   latestMigration: string | null;

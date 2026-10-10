@@ -81,6 +81,35 @@ function fakeServer() {
     calls.push({ method, path, body });
     if (path === '/api/health') return json(HEALTH);
     if (path === '/api/data') return json(overview());
+    if (path === '/api/backups' && method === 'GET')
+      return json({
+        backups: [
+          {
+            name: 'skb-20261010-080000-daily.db',
+            reason: 'daily',
+            sizeBytes: 2_500_000,
+            createdAt: '2026-10-10T08:00:00.000Z',
+          },
+          {
+            name: 'skb-20261009-090000-migration-0016_code_graphs.db',
+            reason: 'migration',
+            sizeBytes: 2_400_000,
+            createdAt: '2026-10-09T09:00:00.000Z',
+          },
+        ],
+        folder: 'C:/Vault/.skb/backups',
+        keep: { daily: 14, migration: 5, manual: 10 },
+      });
+    if (path === '/api/backups' && method === 'POST')
+      return json(
+        {
+          name: 'skb-20261010-100000-manual.db',
+          reason: 'manual',
+          sizeBytes: 2_600_000,
+          createdAt: NOW,
+        },
+        201,
+      );
     const job = {
       id: JOB,
       kind: 'data.export',
@@ -240,6 +269,18 @@ describe('Settings → Data', () => {
       archive: 'manuscript-export-2026-10-08-09-00-00.zip',
       target: 'D:/Restored',
     });
+  });
+
+  it('lists the database backups and makes one on request', async () => {
+    const user = userEvent.setup();
+    const server = fakeServer();
+    renderApp('/settings', server.fetch);
+    const list = await screen.findByRole('list', { name: 'Backups' });
+    expect(within(list).getByText('skb-20261010-080000-daily.db')).toBeInTheDocument();
+    expect(within(list).getByText('before an update')).toBeInTheDocument();
+    expect(screen.getByText('C:/Vault/.skb/backups')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Back up now' }));
+    await waitFor(() => expect(server.find('POST', '/api/backups')).toHaveLength(1));
   });
 
   it('writes notes for concepts and reports what it did', async () => {

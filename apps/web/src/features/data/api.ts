@@ -2,6 +2,7 @@ import {
   CODE_GRAPH_UPLOAD_PATH,
   CodeImportResultSchema,
   conceptCodeEndpoint,
+  createBackupEndpoint,
   decideCodeLinkEndpoint,
   deleteCodeGraphEndpoint,
   deleteExportEndpoint,
@@ -10,6 +11,7 @@ import {
   getDataOverviewEndpoint,
   inspectVaultEndpoint,
   linkCodeEndpoint,
+  listBackupsEndpoint,
   listCodeGraphsEndpoint,
   materialiseConceptsEndpoint,
   rematchCodeGraphEndpoint,
@@ -43,6 +45,23 @@ export const dataOverviewQuery = (api: ApiClient) =>
     queryKey: dataKeys.overview(),
     queryFn: () => api.request(getDataOverviewEndpoint),
   });
+
+export const backupsQuery = (api: ApiClient) =>
+  queryOptions({
+    queryKey: ['data', 'backups'] as const,
+    queryFn: () => api.request(listBackupsEndpoint),
+  });
+
+export function useBackupActions() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return {
+    backUpNow: useMutation({
+      mutationFn: () => api.request(createBackupEndpoint),
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: dataKeys.all }),
+    }),
+  };
+}
 
 export const codeGraphsQuery = (api: ApiClient) =>
   queryOptions({

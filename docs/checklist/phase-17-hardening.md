@@ -13,7 +13,7 @@ The desktop app (Phase 18) should wrap a stable application, not paper over defe
 Phase 16.
 
 ## Atomic tasks
-- [ ] **17.01** Automatic daily SQLite backups (`VACUUM INTO`, rotation) and pre-migration backups
+- [x] **17.01** Automatic daily SQLite backups (`VACUUM INTO`, rotation) and pre-migration backups
 - [ ] **17.02** Crash-safety audit: atomic writes everywhere, WAL checkpointing, startup recovery of interrupted jobs
 - [ ] **17.03** Performance pass against budgets with a 10k-note / 100k-chunk fixture
 - [ ] **17.04** Security review (localhost threat model re-check, CSP, dependency audit, secrets handling)

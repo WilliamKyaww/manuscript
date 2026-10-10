@@ -7,6 +7,7 @@ import { errorHandler, problemResponse, toProblem } from './http/problem';
 import { staticSite } from './http/static';
 import { registerAgentRoutes } from './modules/agent/routes';
 import { registerAiRoutes } from './modules/ai/routes';
+import { registerBackupRoutes } from './modules/backup/routes';
 import { registerCardRoutes } from './modules/cards/routes';
 import { registerChatRoutes } from './modules/chat/routes';
 import { registerCodeRoutes } from './modules/code/routes';
@@ -80,6 +81,7 @@ export function createApp(ctx: AppContext, modules: AppModules, auth: AuthOption
   registerPlanRoutes(registry, modules.plan, modules.settings, modules.resurface);
   registerPortabilityRoutes(registry, modules.portability);
   registerCodeRoutes(registry, modules.code);
+  registerBackupRoutes(registry, modules.backup);
   registerEventRoutes(registry, ctx);
 
   // Unknown API routes are problem-details 404s, never the SPA.
