@@ -351,6 +351,15 @@ directly.
 (`planned` | `done` | `skipped`) · `completed_at` — **tutor_sessions** `thread_id` · `quiz_id` · `attempt_id` (the quiz and attempt a tutored chat records answers in) —
 `assessments.remaining_hours` (the student's estimate of work left) — proposals gain the kind `correction`.
 
+**code_graphs** (canonical, migration `0016`, ADR-0039) `id` (`cgr_…`) · `name` · `module_id` · `file_name` ·
+`sha256` (unique: the same file is not imported twice) · `entity_count` · `edge_count` · `imported_at` —
+**code_entities** `id` (`cod_…`) · `graph_id` · `key` (Graphify's id, unique per graph) · `label` · `kind`
+(Graphify's `file_type`) · `file` · `location` · `rationale` — **code_edges** `graph_id` · `source_id` ·
+`target_id` · `relation` (as Graphify wrote it) · `confidence` · `score` · `weight` — **code_links**
+`concept_id` · `entity_id` · `status` (`proposed` | `accepted` | `rejected`; a rejection is kept) · `score` ·
+`reason` · `created_by` (`user` | `system`). In the graph, code is a node type (`code`) and its edges are
+computed (`uses`, `part_of`, `implemented_in`), never stored in `relations`.
+
 ### 5.9 AI, agent and operations
 
 **ai_usage** (canonical, migration `0010`; rebuilt in `0011` to allow `transcription`) `id` (`use_…`) · `role`
@@ -398,9 +407,13 @@ needs to undo it) · `snapshot_ref` (the `.skb/history/<id>/` folder holding cop
 | Cards, schedules, review logs | No — **export required** | JSON, CSV, Anki-compatible TSV |
 | Questions, attempts, mastery evidence | No — **export required** | JSON, CSV |
 | Chats, agent actions | No | JSON |
+| Imported code graphs and links to concepts | No — **export required** | JSON |
 
-Phase 16 adds one-click **full export** (zip: notes + sources + `data/*.json` + schema docs) and
-**restore**; automatic daily SQLite backups (`VACUUM INTO`) are added in Phase 17.
+Phase 16 adds one-click **full export** and **restore** into a new vault (ADR-0039; the layout of the zip,
+the tables it carries and what it leaves out are in `docs/guide/portability.md` and in the archive's own
+`docs/schema.md`, which is written from the live schema); automatic daily SQLite backups (`VACUUM INTO`)
+are added in Phase 17. Derived tables (the note index, `source_sections`, `chunks`, `graph_communities`,
+`mastery_cache`, `embeddings`, `jobs`, `recent_items`) are never exported.
 
 ## 7. Migrations
 

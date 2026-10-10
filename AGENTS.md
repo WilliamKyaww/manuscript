@@ -76,9 +76,14 @@ All verified on 4 October 2026 (Phase 1):
 - `NoDefaultCurrentDirectoryInExePath=1` stops `cmd.exe` finding `run-web.bat` by a relative name; call
   batch files by their full path in automation (double-clicking in Explorer is unaffected).
 - Another local project may already use Vite's default port 5173 — this project's dev server uses 5317.
-  E2E ports: 4399 for the shared Playwright server, 4398, 4397, 4396, 4395, 4394 and 4393 for the tests
-  that run a server of their own (`e2e/server.ts`, which can pass extra environment such as
-  `SKB_AI_PROVIDER=mock`).
+  E2E ports: 4399 for the shared Playwright server, and 4398 down to 4388 for the tests that run a
+  server of their own (`e2e/server.ts`, which can pass extra environment such as
+  `SKB_AI_PROVIDER=mock`; the next free one is 4387).
+- Switching vault exits the server with code 75 and `scripts/run-web.mjs` starts it again when
+  `SKB_RESTARTABLE=1` (the launcher sets it); under `npm run dev` or in tests there is no launcher, so the
+  choice is only recorded in the data directory's `vaults.json`.
+- Zip entries written by `modules/portability/zip.ts` are always deflated (level 0 for compressed formats):
+  a streamed "stored" entry cannot be read back in one pass, because its size is only in a data descriptor.
 - axe (`@axe-core/playwright`) only checks colour contrast for elements inside the viewport, and page
   bodies scroll internally: grow the viewport to the page height first (`seriousViolations` and
   `fitViewportToContent` in `e2e/axe.ts`), otherwise below-the-fold content is silently skipped.

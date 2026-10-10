@@ -41,6 +41,10 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 | [0033](#adr-0033--ai-configuration-outside-the-vault-answers-streamed-as-json-lines-fusion-in-retrieval) | AI configuration outside the vault; answers streamed as JSON lines; fusion in retrieval | Accepted | 2026-10-09 |
 | [0034](#adr-0034--generated-material-waits-as-drafts-and-proposals-ai-reads-media-through-injected-readers) | Generated material waits as drafts and proposals; AI reads media through injected readers | Accepted | 2026-10-09 |
 | [0035](#adr-0035--tools-are-the-only-way-to-act-the-server-enforces-approvals-every-change-is-logged-and-undoable) | Tools are the only way to act; the server enforces approvals; every change is logged and undoable | Accepted | 2026-10-10 |
+| [0036](#adr-0036--chat-streams-json-lines-from-the-servers-own-runner-a-paused-run-is-saved-with-its-thread) | Chat streams JSON lines from the server's own runner; a paused run is saved with its thread | Accepted | 2026-10-10 |
+| [0037](#adr-0037--the-plan-is-a-pure-function-the-server-decides-the-tutors-rung-answers-recorded-by-a-tutor-are-permanent-and-ask) | The plan is a pure function; the server decides the tutor's rung; answers recorded by a tutor are permanent and ask | Accepted | 2026-10-10 |
+| [0038](#adr-0038--credit-flows-only-along-accepted-prerequisites-the-pipeline-is-a-job-that-fills-the-inbox-mistakes-go-back-to-notes-as-suggestions) | Credit flows only along accepted prerequisites; the pipeline is a job that fills the Inbox; mistakes go back to notes as suggestions | Accepted | 2026-10-10 |
+| [0039](#adr-0039--one-archive-of-open-formats-restore-into-a-new-vault-a-vault-is-chosen-at-start-up-code-graphs-are-shown-not-analysed) | One archive of open formats; restore into a new vault; a vault is chosen at start-up; code graphs are shown, not analysed | Accepted | 2026-10-10 |
 
 ---
 
@@ -856,4 +860,55 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   pipeline → accept concepts → cards again (the cards of the first run do not know concepts that did not exist
   yet). Migration 0015 widens the proposals CHECK again. Pipeline runs and plans are records in the database,
   not in the vault.
+- **Date.** 10 October 2026.
+
+## ADR-0039 — One archive of open formats; restore into a new vault; a vault is chosen at start-up; code graphs are shown, not analysed
+
+- **Context.** Phase 16 makes the first goal literal: nothing the student has made is hostage to the
+  application (ADR-0004). Four questions: what an export is and how it is read back, how a restore may
+  never harm the vault in use, how one vault is switched for another in a process that holds a lock, a
+  database and a file watcher, and how the graph of a coursework repository joins the knowledge graph
+  without taking it over.
+- **Options.** Export as a folder tree, a zip, or a database copy; restore by merging or into a new vault;
+  switching by tearing down and rebuilding every module in process, or by starting the process again;
+  code entities as source sections (a new source kind), as stored relations (a new node type in the
+  `relations` CHECKs), or as their own tables with computed edges.
+- **Decision.**
+  - **One zip** (`manuscript-export-<time>.zip`, written as a stream, kept in the data directory's
+    `exports/`, never in the vault): `manifest.json` first, a README, `docs/schema.md`, `data/<table>.json`
+    for every canonical table, `data/note-ids.json`, `data/files.json` (size and modification time of each
+    file), `anki/*.txt`, `concepts/*.md`, `questions/` (bank as JSON, quizzes as Markdown), `graph/`
+    (node-link JSON and GraphML) and `vault/**` — the files as they are. A note whose id is not in its
+    front matter gains it **in the archive only**, so links by id survive; the vault is never written. The
+    app's own folder, the database and AI keys are never included. Entries are deflated (level 0 for formats
+    that are compressed already): a streamed "stored" entry cannot be read back in one pass.
+  - **Restore only into a new, empty folder.** It reads the archive in one pass (the manifest decides;
+    entries with unsafe names refuse the whole archive), checks every file against `data/files.json`,
+    restores times, loads the tables with foreign keys checked at the end, and marks sources `pending` so the
+    application reads the originals again. Anything derived is rebuilt on first open. A newer archive is
+    refused, and a failed restore removes what it made. Export → restore → export gives the same data.
+  - **A vault is chosen when the process starts.** The data directory keeps `vaults.json` (recent vaults and
+    the one to open next, used when neither `--vault` nor `SKB_VAULT` names one, production only). Switching
+    writes it and, when a launcher or the desktop shell is watching (`SKB_RESTARTABLE=1`), exits with code 75,
+    on which `scripts/run-web.mjs` starts the server again. Otherwise the page says the vault opens at the
+    next start. Opening an Obsidian vault is the same operation: it is described first (notes, files, what
+    will and will not change) and opened in place; only an `id` line is ever added to a note.
+  - **Code graphs are their own canonical tables** (`code_graphs`, `code_entities`, `code_edges`,
+    `code_links`; migration 0016) and a `code` node type. Edges are computed on assembly — `uses` between
+    code, `part_of` (structure) for containment, `implemented_in` from a concept to code — so the stored
+    relations and their CHECKs are untouched. Code nodes are in the graph but not in the semantic view, so
+    a repository cannot reshape communities, hubs or prompts; the default graph filter leaves them out
+    (like topics). Name matches are proposals the student accepts or rejects (a rejection is kept); the
+    file is untrusted and capped (50,000 nodes, 250,000 edges, 60 MB). Only Graphify's published output
+    format is used, no code.
+  - Concepts can be written out as notes (`Concepts/<name>.md`, relations as links) — in every export, and
+    on request into the vault, never overwriting a note and making the new note the concept's backing note.
+- **Reason.** A zip of plain files is the least demanding thing to keep, read or hand on; restoring only
+  into a new folder cannot lose anything; restarting is more robust than hot-swapping a database, a lock and
+  a watcher; computed edges avoid a second rebuild of the relations table for a feature most students use
+  once.
+- **Consequences.** A note whose front matter is not valid YAML cannot carry its id, so a relation to it is
+  lost on restore (TD-11). An export contains everything, chats and usage included — it must be kept as
+  safely as the vault. "Reveal in folder" is a desktop feature (Phase 18); the web page copies the path.
+  Opening a vault adds a hidden `.skb/` folder to it. The agent has no code-graph tools yet (B-KM-23).
 - **Date.** 10 October 2026.

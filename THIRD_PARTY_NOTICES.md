@@ -41,6 +41,10 @@ This file lists third-party code, algorithms or text that has been **adapted int
     extraction instructions (`EXTRACTED` / `INFERRED` with scores 0.55–0.95 / `AMBIGUOUS`), from
     `graphify/llm.py` (`_EXTRACTION_SYSTEM`).
 
+- Not adapted (Phase 16): `packages/core/src/graph/graphify.ts` reads the node-link `graph.json` that
+  Graphify writes (its published output format, `docs/research/graphify.md` §3). No Graphify code is used;
+  the name matching between code and concepts is our own.
+
   Adapted modules carry a header comment naming the Graphify source file and licence, and state that
   they were modified (translated to TypeScript and changed for this application).
 

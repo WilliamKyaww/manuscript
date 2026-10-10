@@ -6,7 +6,7 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 9 October 2026 (end of Phase 10)._
+_Last updated: 10 October 2026 (end of Phase 16)._
 
 ## Platform and architecture
 
@@ -60,7 +60,7 @@ _Last updated: 9 October 2026 (end of Phase 10)._
 | F-SO-05 | Web page import with safe fetch | Deferred (B-SO-01) | 5 |
 | F-SO-06 | Audio/video transcription | Complete — timed sections with media locators, player beside the transcript; up to 25 MB (B-AI-13) | 11 |
 | F-SO-07 | OCR / image understanding | Complete — images read or described, PDF pages without text read by the chat model; imported unread without AI | 11 |
-| F-SO-08 | Graphify `graph.json` import | Planned | 16 |
+| F-SO-08 | Graphify `graph.json` import | Complete — a code graph of its own (tables, `code` graph nodes, `uses` and `implemented_in` edges), name-match suggestions to accept or reject; not a library source (ADR-0039) | 16 |
 
 ## Knowledge — concepts and graph
 
@@ -148,10 +148,12 @@ _Last updated: 9 October 2026 (end of Phase 10)._
 
 | ID | Feature | Status | Phase |
 |---|---|---|---|
-| F-PO-01 | Full export and restore | Planned | 16 |
-| F-PO-02 | Concepts as Markdown, graph as JSON/GraphML, quizzes as Markdown | Planned | 16 |
-| F-PO-03 | Open an Obsidian vault in place | Planned | 16 |
-| F-PO-04 | Vault switching | Planned | 16 |
+| F-PO-01 | Full export (one zip: vault files, JSON per table, schema, README, Anki text) and restore into a new vault; export → restore → export is equivalent | Complete | 16 |
+| F-PO-02 | Concepts as Markdown (in exports, and written into the vault on request), graph as JSON/GraphML, question bank and quizzes as JSON/Markdown | Complete | 16 |
+| F-PO-03 | Open an Obsidian vault in place (described first; only an `id` line is ever added to a note) | Complete | 16 |
+| F-PO-04 | Vault switching and recent vaults (restarts under `run-web.bat`; otherwise opens at the next start) | Complete — "show in folder" waits for the desktop app (Phase 18); the page copies the path | 16 |
+| F-PO-05 | Settings → Data: export, restore, concepts as notes, read the files again, vaults, code graphs | Complete | 16 |
+| F-PO-06 | Code that implements a concept, on the concept's page; code nodes in the graph | Complete | 16 |
 
 ## Desktop and packaging
 
