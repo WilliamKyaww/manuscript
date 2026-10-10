@@ -4,7 +4,7 @@ A personal **Knowledge & Learning OS**: a Markdown knowledge base, a lecture/sou
 graph and a spaced-repetition learning system that share one data model — with an AI agent that can
 search, explain, generate study material and act on the knowledge base through permissioned tools.
 
-> **Status: Phases 0–19 complete; Phase 20 (final UI polish) in progress.** Notes, search, the source
+> **Status: Phases 0–20 complete** (Phase 20: the final UI polish). Notes, search, the source
 > library, the course model, the knowledge graph, flashcards, practice, mastery and progress, the study
 > plan, optional AI (answers with citations, generation, a tutor and an agentic chat with approvals and
 > undo), export and restore, backups and diagnostics all work, in the browser and as a Windows desktop

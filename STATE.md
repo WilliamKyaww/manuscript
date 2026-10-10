@@ -4,11 +4,11 @@ _Last updated: 10 October 2026 — Claude Opus 5.5._
 
 ## Current phase
 
-**Phase 20 — Final UI/UX polish: in progress — every task done, the gate (a full E2E run) next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
+**Phase 21 — Verification: next.** Phase 20 (final UI/UX polish) is complete and merged into `main`, as are Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
 and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
 ingestion pipeline), 6 (course structure and concepts), 7 (knowledge graph), 8 (flashcards and
 spaced repetition), 9 (questions, quizzes and mastery), 10 (AI foundation), 11 (AI generation and
-knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tutor and study planner), 15 (knowledge–learning integration), 16 (portability), 17 (hardening), 18 (Electron desktop app) and 19 (Windows installer) are complete and merged into `main`.
+knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tutor and study planner), 15 (knowledge–learning integration), 16 (portability), 17 (hardening), 18 (Electron desktop app) and 19 (Windows installer).
 
 ## What works
 
@@ -158,7 +158,7 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 883 Vitest tests (core 237, server 443, web 195, desktop 8) and 121 Playwright tests (Phase 19; Phase 20 adds five) (two of them launch the Electron shell and its unpacked build) (sticky headers on every route and pane,
+- **Tests:** 886 Vitest tests (core 237, server 443, web 198, desktop 8) and 127 Playwright tests, plus 3 that take screenshots only when asked (two of them launch the Electron shell and its unpacked build) (sticky headers on every route and pane,
   axe in both themes, the library, the course, the graph, reviewing, practice, chat, generating and an MCP client
   using the stdio bridge) — all green. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
   p95 434 ms, median 71 ms (provisional budget 500 ms; Phase 17 run).
@@ -170,8 +170,7 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## In progress
 
-- Phase 20: all 24 tasks done except 20.23 (the sticky-header audit), which completes with the gate's full E2E
-  run; then the merge.
+- Nothing; Phase 21 not yet started.
 
 ## Incomplete / not started
 
@@ -239,8 +238,8 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## Next steps
 
-1. Phase 20 gate: the full Playwright suite (`npm run test:e2e`), then merge `phase/20-polish` into `main`.
-2. Phase 21 — verification (`docs/checklist/phase-21-verification.md`), from a new branch off `main`.
+1. Create `phase/21-verification` from `main` (done).
+2. Phase 21 — verification: see `docs/checklist/phase-21-verification.md`.
 
 ## Relevant decisions
 

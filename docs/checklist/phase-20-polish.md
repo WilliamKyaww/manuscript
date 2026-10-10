@@ -1,6 +1,6 @@
 # Phase 20 — Final UI/UX polish
 
-**Status:** In progress — every task done but the sticky-header audit, which completes with the gate's full E2E run · **Branch:** `phase/20-polish`
+**Status:** Complete · **Branch:** `phase/20-polish`
 
 ## Objective
 Make the whole application feel like one polished production product: visual design direction, token
@@ -76,15 +76,14 @@ account.
 - [x] **20.22** Responsive pass (768–1920 px) — Below 1024 px the sidebar is the icon rail (opening it there is not
   remembered); header actions wrap; icon tabs; an E2E test checks every route at 800 px for the rail and no sideways
   overflow. Side panels stay resizable panes rather than drawers (B-PL-09).
-- [ ] **20.23** Sticky-header audit (E2E test passes; exceptions documented) — The design system joined the audited
-  routes and passes; exceptions: still none (`ui.md` §2).
-  Remaining: the gate's full E2E run.
+- [x] **20.23** Sticky-header audit (E2E test passes; exceptions documented) — Every route, the design system
+  among them, passes in the gate's full run; exceptions: still none (`ui.md` §2).
 - [x] **20.24** Docs: screenshots in README and guide; STATE/FEATURES/journal updated — Thirteen screenshots in
   `docs/screenshots/`, in the README, the guides' index and ten guides; `ui.md` §§2, 5, 6, 8–10; the Markdown guide (live preview,
   the cheat sheet); README status brought up to date (it still said Phases 0–10).
 
 ## Gate
-- [ ] All tasks `[x]` · [ ] verify + E2E green · [x] docs updated · [ ] merged
+- [x] All tasks `[x]` · [x] verify + E2E green (886 Vitest; 127 Playwright, 3 skipped — the screenshot specs) · [x] docs updated · [x] merged
 
 ## Recommended commit messages
 ```text

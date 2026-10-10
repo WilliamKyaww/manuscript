@@ -173,7 +173,7 @@ _Last updated: 10 October 2026 (end of Phase 19)._
 | F-UI-03 | Command palette and keyboard shortcut registry with cheat sheet | Complete | 2 |
 | F-UI-04 | Accessible primitives and state components (axe-clean in both themes) | Complete | 2 |
 | F-UI-06 | Paned pages (each pane with its own fixed header) and lazily loaded routes | Complete | 3 |
-| F-UI-05 | Final visual polish across all screens | In Progress — tokens and components polished, a design-system page, every screen reviewed in both themes and at 768 px, error states in widgets, a complete cheat sheet, motion and a narrow-window rail; the gate (full E2E run) is next | 20 |
+| F-UI-05 | Final visual polish across all screens | Complete — tokens and components polished, a design-system page, every screen reviewed in both themes and at 768 px, error states in widgets, a complete cheat sheet, motion and a narrow-window rail | 20 |
 | F-UI-07 | Design-system reference page (`/design-system`): every token with its value, every shared component live | Complete | 20 |
 | F-UI-08 | Narrow windows (768–1023 px): the sidebar as a rail, header actions that wrap, icon tabs in narrow panels | Complete — side panels stay resizable panes (drawers: B-PL-09) | 20 |
 
