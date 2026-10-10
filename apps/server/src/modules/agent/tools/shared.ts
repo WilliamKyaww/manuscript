@@ -3,6 +3,10 @@ import type { ToolContext } from '../types';
 
 /** Pieces shared by the tools. */
 
+/** "1 note", "3 notes": a number with its noun, for activity lines. */
+export const count = (n: number, singular: string, plural = `${singular}s`) =>
+  `${n} ${n === 1 ? singular : plural}`;
+
 export const plain = (parts: readonly { text: string }[]) =>
   parts
     .map((part) => part.text)

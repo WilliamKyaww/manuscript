@@ -288,7 +288,7 @@ describe('activity and approvals', () => {
   const waitingDetail = (risk: 'write' | 'destructive') => {
     const approvalId = 'aitxt-approval-1';
     const parts = [
-      tool('call_1', 'list_notes', 'ok', { summary: 'Listed 1 notes' }),
+      tool('call_1', 'list_notes', 'ok', { summary: 'Listed 1 note' }),
       tool('call_2', risk === 'destructive' ? 'delete_note' : 'create_note', 'awaiting_approval', {
         summary: risk === 'destructive' ? 'Delete the note “Scratch”' : 'Create the note “Plan”',
         risk,
@@ -316,7 +316,7 @@ describe('activity and approvals', () => {
     const user = userEvent.setup();
     const { approvalId, detail } = waitingDetail('destructive');
     const done = message('msg_01J9Z3K4M2Q8R5T7V9X1Y3Z5M2', 'assistant', [
-      tool('call_1', 'list_notes', 'ok', { summary: 'Listed 1 notes' }),
+      tool('call_1', 'list_notes', 'ok', { summary: 'Listed 1 note' }),
       tool('call_2', 'delete_note', 'declined', {
         summary: 'Delete the note “Scratch”',
         risk: 'destructive',
@@ -336,7 +336,7 @@ describe('activity and approvals', () => {
     });
     renderApp(`/chat/${THREAD}`, server.fetch);
     const activity = await screen.findByRole('list', { name: 'Assistant activity' });
-    expect(within(activity).getByText('Listed 1 notes')).toBeInTheDocument();
+    expect(within(activity).getByText('Listed 1 note')).toBeInTheDocument();
     const card = within(activity).getByRole('listitem', {
       name: 'Approval needed: Delete the note “Scratch”',
     });

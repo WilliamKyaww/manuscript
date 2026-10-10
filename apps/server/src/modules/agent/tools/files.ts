@@ -88,6 +88,7 @@ export const moveFile = defineTool({
     };
   },
   describe: (_input, output) => (output ? `Moved ${output.from} to ${output.to}` : 'Moving a file'),
+  ask: (_services, input) => `Move ${input.from} to ${input.to}`,
   canUndo(context, record) {
     const { to } = record.undo as { to: string };
     try {

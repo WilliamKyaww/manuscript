@@ -11,6 +11,7 @@ import { normaliseKey } from '@skb/core/markdown';
 import { z } from 'zod';
 import type { MergeSnapshot } from '../../concepts/merge-repository';
 import { defineTool, type Json, type ToolContext } from '../types';
+import { count } from './shared';
 
 /**
  * Concept and graph tools (task 12.06): look concepts up, walk the graph, create concepts, suggest
@@ -137,7 +138,7 @@ export const searchGraph = defineTool({
   },
   describe: (input, output) =>
     output
-      ? `Explored the graph from “${input.node}” (${output.nodes.length} nodes)`
+      ? `Explored the graph from “${input.node}” (${count(output.nodes.length, 'node')})`
       : `Exploring the graph from “${input.node}”`,
 });
 
@@ -163,7 +164,8 @@ export const createConcept = defineTool({
       undo: { conceptId: concept.id, updatedAt: concept.updatedAt } as Json,
     };
   },
-  describe: (input, output) => `Created the concept “${output?.name ?? input.name}”`,
+  describe: (input, output) =>
+    output ? `Created the concept “${output.name}”` : `Create the concept “${input.name}”`,
   canUndo(context, record) {
     const { conceptId, updatedAt } = record.undo as { conceptId: string; updatedAt: string };
     const current = context.services.concepts.list().find((concept) => concept.id === conceptId);
@@ -283,10 +285,13 @@ export const mergeConcepts = defineTool({
       undo: { snapshot: result.snapshot } as unknown as Json,
     };
   },
-  describe: (input, output) =>
-    output
-      ? `Merged “${output.mergedName}” into “${output.keptName}”`
-      : `Merging concept ${input.merge} into ${input.keep}`,
+  describe: (_input, output) =>
+    output ? `Merged “${output.mergedName}” into “${output.keptName}”` : 'Merging two concepts',
+  ask(services, input) {
+    const name = (id: string) =>
+      services.concepts.list().find((concept) => concept.id === id)?.name ?? id;
+    return `Merge the concept “${name(input.merge)}” into “${name(input.keep)}”`;
+  },
   canUndo(context, record) {
     const { snapshot } = record.undo as unknown as { snapshot: MergeSnapshot };
     return context.services.concepts.list().some((concept) => concept.id === snapshot.keepId)

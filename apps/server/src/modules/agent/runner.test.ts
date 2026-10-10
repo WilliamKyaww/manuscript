@@ -96,7 +96,8 @@ describe('the agent runner', () => {
       expect.objectContaining({
         tool: 'delete_note',
         risk: 'destructive',
-        summary: 'Moved the note Old to the trash'.replace('Old', id),
+        // What will happen, named as the person knows it: not the past tense, not an id.
+        summary: 'Move the note “Old” to the trash',
         reason: expect.stringMatching(/approval/u),
       }),
     ]);

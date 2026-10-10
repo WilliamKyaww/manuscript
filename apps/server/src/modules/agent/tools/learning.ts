@@ -9,6 +9,7 @@ import {
 } from '@skb/core';
 import { z } from 'zod';
 import { defineTool, type Json } from '../types';
+import { count } from './shared';
 
 /**
  * Learning tools (task 12.08): read the course, mastery and what is due; make flashcards and
@@ -59,7 +60,7 @@ export const listModules = defineTool({
     };
   },
   describe: (_input, output) =>
-    output ? `Listed ${output.modules.length} modules` : 'Listing modules',
+    output ? `Listed ${count(output.modules.length, 'module')}` : 'Listing modules',
 });
 
 export const getModule = defineTool({
@@ -234,7 +235,7 @@ export const getWeakAreas = defineTool({
     };
   },
   describe: (_input, output) =>
-    output ? `Found ${output.areas.length} weak areas` : 'Finding weak areas',
+    output ? `Found ${count(output.areas.length, 'weak area')}` : 'Finding weak areas',
 });
 
 export const getDueReviews = defineTool({
@@ -273,7 +274,7 @@ export const getDueReviews = defineTool({
   },
   describe: (_input, output) =>
     output
-      ? `${output.counts.new + output.counts.learning + output.counts.review} cards due`
+      ? `${count(output.counts.new + output.counts.learning + output.counts.review, 'card')} due`
       : 'Checking due cards',
 });
 
@@ -306,7 +307,7 @@ export const getDeadlines = defineTool({
     };
   },
   describe: (_input, output) =>
-    output ? `Found ${output.deadlines.length} upcoming deadlines` : 'Checking deadlines',
+    output ? `Found ${count(output.deadlines.length, 'upcoming deadline')}` : 'Checking deadlines',
 });
 
 export const createFlashcards = defineTool({
@@ -390,7 +391,7 @@ export const createFlashcards = defineTool({
   describe: (input, output) =>
     output
       ? `Created ${output.cardIds.length} flashcard${output.cardIds.length === 1 ? '' : 's'} ${output.status === 'draft' ? '(drafts, waiting in the Inbox)' : ''}`.trim()
-      : `Creating ${input.cards.length} flashcards`,
+      : `Creating ${count(input.cards.length, 'flashcard')}`,
   undo(context, record) {
     const { cardIds, createdSetId } = record.undo as {
       cardIds: string[];
@@ -422,7 +423,7 @@ export const createQuiz = defineTool({
   },
   describe: (_input, output) =>
     output
-      ? `Created the quiz “${output.title}” (${output.questionCount} questions)`
+      ? `Created the quiz “${output.title}” (${count(output.questionCount, 'question')})`
       : 'Creating a quiz',
   canUndo(context, record) {
     const quiz = context.services.quizzes
@@ -455,7 +456,11 @@ export const deleteCards = defineTool({
     cards.bulk(input.cardIds, 'delete');
     return { output: { deleted: before.length }, undo: { before } as Json };
   },
-  describe: (input, output) => `Deleted ${output?.deleted ?? input.cardIds.length} flashcards`,
+  describe: (input, output) =>
+    output
+      ? `Deleted ${count(output.deleted, 'flashcard')}`
+      : `Deleting ${count(input.cardIds.length, 'flashcard')}`,
+  ask: (_services, input) => `Delete ${count(input.cardIds.length, 'flashcard')}`,
   undo(context, record) {
     const { before } = record.undo as {
       before: { id: string; status: 'draft' | 'active' | 'suspended' }[];
