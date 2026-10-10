@@ -42,7 +42,10 @@ test.describe('sticky headers (permanent requirement, ui.md §2)', () => {
         for (const pane of await panes.all()) {
           const paneHeader = pane.locator('[data-pane-header]');
           const paneBefore = await paneHeader.boundingBox();
-          const scrolled = await pane.locator('[data-pane-body]').evaluate(fillAndScroll);
+          // A pane may hold a scroller of its own (the conversation's message log in Chat).
+          const inner = pane.locator('[role="log"]');
+          const scroller = (await inner.count()) > 0 ? inner : pane.locator('[data-pane-body]');
+          const scrolled = await scroller.evaluate(fillAndScroll);
           expect(scrolled.body).toBeGreaterThan(1000);
           expect(scrolled.window).toBe(0);
           expect((await paneHeader.boundingBox())?.y).toBe(paneBefore?.y);

@@ -7,7 +7,9 @@ import type {
   LanguageModelV4Usage,
   TranscriptionModelV4,
 } from '@ai-sdk/provider';
+import { mockAgentTurn } from './mock-agent';
 import { mockStructured } from './mock-generation';
+import { streamOf } from './stream-parts';
 
 /**
  * Built-in test models (`SKB_AI_PROVIDER=mock`, agent-system.md §14): deterministic, offline, and
@@ -38,6 +40,9 @@ const firstSentence = (text: string) => {
 export function mockAnswer(prompt: LanguageModelV4Prompt): string {
   const { system, user } = promptText(prompt);
   if (/reply with ok/iu.test(user)) return 'OK';
+  // Compacting a long conversation (Phase 13): a summary that names what was talked about.
+  if (/^Task: summarise-chat/mu.test(system))
+    return `Earlier in this conversation: ${firstSentence(user.replace(/^(?:student|assistant): /gimu, ''))}`;
   const passages = [...user.matchAll(PASSAGE)].slice(0, 2);
   const general = /Scope: general/u.test(system);
   if (passages.length === 0)
@@ -68,6 +73,28 @@ function reply(options: LanguageModelV4CallOptions): string {
   return mockAnswer(options.prompt);
 }
 
+/** The test agent's next step (tool calls or an answer) when the request comes with tools. */
+function agentReply(options: LanguageModelV4CallOptions) {
+  const turn = mockAgentTurn(options);
+  if (!turn) return null;
+  if ('text' in turn)
+    return {
+      content: [{ type: 'text' as const, text: turn.text }],
+      finishReason: { unified: 'stop' as const, raw: 'stop' },
+      text: turn.text,
+    };
+  return {
+    content: turn.calls.map((call, index) => ({
+      type: 'tool-call' as const,
+      toolCallId: `mock_${options.prompt.length}_${index}`,
+      toolName: call.name,
+      input: JSON.stringify(call.input),
+    })),
+    finishReason: { unified: 'tool-calls' as const, raw: 'tool_calls' },
+    text: JSON.stringify(turn.calls),
+  };
+}
+
 export function createMockLanguageModel(modelId = 'mock-chat'): LanguageModelV4 {
   const finishReason = { unified: 'stop' as const, raw: 'stop' };
   return {
@@ -76,6 +103,14 @@ export function createMockLanguageModel(modelId = 'mock-chat'): LanguageModelV4 
     modelId,
     supportedUrls: {},
     async doGenerate(options) {
+      const agent = agentReply(options);
+      if (agent)
+        return {
+          content: agent.content,
+          finishReason: agent.finishReason,
+          usage: usageOf(options, agent.text),
+          warnings: [],
+        };
       const text = reply(options);
       return {
         content: [{ type: 'text', text }],
@@ -85,6 +120,11 @@ export function createMockLanguageModel(modelId = 'mock-chat'): LanguageModelV4 
       };
     },
     async doStream(options) {
+      const agent = agentReply(options);
+      if (agent)
+        return {
+          stream: streamOf(agent.content, agent.finishReason, usageOf(options, agent.text)),
+        };
       const text = reply(options);
       // Word by word, so the interface sees a real stream.
       const pieces = text.match(/\S+\s*/gu) ?? [text];

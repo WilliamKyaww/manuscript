@@ -4,18 +4,18 @@ _Last updated: 10 October 2026 — Claude Sonnet 5.5._
 
 ## Current phase
 
-**Phase 13 — Chat: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
+**Phase 14 — Tutor and study planner: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
 and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
 ingestion pipeline), 6 (course structure and concepts), 7 (knowledge graph), 8 (flashcards and
 spaced repetition), 9 (questions, quizzes and mastery), 10 (AI foundation), 11 (AI generation and
-knowledge extraction) and 12 (agent runtime, tool layer and MCP) are complete and merged into `main`.
+knowledge extraction) 12 (agent runtime, tool layer and MCP) and 13 (chat) are complete and merged into `main`.
 
 ## What works
 
 - **Local server** (`apps/server`): Hono on `127.0.0.1` with token (cookie or bearer), Host allowlist,
   Origin and Fetch-Metadata checks; `/auth` sign-in link; RFC 9457 problem details (with `details`);
   CSP and security headers; production SPA serving; server-sent events at `/api/events`.
-- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0012`), vault (`.skb/` layout,
+- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0013`), vault (`.skb/` layout,
   lock with crash recovery, strict path containment), atomic writes, vault-scoped settings.
 - **Notes** (Phase 3): Markdown files are canonical; the index (notes, aliases, tags, links,
   attachments, FTS5) is rebuilt from the files and follows edits made in other programs. Ids are
@@ -63,8 +63,8 @@ knowledge extraction) and 12 (agent runtime, tool layer and MCP) are complete an
 - **AI** (Phase 10, optional — everything above works without it): providers (Anthropic, OpenAI,
   OpenAI-compatible such as Ollama or LM Studio) and a model per role in Settings → AI, with
   write-only keys kept in the data directory, connection tests, prices, a monthly budget and usage;
-  **Ask** (Ctrl+J): questions answered from your sources, sources and notes, or general knowledge
-  too, streamed with citations that open the page, slide or line, and a grounding label; optional
+  grounded answers from your sources, sources and notes, or general knowledge too, streamed with
+  citations that open the page, slide or line, and a grounding label (now in chat); optional
   semantic search (embeddings, fused with full-text and graph-neighbourhood retrieval) and similar
   notes. `SKB_AI_PROVIDER=mock` runs a built-in test model (ADR-0033).
 - **Generation and the Inbox** (Phase 11, optional): **Generate…** on lectures, sources (or a
@@ -85,15 +85,22 @@ knowledge extraction) and 12 (agent runtime, tool layer and MCP) are complete an
   done (by the assistant or an MCP client) with Undo, which refuses once something has changed since,
   and a permission per tool. **MCP** at `/api/mcp` (Streamable HTTP, token) and the `mcp.mjs` stdio
   bridge let Claude Code or Claude Desktop search and read the knowledge base and make logged,
-  undoable changes; destructive tools are never offered to them. The agent runner (modes ask,
-  tutor, agent; 12 steps, 120 s) is built and tested with scripted models, but has no HTTP route or
-  screen yet: the chat in Phase 13 is its interface. Setup: `docs/guide/agent-tools.md`.
+  undoable changes; destructive tools are never offered to them. Setup: `docs/guide/agent-tools.md`.
+- **Chat** (Phase 13, `/chat` and the side panel on **Ctrl+J**; needs AI): persistent conversations
+  you can search, rename and delete. Answers stream with citations and a grounding label; the
+  assistant works through the tools in three modes (assistant, tutor, read only) and every step shows
+  as an activity row. Deleting and bulk changes stop for an approval card (once, for this chat, or
+  decline; deletes never "for this chat"), and anything it made has a result card that opens it and
+  an Undo. The composer has @mentions of notes, concepts, modules, lectures and sources, the open
+  page and any selected text, and Stop; long conversations are summarised for the model; tokens and
+  cost are shown per conversation. A paused run is saved with its conversation, so approvals survive
+  a reload (ADR-0036). Guide: `docs/guide/chat.md`.
 - **Application shell:** sidebar, sticky page headers (per pane on paned pages), themes, command
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 689 Vitest tests and 83 Playwright tests (sticky headers on every route and pane,
-  axe in both themes, the library, the course, the graph, reviewing, practice, asking, generating and an MCP client
+- **Tests:** 711 Vitest tests and 85 Playwright tests (sticky headers on every route and pane,
+  axe in both themes, the library, the course, the graph, reviewing, practice, chat, generating and an MCP client
   using the stdio bridge) — all green. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
   p95 404 ms, median 51 ms (provisional budget 500 ms).
   Reviewing: 7 ms median between cards over 100 (budget 50 ms). Mastery pass over a year of learning
@@ -104,12 +111,16 @@ knowledge extraction) and 12 (agent runtime, tool layer and MCP) are complete an
 
 ## In progress
 
-- Nothing; Phase 12 not yet started.
+- Nothing; Phase 14 not yet started.
 
 ## Incomplete / not started
 
-- Phases 13–22: the chat, the tutor and planner and the desktop app do not exist yet; their sections
-  show placeholders.
+- Phases 14–22: the tutor and planner and the desktop app do not exist yet; their sections show
+  placeholders.
+- Not in Phase 13 (backlog): editing or regenerating a message and branching (B-AI-25), attaching
+  files (B-AI-26), exporting a conversation or saving an answer as a note (B-AI-27), runs that carry
+  on after the page is closed (B-AI-28), range mentions (B-AI-29), provider token counts for
+  compaction (B-AI-30). Chats are canonical in `.skb/skb.db`, not in the vault.
 - Not in Phase 12 (backlog): MCP resources and prompts (B-AI-20), a token per MCP client (B-AI-21),
   logging MCP reads (B-AI-22), undoing a whole run (B-AI-23), MCP elicitation so destructive tools
   could be offered (B-AI-24); `record_answer` moved to Phase 14 (14.02, ADR-0035); old copies in
@@ -142,15 +153,16 @@ knowledge extraction) and 12 (agent runtime, tool layer and MCP) are complete an
 ## Broken
 
 - Nothing known.
-- Performance budgets were last measured on battery (9 October): four over, exactly as the Phase 10
-  code under the same conditions — throttling, not a regression. Re-run `npm run test:perf` on mains
-  power to confirm the figures above.
+- Performance budgets: four are over when measured with the laptop on mains power but busy (10 October,
+  with a game launcher, Discord and browsers running): search with PDF pages p95 222 ms (150), graph
+  first build 5.0 s (3), graph after an edit 1.5 s (1), retrieval p95 904 ms (500). Phase 13 touches
+  none of these paths, and the figures swing two- to three-fold with background load (as at the Phase 10
+  merge, `AGENTS.md` §5). Re-run `npm run test:perf` with nothing else open to confirm the figures above.
 
 ## Next steps
 
-1. Create `phase/13-chat` from `main`.
-2. Phase 13: the chat interface for the agent runner — threads, streaming, activity rows for tool
-   calls, approval cards, the page context and @mentions.
+1. Create `phase/14-tutor-planner` from `main`.
+2. Phase 14: the tutor (including `record_answer`, task 14.02) and the study planner.
 
 ## Relevant decisions
 
@@ -164,8 +176,9 @@ flashcards are scheduled by face, and review logs are never changed · ADR-0021 
 ADR-0032 mastery recomputed from evidence in one pass; answers written once; Learn replayed from
 its answers · ADR-0012 AI SDK 7 · **ADR-0033** AI configuration outside the vault, answers as JSON lines,
 fusion in retrieval · ADR-0034 generated material waits as drafts and proposals; AI reads media
-through injected readers · **ADR-0035** tools are the only way to act; the server enforces
-approvals; every change is logged and undoable.
+through injected readers · ADR-0035 tools are the only way to act; the server enforces
+approvals; every change is logged and undoable · **ADR-0036** chat streams JSON lines from the
+server's own runner; a paused run is saved with its thread.
 
 ## Technical debt
 
@@ -192,7 +205,9 @@ background load — compare against a worktree of the previous gate (`AGENTS.md`
   modules are assessed. Then relate a few concepts and look at the graph (`docs/guide/graph.md`), make the first
   flashcards (`docs/guide/flashcards.md`), and write a few questions for a module to try Learn and
   Progress (`docs/guide/practice.md`, `docs/guide/mastery.md`).
-- To try Ask: add a provider in Settings → AI (`docs/guide/ai.md`). RQ-04 (which providers, what
+- To try chat: add a provider in Settings → AI (`docs/guide/ai.md`), then follow the short checklist at
+  the end of `docs/guide/chat.md` — the check of chat against a real provider (Phase 13's acceptance
+  criterion) is yours to do; the automated tests use the built-in test model.
   budget) decides the defaults worth suggesting; without an answer, nothing is preset and the budget
   starts at $10 a month.
 

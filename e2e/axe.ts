@@ -49,11 +49,17 @@ async function settleAnimations(page: Page): Promise<void> {
     .catch(() => undefined);
 }
 
-/** Serious and critical WCAG violations on the current page, after fitting it to the viewport. */
-export async function seriousViolations(page: Page) {
+/**
+ * Serious and critical WCAG violations on the current page, after fitting it to the viewport.
+ * `include` limits the scan to one part of the page (a panel beside a page whose own layout is still
+ * settling, such as a PDF being drawn).
+ */
+export async function seriousViolations(page: Page, options: { include?: string } = {}) {
   await fitViewportToContent(page);
   await settleAnimations(page);
-  const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
+  const builder = new AxeBuilder({ page }).withTags(WCAG_TAGS);
+  if (options.include) builder.include(options.include);
+  const results = await builder.analyze();
   return results.violations
     .filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')
     .map((violation) => ({

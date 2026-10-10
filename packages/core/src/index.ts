@@ -8,6 +8,7 @@ export * from './ai/untrusted';
 export * from './api/agent';
 export * from './api/ai';
 export * from './api/cards';
+export * from './api/chat';
 export * from './api/concepts';
 export * from './api/contract';
 export * from './api/course';

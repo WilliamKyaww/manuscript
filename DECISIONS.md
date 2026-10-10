@@ -712,3 +712,54 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   (`npm run docs:tools`, checked by a test). Phase 13 turns the runner's approval callback into the
   chat's approval cards; Phase 14 adds `record_answer` and the planning tools.
 - **Date.** 10 October 2026.
+
+## ADR-0036 — Chat streams JSON lines from the server's own runner; a paused run is saved with its thread
+
+- **Context.** Phase 13 puts the agent runner (ADR-0035) behind a conversation: threads that are kept,
+  answers that stream, tool calls shown as they happen, and approvals that wait for the student —
+  possibly across a page reload — before the run carries on. The architecture notes had planned the AI
+  SDK's UI message stream for this.
+- **Options.** The AI SDK UI message stream and its React hook, or the project's own newline-delimited
+  JSON events (as Ask already uses, ADR-0033). Keeping a paused run in memory, or saving it with the
+  thread. Approvals as part of the stream's request, or as a second request. Compaction by dropping
+  old turns, or by summarising them.
+- **Decision.**
+  - Chat streams `application/x-ndjson` events defined once in `@skb/core` (`ChatEventSchema`:
+    `user`, `assistant`, `passages`, `text`, `tool`, `paused`, `done`, `error`), validated on both
+    sides, with the same Hono `stream` and abort handling as Ask. The web app keeps no AI SDK
+    dependency (principle 5 stays intact), and a `tool` event carries a whole `ToolPart` (state,
+    summary, risk, action id) that replaces the earlier state of the same call. This supersedes the
+    plan to stream the SDK's UI message parts; the message parts we store are our own (`ChatPart`).
+  - A message is a run of the runner. `POST /api/chat/threads/:id/messages` saves the person's
+    message, retrieves passages (the Ask retrieval, narrowed by the page and @mentions), streams the
+    run into the assistant's message and saves it. Passages are given to the model with citation
+    keys, the keys in the answer are checked, and the grounding label is stored with the message.
+  - A run that needs an approval **ends** its stream with `paused`. Everything needed to carry on —
+    the model's messages so far, the pending calls (with their approval ids), the calls already
+    approved, the steps used and the instructions — is saved in the thread (`pending_json`), so it
+    survives a reload or a restart. `POST …/approvals` takes one decision per pending call (approve
+    once, approve for this chat, decline), re-enters the runner with them, and continues in the same
+    assistant message. A thread with a pending run refuses new messages (409) until it is decided.
+  - "Approve for this chat" adds the tool to the thread's allowed tools. It is never offered for,
+    and never applies to, destructive calls, which ask every time (ADR-0035 still decides; the thread
+    only supplies the approval tokens for calls the policy says may be covered).
+  - The runner keeps every step's messages from `result.steps`: in AI SDK 7 the run's `response`
+    holds only the last step, which silently dropped earlier tool calls from a resumed conversation.
+  - Compaction: when the saved history outgrows the context budget, the older turns are summarised
+    (quick-tasks model if there is one) into the thread's summary, which rides along in the
+    instructions; the visible conversation is never shortened. Passages are removed from the
+    saved history after each answer, as they only mattered for it. Usage and cost are added to the
+    thread.
+  - Migration 0013: `chat_threads` (settings, history, summary, pending run, usage) and
+    `chat_messages` (parts and mentions as JSON, plain text for search).
+  - The Ask dialogue is replaced by a docked chat panel (Ctrl+J) beside the page, with the same
+    conversation as the Chat page. `POST /api/ai/ask` stays for programs and tests.
+- **Reason.** One schema for both sides is checked everywhere and keeps the browser free of the SDK.
+  Saving the pause makes approvals durable and keeps the server stateless between requests. Keeping
+  step messages makes a resumed run see what it already did.
+- **Consequences.** A stream cut off by the network leaves the run stopped, with its notice; the
+  person sends again. Two runs on one thread are refused. Chat threads are canonical in
+  `.skb/skb.db` and are not part of the Markdown export until Phase 16 decides (B-AI-27). The mock
+  model plans the brief's example requests so they can be tested end to end; real providers are
+  checked by hand (`docs/guide/chat.md`).
+- **Date.** 10 October 2026.

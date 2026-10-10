@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useAsk } from '../features/ai/ask-store';
+import { MESSAGE_FIELD } from '../features/chat/ChatPanel';
+import { useChat } from '../features/chat/chat-store';
 import { useQuickAdd } from '../features/review/quick-add';
 import { SEARCH_INPUT_ID } from '../features/search/search-ids';
 import { useLayoutStore } from './layout-store';
@@ -51,15 +52,21 @@ export function GlobalShortcuts() {
     },
   });
   useShortcut({
-    id: 'app.ask',
+    id: 'app.chat',
     keys: 'mod+j',
-    description: 'Ask about your material',
+    description: 'Chat about your material',
     group: 'General',
     allowInInputs: true,
     handler: (event) => {
       event.preventDefault();
-      const { open, setOpen } = useAsk.getState();
-      setOpen(!open);
+      // On the Chat page the conversation is already there: go to its message box.
+      if (window.location.pathname.startsWith('/chat')) {
+        document.querySelector<HTMLTextAreaElement>(MESSAGE_FIELD)?.focus();
+        return;
+      }
+      const { panelOpen, openPanel, closePanel } = useChat.getState();
+      if (panelOpen) closePanel();
+      else openPanel();
     },
   });
   useShortcut({

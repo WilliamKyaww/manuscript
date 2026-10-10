@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Dialog as RadixDialog, VisuallyHidden } from 'radix-ui';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
-import { useAsk } from '../features/ai/ask-store';
+import { useChat } from '../features/chat/chat-store';
 import { treeQuery } from '../features/notes/api';
 import { useQuickAdd } from '../features/review/quick-add';
 import { useApi } from '../lib/api/context';
@@ -162,13 +162,13 @@ export function CommandPalette() {
               </Command.Group>
               <Command.Group heading="AI" className={groupClasses}>
                 <Command.Item
-                  value="Ask about your material"
-                  keywords={['ai', 'question', 'explain', 'sources', 'chat']}
-                  onSelect={() => run(() => useAsk.getState().setOpen(true))}
+                  value="Chat about your material"
+                  keywords={['ai', 'question', 'explain', 'sources', 'ask', 'assistant']}
+                  onSelect={() => run(() => useChat.getState().openPanel())}
                   className={itemClasses}
                 >
                   <Sparkles aria-hidden="true" size={16} className="text-muted" />
-                  Ask about your material
+                  Chat about your material
                 </Command.Item>
               </Command.Group>
               <Command.Group heading="Flashcards" className={groupClasses}>

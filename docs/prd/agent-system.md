@@ -76,8 +76,8 @@ label *Not in your sources*. Retrieval fuses (reciprocal rank) full-text matches
 significant words, passages naming the concepts it mentions or their neighbours (two relation steps), and —
 with an embedding model — semantic neighbours; note passages are the best-matching section of a note,
 located by heading and line; passages are packed into the context budget (default 12,000 tokens, 12
-passages at most). The Ask panel (Ctrl+J) narrows to the page on screen (source, module, lecture,
-concept).
+passages at most). Chat (Ctrl+J) narrows to the page on screen (source, module, lecture, concept) and
+to what is @mentioned; `POST /api/ai/ask` remains for programs and tests.
 
 ## 6. Tool layer (Phase 12)
 
@@ -159,7 +159,7 @@ files is wrapped as untrusted data. The runner (`runner.ts`) is `generateText` w
 
 ## 9. Activity UI protocol (Phase 13)
 
-The chat streams AI SDK UI message parts. Tool parts render as compact activity rows using each tool's
+The chat streams message parts. Tool parts render as compact activity rows using each tool's
 `describe()`:
 
 ```text
@@ -172,6 +172,18 @@ The chat streams AI SDK UI message parts. Tool parts render as compact activity 
 States: running (spinner), done, failed (message + retry), awaiting approval (approval card with the
 exact change summary and *Approve once* / *Approve for this chat* / *Decline*), cancelled. Internals
 (raw JSON, prompts) are hidden behind a "Details" disclosure.
+
+**As built (Phase 13, ADR-0036).** The stream is the project's own: one JSON event per line
+(`ChatEventSchema` in `@skb/core`), not the AI SDK's UI message stream, so the browser needs no SDK.
+Events: `user` (the saved message), `assistant` (its id), `passages`, `text` (deltas), `tool` (a whole
+`ToolPart` — state, summary, risk, action id — replacing the earlier state of that call), `paused`,
+`done` (the saved message and thread) and `error`. A message is `{ role, parts[], mentions[] }` with parts
+`text`, `tool`, `passages`, `grounding` and `notice`. States are `running`, `ok`, `error`, `denied`,
+`declined` and `awaiting_approval`. A run that needs approval ends its stream with `paused` and is saved
+with the thread; `POST /api/chat/threads/:id/approvals` takes one decision per pending call and carries
+on in the same message. *Approve for this chat* is never offered for destructive calls. Context per
+message: mode and scope rules, the page and any selected text, @mentions, the thread's summary, then
+the retrieved passages with the question. Details: `docs/guide/chat.md`.
 
 ## 10. Prompt-injection defences (from Graphify)
 

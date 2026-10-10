@@ -3,6 +3,7 @@ import { createJobQueue, type JobQueue } from '../jobs/queue';
 import { createJobsRepository } from '../jobs/repository';
 import { notifyingAfter } from '../shared/change-events';
 import { type AgentModule, createAgentModule } from './agent/index';
+import { createAgentRunner } from './agent/runner';
 import { type AskService, createAskService } from './ai/ask';
 import { createEmbeddingsRepository } from './ai/embeddings/repository';
 import { createEmbeddingService, type EmbeddingService } from './ai/embeddings/service';
@@ -16,6 +17,8 @@ import { createUsageRepository } from './ai/usage';
 import { createCardsRepository } from './cards/repository';
 import { createReviewService, type ReviewService } from './cards/reviews';
 import { type CardsService, createCardsService } from './cards/service';
+import { createChatRepository } from './chat/repository';
+import { type ChatService, createChatService } from './chat/service';
 import { createConceptMergeRepository } from './concepts/merge-repository';
 import { createConceptsRepository } from './concepts/repository';
 import { type ConceptsService, createConceptsService } from './concepts/service';
@@ -83,6 +86,7 @@ export interface AppModules {
   readonly grading: GradingService;
   readonly links: LinkSuggester;
   readonly agent: AgentModule;
+  readonly chat: ChatService;
   start(options: { watch: boolean }): Promise<void>;
   close(): Promise<void>;
 }
@@ -271,17 +275,14 @@ export function createModules(ctx: AppContext): AppModules {
     () => embeddings.schedule(0),
   );
   const retrievalRepo = createRetrievalRepository(ctx.db);
-  const ask = createAskService({
-    ai: aiCore,
-    retrieval: createRetrievalService({
-      repo: retrievalRepo,
-      learning: learningRepo,
-      embeddings,
-      notes: notes.notes,
-      logger: ctx.logger,
-    }),
+  const retrieval = createRetrievalService({
+    repo: retrievalRepo,
+    learning: learningRepo,
+    embeddings,
+    notes: notes.notes,
     logger: ctx.logger,
   });
+  const ask = createAskService({ ai: aiCore, retrieval, logger: ctx.logger });
 
   // Generation and the Inbox (Phase 11): drafts and proposals enter only when accepted.
   const proposalsRepo = createProposalsRepository(ctx.db);
@@ -370,6 +371,17 @@ export function createModules(ctx: AppContext): AppModules {
     logger: ctx.logger,
   });
 
+  // Chat (Phase 13) drives the agent runner over persistent threads.
+  const chat = createChatService({
+    repo: createChatRepository(ctx.db),
+    runner: createAgentRunner({ ai: aiCore, registry: agent.registry, logger: ctx.logger }),
+    ai: aiCore,
+    retrieval,
+    clock: ctx.clock,
+    ids: ctx.ids,
+    logger: ctx.logger,
+  });
+
   return {
     settings,
     notes,
@@ -398,6 +410,7 @@ export function createModules(ctx: AppContext): AppModules {
     grading,
     links,
     agent,
+    chat,
     async start(options) {
       await notes.start(options);
       jobs.start();
