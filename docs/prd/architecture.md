@@ -167,7 +167,7 @@ file in `.skb/` prevents two servers opening the same vault.
    missing, unknown supported files are registered (ADR-0028).
 
 ### 6.3 Agent request
-1. `POST /api/chat/:threadId/messages` streams an AI SDK UI message stream.
+1. `POST /api/chat/threads/:id/messages` streams JSON lines (ADR-0036); `POST …/approvals` carries a paused run on.
 2. Runner assembles context (mode, scope, mentions), runs the tool loop; each tool call passes the policy
    (`auto-approve` / `user-approval` / `auto-deny`).
 3. Approval-required calls pause the stream; the UI shows an approval card; the decision resumes it.

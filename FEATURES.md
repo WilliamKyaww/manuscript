@@ -124,15 +124,15 @@ _Last updated: 9 October 2026 (end of Phase 10)._
 |---|---|---|---|
 | F-AI-01 | Role-based provider registry (Anthropic, OpenAI, OpenAI-compatible, mock) | Complete | 10 |
 | F-AI-02 | Secure key storage, usage tracking and spend caps | Complete — keys in the data directory (mode 0600); Electron safeStorage arrives with the desktop app (Phase 18) | 10 |
-| F-AI-03 | Grounded Q&A with citations and grounding badges | Complete — the Ask panel (Ctrl+J) | 10 |
+| F-AI-03 | Grounded Q&A with citations and grounding badges | Complete — in chat (Ctrl+J); the Ask dialogue became the chat panel in Phase 13 | 10 |
 | F-AI-04 | Prompt-injection defences for source content | Complete | 10 |
 | F-AI-05 | Generation of notes, summaries, cards and questions | Complete — from a lecture, source range, note or selection, with an estimate first | 11 |
 | F-AI-06 | Proposals Inbox (AI proposes, user decides) | Complete — drafts and suggestions, batch decisions, per-kind auto-accept | 11 |
 | F-AI-07 | Typed tool registry with risk levels and approvals | Complete — 29 tools; approvals bound to their arguments; per-tool overrides in Settings | 12 |
 | F-AI-08 | Action log with snapshots and undo | Complete — Settings → Assistant actions; undo refuses once the target has changed | 12 |
 | F-AI-09 | MCP server for external agents | Complete — Streamable HTTP and a stdio bridge; no destructive tools offered | 12 |
-| F-AI-10 | Agentic chat with activity timeline, approvals and result cards | Planned | 13 |
-| F-AI-11 | Chat side panel with page context and @mentions | Planned | 13 |
+| F-AI-10 | Agentic chat with activity timeline, approvals and result cards | Complete — threads, streaming, activity rows, approvals, result cards with Undo, compaction; tested with the test model, real providers by hand (`docs/guide/chat.md`) | 13 |
+| F-AI-11 | Chat side panel with page context and @mentions | Complete — docked panel on every page; page, selection and @mentions | 13 |
 | F-AI-12 | Link suggestions for a note (unlinked mentions, notes close in meaning) as Inbox proposals | Complete — per note; vault-wide in the background is B-AI-15 | 11 |
 
 ## Integration

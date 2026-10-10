@@ -43,7 +43,8 @@ Rules:
    it and the `h1` stay in the viewport, and the window itself never scrolls. A second E2E test checks
    that `StickySection` headers stick to the top of the body; `Page.test.tsx` checks the structure.
    The check was mutation-tested: moving the header into the scroll container makes it fail.
-   For paned pages (Phase 3) it scrolls every pane's body and asserts each pane header stays put;
+   For paned pages (Phase 3) it scrolls every pane's body (or the scroller inside it, such as Chat's
+   message log, which leaves the message box pinned) and asserts each pane header stays put;
    `e2e/notes.spec.ts` does the same with a long note in the editor.
 6. **Documented exceptions** (must be listed here):
    - None. *Focus mode* in a review session (Phase 8) was planned as one, but it keeps the header and
@@ -66,12 +67,12 @@ Sidebar (collapsible, `Ctrl+\`):
 | Practice | `/practice` | Learn, quizzes and mock exams; `/practice/questions` the question bank; `/practice/attempts/$id` taking a quiz or exam and its results; `/practice/learn/$id` a Learn session |
 | Progress | `/progress` | Readiness, mastery and coverage by course, module, topic and concept with their components; weak areas (Phase 9); retention and calibration (Phase 14) |
 | Plan | `/plan` | Study plan calendar/timeline |
-| Chat | `/chat` | Agent and tutor threads |
+| Chat | `/chat`, `/chat/$threadId` | Conversations (search, rename, delete) and the open one: answers with citations, activity rows, approval and result cards, the composer with mode, scope and @mentions (Phase 13) |
 | Inbox | `/inbox` | AI proposals awaiting decision (concepts, links, cards, edits) |
 | Settings | `/settings` | Vault, AI providers, study preferences, permissions, appearance, data |
 
 Global: command palette (`Ctrl+K`), quick switcher (`Ctrl+O`), search (`Ctrl+Shift+F`), quick-add
-card (`Ctrl+Shift+A`), chat side panel (`Ctrl+J`) available on every page with the page as context.
+card (`Ctrl+Shift+A`), chat side panel (`Ctrl+J`, docked beside the page; closes with `Esc`) available on every page with the page as context.
 
 ## 4. Key screens (functional requirements)
 

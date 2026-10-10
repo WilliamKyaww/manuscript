@@ -366,8 +366,8 @@ title, label, locator }]`) · `origin_json` (label, job, module, lecture, where 
 (`{ kind, id }` of what accepting made) · `created_at` · `decided_at`. Generated cards and questions are not
 proposals: they are `cards` and `questions` rows with status `draft` and `created_by = 'ai'` until accepted.
 
-**chat_threads** `id` · `title` · `mode` · `scope_json` · `created_at` · `updated_at` —
-**chat_messages** `id` · `thread_id`† · `role` · `parts_json` (AI SDK UI message parts) · `created_at`
+**chat_threads** `id` · `title` · `mode` · `scope` · `filter_json` · `allowed_tools_json` · `history_json` (the model's messages) · `summary` · `pending_json` (a paused run) · token and cost totals · `created_at` · `updated_at` —
+**chat_messages** `id` · `thread_id`† · `role` · `parts_json` (our message parts) · `mentions_json` · `text` (for search) · `created_at`
 
 **agent_actions** (canonical, migration `0012`, ADR-0035; append-only by trigger — only an undo may mark a
 row) `id` (`act_…`) · `thread_id` · `message_id` (chat, Phase 13) · `actor` (`agent` | `mcp`) · `tool` · `risk`

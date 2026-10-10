@@ -1,6 +1,6 @@
 # Backlog items
 
-_Last reviewed: 9 October 2026 (Phase 8)._
+_Last reviewed: 10 October 2026 (Phase 13)._
 
 ## Knowledge (KM)
 
@@ -91,7 +91,7 @@ _Last reviewed: 9 October 2026 (Phase 8)._
 | B-AI-09 | Google (Gemini) provider | Free tiers and long contexts | Phase 10 |
 | B-AI-10 | Price presets for well-known models, updated with the app | Typing prices per role is error-prone | Phase 10 |
 | B-AI-11 | Bring retrieval's p95 down (404 ms at 10,000 notes: questions of common words make the OR query score most of the library) — e.g. try all words first and widen only when few match — and measure the first answer token with a real provider | Phase 10 measured retrieval only; the first token depends on the provider | Phase 10 |
-| B-AI-12 | Keep the Ask panel's past questions (until the Phase 13 chat threads replace it) | Only the last answer is kept | Phase 10 |
+| B-AI-12 | ~~Keep the Ask panel's past questions~~ — done in Phase 13: every chat is a kept thread | Only the last answer was kept | Phase 10 |
 | B-AI-13 | Transcribe recordings over 25 MB: split the audio (and take it out of video) with ffmpeg, transcribe the parts and join their times | A lecture recording is often 50–100 MB; today it must be exported smaller by hand | Phase 11 |
 | B-AI-14 | Generate from long material in parts (map over passages, then merge and de-duplicate) instead of cutting it at the budget | A whole module or a long PDF is truncated today; the estimate says so | Phase 11 |
 | B-AI-15 | Link suggestions across the vault in the background (after edits, as a job), not only for the open note | Today they are asked for one note at a time | Phase 11 |
@@ -104,6 +104,12 @@ _Last reviewed: 9 October 2026 (Phase 8)._
 | B-AI-22 | Log reads made by MCP clients (what was read, when), as an option | Reads are not logged for the in-app assistant (they would drown the log); a person may want to know what an external program looked at | Phase 12 |
 | B-AI-23 | Undo a whole run: "undo this and everything after it" in one step | Undoing a long agent run is one action at a time, newest first | Phase 12 |
 | B-AI-24 | MCP elicitation: let an MCP client that supports it show the approval request, so destructive tools can be offered to it | Destructive tools are not offered to MCP clients at all because they cannot ask | Phase 12 |
+| B-AI-25 | Edit a sent message and re-run from there, regenerate an answer, branch a conversation | A conversation only goes forward today; a wrong turn means starting a new chat | Phase 13 |
+| B-AI-26 | Attach files or images to a chat message | Today only text, @mentions and a page selection can be pointed at | Phase 13 |
+| B-AI-27 | Export conversations (a Markdown file per chat, or “Save this answer as a note”) | Chats live only in the database (ADR-0036); an answer worth keeping has to be copied by hand | Phase 13 |
+| B-AI-28 | Let a run carry on in the background when the page is closed, and reconnect to it | Closing the page or the panel's tab stops the run, with its notice; navigating within the app does not | Phase 13 |
+| B-AI-29 | Range mentions (`@L1–L4`, `@CS301 L2`) and recent items first in the @ menu | Mentions pick one item at a time and the menu lists matches alphabetically within a kind | Phase 13 |
+| B-AI-30 | Compact by the provider's own token counts instead of the 4-characters-a-token estimate | Compaction may start a little early or late for languages and code that tokenise differently | Phase 13 |
 
 ## Platform (PL)
 

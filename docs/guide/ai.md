@@ -19,7 +19,7 @@ Open **Settings → AI**.
 
    | Role | Used for | A sensible choice |
    |---|---|---|
-   | **Answers** | Questions about your material (and later the tutor and chat) | A strong model, such as Claude Sonnet |
+   | **Answers** | Chat: questions about your material, and the assistant's work | A strong model, such as Claude Sonnet |
    | **Quick tasks** | Short jobs: suggested grades for written answers, telling whether two concept names mean the same thing | A small, cheap model, such as Claude Haiku |
    | **Semantic search** | Finding passages by meaning, not only by words | An embedding model, such as OpenAI `text-embedding-3-small` or Ollama `nomic-embed-text`; leave **Off** if you prefer |
    | **Transcription** | Turning recordings into timed text (see [generation.md](generation.md) §6) | OpenAI `whisper-1` (exact times), or a Whisper server; priced per audio minute; leave **Off** if you prefer |
@@ -32,8 +32,9 @@ Open **Settings → AI**.
 
 ## 2. Asking about your material
 
-Press **Ctrl+J** (or **Ask…** in the sidebar, or *Ask about your material* in the command palette)
-and type a question. Choose where the answer may come from:
+Press **Ctrl+J** (or **Chat…** in the sidebar, or *Chat about your material* in the command palette)
+and type a question; the panel is a conversation, described in [Chat](./chat.md). Choosing where the
+answer may come from works as below. Choose where the answer may come from:
 
 | Answer from | What happens |
 |---|---|
@@ -54,7 +55,7 @@ the model was given. The label above the answer says how grounded it is:
 - **Not in your sources** — nothing relevant was found.
 
 Citations to passages the model was not given are removed (and listed), so a citation always
-points at real text. The last answer stays in the panel until you ask again.
+points at real text. Conversations are kept: find them again on the Chat page.
 
 ### How passages are chosen
 
