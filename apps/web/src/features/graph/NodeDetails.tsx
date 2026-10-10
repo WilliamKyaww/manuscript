@@ -8,6 +8,7 @@ import { IconButton } from '../../components/IconButton';
 import { Input } from '../../components/Input';
 import { LoadingState } from '../../components/States';
 import { useApi } from '../../lib/api/context';
+import { CodeEntityDetails } from '../code/CodeEntityDetails';
 import { graphPathQuery } from './api';
 import { neighboursOf } from './neighbours';
 import {
@@ -65,6 +66,8 @@ export function NodeDetails({
           Centre
         </Button>
       </div>
+
+      {node.type === 'code' && <CodeEntityDetails entityId={node.id} />}
 
       <section className="space-y-2">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">Connections</h3>

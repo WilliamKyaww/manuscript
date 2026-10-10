@@ -65,6 +65,7 @@ export function applyEventToCache(queryClient: QueryClient, event: ServerEvent):
     // graph is built from all three.
     void queryClient.invalidateQueries({ queryKey: ['graph'] });
     void queryClient.invalidateQueries({ queryKey: ['concepts'] });
+    if (event.area === 'code') void queryClient.invalidateQueries({ queryKey: ['code'] });
     if (event.area === 'relations') void queryClient.invalidateQueries({ queryKey: ['relations'] });
     else void queryClient.invalidateQueries({ queryKey: ['learning'] });
     return;

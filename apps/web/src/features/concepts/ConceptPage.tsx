@@ -12,6 +12,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/States';
 import { ApiError } from '../../lib/api/client';
 import { useApi } from '../../lib/api/context';
 import { notifyError } from '../../lib/notify';
+import { ConceptCodeSection } from '../code/ConceptCodeSection';
 import { LocalGraph } from '../graph/LocalGraph';
 import { RelationsSection } from '../graph/RelationsSection';
 import { viewerSearchFor } from '../library/links';
@@ -123,6 +124,8 @@ export function ConceptPage() {
       <ConceptMasteryPanel conceptId={data.id} />
 
       <RelationsSection conceptId={data.id} />
+
+      <ConceptCodeSection conceptId={data.id} />
 
       <StickySection
         title="Connections"
