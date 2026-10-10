@@ -15,11 +15,14 @@ import type { SqlDatabase } from '../../db/sqlite';
 import type { Clock } from '../../shared/clock';
 import type { Vault } from '../../vault/vault';
 import type { CardsService } from '../cards/service';
+import type { ConceptsService } from '../concepts/service';
 import type { GraphService } from '../graph/service';
 import { withPersistedId } from '../notes/identity';
+import { decodeNote } from '../notes/indexer';
 import type { NotesRepository } from '../notes/repository';
 import type { QuestionsService } from '../practice/questions';
 import type { QuizzesService } from '../practice/quizzes';
+import { conceptFiles } from './concept-files';
 import { createSchemaDocument, readmeText } from './documents';
 import { CANONICAL_TABLES, readTable } from './tables';
 import { createZipWriter } from './zip';
@@ -38,6 +41,7 @@ export interface ExporterDependencies {
   notesRepo: NotesRepository;
   graph: GraphService;
   cards: CardsService;
+  concepts: ConceptsService;
   questions: QuestionsService;
   quizzes: QuizzesService;
   clock: Clock;
@@ -67,8 +71,19 @@ function walk(root: string, relative = ''): string[] {
 }
 
 export function createExporter(deps: ExporterDependencies) {
-  const { db, vault, notesRepo, graph, cards, questions, quizzes, clock, version, exportsDir } =
-    deps;
+  const {
+    db,
+    vault,
+    notesRepo,
+    graph,
+    cards,
+    concepts,
+    questions,
+    quizzes,
+    clock,
+    version,
+    exportsDir,
+  } = deps;
 
   async function run(
     progress: (fraction: number, message: string) => void,
@@ -162,23 +177,45 @@ export function createExporter(deps: ExporterDependencies) {
       );
       await writer.addData(inside('graph/graph.graphml'), toGraphMl(everything));
 
+      // Concepts as notes: the same knowledge written the way the student's own notes are.
+      for (const file of conceptFiles(db, concepts, graph, 'concepts'))
+        await writer.addData(inside(file.path), file.content);
+
       // The files: notes first (with their ids), then everything else, as they are.
       const byPath = new Map(notes.map((note) => [note.path, note]));
+      // What each file is like in the archive, so a restore can check that it is whole and put back
+      // the modification times (which the source library uses to tell what changed).
+      const listed: { path: string; sizeBytes: number; mtimeMs: number }[] = [];
       for (const [index, relative] of files.entries()) {
         if (signal.aborted) throw new Error('The export was cancelled.');
         progress(0.2 + 0.78 * (index / Math.max(1, files.length)), `Adding ${relative}`);
         const absolute = path.join(vault.root, ...relative.split('/'));
+        const stats = statSync(absolute);
         const note = byPath.get(relative);
         if (note && !note.idPersisted) {
-          const text = readFileSync(absolute, 'utf8');
-          const updated = withPersistedId(text, analyseNote(text).frontmatter, note.id);
+          // Only text that decodes exactly is touched; anything else is copied byte for byte.
+          const decoded = decodeNote(readFileSync(absolute));
+          const updated = decoded.valid
+            ? withPersistedId(decoded.text, analyseNote(decoded.text).frontmatter, note.id)
+            : null;
           if (updated !== null) {
             await writer.addData(inside(`vault/${relative}`), updated);
+            listed.push({
+              path: relative,
+              sizeBytes: Buffer.byteLength(updated),
+              mtimeMs: Math.trunc(stats.mtimeMs),
+            });
             continue;
           }
         }
-        await writer.addFile(inside(`vault/${relative}`), absolute, statSync(absolute).mtime);
+        await writer.addFile(inside(`vault/${relative}`), absolute, stats.mtime);
+        listed.push({ path: relative, sizeBytes: stats.size, mtimeMs: Math.trunc(stats.mtimeMs) });
       }
+      await writer.addData(
+        inside('data/files.json'),
+        `${JSON.stringify(listed, null, 1)}
+`,
+      );
       progress(0.99, 'Finishing the archive');
       await writer.finish();
     } catch (error) {

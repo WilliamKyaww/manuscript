@@ -5,6 +5,7 @@ import {
   type DataOverview,
   type ExportFile,
   type JobSummary,
+  type MaterialiseConceptsResult,
   NotFoundError,
   type RecentVault,
   type RestoreBody,
@@ -21,8 +22,11 @@ import type { JobQueue } from '../../jobs/queue';
 import type { Clock } from '../../shared/clock';
 import type { Logger } from '../../shared/logger';
 import { isProcessAlive, type Vault } from '../../vault/vault';
+import type { ConceptsService } from '../concepts/service';
+import type { GraphService } from '../graph/service';
 import type { NotesModule } from '../notes/module';
 import type { SourcesModule } from '../sources/module';
+import { conceptFiles } from './concept-files';
 import type { Exporter } from './exporter';
 import { forget, readRegistry, recordOpened, setActive, vaultKey } from './registry';
 import { restoreArchive } from './restorer';
@@ -47,6 +51,8 @@ export interface PortabilityDependencies {
   vault: Vault;
   dataDir: string;
   notes: NotesModule;
+  concepts: ConceptsService;
+  graph: GraphService;
   sources: SourcesModule;
   exporter: Exporter;
   jobs: JobQueue;
@@ -95,7 +101,9 @@ function lockedByAnother(folder: string, ownRoot: string): boolean {
 }
 
 export function createPortabilityService(deps: PortabilityDependencies) {
-  const { db, vault, dataDir, notes, sources, exporter, jobs, clock, logger, restart } = deps;
+  const { db, vault, dataDir, notes, concepts, graph, sources, exporter, jobs, clock, logger } =
+    deps;
+  const { restart } = deps;
 
   const active = () => jobs.activeFor([SUBJECT]).get(SUBJECT) ?? null;
   const requireIdle = () => {
@@ -264,6 +272,33 @@ export function createPortabilityService(deps: PortabilityDependencies) {
     startRescan(): JobSummary {
       requireIdle();
       return jobs.enqueue(RESCAN_JOB, {}, { subject: SUBJECT, maxAttempts: 1 });
+    },
+
+    /**
+     * Writes a note for every concept that has none and makes it the concept's backing note. Concepts
+     * that already have one are left as they are, and nothing is ever overwritten.
+     */
+    materialiseConcepts(folder: string): MaterialiseConceptsResult {
+      const wanted = folder.trim().replace(/^\/+|\/+$/gu, '') || 'Concepts';
+      const all = new Map(concepts.list().map((concept) => [concept.id as string, concept]));
+      const created: MaterialiseConceptsResult['created'] = [];
+      let skipped = 0;
+      for (const file of conceptFiles(db, concepts, graph, wanted)) {
+        const concept = all.get(file.conceptId);
+        if (!concept) continue;
+        if (concept.noteId !== null) {
+          skipped += 1;
+          continue;
+        }
+        const note = notes.notes.create({
+          folder: wanted,
+          title: concept.name,
+          content: file.content,
+        });
+        concepts.update(concept.id, { noteId: note.id });
+        created.push({ conceptId: concept.id, name: concept.name, path: note.path });
+      }
+      return { folder: wanted, created, skipped };
     },
 
     deleteExport: (name: string) => exporter.remove(name),

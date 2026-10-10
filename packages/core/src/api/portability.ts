@@ -153,6 +153,28 @@ export const switchVaultEndpoint = defineEndpoint({
   }),
 });
 
+export const MaterialiseConceptsBodySchema = z.object({
+  /** The folder the notes go in (default `Concepts`). */
+  folder: z.string().trim().max(200).default('Concepts'),
+});
+
+export const MaterialiseConceptsResultSchema = z.object({
+  folder: z.string(),
+  created: z.array(z.object({ conceptId: z.string(), name: z.string(), path: z.string() })),
+  /** Concepts that already have a backing note are left as they are. */
+  skipped: z.number().int().nonnegative(),
+});
+export type MaterialiseConceptsResult = z.infer<typeof MaterialiseConceptsResultSchema>;
+
+/** Writes a Markdown note for every concept that has none, and makes it the concept's backing note. */
+export const materialiseConceptsEndpoint = defineEndpoint({
+  method: 'POST',
+  path: '/api/data/concepts/materialise',
+  status: 201,
+  body: MaterialiseConceptsBodySchema.partial(),
+  response: MaterialiseConceptsResultSchema,
+});
+
 export const forgetVaultEndpoint = defineEndpoint({
   method: 'POST',
   path: '/api/data/vaults/forget',

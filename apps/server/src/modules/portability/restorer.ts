@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, rmSync, statSync, utimesSync } from 'node:fs';
 import path from 'node:path';
 import {
   EXPORT_FORMAT,
@@ -8,6 +8,7 @@ import {
   VAULT_META_DIR,
   ValidationError,
 } from '@skb/core';
+import { z } from 'zod';
 import { loadMigrations, migrate } from '../../db/migrate';
 import { openDatabase } from '../../db/sqlite';
 import type { Clock } from '../../shared/clock';
@@ -115,6 +116,28 @@ export async function restoreArchive(options: RestoreOptions): Promise<RestoreRe
       throw new ValidationError(
         'That export was made by a newer version of Manuscript. Update the application, then restore it.',
       );
+
+    // The archive says how big each file is and when it was last changed: a file that is not whole
+    // means a damaged archive, and the times go back (the source library compares them).
+    const listing = memory.get('data/files.json');
+    if (listing) {
+      const entries = z
+        .array(z.object({ path: z.string(), sizeBytes: z.number(), mtimeMs: z.number() }))
+        .parse(JSON.parse(new TextDecoder().decode(listing)));
+      for (const entry of entries) {
+        const file = path.join(target, ...entry.path.split('/'));
+        let size: number;
+        try {
+          size = statSync(file).size;
+        } catch {
+          if (skipped.some((reason) => reason.startsWith(`${entry.path}:`))) continue;
+          throw new ValidationError(`The archive is damaged: ${entry.path} is missing from it.`);
+        }
+        if (size !== entry.sizeBytes)
+          throw new ValidationError(`The archive is damaged: ${entry.path} is incomplete.`);
+        utimesSync(file, entry.mtimeMs / 1000, entry.mtimeMs / 1000);
+      }
+    }
 
     progress(0.6, 'Building the new vault');
     const meta = path.join(target, VAULT_META_DIR);

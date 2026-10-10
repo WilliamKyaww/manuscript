@@ -7,6 +7,7 @@ import {
   ExportManifestSchema,
   type JobSummary,
   JobSummarySchema,
+  MaterialiseConceptsResultSchema,
 } from '@skb/core';
 import { strToU8, zipSync } from 'fflate';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -172,6 +173,8 @@ describe('export and restore', () => {
     };
     expect(graph.nodes.map((node) => node.label)).toContain('Raft');
     expect(text(inside('graph/graph.graphml'))).toContain('<graphml');
+    expect(text(inside('concepts/Raft.md'))).toMatch(/^---\ntype: concept\n[\s\S]*# Raft\n/u);
+    expect(text(inside('concepts/Paxos.md'))).toContain('- relates to [[Raft]]');
     expect(JSON.parse(text(inside('questions/question-bank.json')))).toHaveLength(3);
     // The app's own folder, the database and the keys are never in an archive.
     expect([...entries.keys()].some((name) => name.includes('.skb') || name.endsWith('.db'))).toBe(
@@ -227,7 +230,8 @@ describe('export and restore', () => {
     copy.close();
 
     // Opened by the application, the derived parts come back by themselves.
-    const reopened = openRestored(target, path.join(temp(), 'data'));
+    const secondData = path.join(temp(), 'data');
+    const reopened = openRestored(target, secondData);
     try {
       await reopened.modules.notes.start({ watch: false });
       await reopened.modules.sources.start();
@@ -241,9 +245,91 @@ describe('export and restore', () => {
       const sources = reopened.modules.sources.repo.live();
       expect(sources.map((row) => row.status)).toEqual(['ready']);
       expect(reopened.modules.concepts.get(raft.id).note?.id).toBe(note.id);
+
+      // Export, restore, export: the second archive says the same as the first.
+      const again = reopened.modules.portability.startExport();
+      await reopened.modules.jobs.runDue();
+      expect(reopened.modules.jobs.get(again.id)?.status).toBe('succeeded');
+      const secondName = reopened.modules.portability.overview().exports[0]?.name as string;
+      const second = await archiveEntries(path.join(secondData, 'exports', secondName));
+      const secondRoot = `${secondName.replace(/.zip$/u, '')}/`;
+      // Times the application stamps on what it read again are the only difference allowed.
+      const dataOf = (entries: Map<string, Uint8Array>, prefix: string, table: string) =>
+        (
+          JSON.parse(text(entries.get(`${prefix}data/${table}.json`))) as Record<string, unknown>[]
+        ).map((row) => {
+          const { ingested_at: _at, ...rest } = row;
+          return rest;
+        });
+      for (const table of CANONICAL_TABLES) {
+        expect(dataOf(second, secondRoot, table.name), table.name).toEqual(
+          dataOf(entries, root, table.name),
+        );
+      }
+      const filesOf = (entries: Map<string, Uint8Array>, prefix: string) =>
+        [...entries.keys()]
+          .filter((name) => name.startsWith(`${prefix}vault/`))
+          .map((name) => name.slice(prefix.length));
+      expect(filesOf(second, secondRoot)).toEqual(filesOf(entries, root));
+      for (const name of filesOf(entries, root)) {
+        expect(
+          Buffer.from(second.get(`${secondRoot}${name}`) ?? new Uint8Array()).equals(
+            Buffer.from(entries.get(`${root}${name}`) ?? new Uint8Array()),
+          ),
+          name,
+        ).toBe(true);
+      }
+      expect(JSON.parse(text(second.get(`${secondRoot}graph/graph.json`))).nodes).toHaveLength(
+        graph.nodes.length,
+      );
     } finally {
       await reopened.close();
     }
+  });
+
+  it('writes a note for each concept that has none, and leaves the others as they are', async () => {
+    const testbed = await practiceTestbed();
+    bed = testbed.bed;
+    const { api, raft, paxos } = testbed;
+    await bed.start();
+    await api.patch(
+      `/api/concepts/${raft.id}`,
+      { summary: 'A consensus algorithm built around a leader.', aliases: ['Raft consensus'] },
+      200,
+    );
+    await api.post('/api/relations', { from: paxos.id, to: raft.id, relation: 'relates_to' }, 201);
+    const own = await api.post<{ id: string }>('/api/notes', {
+      title: 'Paxos',
+      content: '# Paxos\n',
+    });
+    await api.patch(`/api/concepts/${paxos.id}`, { noteId: own.id }, 200);
+
+    const result = await api.post(
+      '/api/data/concepts/materialise',
+      {},
+      201,
+      MaterialiseConceptsResultSchema,
+    );
+    expect(result.created.map((entry) => [entry.name, entry.path])).toEqual([
+      ['Raft', 'Concepts/Raft.md'],
+    ]);
+    expect(result.skipped).toBe(1);
+    const written = readFileSync(bed.abs('Concepts/Raft.md'), 'utf8');
+    expect(written).toContain('# Raft');
+    expect(written).toContain('A consensus algorithm built around a leader.');
+    expect(written).toContain('aliases: ["Raft consensus"]');
+    expect(written).toContain('- relates to [[Paxos]]');
+    // The note is the concept's backing note, and a second run has nothing left to do.
+    const detail = await api.get<{ note: { path: string } | null }>(`/api/concepts/${raft.id}`);
+    expect(detail.note?.path).toBe('Concepts/Raft.md');
+    const again = await api.post(
+      '/api/data/concepts/materialise',
+      { folder: 'Concepts' },
+      201,
+      MaterialiseConceptsResultSchema,
+    );
+    expect(again.created).toEqual([]);
+    expect(again.skipped).toBe(2);
   });
 
   it('refuses a folder that is not empty, and an export from a newer version, and leaves nothing behind', async () => {

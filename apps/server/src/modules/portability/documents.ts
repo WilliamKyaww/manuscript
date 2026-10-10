@@ -23,7 +23,9 @@ Manuscript to read any of it.
 | \`vault/\` | Your vault as it is on disk: ${counts.notes} notes as Markdown (Obsidian-compatible), and ${counts.files - counts.notes} other files — the original slides, PDFs and documents in \`vault/Sources/\`, attachments and the rest. Open this folder in any editor. |
 | \`data/*.json\` | One file per table of your own data: modules, lectures, concepts, relations, flashcards and their schedules, every review and answer, questions, quizzes, the Inbox, chats, study plans. Plain JSON arrays of objects. \`docs/schema.md\` says what every column means. |
 | \`data/note-ids.json\` | The identifier of each note, so that links by identifier survive a restore. |
+| \`data/files.json\` | The size and last-modified time of each file in \`vault/\`, so that a restore can check that the archive is whole and put the times back. |
 | \`anki/*.txt\` | Each flashcard set as tab-separated text that Anki imports (File → Import). |
+| \`concepts/*.md\` | Each concept as a Markdown note: its summary, aliases and modules, and its relations as links. |
 | \`questions/\` | The question bank as JSON, and each quiz as Markdown with its answer key. |
 | \`graph/graph.json\` | The knowledge graph as node-link JSON (NetworkX, D3 and Graphify read this shape). |
 | \`graph/graph.graphml\` | The same graph as GraphML (Gephi, yEd, Cytoscape). |

@@ -478,6 +478,8 @@ export function createModules(ctx: AppContext): AppModules {
     vault: ctx.vault,
     dataDir: ctx.config.dataDir,
     notes,
+    concepts,
+    graph,
     sources,
     exporter: createExporter({
       db: ctx.db,
@@ -485,6 +487,7 @@ export function createModules(ctx: AppContext): AppModules {
       notesRepo: notes.repo,
       graph,
       cards,
+      concepts,
       questions,
       quizzes,
       clock: ctx.clock,

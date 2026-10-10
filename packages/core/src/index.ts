@@ -28,6 +28,7 @@ export * from './api/system';
 export * from './api/vault';
 export * from './app';
 export * from './errors';
+export * from './graph/concept-notes';
 export * from './graph/connections';
 export * from './graph/export';
 export * from './graph/vocabulary';

@@ -7,6 +7,7 @@ import {
   forgetVaultEndpoint,
   getDataOverviewEndpoint,
   inspectVaultEndpoint,
+  materialiseConceptsEndpoint,
   rescanEndpoint,
   restoreEndpoint,
   startExportEndpoint,
@@ -30,6 +31,9 @@ export function registerPortabilityRoutes(
     job: portability.startRestore(body),
   }));
   registerEndpoint(registry, rescanEndpoint, () => ({ job: portability.startRescan() }));
+  registerEndpoint(registry, materialiseConceptsEndpoint, ({ body }) =>
+    portability.materialiseConcepts(body.folder ?? 'Concepts'),
+  );
   registerEndpoint(registry, inspectVaultEndpoint, ({ body }) => portability.inspect(body.path));
   registerEndpoint(registry, switchVaultEndpoint, ({ body }) => portability.switchTo(body.path));
   registerEndpoint(registry, forgetVaultEndpoint, ({ body }) => {
