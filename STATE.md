@@ -4,11 +4,11 @@ _Last updated: 10 October 2026 — Claude Sonnet 5.5._
 
 ## Current phase
 
-**Phase 19 — Windows installer: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
+**Phase 20 — Final UI/UX polish: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
 and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
 ingestion pipeline), 6 (course structure and concepts), 7 (knowledge graph), 8 (flashcards and
 spaced repetition), 9 (questions, quizzes and mastery), 10 (AI foundation), 11 (AI generation and
-knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tutor and study planner), 15 (knowledge–learning integration), 16 (portability), 17 (hardening) and 18 (Electron desktop app) are complete and merged into `main`.
+knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tutor and study planner), 15 (knowledge–learning integration), 16 (portability), 17 (hardening), 18 (Electron desktop app) and 19 (Windows installer) are complete and merged into `main`.
 
 ## What works
 
@@ -142,6 +142,11 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
   *Browse…* and *Show in folder*; opening another vault restarts the engine under the same window; AI keys are
   encrypted with a key that Electron's `safeStorage` wraps (Settings → About says whether the protection is in
   place); one instance at a time; the window remembers where it was.
+- **Installer** (Phase 19, `docs/guide/installing.md`): `npm run desktop:dist` writes
+  `apps\desktop\release\Manuscript-Setup-<version>.exe` (NSIS via electron-builder 26.17.0, about 120 MB): per user,
+  no administrator prompt, a choosable folder, Start Menu and desktop shortcuts, and an uninstaller that keeps the
+  vault and the data folder. Not code-signed unless `CSC_LINK` is set, so SmartScreen warns once. Installed, updated
+  in place and uninstalled on this machine (journal, 10 October).
 - **Application shell:** sidebar, sticky page headers (per pane on paned pages), themes, command
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
@@ -158,11 +163,12 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## In progress
 
-- Nothing; Phase 19 not yet started.
+- Nothing; Phase 20 not yet started.
 
 ## Incomplete / not started
 
-- Phases 19–22: the installer, polish, verification and the release do not exist yet.
+- Phases 20–22: polish, verification and the release do not exist yet.
+- Not in Phase 19: code signing (needs a certificate), automatic updates (B-PL-06).
 - Not in Phase 18: an installer, code signing and automatic updates (Phase 19); macOS and Linux builds were not run;
   the application menu has no shortcuts of its own (the web app's work as in the browser).
 - Not in Phase 17 (debt): a backup runs on the main thread (TD-13); backups live inside the vault, so the guide says
@@ -223,8 +229,8 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## Next steps
 
-1. Create `phase/19-installer` from `main` (done).
-2. Phase 19: see `docs/checklist/phase-19-installer.md` (electron-builder, NSIS, around the layout `desktop:build` makes).
+1. Create `phase/20-polish` from `main` (done).
+2. Phase 20: see `docs/checklist/phase-20-polish.md` (a visual-design phase with 24 tasks: expect screenshots and judgement).
 
 ## Relevant decisions
 
@@ -253,7 +259,7 @@ the server, a token per launch, AI keys wrapped and not handed over.
 TD-01 launcher duplicates the data-directory logic · TD-05 KaTeX override · TD-06 file tree not
 virtualised · TD-07 `shell-quote` override (for `concurrently`) · TD-08 parsing on the main thread ·
 TD-09 PDF viewer estimates page sizes from page 1 · TD-10 undo copies are never pruned · TD-11 a note with
-invalid front matter has no id in an export · TD-12 the imported graph.json is not kept · TD-13 a backup runs on the main thread.
+invalid front matter has no id in an export · TD-12 the imported graph.json is not kept · TD-13 a backup runs on the main thread · TD-14 moderate advisories in the installer tooling (dev only).
 
 ## Environment notes for agents
 

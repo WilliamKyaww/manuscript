@@ -10,7 +10,11 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const desktop = path.join(root, 'apps', 'desktop');
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-const { version } = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
+// SKB_DIST_VERSION builds an installer with another version: to check that an update installs over a
+// release in place (docs/guide/installing.md).
+const version =
+  process.env.SKB_DIST_VERSION ??
+  JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')).version;
 
 const quote = (part) => (/\s/u.test(part) ? `"${part}"` : part);
 const run = (command, args, options = {}) => {

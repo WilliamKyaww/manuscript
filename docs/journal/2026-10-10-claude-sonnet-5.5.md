@@ -524,3 +524,70 @@ Phase 18 — Electron (`phase/18-electron`). It needs the Electron binary; the e
 ### Next steps
 
 Phase 19 — the Windows installer (`phase/19-installer`): electron-builder (NSIS) around the layout this phase made.
+
+---
+
+## Phase 19 — Windows installer (`phase/19-installer`)
+
+**Time:** 10 October 2026 (evening). **Model:** Claude Sonnet 5.5.
+**Work:** electron-builder configuration, the icon, `desktop:dist`, and the install / update / uninstall check on this machine.
+
+### What was done
+
+1. **Configuration (19.01).** `apps/desktop/electron-builder.yml`: NSIS, per user (no administrator prompt), a choosable
+   folder, Start Menu and desktop shortcuts, `deleteAppDataOnUninstall: false`; the shell is two bundles in an asar and
+   the server (with migrations and the web app) a resource.
+2. **Icon and metadata (19.02).** `scripts/make-icon.mjs` renders the favicon to a 512 px PNG with Chromium;
+   electron-builder makes the .ico. Product name, publisher (`author`) and version (the repository's) end up in the
+   executable and the Apps entry.
+3. **`npm run desktop:dist` (19.03).** Builds everything and the installer, in about a minute and a half after the
+   first run (which downloads the tooling). `SKB_DIST_VERSION` builds another version, to test an update.
+4. **Verification on the machine (19.04),** with the user's go-ahead (asked, and answered "yes"), against a
+   snapshot of the real vault and data folders and with the installed program run only with a profile of its own:
+   - before: no install folder, no Apps entry, no shortcuts, no `%APPDATA%\Manuscript`;
+   - **install** of 0.1.0 (`/S`): exit 0; `%LOCALAPPDATA%\Programs\Manuscript`; Apps entry "Manuscript 0.1.0",
+     publisher "Manuscript contributors"; Start Menu and desktop shortcuts; nothing created under `%APPDATA%`; no
+     process left running;
+   - **first run** (`scripts/check-installed.mjs`): came up signed in, `isPackaged`, health ok, made the vault it
+     was pointed at, quit and released the lock;
+   - **update in place** with 0.1.1: same folder, `Manuscript.exe` 0.1.1, still one Apps entry (0.1.1), shortcuts
+     kept, 10 vault files and 1 data file of the real folders unchanged (path, size, time);
+   - **uninstall** (`/currentuser /S`): the folder, the Apps entry and both shortcuts gone; the vault and data
+     folders as before; no `Manuscript` folders made.
+5. **Docs (19.05, 19.06).** `docs/guide/installing.md`, the README row with the SmartScreen note, FEATURES, STATE, TD-14.
+
+### Decisions
+
+- **electron-builder 26.17.0, pinned.** `npm audit` lists eight moderate advisories in its downloader chain
+  (`sprintf-js`, no patched version; older builder releases are worse — high and critical); production
+  dependencies are clean (`npm audit --omit=dev`). Recorded as TD-14.
+- **Per-user only**, no machine-wide install: nothing for the application needs an administrator, and the data is
+  the user's.
+- **Unsigned by default**, signed when `CSC_LINK` is given: a personal build has no certificate.
+
+### Problems encountered
+
+- **The shell's own copy of the installer layout was not the installer's.** The first unpacked build (`pack-desktop`)
+  puts files in `resources/app`; electron-builder uses an asar with `dist/main.mjs`. Both layouts are now launched by
+  the end-to-end test, so a path that works in one and not the other fails there.
+- **The publisher read "GitHub, Inc."** (Electron's default) until `author` was set in the desktop package.
+- **The server inside the 0.1.1 test installer says 0.1.0**: `SKB_DIST_VERSION` changes the installer's version, not
+  the server bundle's; a release bumps the repository's version and both agree.
+
+### Tests run
+
+| Command | Result |
+|---|---|
+| `npm run desktop:dist` (0.1.0 and 0.1.1) | **Pass** — `Manuscript-Setup-0.1.0.exe`, `…-0.1.1.exe` (127 MB) |
+| `npx playwright test e2e/desktop.spec.ts` | **Pass** — 3/3: the shell, our unpacked build and the installer's payload |
+| install, first run, update, uninstall | **Pass** — see above |
+| `npm run verify` | **Pass** — type-check, Biome, **863** Vitest tests, build, smoke (a first run stopped at a one-line formatting fix in the new check script; read and fixed) |
+
+### Unresolved issues
+
+- Not signed; SmartScreen warns once. No automatic updates (B-PL-06): an update is running a newer installer.
+- Only Windows was built; macOS and Linux packaging are not in scope.
+
+### Next steps
+
+Phase 20 — final UI/UX polish (`phase/20-polish`): 24 tasks about how the product looks and feels.
