@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { ArrowRight, CalendarRange } from 'lucide-react';
 import { buttonClasses } from '../../components/Button';
 import { Card } from '../../components/Card';
-import { LoadingState } from '../../components/States';
+import { InlineError, LoadingState } from '../../components/States';
 import { useApi } from '../../lib/api/context';
 import { planQuery } from '../plan/api';
 import { PlanItemRow } from '../plan/PlanItemRow';
@@ -35,6 +35,12 @@ export function PlanWidget() {
         </Link>
       </div>
       {current.isPending && <LoadingState label="Loading the plan" />}
+      {current.isError && (
+        <InlineError
+          message="Your plan could not be loaded."
+          onRetry={() => void current.refetch()}
+        />
+      )}
       {current.data && !plan && (
         <p className="text-sm text-muted">
           No study plan yet. A plan sets aside time for your reviews, deadlines and weakest

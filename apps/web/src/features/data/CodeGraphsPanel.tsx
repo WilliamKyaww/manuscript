@@ -5,6 +5,7 @@ import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { IconButton } from '../../components/IconButton';
 import { Input } from '../../components/Input';
+import { InlineError } from '../../components/States';
 import { useApi } from '../../lib/api/context';
 import { formatCount } from '../../lib/format';
 import { notifyError } from '../../lib/notify';
@@ -96,6 +97,12 @@ export function CodeGraphsPanel() {
         <p role="status" className="text-sm">
           {result}
         </p>
+      )}
+      {graphs.isError && (
+        <InlineError
+          message="The imported code graphs could not be loaded."
+          onRetry={() => void graphs.refetch()}
+        />
       )}
       {graphs.data && graphs.data.graphs.length === 0 && (
         <p className="text-sm text-muted">No code graphs imported.</p>

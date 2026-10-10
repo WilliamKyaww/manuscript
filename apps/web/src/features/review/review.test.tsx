@@ -308,4 +308,16 @@ describe('today', () => {
     expect(start).toHaveAttribute('href', '/review/session');
     expect(screen.getByText(/1 new card/)).toBeInTheDocument();
   });
+
+  it('says when the reviews could not be loaded, rather than that nothing is due', async () => {
+    const server = fakeServer();
+    const failing: FakeFetch = async (input, init) =>
+      new URL(String(input), 'http://localhost').pathname === '/api/review/stats'
+        ? json({ title: 'Internal error', status: 500, code: 'internal' }, 500)
+        : server.fetch(input, init);
+    renderApp('/', failing);
+    const widget = await screen.findByText('Your reviews could not be loaded.');
+    expect(widget.closest('[role="alert"]')).not.toBeNull();
+    expect(screen.queryByText('Nothing is due. Well done.')).not.toBeInTheDocument();
+  });
 });
