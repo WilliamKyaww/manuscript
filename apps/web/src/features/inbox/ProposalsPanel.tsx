@@ -165,6 +165,29 @@ function Summary({ proposal, editing }: { proposal: Proposal; editing: ReactNode
           : list it under “Related”.
         </p>
       );
+    case 'correction':
+      return (
+        <div className="space-y-2 text-sm">
+          <p>
+            In{' '}
+            <Link
+              to="/notes/$noteId"
+              params={{ noteId: payload.noteId }}
+              className="font-medium underline"
+            >
+              {payload.noteTitle}
+            </Link>
+            , your note says something the lecture material does not:
+          </p>
+          <p className="rounded-md bg-danger-subtle px-3 py-1.5 text-danger line-through decoration-1">
+            {payload.text}
+          </p>
+          <p className="rounded-md bg-success-subtle px-3 py-1.5 text-success">
+            {payload.replacement}
+          </p>
+          <p className="text-muted">{payload.explanation}</p>
+        </div>
+      );
     default:
       return (
         editing ?? (

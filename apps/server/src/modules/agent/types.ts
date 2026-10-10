@@ -34,6 +34,8 @@ export type AgentServices = Pick<
   | 'proposals'
   | 'generation'
   | 'jobs'
+  | 'plan'
+  | 'tutor'
 > & { readonly clock: Clock; readonly vault: Vault };
 
 /** Copies of vault files taken before a tool changes them, kept for undo under `.skb/history/`. */
@@ -52,6 +54,8 @@ export interface ToolContext {
   readonly services: AgentServices;
   readonly signal: AbortSignal;
   readonly snapshot: SnapshotWriter;
+  /** The chat conversation the call belongs to, if any. */
+  readonly threadId: string | null;
 }
 
 /** What a tool returns: the result for the model, and what is needed to undo it. */
@@ -93,6 +97,11 @@ export interface ToolDefinition<I, O> {
   canUndo?(context: UndoContext, record: UndoRecord<I, O>): string | null;
   /** Hidden from MCP clients even if not destructive. */
   mcp?: false;
+  /**
+   * A write that cannot be undone (it adds evidence that is never changed). It always asks, and
+   * takes the place of `undo`.
+   */
+  permanent?: true;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: tools of different input and output types share one registry; each validates its own.
@@ -100,7 +109,9 @@ export type AnyTool = ToolDefinition<any, any>;
 
 /** Declares a tool with its types inferred; a write must say how to undo it. */
 export function defineTool<I, O>(tool: ToolDefinition<I, O>): AnyTool {
-  if (tool.risk !== 'read' && !tool.undo)
+  if (tool.permanent && (tool.risk !== 'write' || tool.undo))
+    throw new Error(`The permanent tool "${tool.name}" must be a write without an undo.`);
+  if (tool.risk !== 'read' && !tool.undo && !tool.permanent)
     throw new Error(`The ${tool.risk} tool "${tool.name}" must say how to undo it.`);
   return tool;
 }

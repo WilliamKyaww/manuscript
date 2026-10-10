@@ -146,7 +146,14 @@ export function toolsForMode(mode: AgentMode, tools: readonly AnyTool[]): AnyToo
   if (mode === 'tutor')
     return tools.filter(
       (candidate) =>
-        candidate.risk === 'read' || ['create_flashcards', 'create_quiz'].includes(candidate.name),
+        candidate.risk === 'read' ||
+        [
+          'create_flashcards',
+          'create_quiz',
+          'record_answer',
+          'propose_note_correction',
+          'update_study_plan',
+        ].includes(candidate.name),
     );
   return tools.filter((candidate) => candidate.risk === 'read');
 }

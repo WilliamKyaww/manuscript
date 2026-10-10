@@ -56,6 +56,7 @@ export interface AssessmentRow {
   weight: number;
   dueAt: string | null;
   durationMinutes: number | null;
+  remainingHours: number | null;
   status: 'planned' | 'submitted' | 'marked';
   markAchieved: number | null;
   notes: string;
@@ -127,6 +128,7 @@ const COLUMNS = {
     weight: 'weight',
     dueAt: 'due_at',
     durationMinutes: 'duration_minutes',
+    remainingHours: 'remaining_hours',
     status: 'status',
     markAchieved: 'mark_achieved',
     notes: 'notes',
@@ -185,6 +187,7 @@ const toAssessment = (raw: Raw): AssessmentRow => ({
   weight: Number(raw.weight),
   dueAt: str(raw.due_at),
   durationMinutes: num(raw.duration_minutes),
+  remainingHours: num(raw.remaining_hours),
   status: raw.status as AssessmentRow['status'],
   markAchieved: num(raw.mark_achieved),
   notes: String(raw.notes ?? ''),

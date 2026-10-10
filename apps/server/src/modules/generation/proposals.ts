@@ -53,7 +53,14 @@ export interface NewProposal {
 }
 
 /** Accepting in this order lets concepts exist before the relations and aliases that use them. */
-const ORDER: Record<ProposalKind, number> = { concept: 0, alias: 1, relation: 2, link: 3, note: 4 };
+const ORDER: Record<ProposalKind, number> = {
+  concept: 0,
+  alias: 1,
+  relation: 2,
+  link: 3,
+  note: 4,
+  correction: 5,
+};
 
 export function createProposalsService(deps: ProposalsDependencies) {
   const { repo, concepts, relations, notes, learning, events, clock, ids, logger } = deps;
@@ -189,6 +196,22 @@ export function createProposalsService(deps: ProposalsDependencies) {
     return { kind: 'note', id: note.id };
   }
 
+  /**
+   * Puts the corrected words in the note. The note may have been edited since the tutor read it, so
+   * the words are found again; if they are gone there is nothing left to correct.
+   */
+  function applyCorrection(payload: Extract<ProposalPayload, { kind: 'correction' }>) {
+    const note = notes.get(payload.noteId);
+    const at = note.content.indexOf(payload.text);
+    if (at === -1)
+      throw new ConflictError(
+        `The words “${payload.text.slice(0, 60)}” are no longer in this note.`,
+      );
+    const content = `${note.content.slice(0, at)}${payload.replacement}${note.content.slice(at + payload.text.length)}`;
+    notes.update(note.id, { content, baseHash: note.hash });
+    return { kind: 'note', id: note.id };
+  }
+
   function appendRelated(payload: Extract<ProposalPayload, { kind: 'link' }>) {
     const note = notes.get(payload.noteId);
     const link = `- ${formatWikilink({ target: payload.target.title })}`;
@@ -266,6 +289,9 @@ export function createProposalsService(deps: ProposalsDependencies) {
       }
       case 'link':
         result = payload.variant === 'mention' ? insertMention(payload) : appendRelated(payload);
+        break;
+      case 'correction':
+        result = applyCorrection(payload);
         break;
       default:
         result = acceptNote(row, payload, edit);

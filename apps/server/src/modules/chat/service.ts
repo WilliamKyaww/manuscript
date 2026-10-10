@@ -20,6 +20,10 @@ import {
   type SendMessageInput,
   SendMessageSchema,
   type ToolPart,
+  TUTOR_RULES,
+  type TutorTurn,
+  tutorGuidance,
+  tutorReplyProblems,
   UNTRUSTED_RULE,
   wrapUntrusted,
 } from '@skb/core';
@@ -170,15 +174,33 @@ export function createChatService(deps: ChatDependencies) {
     return filter;
   }
 
+  /** The conversation as a tutor sees it, without the reply being written. */
+  function tutorTurns(threadId: string, exclude?: string): TutorTurn[] {
+    return repo
+      .messages(threadId)
+      .filter((message) => message.id !== exclude)
+      .map((message) => ({
+        role: message.role === 'user' ? ('student' as const) : ('tutor' as const),
+        text: plainText(message.parts),
+        tools: message.parts.flatMap((part) =>
+          part.type === 'tool' && part.state === 'ok' ? [part.tool] : [],
+        ),
+      }));
+  }
+
   function instructionsFor(
     thread: ThreadRow,
     input: {
       mentions: readonly Mention[];
       selection: string | undefined;
       noteId: string | undefined;
+      /** The assistant message being written, left out of the tutor's view of the conversation. */
+      replying: string;
     },
   ): string {
     const lines = [SCOPE_RULES[thread.scope], CITING];
+    if (thread.mode === 'tutor')
+      lines.push(TUTOR_RULES, tutorGuidance(tutorTurns(thread.id, input.replying)).instruction);
     if (input.noteId)
       lines.push(
         `The note the student has open has the id ${input.noteId}; read it with the tools when it helps.`,
@@ -384,6 +406,17 @@ export function createChatService(deps: ChatDependencies) {
       for (const key of checked.unknown) if (!dropped.includes(key)) dropped.push(key);
     }
     const said = plainText(parts);
+    if (thread.mode === 'tutor' && said.trim()) {
+      // A guard, not a gate: the step decides what the model is asked for; this notices when it did not comply.
+      const guidance = tutorGuidance(tutorTurns(thread.id, assistant.id));
+      const problems = tutorReplyProblems(guidance.step, said);
+      if (problems.length > 0)
+        logger.warn('chat.tutor.off-script', {
+          threadId: thread.id,
+          step: guidance.step,
+          problems,
+        });
+    }
     const usedTools = parts.some((part) => part.type === 'tool' && part.state === 'ok');
     if (said.trim() && (passages.length > 0 || !usedTools)) {
       const grounding =
@@ -580,6 +613,7 @@ export function createChatService(deps: ChatDependencies) {
           mentions: input.mentions,
           selection: input.context?.selection,
           noteId: input.context?.noteId,
+          replying: assistant.id,
         }),
         userIndex,
         request: input.text,

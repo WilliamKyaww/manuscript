@@ -41,6 +41,9 @@ import { createLearningService, type LearningService } from './learning/service'
 import { createMasteryRepository } from './mastery/repository';
 import { createMasteryService, type MasteryService } from './mastery/service';
 import { createNotesModule, type NotesModule } from './notes/module';
+import { createPlanRepository } from './plan/repository';
+import { createExamRetention } from './plan/retention';
+import { createPlanService, type PlanService } from './plan/service';
 import { type AttemptsService, createAttemptsService } from './practice/attempts';
 import { createAttemptsRepository } from './practice/attempts-repository';
 import { createLearnService, type LearnService } from './practice/learn';
@@ -52,6 +55,8 @@ import { createSearchService, type SearchService } from './search/service';
 import { createSettingsService, type SettingsService } from './settings/service';
 import { createSourcesModule, type SourcesModule } from './sources/module';
 import { createParsers } from './sources/parsers/index';
+import { createTutorRepository } from './tutor/repository';
+import { createTutorService, type TutorService } from './tutor/service';
 
 /**
  * Domain modules built from the application context (architecture.md §3). Routes receive these;
@@ -87,6 +92,8 @@ export interface AppModules {
   readonly links: LinkSuggester;
   readonly agent: AgentModule;
   readonly chat: ChatService;
+  readonly plan: PlanService;
+  readonly tutor: TutorService;
   start(options: { watch: boolean }): Promise<void>;
   close(): Promise<void>;
 }
@@ -207,6 +214,7 @@ export function createModules(ctx: AppContext): AppModules {
     ['createCard', 'updateCard', 'deleteCard', 'bulk', 'deleteSet', 'importSet'],
     stale,
   );
+  const examRetention = createExamRetention({ learning: learningRepo, settings });
   const reviews = notifyingAfter(
     createReviewService({
       repo: cardsRepo,
@@ -214,6 +222,7 @@ export function createModules(ctx: AppContext): AppModules {
       settings,
       clock: ctx.clock,
       ids: ctx.ids,
+      retention: examRetention.retention,
     }),
     ['rate', 'undo'],
     stale,
@@ -250,6 +259,23 @@ export function createModules(ctx: AppContext): AppModules {
     ['answer', 'submit', 'grade'],
     stale,
   );
+  const tutor = createTutorService({
+    repo: createTutorRepository(ctx.db),
+    attemptsRepo,
+    attempts,
+    questions,
+    clock: ctx.clock,
+    ids: ctx.ids,
+  });
+  const plan = createPlanService({
+    repo: createPlanRepository(ctx.db),
+    settings,
+    reviews,
+    learning,
+    mastery,
+    clock: ctx.clock,
+    ids: ctx.ids,
+  });
   const learn = createLearnService({
     repo: attemptsRepo,
     questionsRepo,
@@ -362,6 +388,8 @@ export function createModules(ctx: AppContext): AppModules {
       proposals,
       generation,
       jobs,
+      plan,
+      tutor,
       clock: ctx.clock,
       vault: ctx.vault,
     },
@@ -411,6 +439,8 @@ export function createModules(ctx: AppContext): AppModules {
     links,
     agent,
     chat,
+    plan,
+    tutor,
     async start(options) {
       await notes.start(options);
       jobs.start();

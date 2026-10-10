@@ -76,7 +76,8 @@ const clip = (text: string) =>
   text.length > SUMMARY_LIMIT ? `${text.slice(0, SUMMARY_LIMIT - 1)}…` : text;
 
 /** MCP clients cannot be asked for approval, so destructive tools are not offered to them at all. */
-export const offeredToMcp = (tool: AnyTool) => tool.risk !== 'destructive' && tool.mcp !== false;
+export const offeredToMcp = (tool: AnyTool) =>
+  tool.risk !== 'destructive' && tool.mcp !== false && !tool.permanent;
 
 export function createToolRegistry(deps: ToolRegistryDependencies) {
   const { actions, snapshots, services, clock, ids, logger } = deps;
@@ -96,6 +97,7 @@ export function createToolRegistry(deps: ToolRegistryDependencies) {
     risk: tool.risk,
     permission: deps.permissions()[tool.name] ?? null,
     mcp: offeredToMcp(tool),
+    permanent: tool.permanent === true,
   });
 
   function describeSafely(tool: AnyTool, input: unknown, output?: unknown): string {
@@ -205,6 +207,7 @@ export function createToolRegistry(deps: ToolRegistryDependencies) {
         risk: tool.risk,
         items: Math.max(1, tool.items?.(input) ?? 1),
         override: deps.permissions()[tool.name],
+        permanent: tool.permanent,
       });
       return {
         ok: true as const,
@@ -227,6 +230,7 @@ export function createToolRegistry(deps: ToolRegistryDependencies) {
         risk: tool.risk,
         items,
         override: deps.permissions()[tool.name],
+        permanent: tool.permanent,
       });
       const summary = describeSafely(tool, input);
 
@@ -285,6 +289,7 @@ export function createToolRegistry(deps: ToolRegistryDependencies) {
             services,
             signal: options.signal ?? new AbortController().signal,
             snapshot: countingWriter,
+            threadId: options.threadId ?? null,
           },
           input,
         );
@@ -384,7 +389,11 @@ export function createToolRegistry(deps: ToolRegistryDependencies) {
         return { status: 'error', tool: name, message: checked.error, actionId: null };
       }
       const { tool, input } = checked;
-      const risk = decideApproval({ risk: tool.risk, items: tool.items?.(input) ?? 1 }).risk;
+      const risk = decideApproval({
+        risk: tool.risk,
+        items: tool.items?.(input) ?? 1,
+        permanent: tool.permanent,
+      }).risk;
       const reason = 'The user declined.';
       const actionId = record(
         tool,

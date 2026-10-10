@@ -34,6 +34,11 @@ export interface ReviewDependencies {
   settings: SettingsService;
   clock: Clock;
   ids: IdFactory;
+  /**
+   * The retention a module's cards are scheduled for, if it differs from the student's setting —
+   * raised in the fortnight before an exam (task 14.07).
+   */
+  retention?: (moduleId: string | null, desired: number, now: Date) => number;
 }
 
 /** When nothing else is left, learning faces due this soon are shown early (as in Anki). */
@@ -60,11 +65,19 @@ function interleaveBySet<T extends { setId: string }>(faces: readonly T[]): T[] 
 export function createReviewService(deps: ReviewDependencies) {
   const { repo, cards, settings, clock, ids } = deps;
   const scheduler = () => createScheduler(settings.review());
+  /** The scheduler for a card set's module: exam-aware where the student has an exam coming. */
+  const schedulerFor = (setId: string, now: Date) => {
+    const config = settings.review();
+    const desired =
+      deps.retention?.(repo.set(setId)?.moduleId ?? null, config.desiredRetention, now) ??
+      config.desiredRetention;
+    return createScheduler({ ...config, desiredRetention: desired });
+  };
 
   const item = (face: FaceRow, now: Date, setTitles?: Map<string, string>): ReviewItem => {
     const [card] = cards.cardsOf([cards.requireCard(face.cardId)]) as [Card];
     const content = faceContent(card, face.ordinal);
-    const preview = scheduler().preview(face.schedule, now);
+    const preview = schedulerFor(card.setId, now).preview(face.schedule, now);
     return {
       cardId: card.id,
       ordinal: face.ordinal,
@@ -186,7 +199,7 @@ export function createReviewService(deps: ReviewDependencies) {
         if (input.sessionId && !repo.session(input.sessionId))
           throw new ValidationError('That review session does not exist.');
         const previous: Schedule = face.schedule;
-        const next = scheduler().rate(previous, input.rating, now);
+        const next = schedulerFor(card.setId, now).rate(previous, input.rating, now);
         repo.saveSchedule(input.cardId, input.ordinal, next);
         const logId = ids('review');
         repo.insertLog({
