@@ -78,6 +78,11 @@ function resultLinks(
     }
     case 'create_quiz':
       return [{ label: 'Open Practice', to: '/practice' }];
+    case 'create_study_plan':
+    case 'update_study_plan':
+      return [{ label: 'Open the plan', to: '/plan' }];
+    case 'propose_note_correction':
+      return [{ label: 'Review in the Inbox', to: '/inbox' }];
     case 'create_concept':
       return id
         ? [{ label: 'Open concept', to: '/concepts/$conceptId', params: { conceptId: id } }]

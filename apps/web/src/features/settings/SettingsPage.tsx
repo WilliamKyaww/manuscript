@@ -14,6 +14,7 @@ import { healthQuery } from '../../lib/queries';
 import { AgentSettingsSection } from '../agent/AgentSettingsSection';
 import { AiSettingsSection } from '../ai/settings/AiSettingsSection';
 import { NotesSettingsSection } from './NotesSettingsSection';
+import { PlanSettingsSection } from './PlanSettingsSection';
 import { ReviewSettingsSection } from './ReviewSettingsSection';
 
 const THEME_OPTIONS: {
@@ -46,6 +47,7 @@ export function SettingsPage() {
       <VaultSection />
       <NotesSettingsSection />
       <ReviewSettingsSection />
+      <PlanSettingsSection />
       <AiSettingsSection />
       <AgentSettingsSection />
       <AppearanceSection />

@@ -182,6 +182,8 @@ function AssessmentDialog({
   const [dueDate, setDueDate] = useState(assessment?.dueAt?.slice(0, 10) ?? '');
   const [dueTime, setDueTime] = useState(assessment?.dueAt?.slice(11, 16) ?? '');
   const [mark, setMark] = useState(assessment?.markAchieved?.toString() ?? '');
+  const [hours, setHours] = useState(assessment?.remainingHours?.toString() ?? '');
+  const [minutes, setMinutes] = useState(assessment?.durationMinutes?.toString() ?? '');
   const [submitted, setSubmitted] = useState(assessment?.status === 'submitted');
   const [error, setError] = useState<string | null>(null);
   const saving = assessment ? actions.updateAssessment : actions.createAssessment;
@@ -202,6 +204,11 @@ function AssessmentDialog({
       weight: percent / 100,
       dueAt: dueDate ? (dueTime ? `${dueDate}T${dueTime}` : dueDate) : null,
       markAchieved,
+      remainingHours: numberOrNull(hours),
+      durationMinutes: (() => {
+        const value = numberOrNull(minutes);
+        return value === null ? null : Math.round(value);
+      })(),
       ...(status ? { status } : {}),
     };
     const options = {
@@ -285,6 +292,33 @@ function AssessmentDialog({
                 inputMode="decimal"
                 value={mark}
                 onChange={(event) => setMark(event.target.value)}
+              />
+            )}
+          </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field
+            label="Hours left"
+            hint="Your estimate for work still to do. The study plan spreads it up to the deadline."
+          >
+            {(id, hint) => (
+              <Input
+                id={id}
+                aria-describedby={hint}
+                inputMode="decimal"
+                value={hours}
+                onChange={(event) => setHours(event.target.value)}
+              />
+            )}
+          </Field>
+          <Field label="Length (minutes)" hint="For an exam: how long a mock exam should be.">
+            {(id, hint) => (
+              <Input
+                id={id}
+                aria-describedby={hint}
+                inputMode="numeric"
+                value={minutes}
+                onChange={(event) => setMinutes(event.target.value)}
               />
             )}
           </Field>

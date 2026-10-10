@@ -1,6 +1,7 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { SectionPlaceholder } from '../features/placeholder/SectionPlaceholder';
 import { healthyFetch, renderApp, resetUiState } from '../test/renderApp';
 import { SECTIONS } from './sections';
 
@@ -23,10 +24,24 @@ describe('application shell', () => {
     expect(screen.getByRole('main')).toBeInTheDocument();
   });
 
-  it('renders an honest placeholder for sections that are not built yet', async () => {
-    renderApp('/plan');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Plan' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Plan arrives in Phase 14' })).toBeInTheDocument();
+  it('renders an honest placeholder for a section that is not built yet', () => {
+    // Every section has a page now; the placeholder stays for the next one that does not.
+    render(
+      <SectionPlaceholder
+        section={{
+          id: 'plan',
+          label: 'Next section',
+          path: '/next',
+          group: 'learning',
+          description: 'Something that is coming.',
+          phase: 99,
+        }}
+      />,
+    );
+    expect(screen.getByRole('heading', { level: 1, name: 'Next section' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Next section arrives in Phase 99' }),
+    ).toBeInTheDocument();
   });
 
   it('shows a not-found page inside the shell for unknown addresses', async () => {
