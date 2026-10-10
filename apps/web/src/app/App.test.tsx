@@ -151,6 +151,11 @@ describe('keyboard and command palette', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Keyboard shortcuts' });
     expect(within(dialog).getByText('Open the command palette')).toBeInTheDocument();
     expect(within(dialog).getByText('Collapse or expand the sidebar')).toBeInTheDocument();
+    // The keys of each page are listed too, wherever the sheet is opened.
+    const review = within(dialog).getByRole('region', { name: 'Review session' });
+    expect(within(review).getByText('Rate Good')).toBeInTheDocument();
+    expect(within(review).getAllByText('Show the answer')).toHaveLength(1);
+    expect(within(dialog).getByRole('region', { name: 'Notes list' })).toHaveTextContent('F2');
   });
 });
 

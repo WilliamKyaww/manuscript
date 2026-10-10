@@ -27,6 +27,7 @@ import { locatorHref } from '../../library/links';
 import { cardQuery } from '../api';
 import { CardEditor } from '../CardEditor';
 import { CardMarkdown } from '../CardMarkdown';
+import { REVIEW_KEYS, type ReviewKey } from './keys';
 import { SessionSummaryView } from './SessionSummaryView';
 import { useReviewSession } from './useReviewSession';
 
@@ -58,15 +59,9 @@ export function SessionPage() {
   const active = state.phase === 'reviewing' && !editing;
 
   /** A session key: it acts (and keeps the key from the page) only when its handler says it did. */
-  const key = (
-    id: string,
-    keys: string,
-    description: string,
-    handler: () => boolean,
-  ): ShortcutDefinition => ({
+  const key = (id: ReviewKey, handler: () => boolean): ShortcutDefinition => ({
     id: `review.${id}`,
-    keys,
-    description,
+    ...REVIEW_KEYS[id],
     group: 'Review',
     handler: (event) => {
       if (handler()) event.preventDefault();
@@ -78,24 +73,24 @@ export function SessionPage() {
   };
   const reveal = () => act(active && !state.revealed, session.reveal);
   useShortcutList([
-    key('reveal', 'space', 'Show the answer', reveal),
-    key('reveal-enter', 'enter', 'Show the answer', reveal),
+    key('reveal', reveal),
+    key('reveal-enter', reveal),
     ...([1, 2, 3, 4] as const).map((rating) =>
-      key(`rate-${rating}`, String(rating), `Rate ${RATING_LABELS[rating]}`, () =>
+      key(`rate-${rating}`, () =>
         act(active && state.revealed && !state.busy, () => session.rate(rating)),
       ),
     ),
-    key('undo', 'mod+z', 'Undo the last rating', () => act(!editing, session.undo)),
-    key('edit', 'e', 'Edit the card', () => act(active, () => setEditing(true))),
-    key('suspend', 's', 'Suspend the card', () => act(active, session.suspend)),
-    key('bury', 'b', 'Bury until tomorrow', () => act(active, session.bury)),
-    key('source', 'o', 'Open the source', () =>
+    key('undo', () => act(!editing, session.undo)),
+    key('edit', () => act(active, () => setEditing(true))),
+    key('suspend', () => act(active, session.suspend)),
+    key('bury', () => act(active, session.bury)),
+    key('source', () =>
       act(
         active && Boolean(current?.locator),
         () => current?.locator && window.open(locatorHref(current.locator), '_blank', 'noopener'),
       ),
     ),
-    key('focus', 'f', 'Focus mode', () => act(!editing, () => setFocus((value) => !value))),
+    key('focus', () => act(!editing, () => setFocus((value) => !value))),
   ]);
 
   const total = state.done + state.left;

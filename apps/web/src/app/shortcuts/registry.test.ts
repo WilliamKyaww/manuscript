@@ -51,6 +51,9 @@ describe('keyLabels', () => {
   it('uses Windows names', () => {
     expect(keyLabels('mod+shift+f', false)).toEqual(['Ctrl', 'Shift', 'F']);
     expect(keyLabels('escape', false)).toEqual(['Esc']);
+    expect(keyLabels('f2', false)).toEqual(['F2']);
+    expect(keyLabels('mod+click', false)).toEqual(['Ctrl', 'Click']);
+    expect(keyLabels('[[', false)).toEqual(['[[']);
   });
 
   it('uses Apple symbols', () => {
