@@ -236,7 +236,8 @@ working.
 
 - Domain errors are typed (`NotFoundError`, `ConflictError`, `ValidationError`, `PolicyDeniedError`, …)
   and mapped to RFC 9457 problem-details JSON by one error middleware.
-- Structured JSON logs to `.skb/logs/` (rotated) and the console in development; secrets redacted.
+- Structured JSON logs to `.skb/logs/` (one file per day, rolled over at 5 MB, kept for seven days) and the
+  console; secrets redacted when the line is made. The Diagnostics page reads them back (`/api/diagnostics/logs`).
 - The UI shows actionable messages; technical details go to the log.
 - Trouble with the machine is mapped too (Phase 17, `systemProblem`): a file that is gone, read-only or in
   use, a full disk, too many open files, a name that is too long, a database that is busy, full or

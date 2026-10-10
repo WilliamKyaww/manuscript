@@ -6,6 +6,7 @@ feature it describes is complete.
 | Guide | Covers |
 |---|---|
 | [Your data: leaving, moving and bringing things in](./portability.md) | What lives where, exporting everything in open formats, restoring into a new vault, concepts as notes, opening another vault or an Obsidian vault in place, importing a Graphify graph of a repository |
+| [When something is wrong](./troubleshooting.md) | Messages at start-up and what to do, files that cannot be written or read, a damaged database and how to go back to a backup, AI that cannot be reached, the diagnostics bundle |
 | [The study loop](./study-loop.md) | How the pieces fit together: lecture, study materials, graph, practice, mastery, plan and notes — and what stays in your hands |
 | [Searching and finding notes](./search.md) | The quick switcher (Ctrl+O), the command palette and full-text search (Ctrl+Shift+F): syntax, filters, ranking |
 | [Lecture material: the library](./sources.md) | Importing slides, PDFs and documents, supported formats and limits, reading them, searching them down to the page or slide, organising the `Sources` folder by hand, retrying and deleting |

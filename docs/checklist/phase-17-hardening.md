@@ -1,6 +1,6 @@
 # Phase 17 — Web application hardening
 
-**Status:** Not started · **Branch:** `phase/17-hardening`
+**Status:** Complete · **Branch:** `phase/17-hardening`
 
 ## Objective
 Make the web application robust for daily use: backups, crash safety, performance at scale, security
@@ -15,17 +15,17 @@ Phase 16.
 ## Atomic tasks
 - [x] **17.01** Automatic daily SQLite backups (`VACUUM INTO`, rotation) and pre-migration backups
 - [x] **17.02** Crash-safety audit: atomic writes everywhere, WAL checkpointing, startup recovery of interrupted jobs
-- [ ] **17.03** Performance pass against budgets with a 10k-note / 100k-chunk fixture
+- [x] **17.03** Performance pass against budgets with a 10k-note / 100k-chunk fixture
 - [x] **17.04** Security review (localhost threat model re-check, CSP, dependency audit, secrets handling)
 - [x] **17.05** Error-handling audit (every API error mapped; UI messages actionable)
 - [x] **17.06** Diagnostics page (log viewer; export a diagnostics bundle without secrets)
 - [x] **17.07** Edge cases: huge PDFs, unusual encodings, Unicode and long Windows paths, read-only files
 - [x] **17.08** Offline audit: everything non-AI works without network; AI degrades gracefully
 - [x] **17.09** Accessibility re-check of all screens built since Phase 2
-- [ ] **17.10** Docs: troubleshooting guide; STATE/FEATURES/journal updated
+- [x] **17.10** Docs: troubleshooting guide; STATE/FEATURES/journal updated
 
 ## Gate
-- [ ] All tasks `[x]` · [ ] verify + E2E green · [ ] docs updated · [ ] merged
+- [x] All tasks `[x]` · [x] verify + E2E green · [x] docs updated · [x] merged
 
 ## Recommended commit messages
 ```text

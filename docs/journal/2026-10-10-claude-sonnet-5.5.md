@@ -378,3 +378,72 @@ Settings → Data, Graphify import.
 
 Phase 17 — hardening (`phase/17-hardening`): backups and startup recovery first (the export is a manual copy; the
 database needs its own automatic one).
+
+---
+
+## Phase 17 — Web application hardening (`phase/17-hardening`)
+
+**Time:** 10 October 2026 (late afternoon and evening). **Model:** Claude Sonnet 5.5.
+**Work:** backups, a crash-safety audit, the performance pass, a security review, an error-handling audit, a
+diagnostics page, edge cases from real vaults, an offline audit and an accessibility sweep.
+
+### What was done
+
+1. **Backups (17.01).** `VACUUM INTO` copies in `.skb/backups`: daily (shortly after start-up when none is under a
+   day old, hourly check), before pending migrations on a database that holds data, and on request; 14/5/10 kept.
+   Settings → Data lists them and says how to go back to one.
+2. **Crash safety (17.02).** Audited every place that writes: three could leave something half-made under a real
+   name — the copies kept for undo (a plain `copyFileSync`), a restored vault (written into its target), and
+   `.partial` files of cut-short exports and backups. Fixed, and tested; WAL is folded in on a clean close; interrupted
+   jobs and `processing` sources were already recovered.
+3. **Performance (17.03).** `npm run test:perf` on mains power, at below-normal priority: **all budgets met** (see
+   below). The four figures that STATE had listed as over were load.
+4. **Security review (17.04).** A test now walks all 188 registered routes (MCP and file routes included) and
+   tries each without a token, with a wrong one, cross-site, as a cookie-only state change from a foreign origin and
+   under a foreign Host. `npm audit`: nothing. The review is in architecture.md §8.
+5. **Errors (17.05).** Disk, file and database trouble mapped to problems that say what to do (a read-only file is
+   **423**, because the editor reads 409 as "the file changed on disk"); JSON bodies capped at 8 MB.
+6. **Diagnostics (17.06).** A log file per day in `.skb/logs`, a `/diagnostics` page (state, background jobs,
+   backups, the log by level and text) and a support bundle without notes or keys.
+7. **Edge cases (17.07).** Unicode names (both normal forms), UTF-16 and Latin-1 notes (never rewritten), a
+   read-only note, Windows' 260-character limit (refused in words), and supported files in Sources that cannot be read
+   (listed as failed with the reason instead of left out).
+8. **Offline (17.08).** Every route is visited with no request leaving the origin; a provider that cannot be reached
+   is said to be unreachable at any depth of the error's causes.
+9. **Accessibility (17.09).** A sweep over pages *with* content in both themes. It found a real problem: white text
+   on the light-red danger button in the dark theme. Fixed with a per-theme text colour.
+10. **Docs (17.10).** `docs/guide/troubleshooting.md`, the backups section of the portability guide, ADR-0040,
+    architecture §5/§8/§10, FEATURES, STATE, debt (TD-13).
+
+### Decisions
+
+- **ADR-0040:** backups are `VACUUM INTO` copies in the vault (and the export remains the off-disk copy); logs are
+  per-day JSON files; machine trouble is said as such.
+- **A supported file that cannot be read is listed as failed**, which refines ADR-0028's "unsupported files are
+  simply files" for kinds the application reads.
+
+### Problems encountered
+
+- **A 409 for a read-only file** would have made the editor claim a conflict; `423` it is.
+- **`verify` took 15 minutes** on two workers with the machine busy (import 95 % of the time): the cost is module
+  evaluation per file, not the tests.
+- **Heredocs and backslashes again** (a regex and a Windows path in generated code), a `Write`-tool script survives;
+  and Biome turned an import into a type import while a file did not parse, which only the type-check noticed.
+
+### Tests run
+
+| Command | Result |
+|---|---|
+| `npm run verify` (two workers, below-normal priority) | **Pass** — type-check, Biome, **849** Vitest tests (core 236, server 436, web 177), build, smoke |
+| `npx playwright test` | **118 of 119** in the full run; the one that failed (`shell.spec` axe, `/notes` light theme) timed out at 30 s on a busy machine and **passed twice** on its own (once together with the accessibility spec, which seeds the same data) — treated as load, not a defect, and recorded in STATE → Broken |
+| `npm run test:perf` | **All budgets met** (mains power, below-normal priority): search p95 40 ms (112 ms with 10,000 PDF pages), graph first build 2.5 s, from cache p95 175 ms, after an edit 755 ms, retrieval p95 434 ms, full index of 10,000 notes 14.7 s |
+
+### Unresolved issues
+
+- TD-13: a backup runs on the main thread (fine at the sizes a student has).
+- Real-provider checks from Phases 10–15 are still the user's.
+
+### Next steps
+
+Phase 18 — Electron (`phase/18-electron`). It needs the Electron binary; the environment pitfalls in AGENTS.md
+(`ELECTRON_RUN_AS_NODE`) apply.
