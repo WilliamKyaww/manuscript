@@ -1,6 +1,15 @@
+import { createHash } from 'node:crypto';
 import { existsSync, statSync } from 'node:fs';
 import path from 'node:path';
-import { detectSourceKind, type IdFactory, MAX_SOURCE_BYTES } from '@skb/core';
+import {
+  detectSourceKind,
+  EXTENSION_MEDIA_TYPES,
+  extensionOf,
+  type IdFactory,
+  MAX_SOURCE_BYTES,
+  SOURCE_EXTENSIONS,
+  SOURCE_MEDIA_TYPES,
+} from '@skb/core';
 import type { JobQueue } from '../../jobs/queue';
 import type { Clock } from '../../shared/clock';
 import type { Logger } from '../../shared/logger';
@@ -61,6 +70,14 @@ export function createSourceReconciler(deps: ReconcilerDependencies): SourceReco
     }
   };
 
+  /** Why a file in Sources cannot be read at all, said so that the library can show it. */
+  const unreadable = (size: number): string | null => {
+    if (size === 0) return 'This file is empty.';
+    if (size > MAX_SOURCE_BYTES)
+      return `This file is larger than ${MAX_SOURCE_BYTES / 1024 / 1024} MB, the most that can be read. Split it into parts or export fewer pages.`;
+    return null;
+  };
+
   const reconcileFile = async (file: FileState, touched: Set<string>) => {
     const absolute = vault.resolve(file.path);
     let size: number;
@@ -76,6 +93,14 @@ export function createSourceReconciler(deps: ReconcilerDependencies): SourceReco
 
     const row = repo.byPath(file.path);
     if (row) {
+      const rejected = unreadable(size);
+      if (rejected) {
+        if (row.status !== 'failed' || row.error !== rejected || row.sizeBytes !== size) {
+          repo.update(row.id, { sizeBytes: size, mtimeMs, status: 'failed', error: rejected });
+          touched.add(row.id);
+        }
+        return;
+      }
       if (row.sizeBytes === size && row.mtimeMs === mtimeMs) {
         if (row.missingAt) {
           repo.update(row.id, { missingAt: null });
@@ -102,11 +127,29 @@ export function createSourceReconciler(deps: ReconcilerDependencies): SourceReco
       return;
     }
 
-    if (size === 0 || size > MAX_SOURCE_BYTES) return;
-    const detected = detectSourceKind(file.path, readHead(absolute), size <= 4096);
-    // Unsupported files in Sources/ are simply files; they are not part of the library.
-    if (!detected.ok) return;
-    const sha256 = await sha256File(absolute);
+    const detectedKind = detectSourceKind(file.path, readHead(absolute), size <= 4096);
+    // Files of a kind this application does not read are simply files; they are not part of the
+    // library. A file of a supported kind that cannot be read (empty, not what its name says, too
+    // large) is listed as failed with the reason, so that it is not quietly missing.
+    const extension = extensionOf(file.path);
+    const claimed = SOURCE_EXTENSIONS[extension];
+    if (!detectedKind.ok && !claimed) return;
+    const detected = detectedKind.ok
+      ? detectedKind
+      : {
+          ok: true as const,
+          kind: claimed as NonNullable<typeof claimed>,
+          mediaType:
+            EXTENSION_MEDIA_TYPES[extension] ??
+            SOURCE_MEDIA_TYPES[claimed as NonNullable<typeof claimed>] ??
+            'application/octet-stream',
+        };
+    const rejected = unreadable(size) ?? (detectedKind.ok ? null : detectedKind.reason);
+    // A file that is the right kind but cannot be read is listed as failed, with the reason, rather than
+    // being quietly left out of the library.
+    const sha256 = rejected
+      ? createHash('sha256').update(`${file.path}:${size}:${mtimeMs}`).digest('hex')
+      : await sha256File(absolute);
     if (repo.byPath(file.path)) return;
     const candidates = repo.bySha(sha256);
     const place = {
@@ -149,8 +192,8 @@ export function createSourceReconciler(deps: ReconcilerDependencies): SourceReco
       sizeBytes: size,
       mtimeMs,
       pageCount: null,
-      status: 'pending',
-      error: null,
+      status: rejected ? 'failed' : 'pending',
+      error: rejected,
       moduleCode: place.moduleCode,
       metadataJson: '{}',
       warningsJson: '[]',
@@ -159,7 +202,7 @@ export function createSourceReconciler(deps: ReconcilerDependencies): SourceReco
       createdAt: now(),
       ingestedAt: null,
     });
-    enqueueIngest(queue, id);
+    if (!rejected) enqueueIngest(queue, id);
     touched.add(id);
     logger.info('Added a file found in the Sources folder to the library', { path: file.path });
   };

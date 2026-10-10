@@ -20,7 +20,7 @@ import { onServerEvent } from '../../lib/events';
 import { formatBytes, formatCount, formatDateTime } from '../../lib/format';
 import { notifyError } from '../../lib/notify';
 import { Field } from '../learning/Field';
-import { dataKeys, dataOverviewQuery, useDataActions } from './api';
+import { backupsQuery, dataKeys, dataOverviewQuery, useBackupActions, useDataActions } from './api';
 import { CodeGraphsPanel } from './CodeGraphsPanel';
 
 /**
@@ -105,6 +105,7 @@ export function DataSection() {
           <RestorePanel overview={overview.data} busy={busy} />
           <VaultsPanel overview={overview.data} />
           <ConceptNotesPanel />
+          <BackupsPanel />
           <RescanPanel busy={busy} />
           <CodeGraphsPanel />
         </div>
@@ -420,6 +421,54 @@ function ConceptNotesPanel() {
           {result}
         </p>
       )}
+    </Panel>
+  );
+}
+
+function BackupsPanel() {
+  const api = useApi();
+  const backups = useQuery(backupsQuery(api));
+  const actions = useBackupActions();
+  const data = backups.data;
+  return (
+    <Panel
+      title="Database backups"
+      description="Your notes are files; everything else (concepts, cards, reviews, answers, chats) is in one database. A copy is made once a day while Manuscript is open and before an update changes the database."
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          loading={actions.backUpNow.isPending}
+          onClick={() => actions.backUpNow.mutate(undefined, { onError: notifyError })}
+        >
+          Back up now
+        </Button>
+        {data && (
+          <span className="text-xs text-muted">
+            Kept in <code className="font-mono">{data.folder}</code> — the last {data.keep.daily}{' '}
+            daily ones, {data.keep.migration} from before updates and {data.keep.manual} made by
+            hand.
+          </span>
+        )}
+      </div>
+      {data && data.backups.length === 0 && <p className="text-sm text-muted">No backups yet.</p>}
+      {data && data.backups.length > 0 && (
+        <ul aria-label="Backups" className="divide-y divide-border rounded-md border border-border">
+          {data.backups.slice(0, 8).map((backup) => (
+            <li key={backup.name} className="flex flex-wrap items-center gap-x-3 px-3 py-2 text-sm">
+              <span className="min-w-0 flex-1 break-all font-mono text-xs">{backup.name}</span>
+              <Badge>{backup.reason === 'migration' ? 'before an update' : backup.reason}</Badge>
+              <span className="text-xs text-muted">
+                {formatBytes(backup.sizeBytes)} · {formatDateTime(new Date(backup.createdAt))}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="text-xs text-muted">
+        To go back to one: close Manuscript, replace <code>.skb/skb.db</code> in the vault with the
+        backup (and delete <code>skb.db-wal</code> and <code>skb.db-shm</code> beside it), then
+        start again. <code>docs/guide/portability.md</code> has the steps.
+      </p>
     </Panel>
   );
 }

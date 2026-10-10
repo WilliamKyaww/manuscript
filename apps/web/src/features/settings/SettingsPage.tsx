@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { Keyboard, Monitor, Moon, Sun } from 'lucide-react';
 import { RadioGroup } from 'radix-ui';
 import type { ReactNode } from 'react';
@@ -187,6 +188,11 @@ function AboutSection() {
           ]}
         />
       )}
+      <p className="mt-3 text-sm">
+        <Link to="/diagnostics" className="text-accent underline">
+          Diagnostics, the log and a bundle for support
+        </Link>
+      </p>
     </StickySection>
   );
 }

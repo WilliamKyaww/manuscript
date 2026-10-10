@@ -100,6 +100,27 @@ If your coursework or dissertation has a code repository, you can map it with
 - The file is checked as untrusted input and limited (50,000 nodes, 250,000 edges, 60 MB). The graph is stored
   in your data (and exported); the original `graph.json` is not kept in the vault.
 
+## Backups of the database
+
+Your notes are files, and your sync tool or Git can look after them. Everything else — concepts, cards and
+their schedules, reviews and answers, the Inbox, chats, plans — is in the database `.skb/skb.db`, and
+Manuscript keeps copies of it in `.skb/backups`:
+
+- **a daily copy**, made shortly after Manuscript starts if there is none under a day old, and again each
+  day it stays open (the last 14 are kept);
+- **a copy before an update changes the database** (the last 5 are kept; a brand-new database has nothing to
+  keep);
+- **a copy you ask for** with **Settings → Data → Back up now** (the last 10 are kept).
+
+Copies are made by SQLite itself, so they are consistent even while you work, and a copy is never left
+half-written. They hold the database only; the files are the vault. They are in the vault's hidden folder, so
+**copy them elsewhere** (or use **Export everything**) if you want protection from losing the disk.
+
+**Going back to a copy.** Close Manuscript. In the vault, rename `.skb\skb.db` (keep it, just in case),
+delete `skb.db-wal` and `skb.db-shm` beside it, copy the backup into `.skb` and name it `skb.db`. Start
+Manuscript again: the index is brought up to date with the files, and everything you did since the copy is
+what you lose.
+
 ## Reading the files again
 
 **Read the files again** brings the index up to date with the files, if you changed them while Manuscript was

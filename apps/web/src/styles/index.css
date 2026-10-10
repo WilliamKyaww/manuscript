@@ -26,6 +26,7 @@
   --color-warning: var(--skb-warning);
   --color-warning-subtle: var(--skb-warning-subtle);
   --color-danger: var(--skb-danger);
+  --color-danger-contrast: var(--skb-danger-contrast);
   --color-danger-subtle: var(--skb-danger-subtle);
   --color-info: var(--skb-info);
   --color-info-subtle: var(--skb-info-subtle);

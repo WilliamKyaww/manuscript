@@ -45,6 +45,7 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 | [0037](#adr-0037--the-plan-is-a-pure-function-the-server-decides-the-tutors-rung-answers-recorded-by-a-tutor-are-permanent-and-ask) | The plan is a pure function; the server decides the tutor's rung; answers recorded by a tutor are permanent and ask | Accepted | 2026-10-10 |
 | [0038](#adr-0038--credit-flows-only-along-accepted-prerequisites-the-pipeline-is-a-job-that-fills-the-inbox-mistakes-go-back-to-notes-as-suggestions) | Credit flows only along accepted prerequisites; the pipeline is a job that fills the Inbox; mistakes go back to notes as suggestions | Accepted | 2026-10-10 |
 | [0039](#adr-0039--one-archive-of-open-formats-restore-into-a-new-vault-a-vault-is-chosen-at-start-up-code-graphs-are-shown-not-analysed) | One archive of open formats; restore into a new vault; a vault is chosen at start-up; code graphs are shown, not analysed | Accepted | 2026-10-10 |
+| [0040](#adr-0040--backups-are-copies-sqlite-makes-logs-are-files-in-the-vault-trouble-with-the-machine-is-said-as-such) | Backups are copies SQLite makes; logs are files in the vault; trouble with the machine is said as such | Accepted | 2026-10-10 |
 
 ---
 
@@ -911,4 +912,39 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   lost on restore (TD-11). An export contains everything, chats and usage included — it must be kept as
   safely as the vault. "Reveal in folder" is a desktop feature (Phase 18); the web page copies the path.
   Opening a vault adds a hidden `.skb/` folder to it. The agent has no code-graph tools yet (B-KM-23).
+- **Date.** 10 October 2026.
+
+## ADR-0040 — Backups are copies SQLite makes; logs are files in the vault; trouble with the machine is said as such
+
+- **Context.** Phase 17 makes the web application fit for daily use. The database holds what the files do not
+  (concepts, cards, reviews, answers, chats), so losing or damaging it costs months of study; a student must also
+  be able to say what went wrong without exposing their notes.
+- **Options.** Backups by copying the file (unsafe while it is in use), by `VACUUM INTO`, or by the export; logs
+  on the console only, in a file per run, or a file per day; disk and database failures as `internal`, or mapped.
+- **Decision.**
+  - **Backups** are `VACUUM INTO` copies in `.skb/backups`: a daily one (shortly after start-up when none is under
+    a day old, then an hourly check), one before pending migrations change a database that already holds data,
+    and one on request. The newest 14 daily, 5 migration and 10 manual copies are kept. A copy is written under a
+    `.partial` name and renamed, and what a crash left is removed at the next start. Going back is a file
+    replacement the guide spells out; the export remains the copy that can live off the disk.
+  - **Logs** are JSON lines (redacted when written) in `.skb/logs`, one file a day, moved aside at 5 MB, kept for
+    seven days; lines written before the vault is open are held and flushed. The Diagnostics page reads them
+    back, and its bundle (report, applied migrations, non-secret settings, log; home folder shown as `~`) holds
+    no note text, questions, answers or keys.
+  - **Trouble with the machine** is mapped to problems that say what to do: a file that is read-only or in use
+    is **423 `locked`** (not 409, which the editor reads as "the file changed on disk"), a full disk, a busy or
+    damaged database and too many open files are 503, a vanished file 404. No path or SQL is repeated. JSON
+    bodies over 8 MB are refused. On Windows a write whose path would reach 260 characters is refused in words.
+  - **A supported file in `Sources` that cannot be read** (empty, not what its extension says, over 200 MB) is
+    listed as failed with the reason; unsupported kinds stay "just files" (refines ADR-0028).
+  - **Every API route is checked against the guards by a test that walks the registered routes**, so a route
+    added later cannot be left open.
+- **Reason.** `VACUUM INTO` is consistent while in use and needs no downtime; a log the student can read, filter
+  and hand over is how a problem on one machine becomes fixable; a message that blames the wrong thing (a
+  "conflict" for a read-only file) is worse than none.
+- **Consequences.** Backups sit in the vault, so a lost disk loses them too (the guide says to export or copy the
+  folder elsewhere). `VACUUM INTO` runs on the main thread; a database of hundreds of megabytes will stall
+  requests for a moment (TD-13). Logs are per vault, so a problem before the vault opens is on the console only.
+  The danger button's text colour became a per-theme token after the accessibility sweep found it unreadable in
+  the dark theme.
 - **Date.** 10 October 2026.

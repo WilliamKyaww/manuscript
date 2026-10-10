@@ -85,6 +85,14 @@ export function createExporter(deps: ExporterDependencies) {
     exportsDir,
   } = deps;
 
+  // An export that a crash cut short leaves a .partial file; nothing is writing one now.
+  try {
+    for (const entry of readdirSync(exportsDir))
+      if (entry.endsWith('.partial')) rmSync(path.join(exportsDir, entry), { force: true });
+  } catch {
+    // The folder does not exist yet.
+  }
+
   async function run(
     progress: (fraction: number, message: string) => void,
     signal: AbortSignal,

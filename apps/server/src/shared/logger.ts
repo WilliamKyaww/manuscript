@@ -15,6 +15,8 @@ export interface LoggerOptions {
   format: 'pretty' | 'json';
   /** Sink for formatted lines; defaults to stdout (debug/info) and stderr (warn/error). */
   write?: (line: string, level: LogLevel) => void;
+  /** Also receives every entry as one JSON line, whatever `format` is (the log file). */
+  file?: (line: string) => void;
   bindings?: LogFields;
   now?: () => Date;
 }
@@ -77,11 +79,12 @@ export function createLogger(options: LoggerOptions): Logger {
     if (LEVEL_ORDER[level] < threshold) return;
     const merged = redact({ ...bindings, ...fields }) as LogFields;
     const time = now();
-    const line =
-      options.format === 'json'
+    const json =
+      options.format === 'json' || options.file
         ? JSON.stringify({ time: time.toISOString(), level, msg: message, ...merged })
-        : formatPretty(time, level, message, merged);
-    write(line, level);
+        : '';
+    write(options.format === 'json' ? json : formatPretty(time, level, message, merged), level);
+    options.file?.(json);
   };
 
   return {

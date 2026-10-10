@@ -7,6 +7,7 @@ import { E2E_TOKEN } from './constants';
 const ROUTES = [
   ...SECTIONS.map((section) => ({ path: section.path, title: section.label })),
   { path: '/practice/questions', title: 'Question bank' },
+  { path: '/diagnostics', title: 'Diagnostics' },
   { path: '/no/such/page', title: 'Page not found' },
 ];
 
@@ -128,6 +129,23 @@ test.describe('navigation and keyboard', () => {
     await expect(dialog.getByText('Open the command palette')).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0);
+  });
+
+  test('visiting every section makes no request to any other address (it works offline)', async ({
+    page,
+  }) => {
+    const outside: string[] = [];
+    page.on('request', (request) => {
+      const url = new URL(request.url());
+      if (['data:', 'blob:', 'about:'].includes(url.protocol)) return;
+      if (url.origin !== new URL(page.url() === 'about:blank' ? request.url() : page.url()).origin)
+        outside.push(`${url.origin}${url.pathname}`);
+    });
+    for (const route of ROUTES) {
+      await page.goto(route.path);
+      await expect(page.getByRole('heading', { level: 1, name: route.title })).toBeVisible();
+    }
+    expect(outside).toEqual([]);
   });
 
   test('visiting every section produces no console errors', async ({ page }) => {

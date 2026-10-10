@@ -6,7 +6,7 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 10 October 2026 (end of Phase 16)._
+_Last updated: 10 October 2026 (end of Phase 17)._
 
 ## Platform and architecture
 
@@ -20,8 +20,8 @@ _Last updated: 10 October 2026 (end of Phase 16)._
 | F-PL-06 | `npm run dev`, `npm run build`, `npm start`, `npm run verify` (incl. bundle smoke test) | Complete | 1 |
 | F-PL-07 | `run-web.bat` one-click Windows launcher | Complete | 1 |
 | F-PL-08 | Persistent job queue with progress events | Complete | 5 |
-| F-PL-09 | Automatic database backups and crash recovery | Planned | 17 |
-| F-PL-10 | Diagnostics page and log viewer | Planned | 17 |
+| F-PL-09 | Automatic database backups (daily, before a migration, on request) and crash recovery (half-made files cleared, interrupted jobs resumed) | Complete | 17 |
+| F-PL-10 | Diagnostics page (state of the installation, failed jobs, log viewer with level and text filters) and a support bundle without notes or keys | Complete | 17 |
 
 ## Knowledge — notes and Markdown
 

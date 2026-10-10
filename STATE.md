@@ -4,11 +4,11 @@ _Last updated: 10 October 2026 — Claude Sonnet 5.5._
 
 ## Current phase
 
-**Phase 17 — Web application hardening: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
+**Phase 18 — Electron desktop application: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
 and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
 ingestion pipeline), 6 (course structure and concepts), 7 (knowledge graph), 8 (flashcards and
 spaced repetition), 9 (questions, quizzes and mastery), 10 (AI foundation), 11 (AI generation and
-knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tutor and study planner), 15 (knowledge–learning integration) and 16 (portability) are complete and merged into `main`.
+knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tutor and study planner), 15 (knowledge–learning integration), 16 (portability) and 17 (hardening) are complete and merged into `main`.
 
 ## What works
 
@@ -125,27 +125,38 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
   **Read the files again**. **Code graphs**: a Graphify `graph.json` becomes `code` nodes in the graph (off by
   default), `uses` edges, and name-match suggestions that wait on the concept's page (**Implemented in**) to be
   accepted or rejected (ADR-0039).
+- **Hardening** (Phase 17, `docs/guide/troubleshooting.md`): a copy of the database is made daily, before each
+  migration and on request (**Settings → Data → Database backups**, `.skb/backups`, ADR-0040); nothing is written
+  half-made under a real name (undo copies, restores, exports and backups are built aside and renamed); disk, file
+  and database trouble is said in words (a read-only note is a 423, not a "conflict"); a path Windows would refuse
+  is refused in words; a supported file in Sources that cannot be read is listed as failed with the reason; a
+  provider that cannot be reached says so. **Diagnostics** (`/diagnostics`, from Settings → About): state,
+  background jobs and failures, backups, the log by level and text, and a support bundle with no notes or keys. Every
+  registered API route is tested against the guards (188 routes), and the pages with content are scanned for
+  accessibility in both themes.
 - **Application shell:** sidebar, sticky page headers (per pane on paned pages), themes, command
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 823 Vitest tests (core 236, server 412, web 175) and 89 Playwright tests (sticky headers on every route and pane,
+- **Tests:** 849 Vitest tests (core 236, server 436, web 177) and 119 Playwright tests (sticky headers on every route and pane,
   axe in both themes, the library, the course, the graph, reviewing, practice, chat, generating and an MCP client
   using the stdio bridge) — all green. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
-  p95 404 ms, median 51 ms (provisional budget 500 ms).
+  p95 434 ms, median 71 ms (provisional budget 500 ms; Phase 17 run).
   Reviewing: 7 ms median between cards over 100 (budget 50 ms). Mastery pass over a year of learning
   (1,000 concepts, 5,000 reviewed cards, 20,000 answers): 254 ms with credit along prerequisites (budget 500 ms). On mains power at 10,000
-  notes: search p95 28 ms (100 ms with 10,000 PDF pages; budget 150 ms); graph payload of 5,000 nodes
-  97 ms from the cache (budget 500 ms), 2.1 s for a first build (budget 3 s), 674 ms after a note
-  edit (budget 1 s).
+  notes: search p95 40 ms (112 ms with 10,000 PDF pages; budget 150 ms); graph payload of 5,000 nodes
+  175 ms from the cache (budget 500 ms), 2.5 s for a first build (budget 3 s), 755 ms after a note
+  edit (budget 1 s) — every budget met in one run on mains power (Phase 17, 10 October).
 
 ## In progress
 
-- Nothing; Phase 17 not yet started.
+- Nothing; Phase 18 not yet started.
 
 ## Incomplete / not started
 
-- Phases 17–22: hardening (automatic backups among it) and the desktop app do not exist yet.
+- Phases 18–22: the desktop app, the installer, polish, verification and the release do not exist yet.
+- Not in Phase 17 (debt): a backup runs on the main thread (TD-13); backups live inside the vault, so the guide says
+  to export or copy the folder elsewhere for protection from a lost disk.
 - Not in Phase 16 (backlog and debt): agent tools for code graphs (B-KM-23), keeping the imported file and
   re-importing with decisions kept (B-KM-24), grouping code by file and other graph formats (B-KM-25), a
   password-protected export (B-PL-07), scheduled exports (B-PL-08); a note with invalid front matter loses
@@ -194,16 +205,16 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 ## Broken
 
 - Nothing known.
-- Performance budgets: four are over when measured with the laptop on mains power but busy (10 October,
-  with a game launcher, Discord and browsers running): search with PDF pages p95 222 ms (150), graph
-  first build 5.0 s (3), graph after an edit 1.5 s (1), retrieval p95 904 ms (500). Phase 13 touches
-  none of these paths, and the figures swing two- to three-fold with background load (as at the Phase 10
-  merge, `AGENTS.md` §5). Re-run `npm run test:perf` with nothing else open to confirm the figures above.
+- Performance budgets: all met in the Phase 17 run (mains power, below-normal priority, Discord and VS Code
+  open). The four that an earlier, busier run had over were load, as suspected. The figures swing two- to
+  three-fold with background load (`AGENTS.md` §5); retrieval p95 (434 ms of 500) is the one with least room.
+- One Playwright test (`/notes` light theme, axe) timed out once in a full run on a busy machine and passed twice
+  on its own, once with the same seeded data; treated as load, not a defect (journal, 10 October).
 
 ## Next steps
 
-1. Create `phase/17-hardening` from `main`.
-2. Phase 17: see `docs/checklist/phase-17-hardening.md` (backups and startup recovery first).
+1. Create `phase/18-electron` from `main` (done).
+2. Phase 18: see `docs/checklist/phase-18-electron.md` (it needs the Electron binary; see the environment notes).
 
 ## Relevant decisions
 
@@ -223,14 +234,15 @@ server's own runner; a paused run is saved with its thread · ADR-0037 the plan 
 the server decides the tutor's rung, answers recorded by a tutor are permanent and ask · **ADR-0038**
 credit flows only along accepted prerequisites; the pipeline is a job that fills the Inbox; mistakes
 go back to notes as suggestions · **ADR-0039** one archive of open formats, restore only into a new vault, a
-vault is chosen at start-up, code graphs are shown but not analysed.
+vault is chosen at start-up, code graphs are shown but not analysed · **ADR-0040** backups are copies SQLite makes,
+logs are files in the vault, trouble with the machine is said as such.
 
 ## Technical debt
 
 TD-01 launcher duplicates the data-directory logic · TD-05 KaTeX override · TD-06 file tree not
 virtualised · TD-07 `shell-quote` override (for `concurrently`) · TD-08 parsing on the main thread ·
 TD-09 PDF viewer estimates page sizes from page 1 · TD-10 undo copies are never pruned · TD-11 a note with
-invalid front matter has no id in an export · TD-12 the imported graph.json is not kept.
+invalid front matter has no id in an export · TD-12 the imported graph.json is not kept · TD-13 a backup runs on the main thread.
 
 ## Environment notes for agents
 

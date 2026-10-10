@@ -141,6 +141,15 @@ apps/web/src/
 Writes: Markdown via write-to-temp + rename (atomic); SQLite in WAL mode with `foreign_keys=ON`; a lock
 file in `.skb/` prevents two servers opening the same vault.
 
+**Crash safety (audited in Phase 17).** Every file the application writes is written whole or not at all:
+vault files, settings, tokens and the saved copies kept for undo go through `writeFileAtomic`
+(temp file, fsync, rename); exports, database backups and a restored vault are built under a `.partial` /
+`.restoring` name and renamed at the end, and what a crash left behind is removed at the next start. The
+database is in WAL mode and is folded into one file on a clean close; every multi-row change is one
+transaction. After a crash: interrupted jobs are queued again, sources that were `processing` are read
+again, the lock of a dead process is taken over, and the index is reconciled with the files. A copy of the
+database is made daily and before a migration (`db/backup.ts`).
+
 ## 6. Key flows
 
 ### 6.1 Saving a note
@@ -199,6 +208,20 @@ Threats for a localhost app that can read/write the vault and spend API credit:
 | Electron renderer compromise | `contextIsolation`, `sandbox`, no `nodeIntegration`, strict CSP, navigation restricted to the app origin, external links opened via validated `shell.openExternal` |
 | Malformed files (zip bombs, huge PDFs) | Size limits, timeouts and memory caps in parsers; parsing in the job worker |
 
+**Review (Phase 17, 10 October 2026).** The threat model was re-checked against everything added since
+Phase 1 (assistant tools and MCP, chat, the Inbox, export and restore, vault switching, code graphs):
+
+| Check | Result |
+|---|---|
+| Every registered API route (about 190, including the MCP endpoint and the file routes) without a token, with a wrong one, as a cross-site fetch, as a cookie-only state change from a foreign origin and under a foreign `Host` | Refused in every case; only `GET /api/ping` is public. A test walks the registered routes (`security/surface.test.ts`), so a route added later is covered without being listed |
+| Content Security Policy and headers | Unchanged and strict (`default-src 'self'`, no inline scripts, `frame-ancestors 'none'`, `nosniff`, `no-referrer`); files served from the vault carry their own sandbox policy |
+| Paths supplied by a request | Vault paths through `resolveInVault`; export names must match the exporter's own pattern; restore refuses archive entries that are absolute, climb out, or name `.skb`, builds the vault beside its target and renames at the end |
+| Untrusted files | Zip entries, Graphify `graph.json` and sources are size-capped and shape-checked; labels are cleaned; nothing from them is executed or rendered as HTML |
+| Secrets | Provider keys only in the data directory (mode 0600), never in the vault, exports, logs or responses; a test asserts the archive holds no `.skb` or database |
+| What an export holds | Everything except keys — chats and usage included — so the guide says to keep it as carefully as the vault; encryption is B-PL-07 |
+| Dependencies | `npm audit` (production and development): no known vulnerabilities |
+| Destructive actions by the assistant | Unchanged (ADR-0035): restoring, switching vault, importing a graph and writing notes for concepts are not tools |
+
 Bootstrap: the launcher opens `http://127.0.0.1:<port>/auth?token=…`; the server sets the cookie and
 redirects to `/` (the pattern used by Jupyter). The token persists in the app data dir so bookmarks keep
 working.
@@ -213,8 +236,14 @@ working.
 
 - Domain errors are typed (`NotFoundError`, `ConflictError`, `ValidationError`, `PolicyDeniedError`, …)
   and mapped to RFC 9457 problem-details JSON by one error middleware.
-- Structured JSON logs to `.skb/logs/` (rotated) and the console in development; secrets redacted.
+- Structured JSON logs to `.skb/logs/` (one file per day, rolled over at 5 MB, kept for seven days) and the
+  console; secrets redacted when the line is made. The Diagnostics page reads them back (`/api/diagnostics/logs`).
 - The UI shows actionable messages; technical details go to the log.
+- Trouble with the machine is mapped too (Phase 17, `systemProblem`): a file that is gone, read-only or in
+  use, a full disk, too many open files, a name that is too long, a database that is busy, full or
+  damaged each become a problem with a `detail` that says what to do and repeats no path or SQL; only a
+  truly unexpected error is an `internal` 500. JSON bodies over 8 MB are refused; uploads have limits of
+  their own.
 
 ## 11. Electron architecture (Phase 18; de-risked by a Phase 1 spike)
 

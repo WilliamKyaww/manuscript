@@ -7,6 +7,7 @@ import { ConfigError, resolveConfig, type ServerConfig } from './config/config';
 import { activeVault } from './modules/portability/registry';
 import { openInBrowser } from './platform/browser';
 import { type RunningServer, StartupError, startServer } from './server';
+import { createDeferredLogFile } from './shared/log-file';
 import { createLogger, type Logger } from './shared/logger';
 import { VERSION } from './version';
 
@@ -98,7 +99,12 @@ async function main(): Promise<void> {
   }
 
   const pretty = config.mode === 'development' || process.stdout.isTTY === true;
-  const logger = createLogger({ level: config.logLevel, format: pretty ? 'pretty' : 'json' });
+  const logFile = createDeferredLogFile();
+  const logger = createLogger({
+    level: config.logLevel,
+    format: pretty ? 'pretty' : 'json',
+    file: (line) => logFile.write(line),
+  });
 
   // The launcher (run-web) and the desktop shell relaunch the process on this exit code, which is how
   // opening another vault works: the vault is chosen when the process starts.
@@ -113,7 +119,7 @@ async function main(): Promise<void> {
 
   let running: RunningServer;
   try {
-    running = await startServer(config, { logger, restart });
+    running = await startServer(config, { logger, restart, logFile });
   } catch (error) {
     if (error instanceof StartupError || error instanceof AppError)
       exitWithMessage(error.message, 1);

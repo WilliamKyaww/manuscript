@@ -404,6 +404,8 @@ describe('export and restore', () => {
     expect(newer.status).toBe('failed');
     expect(newer.error).toMatch(/newer version/u);
     expect(existsSync(target)).toBe(false);
+    // Nor is a half-built folder left beside it.
+    expect(existsSync(`${target}.restoring`)).toBe(false);
 
     // Something that is not an export at all.
     const notExport = path.join(temp(), 'random.zip');

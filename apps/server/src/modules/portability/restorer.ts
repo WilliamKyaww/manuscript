@@ -1,4 +1,12 @@
-import { existsSync, mkdirSync, readdirSync, rmSync, statSync, utimesSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  statSync,
+  utimesSync,
+} from 'node:fs';
 import path from 'node:path';
 import {
   EXPORT_FORMAT,
@@ -73,7 +81,11 @@ export async function restoreArchive(options: RestoreOptions): Promise<RestoreRe
         'That folder is not empty. Choose a new or empty folder: a restore never merges into a vault.',
       );
   }
-  mkdirSync(target, { recursive: true });
+  // Built beside the target and moved into place at the end, so a crash or a failure leaves no
+  // half-made vault under the name the student chose.
+  const staging = `${target}.restoring`;
+  rmSync(staging, { recursive: true, force: true });
+  mkdirSync(staging, { recursive: true });
 
   const skipped: string[] = [];
   const memory = new Map<string, Uint8Array>();
@@ -99,7 +111,7 @@ export async function restoreArchive(options: RestoreOptions): Promise<RestoreRe
         return { kind: 'skip' };
       }
       files += 1;
-      return { kind: 'file', path: path.join(target, ...parts) };
+      return { kind: 'file', path: path.join(staging, ...parts) };
     });
     if (signal.aborted) throw new Error('The restore was cancelled.');
 
@@ -125,7 +137,7 @@ export async function restoreArchive(options: RestoreOptions): Promise<RestoreRe
         .array(z.object({ path: z.string(), sizeBytes: z.number(), mtimeMs: z.number() }))
         .parse(JSON.parse(new TextDecoder().decode(listing)));
       for (const entry of entries) {
-        const file = path.join(target, ...entry.path.split('/'));
+        const file = path.join(staging, ...entry.path.split('/'));
         let size: number;
         try {
           size = statSync(file).size;
@@ -140,7 +152,7 @@ export async function restoreArchive(options: RestoreOptions): Promise<RestoreRe
     }
 
     progress(0.6, 'Building the new vault');
-    const meta = path.join(target, VAULT_META_DIR);
+    const meta = path.join(staging, VAULT_META_DIR);
     mkdirSync(meta, { recursive: true });
     const db = openDatabase(path.join(meta, 'skb.db'));
     let rows = 0;
@@ -178,11 +190,14 @@ export async function restoreArchive(options: RestoreOptions): Promise<RestoreRe
     } finally {
       db.close();
     }
+    // An empty folder the student made is replaced by the finished vault in one step.
+    if (existsSync(target)) rmSync(target, { recursive: true, force: true });
+    renameSync(staging, target);
     progress(1, 'Restored');
     return { vaultPath: target, manifest, files, rows, skipped };
   } catch (error) {
-    // The target was missing or empty when we began, so removing it leaves nothing behind.
-    rmSync(target, { recursive: true, force: true });
+    // Only the staging folder was written to, so removing it leaves nothing behind.
+    rmSync(staging, { recursive: true, force: true });
     throw error;
   }
 }
