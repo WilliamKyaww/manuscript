@@ -182,7 +182,9 @@ export function createGenerationService(deps: GenerationDependencies) {
             ? scope.lectureId
             : scope.kind === 'note'
               ? scope.noteId
-              : null;
+              : scope.kind === 'concept'
+                ? scope.conceptId
+                : null;
       return jobs.enqueue(GENERATE_JOB, request, subject ? { subject } : {});
     },
 

@@ -44,6 +44,7 @@ import { createMasteryRepository } from './mastery/repository';
 import { createMasteryService, type MasteryService } from './mastery/service';
 import { createNotesModule, type NotesModule } from './notes/module';
 import { createPlanRepository } from './plan/repository';
+import { createResurfaceService, type ResurfaceService } from './plan/resurface';
 import { createExamRetention } from './plan/retention';
 import { createPlanService, type PlanService } from './plan/service';
 import { type AttemptsService, createAttemptsService } from './practice/attempts';
@@ -97,6 +98,7 @@ export interface AppModules {
   readonly agent: AgentModule;
   readonly chat: ChatService;
   readonly plan: PlanService;
+  readonly resurface: ResurfaceService;
   readonly tutor: TutorService;
   start(options: { watch: boolean }): Promise<void>;
   close(): Promise<void>;
@@ -302,6 +304,13 @@ export function createModules(ctx: AppContext): AppModules {
     clock: ctx.clock,
     ids: ctx.ids,
   });
+  const resurface = createResurfaceService({
+    learning,
+    lectures,
+    mastery,
+    concepts,
+    clock: ctx.clock,
+  });
   const learn = createLearnService({
     repo: attemptsRepo,
     questionsRepo,
@@ -363,6 +372,7 @@ export function createModules(ctx: AppContext): AppModules {
       learning: learningRepo,
       sources: sources.repo,
       notes: notes.notes,
+      concepts,
     }),
     jobs,
     runners,
@@ -489,6 +499,7 @@ export function createModules(ctx: AppContext): AppModules {
     agent,
     chat,
     plan,
+    resurface,
     tutor,
     async start(options) {
       await notes.start(options);

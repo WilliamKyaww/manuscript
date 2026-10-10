@@ -1,7 +1,7 @@
 import type { ConceptProgress, ModuleProgress } from '@skb/core';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ChartLine } from 'lucide-react';
+import { ChartLine, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '../../components/Badge';
 import { Button, buttonClasses } from '../../components/Button';
@@ -10,6 +10,7 @@ import { Page, StickySection } from '../../components/Page';
 import { EmptyState, ErrorState, LoadingState } from '../../components/States';
 import { useApi } from '../../lib/api/context';
 import { formatCount } from '../../lib/format';
+import { GenerateDialog } from '../inbox/GenerateDialog';
 import { progressQuery, weakAreasQuery } from '../practice/api';
 import { decimal, percent } from '../practice/format';
 import { type QuestionDraft, QuestionEditor } from '../practice/QuestionEditor';
@@ -112,6 +113,7 @@ export function ProgressPage() {
   const progress = useQuery(progressQuery(api));
   const weak = useQuery(weakAreasQuery(api));
   const [writing, setWriting] = useState<QuestionDraft | null>(null);
+  const [generating, setGenerating] = useState<{ id: string; name: string } | null>(null);
   const data = progress.data;
 
   return (
@@ -157,7 +159,7 @@ export function ProgressPage() {
                 </h3>
                 <ul className="flex flex-wrap gap-2">
                   {weak.data.noMaterial.map((concept) => (
-                    <li key={concept.id}>
+                    <li key={concept.id} className="flex items-center gap-0.5">
                       <Button
                         size="sm"
                         variant="ghost"
@@ -165,6 +167,14 @@ export function ProgressPage() {
                         aria-label={`Write a question for ${concept.name}`}
                       >
                         {concept.name} +
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setGenerating({ id: concept.id, name: concept.name })}
+                        aria-label={`Make questions for ${concept.name} from your material`}
+                      >
+                        <Sparkles aria-hidden="true" size={14} />
                       </Button>
                     </li>
                   ))}
@@ -205,6 +215,14 @@ export function ProgressPage() {
         </>
       )}
       {writing && <QuestionEditor draft={writing} onClose={() => setWriting(null)} />}
+      {generating && (
+        <GenerateDialog
+          scope={{ kind: 'concept', conceptId: generating.id as never }}
+          title={generating.name}
+          initialTask="questions"
+          onClose={() => setGenerating(null)}
+        />
+      )}
     </Page>
   );
 }

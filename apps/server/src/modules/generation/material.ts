@@ -7,6 +7,7 @@ import {
   ValidationError,
 } from '@skb/core';
 import { noteSections } from '../ai/retrieval';
+import type { ConceptsService } from '../concepts/service';
 import type { LearningRepository } from '../learning/repository';
 import type { NotesService } from '../notes/service';
 import type { SourcesRepository } from '../sources/repository';
@@ -44,6 +45,7 @@ export interface MaterialDependencies {
   learning: LearningRepository;
   sources: SourcesRepository;
   notes: NotesService;
+  concepts: ConceptsService;
 }
 
 type Draft = Omit<MaterialPassage, 'key'>;
@@ -59,7 +61,7 @@ function pageAnchor(locator: Locator): string {
 }
 
 export function createMaterialService(deps: MaterialDependencies) {
-  const { learning, sources, notes } = deps;
+  const { learning, sources, notes, concepts } = deps;
 
   function sourcePassages(sourceId: string, from?: number, to?: number): Draft[] {
     const source = sources.byId(sourceId);
@@ -161,6 +163,32 @@ export function createMaterialService(deps: MaterialDependencies) {
           moduleId: lecture.moduleId,
           lectureId: lecture.id,
           coveredIn: { type: 'lecture', id: lecture.id },
+        };
+      }
+      case 'concept': {
+        const concept = concepts.get(scope.conceptId);
+        const drafts: Draft[] = [];
+        // What the student wrote about it, then the lecture material that names it.
+        if (concept.note) drafts.push(...notePassages(concept.note.id).passages);
+        const seen = new Set<string>();
+        for (const passage of concept.passages) {
+          const number = sectionNumber(passage.locator, passage.section.ordinal);
+          const key = `${passage.source.id}:${number}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          try {
+            drafts.push(...sourcePassages(passage.source.id, number, number));
+          } catch {
+            // A source that is no longer readable adds nothing.
+          }
+        }
+        return {
+          title: concept.name,
+          label: `the concept ${concept.name}`,
+          drafts,
+          moduleId: concept.modules[0]?.id ?? null,
+          lectureId: null,
+          coveredIn: concept.note ? { type: 'note', id: concept.note.id } : null,
         };
       }
       case 'note': {

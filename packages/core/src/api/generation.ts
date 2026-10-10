@@ -28,6 +28,8 @@ export const GenerationScopeSchema = z.discriminatedUnion('kind', [
   }),
   z.object({ kind: z.literal('lecture'), lectureId: LectureIdSchema }),
   z.object({ kind: z.literal('note'), noteId: NoteIdSchema }),
+  /** A concept: its own note and the passages of the sources that name it (task 15.06). */
+  z.object({ kind: z.literal('concept'), conceptId: idSchema('concept') }),
   z.object({
     kind: z.literal('selection'),
     text: z.string().trim().min(1).max(20_000),

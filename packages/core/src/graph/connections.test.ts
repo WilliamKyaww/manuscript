@@ -27,6 +27,7 @@ const edge = (source: string, target: string, extra: Partial<GraphEdge> = {}): G
   status: 'accepted',
   score: null,
   weight: 1,
+  relationId: null,
   ...extra,
 });
 

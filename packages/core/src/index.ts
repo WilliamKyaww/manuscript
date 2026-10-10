@@ -20,6 +20,7 @@ export * from './api/notes';
 export * from './api/pipeline';
 export * from './api/plan';
 export * from './api/questions';
+export * from './api/resurface';
 export * from './api/search';
 export * from './api/sources';
 export * from './api/system';

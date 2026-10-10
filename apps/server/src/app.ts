@@ -75,7 +75,7 @@ export function createApp(ctx: AppContext, modules: AppModules, auth: AuthOption
   registerGenerationRoutes(registry, modules);
   registerAgentRoutes(registry, modules.agent);
   registerChatRoutes(registry, modules.chat, ctx.logger);
-  registerPlanRoutes(registry, modules.plan, modules.settings);
+  registerPlanRoutes(registry, modules.plan, modules.settings, modules.resurface);
   registerEventRoutes(registry, ctx);
 
   // Unknown API routes are problem-details 404s, never the SPA.
