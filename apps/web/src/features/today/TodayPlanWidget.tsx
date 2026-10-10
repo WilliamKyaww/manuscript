@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { CalendarRange } from 'lucide-react';
+import { ArrowRight, CalendarRange } from 'lucide-react';
 import { buttonClasses } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { LoadingState } from '../../components/States';
@@ -29,8 +29,9 @@ export function PlanWidget() {
           </span>
           <h2 className="text-base font-semibold">Today’s plan</h2>
         </div>
-        <Link to="/plan" className={buttonClasses('ghost', 'sm')}>
+        <Link to="/plan" className={buttonClasses('link', 'sm')}>
           {plan ? 'Open the plan' : 'Make a plan'}
+          <ArrowRight aria-hidden="true" size={14} />
         </Link>
       </div>
       {current.isPending && <LoadingState label="Loading the plan" />}

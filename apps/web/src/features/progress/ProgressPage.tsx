@@ -1,11 +1,12 @@
 import type { ConceptProgress, ModuleProgress } from '@skb/core';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ChartLine, Sparkles } from 'lucide-react';
+import { ArrowRight, ChartLine, Plus, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '../../components/Badge';
-import { Button, buttonClasses } from '../../components/Button';
+import { buttonClasses } from '../../components/Button';
 import { Card } from '../../components/Card';
+import { IconButton } from '../../components/IconButton';
 import { Page, StickySection } from '../../components/Page';
 import { EmptyState, ErrorState, LoadingState } from '../../components/States';
 import { useApi } from '../../lib/api/context';
@@ -52,9 +53,10 @@ function ConceptRow({ row }: { row: ConceptProgress }) {
           <Link
             to="/concepts/$conceptId"
             params={{ conceptId: row.concept.id }}
-            className={buttonClasses('ghost', 'sm')}
+            className={buttonClasses('link', 'sm')}
           >
             Open concept
+            <ArrowRight aria-hidden="true" size={14} />
           </Link>
         </div>
       </details>
@@ -72,9 +74,10 @@ function ModuleSection({ progress }: { progress: ModuleProgress }) {
         <Link
           to="/modules/$moduleId"
           params={{ moduleId: module.id }}
-          className={buttonClasses('ghost', 'sm')}
+          className={buttonClasses('link', 'sm')}
         >
-          Module
+          Open module
+          <ArrowRight aria-hidden="true" size={14} />
         </Link>
       }
     >
@@ -157,25 +160,34 @@ export function ProgressPage() {
                 <h3 className="mb-1 text-sm font-medium">
                   No cards or questions yet ({weak.data.noMaterial.length})
                 </h3>
-                <ul className="flex flex-wrap gap-2">
+                <ul
+                  aria-label="Concepts with no cards or questions"
+                  className="flex flex-wrap gap-2"
+                >
                   {weak.data.noMaterial.map((concept) => (
-                    <li key={concept.id} className="flex items-center gap-0.5">
-                      <Button
+                    <li
+                      key={concept.id}
+                      className="flex items-center gap-0.5 rounded-full border border-border bg-surface py-0.5 pr-1 pl-3"
+                    >
+                      <Link
+                        to="/concepts/$conceptId"
+                        params={{ conceptId: concept.id }}
+                        className="mr-1 text-sm hover:underline"
+                      >
+                        {concept.name}
+                      </Link>
+                      <IconButton
                         size="sm"
-                        variant="ghost"
+                        icon={<Plus size={14} />}
+                        label={`Write a question for ${concept.name}`}
                         onClick={() => setWriting({ conceptIds: [concept.id] })}
-                        aria-label={`Write a question for ${concept.name}`}
-                      >
-                        {concept.name} +
-                      </Button>
-                      <Button
+                      />
+                      <IconButton
                         size="sm"
-                        variant="ghost"
+                        icon={<Sparkles size={14} />}
+                        label={`Make questions for ${concept.name} from your material`}
                         onClick={() => setGenerating({ id: concept.id, name: concept.name })}
-                        aria-label={`Make questions for ${concept.name} from your material`}
-                      >
-                        <Sparkles aria-hidden="true" size={14} />
-                      </Button>
+                      />
                     </li>
                   ))}
                 </ul>

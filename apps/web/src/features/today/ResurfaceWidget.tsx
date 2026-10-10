@@ -1,7 +1,7 @@
 import { type ResurfaceItem, resurfaceEndpoint } from '@skb/core';
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { BookMarked } from 'lucide-react';
+import { BookMarked, Sparkles } from 'lucide-react';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
@@ -77,12 +77,11 @@ export function ResurfaceWidget() {
                   <span className="text-xs text-muted">{entry.reason}</span>
                   <Button
                     size="sm"
-                    variant="ghost"
                     disabled={practise.pending}
                     aria-label={`Practise ${entry.concept.name}`}
                     onClick={() => void practise.start(entry.concept.id)}
                   >
-                    Practise
+                    <Sparkles aria-hidden="true" size={14} /> Practise
                   </Button>
                 </li>
               ))}
