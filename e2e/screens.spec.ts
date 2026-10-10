@@ -3,6 +3,7 @@ import path from 'node:path';
 import { type APIRequestContext, expect, test } from '@playwright/test';
 import { makePptx } from '../apps/server/test/fixtures/sources/builders';
 import { E2E_TOKEN } from './constants';
+import { studyDay } from './days';
 
 /**
  * Screenshots of every major screen with content, in both themes (Phase 20, tasks 20.01–20.24): the
@@ -24,11 +25,7 @@ async function create<T>(request: APIRequestContext, url: string, data: unknown)
   return (await response.json()) as T;
 }
 
-const day = (offset: number) => {
-  const date = new Date();
-  date.setDate(date.getDate() + offset);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-};
+const day = studyDay;
 
 interface Seed {
   module: string;
