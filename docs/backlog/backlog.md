@@ -58,7 +58,7 @@ _Last reviewed: 10 October 2026 (Phase 13)._
 | B-LE-13 | Drag to reorder topics and lectures; rename topics in place | The API takes an `ordinal`; the module page only adds and deletes topics | Phase 6 |
 | B-LE-14 | Delete a course from the Modules page | The API can; modules keep working without a course | Phase 6 |
 | B-LE-15 | Degree classification across years (e.g. Year 2 : Year 3 weighted 1 : 3) with UK boundaries | The classification, not one year's average, is what finally counts | Phase 6 |
-| B-LE-16 | Exam duration and room in the assessment dialog | The API stores `durationMinutes`; the dialog does not ask for it | Phase 6 |
+| B-LE-16 | ~~Exam duration and room in the assessment dialog~~ — the length is asked in Phase 14 (a mock exam takes it); the room is not | The API stores `durationMinutes`; the dialog now asks for it | Phase 6 |
 | B-LE-17 | Lecture list grouped by week with a marker for the current week | Easier to see where the term is | Phase 6 |
 | B-LE-18 | Tags on cards, and filtering a set's cards by tag, status or text | Large sets are hard to scan | Phase 8 |
 | B-LE-19 | New-card limits per module or set | One module's new cards can crowd out another's | Phase 8 |
@@ -75,6 +75,10 @@ _Last reviewed: 10 October 2026 (Phase 13)._
 | B-LE-30 | Mastery trend per concept and module over time | Progress shows today's figures only; the cache keeps no history | Phase 9 |
 | B-LE-31 | Learn scoped by lectures and tags, as quizzes are | Learn takes a module, topics or concepts | Phase 9 |
 | B-LE-32 | Revisit the Forgotten rule (e.g. a fall of 0.15 in recall, or predicted recall at the exam) | With FSRS-6's flat curve it fires only for faces with stability under about two days | Phase 9 |
+| B-LE-33 | Plan the retention pass with simulated reviews: assume each card is reviewed when due, then count what would still be under 85 % on the exam date | Today it counts cards under 85 % if left as they are; with FSRS at 90 % retention that is mostly cards due in the last few days | Phase 14 |
+| B-LE-34 | Move a plan item to another day, add your own items, and export the plan as a calendar file | The plan can only be remade; items cannot be dragged or added | Phase 14 |
+| B-LE-35 | Remake the plan by itself each morning, and say what was missed | The student presses Plan again; overdue planned items are replaced when they do | Phase 14 |
+| B-LE-36 | Plan time per concept from how long answers take, not a fixed block; estimate hours for coursework from past work | Practice blocks are one sitting each and hours left is the student's guess | Phase 14 |
 
 ## AI (AI)
 
@@ -110,6 +114,9 @@ _Last reviewed: 10 October 2026 (Phase 13)._
 | B-AI-28 | Let a run carry on in the background when the page is closed, and reconnect to it | Closing the page or the panel's tab stops the run, with its notice; navigating within the app does not | Phase 13 |
 | B-AI-29 | Range mentions (`@L1–L4`, `@CS301 L2`) and recent items first in the @ menu | Mentions pick one item at a time and the menu lists matches alphabetically within a kind | Phase 13 |
 | B-AI-30 | Compact by the provider's own token counts instead of the 4-characters-a-token estimate | Compaction may start a little early or late for languages and code that tokenise differently | Phase 13 |
+| B-AI-31 | When a tutor reply breaks its step (opens with the answer, asks nothing), ask the model again with a firmer instruction instead of only logging it | The ladder is enforced by instruction, and a guard only notices; a real model may slip | Phase 14 |
+| B-AI-32 | List tutored sessions (questions asked, answers recorded, hints used) on the Progress page | A tutored chat's answers count towards mastery but have no page of their own | Phase 14 |
+| B-AI-33 | Check a note against the lectures across the whole vault in the background, not one topic on request | Misconception checks run when asked, for one topic at a time | Phase 14 |
 
 ## Platform (PL)
 

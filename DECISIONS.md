@@ -763,3 +763,54 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   model plans the brief's example requests so they can be tested end to end; real providers are
   checked by hand (`docs/guide/chat.md`).
 - **Date.** 10 October 2026.
+
+## ADR-0037 — The plan is a pure function; the server decides the tutor's rung; answers recorded by a tutor are permanent and ask
+
+- **Context.** Phase 14 adds a study planner, a guardrailed tutor with a "quiz me" flow, and a check of the
+  student's notes against the lectures. The founding constraints still hold: the agent has no unlimited
+  access, nothing is hostage to the app, the app works without AI. Three things pull against the rules
+  written for Phase 12: the planner must be explainable and repeatable, "a tutor that does not give the
+  answer away" cannot depend on a model behaving, and recording an answer is evidence that ADR-0032 makes
+  append-only — so it cannot be undone, which ADR-0035 forbids for every write.
+- **Options.** The planner as a model prompt, or as code. The tutor's ladder in the prompt alone, or decided
+  by the server. `record_answer` as a destructive tool, as an ordinary write with a "void" mechanism over
+  append-only answers, or as a new kind of write. Exam-aware retention as a global setting, or applied per
+  card by its module's exam.
+- **Decision.**
+  - `planStudy` (`@skb/core`) is a pure, deterministic function of its inputs (date, availability, forecast
+    of reviews, assessments, concept priorities, lectures, forgetting-curve counts, what is already done).
+    No model is involved, so the same inputs give the same plan and every item carries a reason generated
+    from the figures that put it there. The server only gathers inputs and stores the result. Reviews are
+    always planned, even beyond the time set aside; everything else respects it, and what does not fit is
+    returned with a reason rather than dropped.
+  - The plan is rolling: making it again keeps done and skipped items (their minutes count towards the day)
+    and replaces the rest. Plans are canonical in the database (migration 0014: `study_plans`,
+    `plan_items`; `assessments.remaining_hours`).
+  - The tutor's rung is computed by `tutorGuidance` from the conversation and added to the model's
+    instructions for that reply ("Tutor step: diagnose."). A full solution is possible only when the student
+    asks for it in so many words, and always ends with a "Check question:". The answer to a check question
+    is evaluated, and the ladder then restarts. A guard (`tutorReplyProblems`) notices a reply that does not
+    fit its step and logs it; it does not rewrite what the model said.
+  - `record_answer` is a *permanent* write: `defineTool` accepts `permanent: true` in place of `undo`, only
+    for a write. Policy: a permanent call always asks (reason: recorded permanently, cannot be undone), may
+    be approved for the rest of the chat (the student sees exactly what is recorded and supplies the
+    answer), is hidden from MCP clients, and cannot be set to run automatically. The tool can only be called
+    inside a chat thread, records the answer given by the student as `assisted`, and the question tool
+    (`get_questions`) never returns an answer key. The tutor's answers live in a hidden practice quiz and
+    attempt per thread (`tutor_sessions`).
+  - Note corrections are a new proposal kind (`correction`): the exact words in the note, the replacement,
+    an explanation and the lecture's own words as evidence (verified to be in the source). Accepting
+    applies the change if the words are still there; nothing changes a note without the student. The
+    proposals table is rebuilt in migration 0014 for the wider CHECK.
+  - Exam-aware retention is applied per card when it is rated (and in the buttons' previews): the retention
+    of a card's module is raised to 0.93 within 14 days of its next exam or test, never lowering a higher
+    setting, switchable in Settings → Study plan.
+- **Reason.** A plan the student cannot check is a plan they will not trust, and a model cannot promise
+  repeatability. A tutor that is only asked to be Socratic will sometimes give the answer; deciding the
+  rung in code puts the guardrail where it can be tested with transcripts. Evidence that cannot be undone
+  should be rare and deliberate, so it asks, every time unless the student says otherwise for the chat.
+- **Consequences.** There is now one kind of write that cannot be undone, listed as such in the catalogue
+  and Settings. The planner's quality depends on the student's availability and on "hours left" being
+  filled in. A real model may still break its step; the guard only logs it (B-AI-31). Tutored sessions have
+  no page of their own yet (B-AI-32).
+- **Date.** 10 October 2026.

@@ -24,8 +24,10 @@ Two more rules:
   or *off*, but no setting lets a delete or merge run without asking.
 
 There is deliberately **no tool that sets what you have mastered**: mastery comes only from your own
-reviews and answers. There is also no tool that records an answer for you, runs commands, or opens
-files outside your vault.
+reviews and answers. The one tool that touches an answer is `record_answer`, used by the tutor: it
+records only what *you* answered to a question it put to you, only after you approve it (it always
+asks; it cannot be undone, so it is the one change without an Undo), and marks it as assisted. There is no
+tool that runs commands or opens files outside your vault.
 
 ### Approvals
 

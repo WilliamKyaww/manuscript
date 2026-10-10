@@ -45,6 +45,8 @@ the spend estimate; the monthly budget (default $10) warns at 80 % and refuses r
 | **Assistant** (default) | Answers and performs actions with tools per policy; cites sources |
 | **Tutor** | Socratic: diagnoses, asks, hints → partial solution → full worked solution only on request; ends with a check question or a card proposal; write tools limited to proposals |
 
+**As built (Phase 14).** The rung of the ladder is computed by `tutorGuidance` (`@skb/core`) from the conversation and added to the model's instructions for that reply ("Tutor step: hint."); a guard (`tutorReplyProblems`) logs a reply that does not fit its step. A quiz is under way while the tutor keeps using `get_questions`/`record_answer`.
+
 | Scope | Retrieval and labelling |
 |---|---|
 | **My sources** | Only lecture/source passages; if not found, says so — no model-knowledge filling |
@@ -116,7 +118,9 @@ Tools wrap **services**, so the HTTP API and the agent share validation and busi
 | | `extract_concepts` (→ proposals) | write | 12 |
 | Learning | `list_modules`, `get_module`, `get_lecture`, `get_mastery`, `get_weak_areas`, `get_due_reviews`, `get_deadlines` | read | 12 |
 | | `create_flashcards` (drafts by default), `create_quiz` | write | 12 |
-| | `record_answer` (tutor "quiz me"; answers are append-only evidence, so not undoable) | write | 14 |
+| | `get_questions` (prompts only, never the key) | read | 14 |
+| | `record_answer` (tutor "quiz me"; append-only evidence, so **permanent**: always asks, never offered to MCP) | write, permanent | 14 |
+| | `propose_note_correction` (→ Inbox) | write | 14 |
 | | `delete_cards` | destructive | 12 |
 | Planning | `get_study_plan` | read | 14 |
 | | `create_study_plan`, `update_study_plan` | write | 14 |

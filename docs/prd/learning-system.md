@@ -225,6 +225,18 @@ Every plan item carries a human-readable *reason* ("Weak: Raft log matching — 
 **Exam-aware retention** (policy over FSRS): within 14 days of a module's exam, its cards are scheduled
 with desired retention 0.93. Disabled after the exam.
 
+**As built (Phase 14, ADR-0037, `docs/guide/planning.md`).** `planStudy` in `@skb/core` is pure and
+deterministic. Time per weekday and days off come from the plan settings; reviews are always planned (the
+item says when they exceed the time set aside); a mock exam per exam per week for three weeks goes on the
+roomiest day that fits it; the retention pass is in the exam's last week, on the day before if there is room;
+coursework hours are spread over the days to the deadline with weights n…1 (most first, at most two hours
+at a time); lectures with material and nothing studied become 25-minute learn items; the rest of each day is
+practice blocks, one concept per block, modules in turn, a concept resting two days. The practice order is
+the Phase 9 priority. Whatever does not fit is reported with a reason. Making the plan again keeps done and
+skipped items and counts their minutes. Exam-aware retention is applied when a card is rated and when its
+buttons are previewed (`max(setting, 0.93)` within 14 days of the module's next exam or test). The
+retention pass counts card faces whose predicted recall on the exam date is under 0.85 if left as they are.
+
 ## 10. Hierarchical credit (FIRe-inspired, Phase 15)
 
 Applies to concept mastery evidence only, along **accepted** `prerequisite_for` edges with weight

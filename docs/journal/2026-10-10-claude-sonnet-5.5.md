@@ -170,3 +170,69 @@ sidebar, palette, shortcuts and router; `e2e/{chat,ask,shell,axe}`; docs.
 ### Next steps
 
 Phase 14 — tutor and study planner (`phase/14-tutor-planner`); task 14.02 owns `record_answer`.
+
+## Session 17 — Phase 14: tutor mode and study planning
+
+- **Time:** about 05:30–09:30
+- **Phase:** 14 — Tutor mode and study planning (branch `phase/14-tutor-planning`)
+- **Work performed:** built and verified Phase 14 end to end; merged at the gate.
+
+### What was done
+
+1. **Planner (14.05–14.07, core).** `planStudy`: a pure, deterministic function. Reviews first (never dropped),
+   then mock exams (one a week for three weeks, on the roomiest day that fits), the exam-day retention pass,
+   coursework hours spread to the deadline (front-loaded), learn items for lectures with material and nothing
+   studied, and practice blocks interleaved across modules by the Phase 9 priority. Every item has a reason; what
+   does not fit comes back with why. `examAwareRetention` (0.93 within 14 days of an exam or test).
+2. **Plan service and API (14.04, 14.08).** Migration `0014`; making the plan again keeps done and skipped items and
+   counts their minutes; settings group `plan` (minutes per weekday, days off, sitting, exam retention); exam-aware
+   retention is applied when a card is rated and previewed; tools `get_study_plan`, `create_study_plan` (undo puts the
+   plan back), `update_study_plan`; `assessments.remaining_hours`.
+3. **Tutor (14.01–14.03).** `tutorGuidance` decides the rung from the conversation (diagnose, hint, stronger hint,
+   partial, worked on request ending in "Check question:", evaluate, quiz); the chat service adds it to the instructions.
+   `get_questions` (prompts only), `record_answer` (a new *permanent* write kind: always asks, may be approved for the
+   chat, hidden from MCP; assisted evidence in a hidden per-thread quiz), `propose_note_correction` (new proposal kind
+   `correction`, verified quote). The test model plays all of this so it can be tested with transcripts.
+4. **UI (14.09–14.11).** `/plan` (week and list, done / skip / put back, Plan again, what did not fit), Today's plan,
+   Settings → Study plan, hours left and length on the assessment dialog, a correction card in the Inbox, result links
+   in chat.
+5. **Docs (14.13).** `docs/guide/planning.md`, tutor section of the chat guide, ADR-0037, PRD sections, FEATURES, backlog
+   (B-LE-33 to 36, B-AI-31 to 33), checklist, STATE.
+
+### Decisions
+
+- **The plan is code, not a prompt** (ADR-0037): repeatable, explainable, testable.
+- **The server decides the tutor's rung**, not the model; a guard only logs a reply that breaks its step.
+- **`record_answer` is permanent and asks.** ADR-0035 said a write must be undoable; answers are append-only evidence
+  (ADR-0032), so a `permanent` write kind exists for exactly this: it always asks, may be approved for a chat, is not
+  offered to MCP.
+- **Retention pass counts cards under 85 % if left as they are**; a simulated-review version is B-LE-33.
+- All sections now have pages; the placeholder component stays, tested on its own.
+
+### Problems encountered
+
+- **The AI SDK mock tool-call ids repeat from step to step** (`mock_N_0`); the mock now pairs results within a step.
+- **FSRS first intervals differ between cards rated at different clock times**, so the exam-retention test rates
+  both cards at the same moments.
+- **ULID alphabet**: a fixture id containing `I` failed response validation silently (the page just showed nothing);
+  the alphabet excludes I, L, O, U.
+- **Shell slips again**: a `sed` meant to unescape backticks prefixed one to every line of DECISIONS.md (restored from
+  git and redone with a file written by the editor tool); a here-document dropped backslashes in regexes.
+
+### Tests run
+
+| Command | Result |
+|---|---|
+| `npm run verify` | **Pass** — type-check, Biome, **760** Vitest tests (core 214, server 381, web 165), build, smoke |
+| `npm run test:e2e` | **Pass** — **87/87** (new: `plan.spec.ts`: a 7-day plan, ticking, skipping, planning again, Today, Settings, axe; a tutored chat that asks before explaining and before recording an answer) |
+| `npm run test:perf` | Not re-run: Phase 14 touches the review rating and the planner, not indexing or search; the last figures and their caveat are in STATE |
+
+### Unresolved issues
+
+- Tutor mode with a **real provider** is unchecked (the steps are in `docs/guide/chat.md`): the ladder is
+  instruction-based and a real model may slip (B-AI-31).
+- The performance budgets still need a quiet run on mains power.
+
+### Next steps
+
+Phase 15 — integration (`phase/15-integration`).

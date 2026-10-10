@@ -4,18 +4,18 @@ _Last updated: 10 October 2026 — Claude Sonnet 5.5._
 
 ## Current phase
 
-**Phase 14 — Tutor and study planner: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
+**Phase 15 — Integration: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
 and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
 ingestion pipeline), 6 (course structure and concepts), 7 (knowledge graph), 8 (flashcards and
 spaced repetition), 9 (questions, quizzes and mastery), 10 (AI foundation), 11 (AI generation and
-knowledge extraction) 12 (agent runtime, tool layer and MCP) and 13 (chat) are complete and merged into `main`.
+knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat) and 14 (tutor and study planner) are complete and merged into `main`.
 
 ## What works
 
 - **Local server** (`apps/server`): Hono on `127.0.0.1` with token (cookie or bearer), Host allowlist,
   Origin and Fetch-Metadata checks; `/auth` sign-in link; RFC 9457 problem details (with `details`);
   CSP and security headers; production SPA serving; server-sent events at `/api/events`.
-- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0013`), vault (`.skb/` layout,
+- **Storage:** `node:sqlite` adapter, checksummed migrations (`0001`–`0014`), vault (`.skb/` layout,
   lock with crash recovery, strict path containment), atomic writes, vault-scoped settings.
 - **Notes** (Phase 3): Markdown files are canonical; the index (notes, aliases, tags, links,
   attachments, FTS5) is rebuilt from the files and follows edits made in other programs. Ids are
@@ -95,11 +95,21 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP) and 13 (chat) are c
   page and any selected text, and Stop; long conversations are summarised for the model; tokens and
   cost are shown per conversation. A paused run is saved with its conversation, so approvals survive
   a reload (ADR-0036). Guide: `docs/guide/chat.md`.
+- **Tutor and study plan** (Phase 14): **Tutor** mode in chat guides with a ladder the server decides — a
+  question first, hints, the first part of the solution, and the full worked solution only on request,
+  ending in a check question. **Quiz me** puts questions from your own bank (never their answers) and
+  records your reply as *assisted* evidence only after you approve it; that is the one change that cannot
+  be undone (ADR-0037). **Check my notes** turns what the lectures contradict into correction suggestions
+  in the Inbox. **Plan** (`/plan`): a deterministic plan for 7–28 days from the time you set aside
+  (Settings → Study plan), due reviews, mock exams, an exam-day retention pass, coursework hours left,
+  lectures to work through and practice on the concepts that matter most, each item with its reason;
+  tick, skip, put back, plan again without losing what is done; Today shows today's items. Flashcards come
+  back sooner for a module's exam fortnight (93 % recall). Guide: `docs/guide/planning.md`.
 - **Application shell:** sidebar, sticky page headers (per pane on paned pages), themes, command
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 711 Vitest tests and 85 Playwright tests (sticky headers on every route and pane,
+- **Tests:** 760 Vitest tests and 87 Playwright tests (sticky headers on every route and pane,
   axe in both themes, the library, the course, the graph, reviewing, practice, chat, generating and an MCP client
   using the stdio bridge) — all green. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
   p95 404 ms, median 51 ms (provisional budget 500 ms).
@@ -111,12 +121,16 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP) and 13 (chat) are c
 
 ## In progress
 
-- Nothing; Phase 14 not yet started.
+- Nothing; Phase 15 not yet started.
 
 ## Incomplete / not started
 
-- Phases 14–22: the tutor and planner and the desktop app do not exist yet; their sections show
-  placeholders.
+- Phases 15–22: integration (FIRe-style credit, mastery on the graph), export, hardening and the desktop
+  app do not exist yet.
+- Not in Phase 14 (backlog): a retention pass from simulated reviews (B-LE-33), moving or adding plan items
+  and a calendar export (B-LE-34), remaking the plan each morning (B-LE-35), time per concept from real
+  durations (B-LE-36), asking the model again when a tutor reply breaks its step (B-AI-31), a page for
+  tutored sessions (B-AI-32), a vault-wide notes check (B-AI-33).
 - Not in Phase 13 (backlog): editing or regenerating a message and branching (B-AI-25), attaching
   files (B-AI-26), exporting a conversation or saving an answer as a note (B-AI-27), runs that carry
   on after the page is closed (B-AI-28), range mentions (B-AI-29), provider token counts for
@@ -161,8 +175,8 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP) and 13 (chat) are c
 
 ## Next steps
 
-1. Create `phase/14-tutor-planner` from `main`.
-2. Phase 14: the tutor (including `record_answer`, task 14.02) and the study planner.
+1. Create `phase/15-integration` from `main`.
+2. Phase 15: see `docs/checklist/phase-15-integration.md`.
 
 ## Relevant decisions
 
@@ -177,8 +191,9 @@ ADR-0032 mastery recomputed from evidence in one pass; answers written once; Lea
 its answers · ADR-0012 AI SDK 7 · **ADR-0033** AI configuration outside the vault, answers as JSON lines,
 fusion in retrieval · ADR-0034 generated material waits as drafts and proposals; AI reads media
 through injected readers · ADR-0035 tools are the only way to act; the server enforces
-approvals; every change is logged and undoable · **ADR-0036** chat streams JSON lines from the
-server's own runner; a paused run is saved with its thread.
+approvals; every change is logged and undoable · ADR-0036 chat streams JSON lines from the
+server's own runner; a paused run is saved with its thread · **ADR-0037** the plan is a pure function,
+the server decides the tutor's rung, answers recorded by a tutor are permanent and ask.
 
 ## Technical debt
 
