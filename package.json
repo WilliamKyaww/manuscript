@@ -29,7 +29,8 @@
     "test:perf:mastery": "tsx apps/server/test/perf/mastery-perf.ts",
     "docs:tools": "tsx scripts/write-tool-catalogue.ts",
     "desktop:dev": "node scripts/run-desktop.mjs",
-    "desktop:build": "node scripts/pack-desktop.mjs"
+    "desktop:build": "node scripts/pack-desktop.mjs",
+    "desktop:dist": "node scripts/dist-desktop.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",

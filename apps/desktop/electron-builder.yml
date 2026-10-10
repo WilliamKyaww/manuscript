@@ -1,0 +1,41 @@
+# The Windows installer (Phase 19, ADR-0016): an NSIS installer for one user, built from the same
+# layout `npm run desktop:build` makes. `npm run desktop:dist` runs electron-builder with this file.
+appId: app.manuscript.desktop
+productName: Manuscript
+copyright: Copyright © 2026 Manuscript contributors
+directories:
+  output: release
+  buildResources: build
+# The shell is two bundles; the server (with its migrations and the built web app) is a resource.
+files:
+  - dist/main.mjs
+  - dist/preload.cjs
+  - package.json
+extraResources:
+  - from: ../server/dist
+    to: server
+    filter:
+      - '**/*'
+      - '!**/*.map'
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.png
+  # Signing is optional (a personal build has no certificate): it happens only when CSC_LINK and
+  # CSC_KEY_PASSWORD are set; otherwise Windows SmartScreen warns once (README → Installing).
+  artifactName: Manuscript-Setup-${version}.${ext}
+nsis:
+  # A per-user install in the user's own profile: no administrator prompt, and the data stays theirs.
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Manuscript
+  # The vault (Documents\Manuscript) and the data folder (%APPDATA%\Manuscript) are the student's, not
+  # the application's: uninstalling removes the program and leaves them alone.
+  deleteAppDataOnUninstall: false
+  runAfterFinish: true
+  uninstallDisplayName: Manuscript
