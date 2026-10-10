@@ -5,6 +5,8 @@ lectures and modules, and how they connect. It is built from what you have alrea
 links in your notes, the course structure — plus the **relations** you add between concepts, and it
 points out what to study next: gaps, bridges between topics, connections to check.
 
+![The graph of a module: concepts coloured by cluster, notes, lectures and the module, with study prompts beside it](../screenshots/graph-dark.png)
+
 ## 1. What is in the graph
 
 | Dot | Is |

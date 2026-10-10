@@ -4,6 +4,8 @@ The **Library** (sidebar, or `/library`) holds the material you study from — l
 handouts, coursework briefs. Manuscript keeps every original exactly as you imported it, reads its
 text, and makes that text searchable down to the page or slide it came from.
 
+![A slide deck in the source viewer: the slides on the left, their text and speaker notes on the right](../screenshots/source-light.png)
+
 ## Importing
 
 - **Import files** (top right) opens a file picker; several files can be chosen at once.

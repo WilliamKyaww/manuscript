@@ -4,22 +4,22 @@ A personal **Knowledge & Learning OS**: a Markdown knowledge base, a lecture/sou
 graph and a spaced-repetition learning system that share one data model — with an AI agent that can
 search, explain, generate study material and act on the knowledge base through permissioned tools.
 
-> **Status: Phases 0–10 complete** (research and planning; secure local server, database, vault and
-> launcher; application shell; **notes**: Markdown files in your vault with an editor, preview,
-> wikilinks, backlinks, templates, attachments, trash and live pick-up of edits made in Obsidian or
-> VS Code; **search**: full-text search with filters, a quick switcher and notes in the command
-> palette; **library**: PDF, PowerPoint, Word, Markdown and text sources kept byte for byte, read in
-> the background, searchable down to the page or slide, with a viewer; **course**: modules, lectures
-> with their material, topics, assessments with a mark calculator against your targets, and concepts
-> that wikilinks resolve to; **graph**: concepts, notes, sources and the course as a WebGL graph with
-> typed relations, clusters and study prompts; **flashcards**: basic, reversed and cloze cards
-> scheduled with FSRS-6 and reviewed from the keyboard; **practice**: a question bank of eight kinds,
-> quizzes, timed mock exams and adaptive Learn sessions; **progress**: transparent mastery per concept
-> with readiness by module and weak areas; **AI, optional**: your choice of provider, and questions
-> answered from your own material with citations that open the page). Generation arrives in Phase 11. See
-> [`STATE.md`](./STATE.md), the
-> [user guides](./docs/guide/README.md) and
-> [`docs/checklist/`](./docs/checklist/README.md) for the roadmap.
+> **Status: Phases 0–19 complete; Phase 20 (final UI polish) in progress.** Notes, search, the source
+> library, the course model, the knowledge graph, flashcards, practice, mastery and progress, the study
+> plan, optional AI (answers with citations, generation, a tutor and an agentic chat with approvals and
+> undo), export and restore, backups and diagnostics all work, in the browser and as a Windows desktop
+> application with an installer. Verification (Phase 21) and the first release (Phase 22) follow. See
+> [`STATE.md`](./STATE.md), [`FEATURES.md`](./FEATURES.md), the
+> [user guides](./docs/guide/README.md) and [`docs/checklist/`](./docs/checklist/README.md).
+
+![Today: reviews due, upcoming deadlines, progress towards the target, today's plan and the weak spots before the next lecture](./docs/screenshots/today-light.png)
+
+| | |
+|---|---|
+| ![A note in the editor with live preview: headings and emphasis without their marks, front matter small and grey](./docs/screenshots/note-light.png) | ![The knowledge graph in the dark theme: concepts, notes, lectures and modules, clustered, with study prompts](./docs/screenshots/graph-dark.png) |
+| **Notes** — Markdown files in your vault, with live preview | **Graph** — how it all connects, and what to study next |
+| ![A review session: the question, Show answer, and the keys for each action](./docs/screenshots/review-session-light.png) | ![Progress: readiness, mastery and coverage, weak areas, and every concept with its evidence](./docs/screenshots/progress-light.png) |
+| **Review** — FSRS-6 flashcards from the keyboard | **Progress** — mastery you can check, never set by hand |
 
 ## Why it exists
 
@@ -31,10 +31,10 @@ schedule it. This project joins the two around the learning loop:
 lecture → concepts → knowledge graph → study material → practice → mastery → weak concepts → targeted study
 ```
 
-## Core capabilities (planned — see [FEATURES.md](./FEATURES.md) for live status)
+## Core capabilities (see [FEATURES.md](./FEATURES.md) for the status of each)
 
 - **Knowledge:** Obsidian-compatible Markdown notes (wikilinks, backlinks, maths, code, Mermaid), fast
-  full-text and semantic search, a source library (PDF, PPTX, DOCX…) with page/slide-precise locators,
+  full-text search (and semantic retrieval for answers), a source library (PDF, PPTX, DOCX…) with page/slide-precise locators,
   concepts and a typed, provenance-tagged knowledge graph.
 - **Learning:** modules, lectures, topics, assessments and a mark calculator; FSRS-6 flashcards;
   question bank, quizzes and mock exams; transparent concept-level mastery; weak-area detection; a
@@ -102,6 +102,7 @@ HttpOnly cookie after you open the sign-in link). Requests with a foreign `Host`
 | `npm run test:e2e` | Builds, then Playwright end-to-end tests in Chromium (first run: `npx playwright install chromium`) |
 | `npm run test:perf` | Generates 10,000 notes (and 10,000 PDF pages) and checks the indexing, search, graph and retrieval budgets |
 | `npx playwright test e2e/desktop.spec.ts` | Launches the desktop shell and its unpacked build with Playwright's Electron driver (needs `npm run build`, and `npm run desktop:build` for the second test) |
+| `SKB_SCREENSHOTS=<folder> npx playwright test e2e/screens.spec.ts` | Seeds a realistic course and photographs every screen in both themes (`SKB_SCREENSHOT_WIDTH` sets the width; needs `npm run build`) — how the pictures here were made |
 | **`npm run verify`** | typecheck → lint → tests → build → smoke test (run before every commit) |
 
 ## Troubleshooting
@@ -124,7 +125,7 @@ HttpOnly cookie after you open the sign-in link). Requests with a foreign `Host`
 | [`STATE.md`](./STATE.md) | Current state of the project |
 | [`FEATURES.md`](./FEATURES.md) | Feature inventory and statuses |
 | [`DECISIONS.md`](./DECISIONS.md) | Architecture decision records |
-| [`docs/guide/`](./docs/guide/README.md) | User guides: notes and the Markdown dialect |
+| [`docs/guide/`](./docs/guide/README.md) | User guides: one per part of the application, from installing to troubleshooting |
 | [`AGENTS.md`](./AGENTS.md) | How to work on this repository (agents and humans) |
 | [`docs/`](./docs/README.md) | Research, PRD, checklists, journal, backlog |
 

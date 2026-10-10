@@ -3,6 +3,8 @@
 Written for people using Manuscript, not for developers. Each guide is added when the
 feature it describes is complete.
 
+![Today in the dark theme: reviews due, deadlines, progress towards the target, today’s plan and the weak spots before the next lecture](../screenshots/today-dark.png)
+
 | Guide | Covers |
 |---|---|
 | [Installing on Windows](./installing.md) | Building the installer, what it installs and what it leaves alone, the SmartScreen warning, first run, updating in place, uninstalling |

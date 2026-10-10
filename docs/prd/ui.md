@@ -38,7 +38,8 @@ Rules:
    Phase 5 for the source viewer, whose thumbnails, pages and contents are panes; `e2e/library.spec.ts`
    checks that the page and pane headers stay put while the pages scroll).
 5. **Enforcement (implemented in Phase 2):** `e2e/shell.spec.ts` visits every route in
-   `apps/web/src/app/sections.ts` plus the not-found page, pads the body to force scrolling, scrolls
+   `apps/web/src/app/sections.ts` plus the question bank, diagnostics, the design system and the
+   not-found page, pads the body to force scrolling, scrolls
    `PageBody` to the bottom and asserts that exactly one page header exists, its position is unchanged,
    it and the `h1` stay in the viewport, and the window itself never scrolls. A second E2E test checks
    that `StickySection` headers stick to the top of the body; `Page.test.tsx` checks the structure.
@@ -99,10 +100,20 @@ why it is empty, the primary action), **error** (plain-language message, retry, 
 **partial** (e.g. source still processing, with progress). Not-yet-implemented areas say so honestly
 ("Arrives in Phase 8") rather than showing fake data.
 
+Inside a card, widget or panel a failed request shows `InlineError` (one line and *Try again*) — never a
+blank, and never a zero or "nothing due" standing in for an answer that did not arrive (Phase 20). A
+chart with nothing to plot says why instead of showing a row of empty bars. Optional extras that add to
+a page (related notes, AI usage, "before what's next") may simply stay hidden when they fail.
+
 ## 6. Keyboard model
 
 Shortcut registry with scopes (global, page, editor, session) and a cheat sheet (`?` / `Ctrl+/`).
 Everything reachable by keyboard; visible focus; no shortcut conflicts with the editor's defaults.
+
+The cheat sheet has two parts (Phase 20): **Everywhere**, from the registry, and **On a page**, from
+`apps/web/src/app/shortcuts/reference.ts` — the keys handled where they apply (editor, notes list, review
+session, practice, chat, quick switcher, dialogues), listed wherever the sheet is opened. A key handled
+in a component must be added there. The review session's keys live in `session/keys.ts`, used by both.
 
 ## 7. Accessibility
 
@@ -123,13 +134,44 @@ mastery stages, confidence styles), spacing scale (4 px base), radius, typograph
 serif optional, mono for code), elevation, motion durations. Light, dark and system themes from Phase 2.
 The polish phase changes token *values* and component details, not the layout architecture.
 
+**Visual direction (Phase 20).** Calm and paper-like, so that the material is the loudest thing on
+screen: warm neutral surfaces (a cream page, white cards, sunken wells), near-black warm text in three
+strengths that all meet AA on every surface, and **one** green accent for primary actions, links, focus
+and selection. Status colours appear only as small badges and banners on their subtle backgrounds.
+Segoe UI Variable on Windows (the system font elsewhere) at a compact scale — page titles `text-xl`
+semibold, section titles `text-sm` semibold, body `text-sm`, notes `text-base` — with Cascadia for code.
+Three radii, three shadows, used sparingly. The dark theme keeps the same roles at lower luminance.
+
+The values live in `apps/web/src/styles/tokens.css`; **`/design-system`** (Settings › About) shows
+every token with its resolved value in the current theme and every shared component live, and a test
+fails if a token is not listed there. Component conventions: one primary button per view; `link` for a
+way to another page among buttons; `danger-outline` for Delete in a header, with the solid `danger`
+only on the confirming button of `ConfirmDialog`; `eyebrow` for the small upper-case labels in panels;
+icon tabs (name on the selected tab) in narrow panels.
+
+**Motion.** Hover and state changes use `--skb-duration-fast` (120 ms); dialogues fade and rise, menus and
+popovers fade in, over `--skb-duration-normal` (200 ms). Both are 0 ms under `prefers-reduced-motion`,
+and spinners and skeleton pulses stop. `e2e/shell.spec.ts` checks a dialogue's animation both ways; the
+other end-to-end tests run with reduced motion so that axe never measures a half-faded dialogue.
+
 ## 9. Responsive behaviour
 
 Primary target: laptop/desktop (≥ 1280 px). Usable down to 768 px (sidebar collapses to icons, side
 panels become drawers). Phone layouts are best-effort (review and quiz sessions should work).
+
+As built (Phase 20): below 1024 px the sidebar is the rail of icons whatever was chosen for wide
+windows (opening it there lasts until the window widens and is not remembered); a page header's actions
+move below the title rather than cut it short; narrow panels use icon tabs. Side panels (a note's
+details, the graph's insights) stay **resizable panes** rather than drawers — usable at 768 px, and the
+drawers are in the backlog (B-PL-09). `e2e/shell.spec.ts` checks every route at 800 px: the rail, and no
+page wider than the window.
 
 ## 10. Final polish phase (Phase 20) scope
 
 Every screen in §4 reviewed for spacing, typography, iconography, component states, empty/loading/error
 states, responsive behaviour, keyboard shortcuts, accessibility, micro-interactions, and consistency;
 editor live-preview decorations; graph styling; a design-system page documenting components.
+
+The review was done from screenshots of every screen with realistic content in both themes and at
+768 px (`e2e/screens.spec.ts`, run with `SKB_SCREENSHOTS=<folder>`); what it found and changed is listed
+in `docs/checklist/phase-20-polish.md` and the 10 October journal.

@@ -4,6 +4,8 @@
 take, their lectures, how they are assessed and the ideas — **concepts** — they teach. From the marks
 you enter, Manuscript works out what you still need for your targets.
 
+![A module page: the module mark and calculator, readiness, and its assessments with weights and due dates](../screenshots/module-light.png)
+
 A semester takes a few minutes to set up: a course, its modules, then each module's assessments. Add
 lectures as the term goes on.
 

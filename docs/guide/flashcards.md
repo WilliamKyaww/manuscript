@@ -4,6 +4,8 @@
 forget it: Manuscript schedules them with **FSRS-6**, the scheduler Anki uses by default, so reviewing
 a little every day keeps what you have learnt with the fewest reviews.
 
+![A review session: a new card’s question, Show answer (Space), and Undo, Edit, Bury and Suspend with their keys](../screenshots/review-session-light.png)
+
 ## 1. Sets and cards
 
 Cards live in **sets** — one per module, lecture or topic is a good start. **New set** asks for a

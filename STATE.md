@@ -1,10 +1,10 @@
 # State — Manuscript
 
-_Last updated: 10 October 2026 — Claude Sonnet 5.5._
+_Last updated: 10 October 2026 — Claude Opus 5.5._
 
 ## Current phase
 
-**Phase 20 — Final UI/UX polish: next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
+**Phase 20 — Final UI/UX polish: in progress — every task done, the gate (a full E2E run) next.** Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
 and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
 ingestion pipeline), 6 (course structure and concepts), 7 (knowledge graph), 8 (flashcards and
 spaced repetition), 9 (questions, quizzes and mastery), 10 (AI foundation), 11 (AI generation and
@@ -147,11 +147,18 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
   no administrator prompt, a choosable folder, Start Menu and desktop shortcuts, and an uninstaller that keeps the
   vault and the data folder. Not code-signed unless `CSC_LINK` is set, so SmartScreen warns once. Installed, updated
   in place and uninstalled on this machine (journal, 10 October).
+- **Polish** (Phase 20, `ui.md` §§8–9): a written visual direction; `/design-system` shows every token and shared
+  component live; **live preview** in the note editor (marks hidden away from the cursor, a toggle) and quiet front
+  matter; deletes that ask first everywhere (lectures and selected cards did not); `InlineError` wherever a widget's
+  data can fail, never a misleading zero; approval cards that name their target ("Move the note “Scratch” to the
+  trash"); a cheat sheet with every page's keys; enter animations on the motion tokens (none under reduced motion);
+  below 1024 px the sidebar is a rail. Screenshots of every screen in both themes: `e2e/screens.spec.ts` and
+  `e2e/screens-assistant.spec.ts` (`SKB_SCREENSHOTS=<folder>`); thirteen of them illustrate the README and guides.
 - **Application shell:** sidebar, sticky page headers (per pane on paned pages), themes, command
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 863 Vitest tests (core 236, server 440, web 179, desktop 8) and 121 Playwright tests (two of them launch the Electron shell and its unpacked build) (sticky headers on every route and pane,
+- **Tests:** 883 Vitest tests (core 237, server 443, web 195, desktop 8) and 121 Playwright tests (Phase 19; Phase 20 adds five) (two of them launch the Electron shell and its unpacked build) (sticky headers on every route and pane,
   axe in both themes, the library, the course, the graph, reviewing, practice, chat, generating and an MCP client
   using the stdio bridge) — all green. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
   p95 434 ms, median 71 ms (provisional budget 500 ms; Phase 17 run).
@@ -163,11 +170,14 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## In progress
 
-- Nothing; Phase 20 not yet started.
+- Phase 20: all 24 tasks done except 20.23 (the sticky-header audit), which completes with the gate's full E2E
+  run; then the merge.
 
 ## Incomplete / not started
 
-- Phases 20–22: polish, verification and the release do not exist yet.
+- Phases 21–22: verification and the release do not exist yet.
+- Not in Phase 20 (backlog): side panels as drawers below 1024 px (B-PL-09) — at 768 px they are narrow resizable
+  panes.
 - Not in Phase 19: code signing (needs a certificate), automatic updates (B-PL-06).
 - Not in Phase 18: an installer, code signing and automatic updates (Phase 19); macOS and Linux builds were not run;
   the application menu has no shortcuts of its own (the web app's work as in the browser).
@@ -229,8 +239,8 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## Next steps
 
-1. Create `phase/20-polish` from `main` (done).
-2. Phase 20: see `docs/checklist/phase-20-polish.md` (a visual-design phase with 24 tasks: expect screenshots and judgement).
+1. Phase 20 gate: the full Playwright suite (`npm run test:e2e`), then merge `phase/20-polish` into `main`.
+2. Phase 21 — verification (`docs/checklist/phase-21-verification.md`), from a new branch off `main`.
 
 ## Relevant decisions
 
@@ -296,8 +306,10 @@ background load — compare against a worktree of the previous gate (`AGENTS.md`
 - To try chat: add a provider in Settings → AI (`docs/guide/ai.md`), then follow the short checklist at
   the end of `docs/guide/chat.md` — the check of chat against a real provider (Phase 13's acceptance
   criterion) is yours to do; the automated tests use the built-in test model.
-  budget) decides the defaults worth suggesting; without an answer, nothing is preset and the budget
-  starts at $10 a month.
+- RQ-04 (your AI providers and budget) decides the defaults worth suggesting; without an answer, nothing is preset
+  and the budget starts at $10 a month.
+- To look at the new design: **Settings › About › Design system**, and the ¶ button in the note editor's toolbar
+  turns live preview on and off.
 
 ## Open questions for the user
 

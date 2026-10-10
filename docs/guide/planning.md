@@ -4,6 +4,8 @@ The plan answers "what should I do today, and why?". It looks at the time you ha
 how much each is worth, what you are weakest at, and which flashcards are due, and sets out the coming
 days. Every item says why it is there. It works without AI.
 
+![A two-week plan: each day’s items with their minutes and reasons, today highlighted](../screenshots/plan-light.png)
+
 Open it from **Plan** in the sidebar. **Today** shows the part for today.
 
 ## Making a plan
