@@ -92,13 +92,42 @@ test.describe('navigation and keyboard', () => {
     await expect(palette).toHaveCount(0);
   });
 
-  test('collapsing the sidebar is remembered across reloads', async ({ page }) => {
+  test('the sidebar starts collapsed; opening and resizing it are remembered across reloads', async ({
+    page,
+  }) => {
     const sidebar = page.locator('[data-sidebar]');
-    await expect(sidebar).toHaveAttribute('data-collapsed', 'false');
-    await page.keyboard.press('Control+Backslash');
     await expect(sidebar).toHaveAttribute('data-collapsed', 'true');
+    await page.keyboard.press('Control+Backslash');
+    await expect(sidebar).toHaveAttribute('data-collapsed', 'false');
+    expect(Math.round((await sidebar.boundingBox())?.width ?? 0)).toBe(216);
+
+    // Dragged wider by its edge, then narrower than it may be (it stops at 12 rem).
+    const handle = page.getByRole('separator', { name: 'Resize sidebar' });
+    const box = await handle.boundingBox();
+    if (!box) throw new Error('No resize handle');
+    await page.mouse.move(box.x + box.width / 2, box.y + 200);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 64, box.y + 200, { steps: 4 });
+    await page.mouse.up();
+    await expect.poll(async () => Math.round((await sidebar.boundingBox())?.width ?? 0)).toBe(276);
+    await handle.focus();
+    await page.keyboard.press('Home');
+    await expect(handle).toHaveAttribute('aria-valuenow', '192');
+    await page.keyboard.press('ArrowRight');
+    await expect(handle).toHaveAttribute('aria-valuenow', '208');
+
     await page.reload();
-    await expect(page.locator('[data-sidebar]')).toHaveAttribute('data-collapsed', 'true');
+    await expect(page.locator('[data-sidebar]')).toHaveAttribute('data-collapsed', 'false');
+    await expect(page.getByRole('separator', { name: 'Resize sidebar' })).toHaveAttribute(
+      'aria-valuenow',
+      '208',
+    );
+    // A double click puts it back to the usual width.
+    await page.getByRole('separator', { name: 'Resize sidebar' }).dblclick();
+    await expect(page.getByRole('separator', { name: 'Resize sidebar' })).toHaveAttribute(
+      'aria-valuenow',
+      '216',
+    );
   });
 
   test('the chosen theme applies before the app renders after a reload', async ({ page }) => {
@@ -233,9 +262,10 @@ test.describe('accessibility (axe: no serious or critical violations)', () => {
     expect(await seriousViolations(page)).toEqual([]);
   });
 
-  test('the collapsed sidebar', async ({ page }) => {
+  test('the open sidebar, with its resize handle', async ({ page }) => {
+    // Every page above is checked with the sidebar as it starts: collapsed.
     await page.keyboard.press('Control+Backslash');
-    await expect(page.locator('[data-sidebar]')).toHaveAttribute('data-collapsed', 'true');
+    await expect(page.locator('[data-sidebar]')).toHaveAttribute('data-collapsed', 'false');
     expect(await seriousViolations(page)).toEqual([]);
   });
 });

@@ -46,7 +46,9 @@ export function Pane({
         <h2 id={headingId} className={cn('eyebrow truncate', hideTitle && 'sr-only')}>
           {title}
         </h2>
-        {headerStart && <div className="flex min-w-0 flex-1 items-center">{headerStart}</div>}
+        {headerStart && (
+          <div className="flex min-w-16 flex-1 items-center overflow-hidden">{headerStart}</div>
+        )}
         {actions && <div className="flex shrink-0 items-center gap-1">{actions}</div>}
       </div>
       {toolbar && (

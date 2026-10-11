@@ -10,18 +10,24 @@ export function DropdownMenuContent({
   children,
   align = 'end',
   className,
+  onCloseAutoFocus,
 }: {
   children: ReactNode;
   align?: 'start' | 'center' | 'end';
   className?: string;
+  /** Call `preventDefault()` to keep focus where an item put it (the find bar, the file tree). */
+  onCloseAutoFocus?(event: Event): void;
 }) {
   return (
     <RadixMenu.Portal>
       <RadixMenu.Content
+        onCloseAutoFocus={onCloseAutoFocus}
         align={align}
         sideOffset={6}
         className={cn(
           'z-50 min-w-44 animate-fade-in rounded-md border border-border bg-surface-raised p-1 text-sm shadow-md',
+          // A long menu in a short window scrolls rather than running off the screen.
+          'max-h-(--radix-dropdown-menu-content-available-height) overflow-y-auto',
           className,
         )}
       >

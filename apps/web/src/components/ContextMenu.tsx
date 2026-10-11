@@ -25,6 +25,8 @@ export function ContextMenuContent({
         onCloseAutoFocus={onCloseAutoFocus}
         className={cn(
           'z-50 min-w-48 animate-fade-in rounded-md border border-border bg-surface-raised p-1 text-sm shadow-md',
+          // A long menu in a short window scrolls rather than running off the screen.
+          'max-h-(--radix-context-menu-content-available-height) overflow-y-auto',
           className,
         )}
       >

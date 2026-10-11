@@ -142,7 +142,16 @@ export function MenuEntries({
                   <ChevronRight aria-hidden="true" size={14} className="text-subtle" />
                 </M.SubTrigger>
                 <M.Portal>
-                  <M.SubContent sideOffset={4} className={MENU_SURFACE}>
+                  <M.SubContent
+                    sideOffset={4}
+                    className={cn(
+                      MENU_SURFACE,
+                      'overflow-y-auto',
+                      as === 'dropdown'
+                        ? 'max-h-(--radix-dropdown-menu-content-available-height)'
+                        : 'max-h-(--radix-context-menu-content-available-height)',
+                    )}
+                  >
                     <MenuEntries entries={entry.entries} as={as} />
                   </M.SubContent>
                 </M.Portal>

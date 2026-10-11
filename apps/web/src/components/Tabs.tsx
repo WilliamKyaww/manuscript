@@ -23,7 +23,11 @@ export function TabsList({
   );
 }
 
-type TabsTriggerProps = { value: string } & (
+type TabsTriggerProps = {
+  value: string;
+  /** Five tabs or more in a narrow panel: every name shows only from 28rem rather than 19rem. */
+  crowded?: boolean;
+} & (
   | { children: ReactNode; icon?: undefined }
   | {
       /** Plain text: it is also the accessible name while only the icon shows. */
@@ -37,7 +41,7 @@ type TabsTriggerProps = { value: string } & (
     }
 );
 
-export function TabsTrigger({ value, children, icon }: TabsTriggerProps) {
+export function TabsTrigger({ value, children, icon, crowded }: TabsTriggerProps) {
   return (
     <RadixTabs.Trigger
       value={value}
@@ -55,7 +59,10 @@ export function TabsTrigger({ value, children, icon }: TabsTriggerProps) {
       )}
       <span
         className={cn(
-          icon && 'hidden @min-[12rem]:group-data-[state=active]:inline @min-[19rem]:inline',
+          icon &&
+            (crowded
+              ? 'hidden @min-[12rem]:group-data-[state=active]:inline @min-[28rem]:inline'
+              : 'hidden @min-[12rem]:group-data-[state=active]:inline @min-[19rem]:inline'),
         )}
         {...(icon ? { 'aria-hidden': true } : {})}
       >

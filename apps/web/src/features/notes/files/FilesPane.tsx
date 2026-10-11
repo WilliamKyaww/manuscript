@@ -76,6 +76,8 @@ export function FilesPane({
   return (
     <Pane
       title="Files"
+      // As in Obsidian, the toolbar is the header; the name is for assistive technology.
+      hideTitle
       actions={
         <>
           <IconButton

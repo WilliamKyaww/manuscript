@@ -298,28 +298,41 @@ export function NoteWorkspace({
       onError: notifyError,
     });
 
+  // Items that move focus elsewhere (the find bar, the file tree) keep it there when the menu closes.
+  const focusMoves = useRef(false);
   const search = (replace: boolean) => {
+    focusMoves.current = true;
     if (mode === 'preview') setMode('edit');
     // After the editor is shown again.
     requestAnimationFrame(() => editor.current?.openSearch({ replace }));
   };
 
   const node = nodeForNote(note);
-  const menu = moreOptionsMenu(node, actions, {
-    mode,
-    setMode,
-    livePreview,
-    setLivePreview,
-    backlinksInDocument: ui.backlinksInDocument,
-    setBacklinksInDocument: ui.setBacklinksInDocument,
-    find: () => search(false),
-    replace: () => search(true),
-    exportPdf: () =>
-      exportToPdf({ noteId: note.id, title: note.title, content: liveText, resolve }),
-    addProperty: ui.requestAddProperty,
-    showPanel: ui.showDetails,
-    readOnly: session.readOnly,
-  });
+  const menu = moreOptionsMenu(
+    node,
+    {
+      ...actions,
+      reveal: (target) => {
+        focusMoves.current = true;
+        actions.reveal(target);
+      },
+    },
+    {
+      mode,
+      setMode,
+      livePreview,
+      setLivePreview,
+      backlinksInDocument: ui.backlinksInDocument,
+      setBacklinksInDocument: ui.setBacklinksInDocument,
+      find: () => search(false),
+      replace: () => search(true),
+      exportPdf: () =>
+        exportToPdf({ noteId: note.id, title: note.title, content: liveText, resolve }),
+      addProperty: ui.requestAddProperty,
+      showPanel: ui.showDetails,
+      readOnly: session.readOnly,
+    },
+  );
 
   const conflict = session.conflict;
   return (
@@ -338,7 +351,8 @@ export function NoteWorkspace({
             <span
               aria-live="polite"
               className={cn(
-                'mr-2 hidden text-xs @min-[30rem]:inline',
+                // Read out in any pane; shown once the pane has room for it.
+                'sr-only mr-2 text-xs @min-[34rem]:not-sr-only',
                 session.status === 'failed' ? 'text-danger' : 'text-muted',
               )}
             >
@@ -347,36 +361,76 @@ export function NoteWorkspace({
             </span>
             <span
               aria-hidden="true"
-              className="mr-2 hidden text-xs text-subtle @min-[44rem]:inline"
+              className="mr-2 hidden text-xs text-subtle @min-[48rem]:inline"
             >
               {analysis.wordCount} {analysis.wordCount === 1 ? 'word' : 'words'}
             </span>
-            <IconButton
-              label="Make a card from the selection"
-              icon={<SquarePlus size={16} />}
-              size="sm"
-              onClick={makeCard}
-            />
-            <IconButton
-              label="Generate from this note or the selection"
-              icon={<Sparkles size={16} />}
-              size="sm"
-              onClick={generate}
-            />
-            <IconButton
-              label="Suggest links"
-              icon={<Link2 size={16} />}
-              size="sm"
-              disabled={inbox.suggestLinks.isPending}
-              onClick={suggestLinks}
-            />
+            {/* The study tools: three buttons in a wide pane, one menu in a narrow one. */}
+            <div className="hidden items-center gap-1 @min-[40rem]:flex">
+              <IconButton
+                label="Make a card from the selection"
+                icon={<SquarePlus size={16} />}
+                size="sm"
+                onClick={makeCard}
+              />
+              <IconButton
+                label="Generate from this note or the selection"
+                icon={<Sparkles size={16} />}
+                size="sm"
+                onClick={generate}
+              />
+              <IconButton
+                label="Suggest links"
+                icon={<Link2 size={16} />}
+                size="sm"
+                disabled={inbox.suggestLinks.isPending}
+                onClick={suggestLinks}
+              />
+            </div>
+            <div className="flex @min-[40rem]:hidden">
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <IconButton label="Study tools" icon={<Sparkles size={16} />} size="sm" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="min-w-60">
+                  <MenuEntries
+                    as="dropdown"
+                    entries={[
+                      {
+                        label: 'Make a card from the selection',
+                        icon: <SquarePlus size={15} />,
+                        onSelect: makeCard,
+                      },
+                      {
+                        label: 'Generate from this note or the selection',
+                        icon: <Sparkles size={15} />,
+                        onSelect: generate,
+                      },
+                      {
+                        label: 'Suggest links',
+                        icon: <Link2 size={15} />,
+                        disabled: inbox.suggestLinks.isPending,
+                        onSelect: suggestLinks,
+                      },
+                    ]}
+                  />
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
             {mode !== 'preview' && <LivePreviewToggle on={livePreview} onChange={setLivePreview} />}
             <ModeToggle mode={mode} onChange={setMode} />
-            <DropdownMenu>
+            {/* Not modal, as in Obsidian: the page stays readable (and reachable) beside it. */}
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <IconButton label="More options" icon={<MoreVertical size={16} />} size="sm" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="min-w-60">
+              <DropdownMenuContent
+                className="min-w-60"
+                onCloseAutoFocus={(event) => {
+                  if (focusMoves.current) event.preventDefault();
+                  focusMoves.current = false;
+                }}
+              >
                 <MenuEntries entries={menu} as="dropdown" />
               </DropdownMenuContent>
             </DropdownMenu>
@@ -467,22 +521,27 @@ export function NoteWorkspace({
 function NoteBreadcrumb({ path, onFolder }: { path: string; onFolder(folder: string): void }) {
   const folders = ancestorsOf(path);
   return (
-    <nav aria-label="Location" className="min-w-0 truncate text-sm">
-      {folders.map((folder) => (
-        <span key={folder} className="text-muted">
-          <button
-            type="button"
-            className="rounded-sm hover:text-text hover:underline"
-            onClick={() => onFolder(folder)}
-          >
-            {folder.slice(folder.lastIndexOf('/') + 1)}
-          </button>
-          <span aria-hidden="true" className="px-1 text-subtle">
-            /
-          </span>
+    // In a narrow pane the folders give way before the note's own name.
+    <nav aria-label="Location" className="flex min-w-0 items-baseline text-sm whitespace-nowrap">
+      {folders.length > 0 && (
+        <span className="min-w-0 shrink-[4] truncate text-muted">
+          {folders.map((folder) => (
+            <span key={folder}>
+              <button
+                type="button"
+                className="rounded-sm hover:text-text hover:underline"
+                onClick={() => onFolder(folder)}
+              >
+                {folder.slice(folder.lastIndexOf('/') + 1)}
+              </button>
+              <span aria-hidden="true" className="px-1 text-subtle">
+                /
+              </span>
+            </span>
+          ))}
         </span>
-      ))}
-      <span aria-current="page" className="font-medium">
+      )}
+      <span aria-current="page" className="min-w-0 truncate font-medium">
         {noteNameFromPath(path)}
       </span>
     </nav>

@@ -132,7 +132,6 @@ export function NotesPage() {
   return (
     <Page
       title={current?.title ?? 'Notes'}
-      description={vault.vault ? vault.vault.name : undefined}
       layout="panes"
       density="compact"
       actions={

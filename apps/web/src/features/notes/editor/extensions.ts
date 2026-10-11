@@ -22,7 +22,7 @@ import {
   syntaxHighlighting,
 } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
-import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
+import { highlightSelectionMatches, openSearchPanel, searchKeymap } from '@codemirror/search';
 import { EditorState, type Extension } from '@codemirror/state';
 import {
   Decoration,
@@ -287,6 +287,16 @@ export function createExtensions({
           return true;
         },
       },
+      {
+        // Replace, as in Obsidian (task 23.08): the find bar with the cursor in its replace field.
+        key: 'Mod-h',
+        preventDefault: true,
+        run: (view) => {
+          openSearchPanel(view);
+          view.dom.querySelector<HTMLInputElement>('.cm-search input[name="replace"]')?.focus();
+          return true;
+        },
+      },
       ...closeBracketsKeymap,
       ...defaultKeymap,
       ...searchKeymap,
@@ -301,6 +311,8 @@ export function createExtensions({
     ...(lineSeparator ? [EditorState.lineSeparator.of(lineSeparator)] : []),
     EditorView.contentAttributes.of({
       'aria-label': 'Note text',
+      // Focusable even when read-only, so that its scroller can be scrolled from the keyboard.
+      tabindex: '0',
       spellcheck: 'true',
       autocorrect: 'on',
     }),

@@ -30,7 +30,9 @@ import {
   Tags,
   Trash2,
 } from 'lucide-react';
+import { keyLabels } from '../../../app/shortcuts/registry';
 import type { MenuEntry } from '../../../components/MenuEntries';
+import { isApplePlatform } from '../../../lib/platform';
 import type { EditorMode, SidePanel } from '../notes-store';
 import { parentOf, type TreeNode } from '../tree/buildTree';
 import type { FileActions } from '../useFileActions';
@@ -43,6 +45,8 @@ import type { FileActions } from '../useFileActions';
 
 const ICON = 15;
 const DESKTOP_ONLY = 'Desktop app';
+/** A shortcut as this platform writes it: "Ctrl+E" here, "⌘+E" on a Mac. */
+const keys = (shortcut: string) => keyLabels(shortcut, isApplePlatform()).join('+');
 
 function copyPathMenu(node: TreeNode, actions: FileActions): MenuEntry {
   return {
@@ -160,7 +164,7 @@ export function treeMenu(
           {
             label: 'Open in new tab',
             icon: <Plus size={ICON} />,
-            hint: 'Ctrl+click',
+            hint: keys('mod+click'),
             onSelect: () => actions.openInNewTab(node),
           },
           {
@@ -249,7 +253,7 @@ export function moreOptionsMenu(
     {
       label: reading ? 'Editing view' : 'Reading view',
       icon: reading ? <Pencil size={ICON} /> : <BookOpen size={ICON} />,
-      hint: 'Ctrl+E',
+      hint: keys('mod+e'),
       onSelect: () => view.setMode(reading ? 'edit' : 'preview'),
     },
     {
@@ -298,11 +302,11 @@ export function moreOptionsMenu(
     { kind: 'separator' },
     { label: 'Export to PDF…', icon: <Printer size={ICON} />, onSelect: view.exportPdf },
     { kind: 'separator' },
-    { label: 'Find…', icon: <Search size={ICON} />, hint: 'Ctrl+F', onSelect: view.find },
+    { label: 'Find…', icon: <Search size={ICON} />, hint: keys('mod+f'), onSelect: view.find },
     {
       label: 'Replace…',
       icon: <Replace size={ICON} />,
-      hint: 'Ctrl+H',
+      hint: keys('mod+h'),
       disabled: view.readOnly,
       onSelect: view.replace,
     },

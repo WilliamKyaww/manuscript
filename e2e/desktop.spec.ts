@@ -90,7 +90,15 @@ test('the desktop shell starts, shows the application, keeps the page confined, 
       };
     });
     expect(surface).toEqual({
-      bridge: ['appInfo', 'pickFiles', 'pickFolder', 'revealInExplorer'],
+      bridge: [
+        'appInfo',
+        'openPath',
+        'pickFiles',
+        'pickFolder',
+        'printToPdf',
+        'revealInExplorer',
+        'setTitleBarColours',
+      ],
       require: 'undefined',
       process: 'undefined',
     });
@@ -122,6 +130,45 @@ test('the desktop shell starts, shows the application, keeps the page confined, 
         { timeout: 20_000 },
       )
       .toContain('Written in the desktop window.');
+
+    // The slim title bar (task 23.10): the page draws the strip the window is dragged by, and the
+    // menu's shortcuts still work though no menu bar is shown.
+    await expect(page.locator('[data-title-bar]')).toBeVisible();
+    if (process.env.SKB_SCREENSHOTS)
+      await page.screenshot({
+        path: path.join(process.env.SKB_SCREENSHOTS, 'desktop-title-bar.png'),
+      });
+    const zoom = () =>
+      app.evaluate(
+        ({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.webContents.getZoomLevel() ?? 0,
+      );
+    // Through Electron's input path: keys sent by the test driver never reach the menu.
+    const press = (keyCode: string) =>
+      app.evaluate(({ BrowserWindow }, key) => {
+        const contents = BrowserWindow.getAllWindows()[0]?.webContents;
+        contents?.sendInputEvent({ type: 'keyDown', keyCode: key, modifiers: ['control'] });
+        contents?.sendInputEvent({ type: 'keyUp', keyCode: key, modifiers: ['control'] });
+      }, keyCode);
+    expect(await zoom()).toBe(0);
+    await press('-');
+    await expect.poll(zoom).toBeLessThan(0);
+    await press('0');
+    await expect.poll(zoom).toBe(0);
+
+    // "Open in new window": a note of the application, in a window of its own without the sidebar.
+    const noteId = new URL(page.url()).pathname.split('/').at(-1) ?? '';
+    const opened = app.waitForEvent('window');
+    await page.evaluate(
+      (id) => window.open(`/notes/${id}?window=note`, `note-${id}`, 'popup'),
+      noteId,
+    );
+    const own = await opened;
+    await expect(own.locator('.cm-content')).toContainText('Written in the desktop window.', {
+      timeout: 30_000,
+    });
+    await expect(own.locator('[data-sidebar]')).toHaveCount(0);
+    await own.close();
+    expect(app.windows()).toHaveLength(1);
 
     // A link to the web is not shown in this window.
     const origin = new URL(page.url()).origin;

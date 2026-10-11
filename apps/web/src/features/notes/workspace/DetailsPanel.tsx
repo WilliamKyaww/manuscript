@@ -37,19 +37,19 @@ export function DetailsPanel() {
         }
         toolbar={
           <TabsList label="Note details" className="-mb-1.5 border-b-0">
-            <TabsTrigger value="outline" icon={<ListTree size={14} />}>
+            <TabsTrigger crowded value="outline" icon={<ListTree size={14} />}>
               Outline
             </TabsTrigger>
-            <TabsTrigger value="backlinks" icon={<ArrowLeftFromLine size={14} />}>
+            <TabsTrigger crowded value="backlinks" icon={<ArrowLeftFromLine size={14} />}>
               Backlinks
             </TabsTrigger>
-            <TabsTrigger value="outgoing" icon={<ArrowRightFromLine size={14} />}>
+            <TabsTrigger crowded value="outgoing" icon={<ArrowRightFromLine size={14} />}>
               Outgoing
             </TabsTrigger>
-            <TabsTrigger value="properties" icon={<Tags size={14} />}>
+            <TabsTrigger crowded value="properties" icon={<Tags size={14} />}>
               Properties
             </TabsTrigger>
-            <TabsTrigger value="graph" icon={<Network size={14} />}>
+            <TabsTrigger crowded value="graph" icon={<Network size={14} />}>
               Graph
             </TabsTrigger>
           </TabsList>
