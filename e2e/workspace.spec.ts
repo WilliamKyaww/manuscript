@@ -159,7 +159,8 @@ test('merging a note appends it to another, retargets links and trashes it', asy
   await expect
     .poll(() => readVault(target.path))
     .toBe('Text of the target.\n\nText from the source.');
-  expect(existsSync(onDisk(source.path))).toBe(false);
+  // The target is written first and the merged note moved last, in the same request.
+  await expect.poll(() => existsSync(onDisk(source.path))).toBe(false);
   expect(readVault(linking.path)).toBe('See [[Merge target]].');
   await expect(page.getByRole('treeitem', { name: 'Merge source', exact: true })).toHaveCount(0);
 });
