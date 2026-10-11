@@ -39,6 +39,8 @@ interface NotesUiState {
   mode: EditorMode;
   panel: SidePanel;
   livePreview: boolean;
+  /** A note just created, whose editor takes focus when it opens (not remembered). */
+  justCreated: string | null;
   toggleFolder(path: string): void;
   expandFolders(paths: readonly string[]): void;
   collapseAll(): void;
@@ -46,6 +48,7 @@ interface NotesUiState {
   setMode(mode: EditorMode): void;
   setPanel(panel: SidePanel): void;
   setLivePreview(on: boolean): void;
+  setJustCreated(id: string | null): void;
 }
 
 export const useNotesUi = create<NotesUiState>((set, get) => {
@@ -89,6 +92,10 @@ export const useNotesUi = create<NotesUiState>((set, get) => {
     setLivePreview(on) {
       writePreference(KEYS.livePreview, String(on));
       set({ livePreview: on });
+    },
+    justCreated: null,
+    setJustCreated(id) {
+      set({ justCreated: id });
     },
   };
 });

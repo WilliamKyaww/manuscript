@@ -104,6 +104,21 @@ export function NoteWorkspace({
   useEffect(() => {
     if (line) editor.current?.goToLine(line);
   }, [line]);
+  // A note just created is for writing in. Two frames, so that this comes after the page title takes
+  // focus on arriving from another section (AppShell), which would otherwise take it back.
+  useEffect(() => {
+    const ui = useNotesUi.getState();
+    if (ui.justCreated !== note.id) return;
+    ui.setJustCreated(null);
+    let inner = 0;
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => editor.current?.focus());
+    });
+    return () => {
+      cancelAnimationFrame(outer);
+      cancelAnimationFrame(inner);
+    };
+  }, [note.id]);
 
   const mediaTypes = useMemo(
     () =>
