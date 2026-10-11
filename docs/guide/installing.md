@@ -59,7 +59,7 @@ might want them back ([Your data](./portability.md)).
 
 To check an installer without trusting it to your own profile, `node scripts/check-installed.mjs "<path to
 Manuscript.exe>"` starts a program (installed or unpacked) with a vault, a data folder and a user profile of its
-own, and checks that it comes up signed in, answers, and quits cleanly. `SKB_DIST_VERSION=0.1.1 npm run
+own, and checks that it comes up signed in, answers, and quits cleanly. `SKB_DIST_VERSION=1.0.1 npm run
 desktop:dist` builds an installer with another version, to see an update install over a release in place.
 
 The configuration is `apps/desktop/electron-builder.yml`; `npm run desktop:build` makes an unpacked build without
