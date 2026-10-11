@@ -1,4 +1,4 @@
-import type { GenerationScope, NoteDetail, NoteTree } from '@skb/core';
+import type { NoteDetail, NoteTree } from '@skb/core';
 import {
   analyseNote,
   folderOf,
@@ -8,7 +8,7 @@ import {
 } from '@skb/core/markdown';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Link2, MoreVertical, Sparkles, SquarePlus } from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   DropdownMenu,
@@ -21,12 +21,9 @@ import { Pane } from '../../components/Pane';
 import { LoadingState } from '../../components/States';
 import { useApi } from '../../lib/api/context';
 import { cn } from '../../lib/cn';
-import { notifyError, notifySuccess } from '../../lib/notify';
+import { notifyError } from '../../lib/notify';
 import { conceptsQuery } from '../concepts/api';
 import { ConceptDialog } from '../concepts/ConceptDialog';
-import { useInboxActions } from '../inbox/api';
-import { GenerateDialog } from '../inbox/GenerateDialog';
-import { useQuickAdd } from '../review/quick-add';
 import { useUploadAttachment } from './api';
 import { ConflictBanner } from './editor/ConflictBanner';
 import { MarkdownEditor, type MarkdownEditorHandle } from './editor/MarkdownEditor';
@@ -36,9 +33,10 @@ import { moreOptionsMenu } from './menus/file-menu';
 import { useNotesUi } from './notes-store';
 import { BacklinksPanel } from './panels/BacklinksPanel';
 import type { PreviewTarget } from './preview/remark-obsidian';
-import { ancestorsOf } from './tree/buildTree';
 import { type FileActions, nodeForNote } from './useFileActions';
 import { LivePreviewToggle, ModeToggle } from './ViewControls';
+import { NoteBreadcrumb } from './view/NoteBreadcrumb';
+import { StudyTools } from './view/StudyTools';
 import { useActiveNote } from './workspace/active-note';
 import { useWorkspace } from './workspace/workspace-store';
 
@@ -69,17 +67,6 @@ const STATUS_TEXT: Record<SaveStatus, string> = {
 };
 
 const LIVE_DELAY_MS = 200;
-
-/** The headings a line sits under, outermost first (for a card's source locator). */
-export function headingPathAt(headings: readonly HeadingRef[], line: number): string[] {
-  const path: HeadingRef[] = [];
-  for (const heading of headings) {
-    if (heading.line > line) break;
-    while (path.length > 0 && (path.at(-1) as HeadingRef).level >= heading.level) path.pop();
-    path.push(heading);
-  }
-  return path.map((heading) => heading.text);
-}
 
 // The preview (unified, KaTeX, highlight.js) is loaded only when a preview is first shown.
 const MarkdownPreview = lazy(() =>
@@ -153,8 +140,6 @@ export function NoteWorkspace({
   const api = useApi();
   const concepts = useQuery(conceptsQuery(api));
   const [newConcept, setNewConcept] = useState<string | null>(null);
-  const [generating, setGenerating] = useState<GenerationScope | null>(null);
-  const inbox = useInboxActions();
   const completions = useMemo(
     () => ({
       notes: () => {
@@ -248,56 +233,6 @@ export function NoteWorkspace({
   }, [active, owner, note, liveText, analysis.headings, session.readOnly, goToHeading, saveNow]);
   useEffect(() => () => useActiveNote.getState().clear(owner), [owner]);
 
-  /** "Make card from selection" (task 8.08): the selected text, and a way back to this line. */
-  const makeCard = () => {
-    const selected = mode === 'preview' ? null : (editor.current?.getSelection() ?? null);
-    const text = selected?.text ?? window.getSelection()?.toString() ?? '';
-    const line = selected?.line ?? 1;
-    useQuickAdd.getState().open({
-      front: text.trim(),
-      locator: {
-        kind: 'markdown',
-        noteId: note.id,
-        headingPath: headingPathAt(analysis.headings, line),
-        line,
-      },
-    });
-  };
-
-  /** Generate from the selection if there is one, otherwise from the whole note (task 11.12). */
-  const generate = () => {
-    const selected = mode === 'preview' ? null : (editor.current?.getSelection() ?? null);
-    const text = (selected?.text ?? window.getSelection()?.toString() ?? '').trim();
-    const line = selected?.line ?? 1;
-    setGenerating(
-      text
-        ? {
-            kind: 'selection',
-            text,
-            title: note.title,
-            locator: {
-              kind: 'markdown',
-              noteId: note.id,
-              headingPath: headingPathAt(analysis.headings, line),
-              line,
-            },
-          }
-        : { kind: 'note', noteId: note.id },
-    );
-  };
-
-  /** Link suggestions (task 11.09): unlinked mentions and notes close in meaning, to the Inbox. */
-  const suggestLinks = () =>
-    inbox.suggestLinks.mutate(note.id, {
-      onSuccess: ({ created }) =>
-        notifySuccess(
-          created === 0
-            ? 'No new links to suggest'
-            : `${created} link suggestion${created === 1 ? '' : 's'} in the Inbox`,
-        ),
-      onError: notifyError,
-    });
-
   // Items that move focus elsewhere (the find bar, the file tree) keep it there when the menu closes.
   const focusMoves = useRef(false);
   const search = (replace: boolean) => {
@@ -365,58 +300,7 @@ export function NoteWorkspace({
             >
               {analysis.wordCount} {analysis.wordCount === 1 ? 'word' : 'words'}
             </span>
-            {/* The study tools: three buttons in a wide pane, one menu in a narrow one. */}
-            <div className="hidden items-center gap-1 @min-[40rem]:flex">
-              <IconButton
-                label="Make a card from the selection"
-                icon={<SquarePlus size={16} />}
-                size="sm"
-                onClick={makeCard}
-              />
-              <IconButton
-                label="Generate from this note or the selection"
-                icon={<Sparkles size={16} />}
-                size="sm"
-                onClick={generate}
-              />
-              <IconButton
-                label="Suggest links"
-                icon={<Link2 size={16} />}
-                size="sm"
-                disabled={inbox.suggestLinks.isPending}
-                onClick={suggestLinks}
-              />
-            </div>
-            <div className="flex @min-[40rem]:hidden">
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger asChild>
-                  <IconButton label="Study tools" icon={<Sparkles size={16} />} size="sm" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="min-w-60">
-                  <MenuEntries
-                    as="dropdown"
-                    entries={[
-                      {
-                        label: 'Make a card from the selection',
-                        icon: <SquarePlus size={15} />,
-                        onSelect: makeCard,
-                      },
-                      {
-                        label: 'Generate from this note or the selection',
-                        icon: <Sparkles size={15} />,
-                        onSelect: generate,
-                      },
-                      {
-                        label: 'Suggest links',
-                        icon: <Link2 size={15} />,
-                        disabled: inbox.suggestLinks.isPending,
-                        onSelect: suggestLinks,
-                      },
-                    ]}
-                  />
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <StudyTools note={note} editor={editor} mode={mode} headings={analysis.headings} />
             {mode !== 'preview' && <LivePreviewToggle on={livePreview} onChange={setLivePreview} />}
             <ModeToggle mode={mode} onChange={setMode} />
             {/* Not modal, as in Obsidian: the page stays readable (and reachable) beside it. */}
@@ -451,15 +335,6 @@ export function NoteWorkspace({
         className="@container"
         bodyClassName="flex flex-col overflow-hidden"
       >
-        {generating && (
-          <GenerateDialog
-            scope={generating}
-            title={
-              generating.kind === 'selection' ? `the selection in “${note.title}”` : note.title
-            }
-            onClose={() => setGenerating(null)}
-          />
-        )}
         <div className="flex min-h-0 flex-1">
           <div className={cn('min-w-0 flex-1', mode === 'preview' && 'hidden')}>
             <MarkdownEditor
@@ -514,36 +389,5 @@ export function NoteWorkspace({
         )}
       </Pane>
     </div>
-  );
-}
-
-/** Folder › … › note, as Obsidian shows above a note; a folder reveals itself in the file tree. */
-function NoteBreadcrumb({ path, onFolder }: { path: string; onFolder(folder: string): void }) {
-  const folders = ancestorsOf(path);
-  return (
-    // In a narrow pane the folders give way before the note's own name.
-    <nav aria-label="Location" className="flex min-w-0 items-baseline text-sm whitespace-nowrap">
-      {folders.length > 0 && (
-        <span className="min-w-0 shrink-[4] truncate text-muted">
-          {folders.map((folder) => (
-            <span key={folder}>
-              <button
-                type="button"
-                className="rounded-sm hover:text-text hover:underline"
-                onClick={() => onFolder(folder)}
-              >
-                {folder.slice(folder.lastIndexOf('/') + 1)}
-              </button>
-              <span aria-hidden="true" className="px-1 text-subtle">
-                /
-              </span>
-            </span>
-          ))}
-        </span>
-      )}
-      <span aria-current="page" className="min-w-0 truncate font-medium">
-        {noteNameFromPath(path)}
-      </span>
-    </nav>
   );
 }
