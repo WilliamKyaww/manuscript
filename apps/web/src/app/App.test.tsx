@@ -113,7 +113,7 @@ describe('keyboard and command palette', () => {
     expect(sidebar).toHaveAttribute('data-collapsed', 'false');
     await user.keyboard('{Control>}\\{/Control}');
     expect(sidebar).toHaveAttribute('data-collapsed', 'true');
-    expect(localStorage.getItem('skb.sidebar.collapsed')).toBe('true');
+    expect(localStorage.getItem('skb.sidebar.state')).toBe('collapsed');
     // Collapsed links keep their accessible names.
     expect(screen.getByRole('link', { name: 'Notes' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Expand sidebar' })).toHaveAttribute(
@@ -139,7 +139,7 @@ describe('keyboard and command palette', () => {
     await waitFor(() => expect(sidebar).toHaveAttribute('data-collapsed', 'true'));
     await user.click(screen.getByRole('button', { name: 'Expand sidebar' }));
     expect(sidebar).toHaveAttribute('data-collapsed', 'false');
-    expect(localStorage.getItem('skb.sidebar.collapsed')).toBeNull();
+    expect(localStorage.getItem('skb.sidebar.state')).toBeNull();
     media.mockRestore();
   });
 

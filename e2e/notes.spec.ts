@@ -72,6 +72,8 @@ test('a link to a new note shows up as a backlink there', async ({ page }) => {
   await page.getByRole('menuitem', { name: /Create note/ }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Leader election' })).toBeVisible();
 
+  // The Details panel starts closed (task 23.05).
+  await page.getByRole('button', { name: 'Show details' }).click();
   await page.getByRole('tab', { name: 'Backlinks' }).click();
   const panel = page.getByRole('tabpanel', { name: 'Backlinks' });
   await expect(panel.getByRole('link', { name: 'Consensus overview' })).toBeVisible();

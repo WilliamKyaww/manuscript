@@ -64,6 +64,38 @@ export const moveEntryEndpoint = defineEndpoint({
   }),
 });
 
+/** Makes a copy of a note or attachment beside it ("Name 1.md"); a copied note gets a new id. */
+export const copyEntryEndpoint = defineEndpoint({
+  method: 'POST',
+  path: '/api/entries/copy',
+  status: 201,
+  body: z.object({ path: VaultPathSchema }),
+  response: z.object({ path: z.string(), noteId: NoteIdSchema.nullable() }),
+});
+
+export const BookmarkSchema = z.object({
+  path: z.string().trim().min(1).max(1024),
+  kind: z.enum(['note', 'folder', 'attachment']),
+});
+export type Bookmark = z.infer<typeof BookmarkSchema>;
+
+export const BookmarksSchema = z.object({ items: z.array(BookmarkSchema).max(500) });
+export type Bookmarks = z.infer<typeof BookmarksSchema>;
+
+export const getBookmarksEndpoint = defineEndpoint({
+  method: 'GET',
+  path: '/api/bookmarks',
+  response: BookmarksSchema,
+});
+
+/** Replaces the list (the client adds, removes and reorders); the server moves them with files. */
+export const putBookmarksEndpoint = defineEndpoint({
+  method: 'PUT',
+  path: '/api/bookmarks',
+  body: BookmarksSchema,
+  response: BookmarksSchema,
+});
+
 export const TrashIdSchema = z.string().regex(/^\d{8}T\d{6}Z-[0-9a-f]{8}$/, 'Not a trash item id.');
 
 export const TrashItemSchema = z.object({

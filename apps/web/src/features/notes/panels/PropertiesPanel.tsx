@@ -10,6 +10,7 @@ import { type ReactNode, useId, useState } from 'react';
 import { Button } from '../../../components/Button';
 import { Input, Textarea } from '../../../components/Input';
 import { notifyError } from '../../../lib/notify';
+import { AddProperty } from './AddProperty';
 
 /**
  * Frontmatter properties (task 3.17): typed fields for the keys the app understands, the other keys
@@ -36,6 +37,9 @@ interface Props {
   text: string;
   readOnly: boolean;
   onChange(text: string): void;
+  /** "Add file property" was chosen: open the new-property form, focus it, and say so. */
+  addRequested?: boolean;
+  onAddHandled?(): void;
 }
 
 function display(value: unknown): string {
@@ -104,7 +108,13 @@ function CommitInput({
   );
 }
 
-export function PropertiesPanel({ text, readOnly, onChange }: Props) {
+export function PropertiesPanel({
+  text,
+  readOnly,
+  onChange,
+  addRequested = false,
+  onAddHandled,
+}: Props) {
   const split = splitFrontmatter(text);
   const { data, error } = split.present ? parseFrontmatter(split.yaml) : { data: {}, error: null };
   const [editingYaml, setEditingYaml] = useState(false);
@@ -261,6 +271,14 @@ export function PropertiesPanel({ text, readOnly, onChange }: Props) {
             ))}
           </dl>
         </div>
+      )}
+
+      {!disabled && !editingYaml && (
+        <AddProperty
+          requested={addRequested}
+          onHandled={onAddHandled}
+          onAdd={(key, value) => update(key, value)}
+        />
       )}
 
       {editingYaml ? (

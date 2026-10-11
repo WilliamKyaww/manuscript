@@ -22,16 +22,26 @@ share a token made for that run.
 - **Opening another vault** restarts the engine under the same window and returns you to Today.
 - **A window that remembers** where it was, its size and whether it was maximised (a position on a screen that
   is no longer there is forgotten).
-- **A menu** with the usual Edit and View commands, zoom, full screen, and *Show the vault folder* / *Show the
-  data folder*. Manuscript's own shortcuts (`Ctrl+K`, `Ctrl+O`, `?` …) work as in the browser.
+- **A slim title bar** in Manuscript's colours (1.1): no system title bar or menu bar, a 32-pixel strip with the
+  page's title that you drag the window by, and Windows' own minimise, maximise and close buttons over the top
+  right, coloured to follow the light or dark theme. The menu is hidden but its shortcuts still work: zoom
+  (`Ctrl+-`, `Ctrl+=`, `Ctrl+0`), full screen (`F11`), reload (`Ctrl+R`), and the Edit commands. *Show the
+  vault folder* is in the vault menu at the foot of the Notes page's Files pane, and the data folder in
+  *Settings → Data*. Manuscript's own shortcuts (`Ctrl+K`, `Ctrl+O`, `?` …) work as in the browser.
+- **The Notes page's file commands** that a browser cannot do: **Open in default app** (a note or attachment in
+  the program Windows uses for it — only files inside the vault), **Show in system explorer**, **Export to
+  PDF…** straight to a file you choose, and **Open in new window** for a note in a window of its own (closed
+  with the main window).
 - **One copy at a time**: starting it again brings the open window forward.
 
 ## What it keeps to itself
 
 - **The window shows only Manuscript.** A link to a web page opens in your system browser (plain `http` and
   `https` links only); the window never navigates to another address.
-- **The page can ask for four things**, and nothing else: pick files, pick a folder, show a path (only inside
-  the vault or the data folder) and say which application this is. It has no access to Node or to your files.
+- **The page can ask for a few things**, and nothing else: pick files, pick a folder, show a path (only inside
+  the vault or the data folder, or a PDF it has just saved), open a file of the vault in its program, print
+  itself to a PDF, colour the title bar's buttons and say which application this is. A window of its own opens
+  only for a note of the application. It has no access to Node or to your files.
 - **AI keys are encrypted.** The first time it starts, a random key is made and wrapped by the operating system
   (on Windows, with your login), and the keys file in the data folder is encrypted with it. Copying the data
   folder to another computer or account does not give the keys away. *Settings → About* says whether the

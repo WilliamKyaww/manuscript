@@ -3,7 +3,10 @@ import { ToggleGroup } from 'radix-ui';
 import { IconButton } from '../../components/IconButton';
 import type { EditorMode } from './notes-store';
 
-/** How a note is shown: the editor, the preview or both, and whether the editor hides its marks. */
+/**
+ * How a note is shown: the editor, the preview or both, and whether the editor hides its marks. The
+ * names show once the note's pane (a container) is wide enough for them.
+ */
 
 const MODES: { value: EditorMode; label: string; icon: typeof PenLine }[] = [
   { value: 'edit', label: 'Edit', icon: PenLine },
@@ -35,7 +38,7 @@ export function ModeToggle({
           className="flex h-6 items-center gap-1 rounded-sm px-2 text-xs text-muted hover:text-text data-[state=on]:bg-accent-subtle data-[state=on]:text-text"
         >
           <Icon aria-hidden="true" size={13} />
-          <span className="hidden lg:inline">{label}</span>
+          <span className="hidden @min-[52rem]:inline">{label}</span>
         </ToggleGroup.Item>
       ))}
     </ToggleGroup.Root>

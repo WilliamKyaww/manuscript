@@ -96,7 +96,8 @@ test('a grounded answer cites the page it comes from', async ({ page }) => {
 test('without a provider, the chat panel explains how to set AI up', async ({ page }) => {
   await page.goto(`/auth?token=${E2E_TOKEN}`);
   await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
-  await page.getByRole('button', { name: /Chat…/u }).click();
+  // The sidebar starts collapsed: its chat button is the icon named for what it does.
+  await page.getByRole('button', { name: 'Chat about your material' }).click();
   const panel = page.getByRole('complementary', { name: 'Chat panel' });
   await expect(panel.getByText(/Choose a provider and model for answers/u)).toBeVisible();
   await expect(panel.getByRole('textbox', { name: 'Message' })).toBeDisabled();

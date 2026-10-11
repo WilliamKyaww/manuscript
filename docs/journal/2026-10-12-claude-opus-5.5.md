@@ -1,0 +1,101 @@
+# 12 October 2026 — Claude Opus 5.5
+
+- **Date:** begun on the evening of Sunday 11 October 2026, finished after midnight on Monday 12 October
+- **Model:** Claude Opus 5.5
+- **Phase:** 23 — the notes workspace (`phase/23-notes-workspace`), after 1.0.0
+- **Summary:** From the student's review of 1.0 (fourteen screenshots of Manuscript and Obsidian), the Notes page now
+  works like Obsidian's: tabs and two panes, the ⋮ *More options* menu and the file tree's right-click menu with every
+  item working (several were new: version history, merging, copies, bookmarks, export to PDF, a note's own window),
+  Obsidian's sort orders and *Expand all / Collapse all*, the open vault and a way to open another at the foot of the
+  Files pane, a Details panel that starts closed, better empty states, a narrower resizable sidebar that starts
+  collapsed, and a slim desktop title bar in the application's colours. Version 1.1.0.
+
+## What was asked, and the two choices made
+
+The student listed ten changes and asked whether hiding Electron's title bar was all right. Two questions were put
+back: how far to go with the menu items that assume tabs and panes (answer: **build tabs and panes**, so that *Open in
+new tab*, *Open to the right*, *Split right/down* and *Open in new window* all work), and what to do with the title
+bar (answer: **a slim bar in the app's colours**, with the system's window buttons kept). The rest followed Obsidian:
+its menu items in its order and words, its six sort orders, one *Expand all / Collapse all* button.
+
+## What was done
+
+- **Server** (`modules/notes`): the tree sends each note's created time; `POST /api/entries/copy` (a copied note's `id`
+  line is removed, so two files never claim one id); `POST /api/notes/:id/merge` (`merges.ts`: the body is appended,
+  links to the merged note are retargeted — the target's own, other notes', relative Markdown links in the moved
+  body — and it goes to the trash); version history (`versions.ts`: the replaced text kept before a save, at most
+  every five minutes per note, 30 days and at most 200 files, in `.skb/history/versions/<id>/`; listed, read and kept
+  on request before a restore); bookmarks as a settings group that follows moves and merges (`bookmarks.ts`).
+  Nine route tests (`workspace.test.ts`).
+- **Web — workspace** (`features/notes/workspace/`): a zustand store of one or two panes with tabs, remembered in
+  `localStorage` and repaired when the memory is damaged; `route-sync.ts` keeps the address and the active tab in
+  step (the address decides on arrival, tab changes move the address afterwards); `EditorPanes` and `TabBar` (close
+  with × or a middle click, drag to reorder, a tab menu); `EmptyTab`; `DetailsPanel` fed by `active-note.ts`, which
+  the view of the active pane publishes to. A pop-out window (`?window=note`) has no sidebar or Files pane and does
+  not write the workspace. Store tests cover every action.
+- **Web — menus**: `components/MenuEntries.tsx` draws a menu described as data as a dropdown or a right-click menu
+  (items, checkboxes, radio groups, submenus); `menus/file-menu.tsx` builds the tree's menu and the ⋮ menu from
+  `useFileActions` (open variants, rename and move dialogues, copy, bookmark, merge with a suggester and a
+  confirmation, copy path, version history, default app, Explorer, reveal). `SuggestDialog` is Obsidian's
+  suggester; `VersionHistoryDialog` shows a version or its changes and restores it (undoable from the toast).
+- **Web — Files pane** (`files/FilesPane.tsx`): Obsidian's toolbar, the sort menu (`buildTree` sorts by the six
+  orders, folders always by name), *Expand all / Collapse all*, bookmarks, the empty-vault state, and the vault
+  switcher (`vault/`) with recent vaults, *Open folder as vault…* (the desktop picker or a path; inspected before
+  opening) and *Manage vaults…*. `useVaultSwitch` is shared with Settings → Data.
+- **Web — the note view** (`NoteWorkspace.tsx`): now one pane's view: a breadcrumb, the ⋮ menu, backlinks at the foot
+  when chosen, Ctrl+E for reading view, Ctrl+H for Replace; export to PDF prints a light-theme copy of the rendered
+  note (`export/PrintHost.tsx`).
+- **Shell**: the sidebar is 13.5 rem, resizable by its edge (pointer or arrow keys; 12–22 rem; remembered) and
+  collapsed until opened (a new preference key, so the new default applies once); thin scrollbars; `Page` has a
+  compact header; `Pane` a start slot and a footer.
+- **Desktop**: `titleBarStyle: 'hidden'` with `titleBarOverlay` (the page draws a 32-pixel strip, `TitleBar.tsx`, and
+  sets the buttons' colours from the theme); bridge calls `openPath` (vault only), `printToPdf` (a save dialogue, then
+  `printToPDF`; the saved file may be shown in its folder) and `setTitleBarColours`; `window.open` allowed only for a
+  note window (`isNoteWindowUrl`). Policy tests for the three new rules.
+
+## Decisions
+
+- **ADR-0042**: the workspace is browser state; versions are files beside the database in `.skb/history/versions`;
+  bookmarks are a vault setting (Obsidian's `bookmarks.json` is not written, to avoid fighting a running Obsidian);
+  copies never share an id; merges append the body and retarget links; the title bar is Electron's hidden title bar
+  with the system's buttons.
+- Two panes at most; the "other pane" of *Split right* is relative to the active pane.
+- The ⋮ menu is not modal (as in Obsidian): the page stays readable and reachable beside it.
+
+## Problems met
+
+- **Tree fixtures without `createdAt`** failed validation in component tests ("The notes could not be loaded"); the
+  fixtures were updated (the field is required: the server always sends it).
+- **Rename from the right-click menu** closed at once: while open, the menu keeps focus inside itself, so the rename
+  field lost it. The rename starts once the menu has closed, and the menu does not take focus back.
+- **Find/Replace from the ⋮ menu** lost focus to the menu button as the menu closed; items that move focus elsewhere
+  now keep it there. **Long menus** ran off a short window; they scroll now.
+- **axe** found the editor's scroller not keyboard-reachable in a short pane (CodeMirror's content is now always
+  focusable, read-only notes included).
+- **Menu shortcuts with the hidden title bar**: keys sent by Playwright never reach Electron's menu (Chromium marks
+  them as synthetic), so the desktop test sends keys through `webContents.sendInputEvent`; zoom out and reset work.
+- Bash here-documents collapsed backslashes again (a regular expression, `'\\'`) and choked on prose with quotes;
+  scripts with escapes were written with the editor tools instead (`AGENTS.md` §5 already warns).
+
+## Tests run
+
+- `npx vitest run --project server …/workspace.test.ts` — 9 passed. Web project: 216 passed. Desktop: 12 passed.
+- `npm run verify` — typecheck, lint, 154 files / 928 tests, build, smoke (server 1.1.0): passed.
+- End-to-end: notes, shell and the new `workspace.spec.ts` (8 tests) passed; the desktop shell test passed (title
+  bar, menu shortcuts, a note's own window).
+- `npm run test:e2e`, first full run: 138 passed, 4 failed. Two tests clicked the sidebar's "Chat…" text and read the
+  Inbox count as visible text, which the sidebar no longer shows now that it starts collapsed (they use the collapsed
+  sidebar's names now); the merge test checked for the merged file between the two writes of one request (it polls
+  now); the desktop shell test lost its window once ("Target page, context or browser has been closed" two seconds
+  in) and passed every time since — alone twice, with its neighbours, and in the second full run.
+- Second full run (after the note view was split into `view/StudyTools.tsx` and `view/NoteBreadcrumb.tsx`): **142
+  passed, 0 failed** (3 skipped: the screenshot specs). `npm run verify` again: 928 tests, smoke on 1.1.0, passed.
+
+## Unresolved
+
+- Edits made in other programs are not versioned (the file changed without the server).
+- The installed 1.0.0 on the student's machine is not updated: installing 1.1.0 over it needs their go-ahead.
+
+## Next steps
+
+- Install 1.1.0 over 1.0.0 when the student says so; use it and report what is wrong or missing.

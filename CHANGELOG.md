@@ -3,6 +3,46 @@
 All notable changes to Manuscript. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] — 2026-10-12
+
+The notes workspace (Phase 23): the Notes page now works the way an Obsidian user expects, from the student's
+review of 1.0.
+
+### Release notes
+
+**Updating.** Run `Manuscript-Setup-1.1.0.exe` over 1.0.0 (close Manuscript first): your vault, settings and data
+stay as they are. Nothing in the vault changes on its own; the new version history starts with the first save made
+in 1.1.
+
+### Added
+
+- **Tabs and panes** — Ctrl+click (or a middle click) opens a note in a new tab; tabs close with × or a middle
+  click, can be dragged into order and are remembered; **Split right** and **Split down** open a second pane; a note
+  can open in a window of its own.
+- **Obsidian's file menus** — the ⋮ *More options* menu of a note and the right-click menu of the file tree, with
+  every item working: backlinks in the document, reading view (Ctrl+E), source mode, split, new window, rename, move
+  to a folder, bookmark, merge with another note, add a property, export to PDF, find (Ctrl+F) and replace
+  (Ctrl+H), copy path, version history, linked views, open in the default application, show in Explorer, reveal in
+  the file tree, make a copy, delete.
+- **Version history** — the text a save replaces is kept (at most every five minutes, for 30 days, as plain files
+  in the vault's `.skb/history/versions/`), and can be compared and restored; a restore can be undone.
+- **Merging, copies and bookmarks** — a merge appends a note to another, points its links there and moves it to the
+  trash; a copy never shares the original's id; bookmarks are listed above the tree and follow moves.
+- **Sorting and folders** — Obsidian's six sort orders; one button that is *Expand all* or *Collapse all*.
+- **The vault on the Notes page** — its name at the foot of the Files pane, with recent vaults, *Open folder as
+  vault…*, its folder and *Manage vaults…*; clear pages for an empty vault and for a tab with no note.
+- **Details panel** — one panel for the active note, now with **Outgoing** links and **Add property**; closed until
+  you open it.
+- **Desktop** — a slim title bar in the application's colours (the system's window buttons kept, following the
+  theme; the menu's shortcuts still work); PDFs saved straight to a file.
+
+### Changed
+
+- The sidebar is narrower (13.5 rem), can be resized by dragging its edge (or with the arrow keys on it), and starts
+  collapsed until you open it. Scrollbars are thin and in the theme's colours.
+- In a narrow pane a note's header keeps its name: the study tools fold into one menu and the view switch shows
+  icons.
+
 ## [1.0.0] — 2026-10-11
 
 The first release: a personal knowledge and learning system for one student's degree, built in twenty-two

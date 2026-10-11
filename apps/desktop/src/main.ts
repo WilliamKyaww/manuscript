@@ -1,11 +1,13 @@
 import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   app,
   BrowserWindow,
+  type BrowserWindowConstructorOptions,
   dialog,
   type IpcMainInvokeEvent,
   ipcMain,
@@ -20,10 +22,13 @@ import { buildMenu } from './menu';
 import {
   externalUrl,
   isAppUrl,
+  isNoteWindowUrl,
   isRevealable,
+  pdfFileName,
   restoreWindowState,
   sanitisePick,
   senderAllowed,
+  titleBarColour,
   type WindowState,
 } from './policy';
 import { loadSecretsKey, type SecretsKey } from './secrets';
@@ -71,6 +76,32 @@ let stopped = false;
 let vaultOverride = true;
 /** The token the server accepts, made for this run: nothing else on the machine knows it. */
 const token = randomBytes(32).toString('base64url');
+/** PDFs saved this run, which "Show in folder" may point at wherever they were saved. */
+const exported = new Set<string>();
+
+/**
+ * The slim title bar (task 23.10, ADR-0042): no system title bar or menu bar, only the window's
+ * buttons over the page, which draws a strip in its own colours (the page sets their colours to
+ * follow the theme). The menu's shortcuts still work.
+ */
+const TITLE_BAR_HEIGHT = 32;
+const titleBar = (): BrowserWindowConstructorOptions =>
+  process.platform === 'darwin'
+    ? { titleBarStyle: 'hidden', trafficLightPosition: { x: 12, y: 9 } }
+    : {
+        titleBarStyle: 'hidden',
+        titleBarOverlay: { color: '#f7f5f0', symbolColor: '#1f1c18', height: TITLE_BAR_HEIGHT },
+      };
+
+const webPreferences = (): BrowserWindowConstructorOptions['webPreferences'] => ({
+  preload: path.join(here, 'preload.cjs'),
+  contextIsolation: true,
+  sandbox: true,
+  nodeIntegration: false,
+  webSecurity: true,
+  allowRunningInsecureContent: false,
+  devTools,
+});
 
 // --- Window state -------------------------------------------------------------------------------
 
@@ -203,15 +234,8 @@ function openWindow(running: Engine): void {
     show: false,
     title: 'Manuscript',
     backgroundColor: '#f7f5f0',
-    webPreferences: {
-      preload: path.join(here, 'preload.cjs'),
-      contextIsolation: true,
-      sandbox: true,
-      nodeIntegration: false,
-      webSecurity: true,
-      allowRunningInsecureContent: false,
-      devTools,
-    },
+    ...titleBar(),
+    webPreferences: webPreferences(),
   });
   window = created;
   created.once('ready-to-show', () => {
@@ -228,6 +252,8 @@ function openWindow(running: Engine): void {
   created.on('close', () => writeState(created));
   created.on('closed', () => {
     window = null;
+    // A note's own windows belong to this one.
+    for (const other of BrowserWindow.getAllWindows()) if (!other.isDestroyed()) other.close();
   });
   void created.loadURL(`${running.origin}/`);
 }
@@ -245,6 +271,20 @@ function hardenWebContents(): void {
     contents.on('will-redirect', (event, url) => guard(event, url));
     contents.on('will-attach-webview', (event) => event.preventDefault());
     contents.setWindowOpenHandler(({ url }) => {
+      // "Open in new window": a note of the application, in a window like the main one.
+      if (engine && isNoteWindowUrl(url, engine.origin))
+        return {
+          action: 'allow',
+          overrideBrowserWindowOptions: {
+            width: 960,
+            height: 820,
+            minWidth: 480,
+            minHeight: 360,
+            backgroundColor: '#f7f5f0',
+            ...titleBar(),
+            webPreferences: webPreferences(),
+          },
+        };
       const outside = externalUrl(url);
       if (outside) void shell.openExternal(outside);
       return { action: 'deny' };
@@ -266,10 +306,14 @@ function registerBridge(): void {
   const trusted = (event: IpcMainInvokeEvent) =>
     senderAllowed(event.senderFrame?.url, engine?.origin ?? null);
 
+  /** The window that asked: the main one or a note's own. */
+  const asking = (event: IpcMainInvokeEvent) => BrowserWindow.fromWebContents(event.sender);
+
   ipcMain.handle('skb:pick-files', async (event, options: unknown) => {
-    if (!trusted(event) || !window) return [];
+    const parent = asking(event);
+    if (!trusted(event) || !parent) return [];
     const wanted = sanitisePick(options);
-    const result = await dialog.showOpenDialog(window, {
+    const result = await dialog.showOpenDialog(parent, {
       ...(wanted.title ? { title: wanted.title } : {}),
       ...(wanted.filters ? { filters: wanted.filters } : {}),
       properties: ['openFile', ...(wanted.multiple ? (['multiSelections'] as const) : [])],
@@ -278,9 +322,10 @@ function registerBridge(): void {
   });
 
   ipcMain.handle('skb:pick-folder', async (event, options: unknown) => {
-    if (!trusted(event) || !window) return null;
+    const parent = asking(event);
+    if (!trusted(event) || !parent) return null;
     const wanted = sanitisePick(options);
-    const result = await dialog.showOpenDialog(window, {
+    const result = await dialog.showOpenDialog(parent, {
       ...(wanted.title ? { title: wanted.title } : {}),
       properties: ['openDirectory', 'createDirectory'],
     });
@@ -290,9 +335,48 @@ function registerBridge(): void {
   ipcMain.handle('skb:reveal', (event, target: unknown) => {
     if (!trusted(event)) return false;
     const roots = [folders.vault, folders.data].filter((root): root is string => root !== null);
-    if (!isRevealable(target, roots)) return false;
+    if (!isRevealable(target, [...roots, ...exported])) return false;
     shell.showItemInFolder(target);
     return true;
+  });
+
+  // A file of the vault in the program the system uses for it (never the data folder: it holds
+  // the database and keys, which are not documents to open).
+  ipcMain.handle('skb:open-path', async (event, target: unknown) => {
+    if (!trusted(event) || !folders.vault || !isRevealable(target, [folders.vault])) return false;
+    return (await shell.openPath(target)) === '';
+  });
+
+  ipcMain.handle('skb:print-pdf', async (event, options: unknown) => {
+    const parent = asking(event);
+    if (!trusted(event) || !parent) return null;
+    const title =
+      typeof options === 'object' && options !== null
+        ? (options as { title?: unknown }).title
+        : undefined;
+    const choice = await dialog.showSaveDialog(parent, {
+      title: 'Export to PDF',
+      defaultPath: path.join(app.getPath('documents'), pdfFileName(title)),
+      filters: [{ name: 'PDF', extensions: ['pdf'] }],
+    });
+    if (choice.canceled || !choice.filePath) return null;
+    const pdf = await event.sender.printToPDF({ printBackground: true, pageSize: 'A4' });
+    await writeFile(choice.filePath, pdf);
+    exported.add(choice.filePath);
+    return choice.filePath;
+  });
+
+  ipcMain.handle('skb:title-bar', (event, colours: unknown) => {
+    const target = asking(event);
+    if (!trusted(event) || !target || process.platform === 'darwin') return;
+    const given = (typeof colours === 'object' && colours !== null ? colours : {}) as Record<
+      string,
+      unknown
+    >;
+    const color = titleBarColour(given.background);
+    const symbolColor = titleBarColour(given.symbols);
+    if (color && symbolColor)
+      target.setTitleBarOverlay({ color, symbolColor, height: TITLE_BAR_HEIGHT });
   });
 
   ipcMain.handle('skb:app-info', (event) => {

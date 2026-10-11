@@ -3,19 +3,26 @@ import { Readable } from 'node:stream';
 import {
   ATTACHMENT_UPLOAD_PATH,
   backlinksEndpoint,
+  copyEntryEndpoint,
   createFolderEndpoint,
   createNoteEndpoint,
   FILES_PATH_PREFIX,
+  getBookmarksEndpoint,
   getNoteEndpoint,
+  getVersionEndpoint,
+  keepVersionEndpoint,
   linkMentionEndpoint,
   listNotesEndpoint,
   listTagsEndpoint,
   listTemplatesEndpoint,
   listTrashEndpoint,
+  listVersionsEndpoint,
   MAX_ATTACHMENT_BYTES,
+  mergeNoteEndpoint,
   moveEntryEndpoint,
   movePreviewEndpoint,
   purgeTrashEndpoint,
+  putBookmarksEndpoint,
   restoreTrashEndpoint,
   trashEntryEndpoint,
   UploadedAttachmentSchema,
@@ -29,8 +36,10 @@ import { type ApiRegistry, registerEndpoint } from '../../http/endpoint';
 import type { EntriesService, VaultFile } from './entries';
 import { isInlineSafe } from './media-types';
 import type { NotesModule } from './module';
+import { VERSION_RETENTION_DAYS } from './versions';
 
-export function registerNotesRoutes(registry: ApiRegistry, { notes, entries }: NotesModule): void {
+export function registerNotesRoutes(registry: ApiRegistry, module: NotesModule): void {
+  const { notes, entries, versions, bookmarks } = module;
   registerEndpoint(registry, listNotesEndpoint, () => notes.tree());
   registerEndpoint(registry, getNoteEndpoint, ({ params }) => notes.get(params.id));
   registerEndpoint(registry, createNoteEndpoint, ({ body }) => notes.create(body));
@@ -44,6 +53,22 @@ export function registerNotesRoutes(registry: ApiRegistry, { notes, entries }: N
   registerEndpoint(registry, linkMentionEndpoint, ({ params, body }) =>
     notes.linkMention(params.id, body),
   );
+  registerEndpoint(registry, mergeNoteEndpoint, ({ params, body }) =>
+    module.merge(params.id, body.targetId),
+  );
+  registerEndpoint(registry, listVersionsEndpoint, ({ params }) => {
+    notes.get(params.id);
+    return { versions: versions.list(params.id), retentionDays: VERSION_RETENTION_DAYS };
+  });
+  registerEndpoint(registry, getVersionEndpoint, ({ params }) =>
+    versions.read(params.id, params.versionId),
+  );
+  registerEndpoint(registry, keepVersionEndpoint, ({ params }) => {
+    const current = notes.get(params.id);
+    return { version: versions.keep(params.id, current.content, 'restore') };
+  });
+  registerEndpoint(registry, getBookmarksEndpoint, () => bookmarks.list());
+  registerEndpoint(registry, putBookmarksEndpoint, ({ body }) => bookmarks.replace(body));
   registerEndpoint(registry, listTagsEndpoint, () => ({ tags: notes.tags() }));
   registerEndpoint(registry, listTemplatesEndpoint, () => notes.templates());
 
@@ -54,6 +79,7 @@ export function registerNotesRoutes(registry: ApiRegistry, { notes, entries }: N
   registerEndpoint(registry, moveEntryEndpoint, ({ body }) =>
     entries.move(body.from, body.to, body.rewriteLinks),
   );
+  registerEndpoint(registry, copyEntryEndpoint, ({ body }) => entries.copy(body.path));
   registerEndpoint(registry, trashEntryEndpoint, ({ body }) => entries.trash(body.path));
   registerEndpoint(registry, listTrashEndpoint, () => entries.listTrash());
   registerEndpoint(registry, restoreTrashEndpoint, ({ params }) => entries.restore(params.id));

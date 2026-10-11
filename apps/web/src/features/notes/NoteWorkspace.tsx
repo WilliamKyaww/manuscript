@@ -1,4 +1,4 @@
-import type { GenerationScope, NoteDetail, NoteTree } from '@skb/core';
+import type { NoteDetail, NoteTree } from '@skb/core';
 import {
   analyseNote,
   folderOf,
@@ -8,44 +8,42 @@ import {
 } from '@skb/core/markdown';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import {
-  ArrowLeftFromLine,
-  Link2,
-  ListTree,
-  Network,
-  Sparkles,
-  SquarePlus,
-  Tags,
-} from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Group, Panel, Separator } from 'react-resizable-panels';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '../../components/DropdownMenu';
 import { IconButton } from '../../components/IconButton';
+import { MenuEntries } from '../../components/MenuEntries';
 import { Pane } from '../../components/Pane';
 import { LoadingState } from '../../components/States';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/Tabs';
 import { useApi } from '../../lib/api/context';
 import { cn } from '../../lib/cn';
-import { notifyError, notifySuccess } from '../../lib/notify';
+import { notifyError } from '../../lib/notify';
 import { conceptsQuery } from '../concepts/api';
 import { ConceptDialog } from '../concepts/ConceptDialog';
-import { LocalGraph } from '../graph/LocalGraph';
-import { useInboxActions } from '../inbox/api';
-import { GenerateDialog } from '../inbox/GenerateDialog';
-import { useQuickAdd } from '../review/quick-add';
 import { useUploadAttachment } from './api';
 import { ConflictBanner } from './editor/ConflictBanner';
 import { MarkdownEditor, type MarkdownEditorHandle } from './editor/MarkdownEditor';
 import { type SaveStatus, useNoteSession } from './editor/useNoteSession';
-import { type SidePanel, useNotesUi } from './notes-store';
+import { exportToPdf } from './export/PrintHost';
+import { moreOptionsMenu } from './menus/file-menu';
+import { useNotesUi } from './notes-store';
 import { BacklinksPanel } from './panels/BacklinksPanel';
-import { OutlinePanel } from './panels/OutlinePanel';
-import { PropertiesPanel } from './panels/PropertiesPanel';
 import type { PreviewTarget } from './preview/remark-obsidian';
+import { type FileActions, nodeForNote } from './useFileActions';
 import { LivePreviewToggle, ModeToggle } from './ViewControls';
+import { NoteBreadcrumb } from './view/NoteBreadcrumb';
+import { StudyTools } from './view/StudyTools';
+import { useActiveNote } from './workspace/active-note';
+import { useWorkspace } from './workspace/workspace-store';
 
 /**
- * One open note (tasks 3.14–3.18): the editor and/or preview, save status and conflicts, and the
- * details panel (outline, backlinks, properties). Keyed by note id, so state never leaks between notes.
+ * One open note in a pane (tasks 3.14–3.18, 23.04): the editor and/or preview, save status and
+ * conflicts, and the note's "More options" menu. Keyed by note id, so state never leaks between
+ * notes. The view in the active pane tells the Details panel about itself (`useActiveNote`).
  */
 
 export interface NoteWorkspaceProps {
@@ -55,6 +53,10 @@ export interface NoteWorkspaceProps {
   /** 1-based line to show when opening (from backlinks). */
   line?: number;
   onCreateFromLink(title: string, folder: string): void;
+  actions: FileActions;
+  /** The pane this view is in, and whether that pane is the active one. */
+  paneId: string;
+  active: boolean;
 }
 
 const STATUS_TEXT: Record<SaveStatus, string> = {
@@ -65,17 +67,6 @@ const STATUS_TEXT: Record<SaveStatus, string> = {
 };
 
 const LIVE_DELAY_MS = 200;
-
-/** The headings a line sits under, outermost first (for a card's source locator). */
-export function headingPathAt(headings: readonly HeadingRef[], line: number): string[] {
-  const path: HeadingRef[] = [];
-  for (const heading of headings) {
-    if (heading.line > line) break;
-    while (path.length > 0 && (path.at(-1) as HeadingRef).level >= heading.level) path.pop();
-    path.push(heading);
-  }
-  return path.map((heading) => heading.text);
-}
 
 // The preview (unified, KaTeX, highlight.js) is loaded only when a preview is first shown.
 const MarkdownPreview = lazy(() =>
@@ -88,12 +79,16 @@ export function NoteWorkspace({
   resolver,
   line,
   onCreateFromLink,
+  actions,
+  paneId,
+  active,
 }: NoteWorkspaceProps) {
   const navigate = useNavigate();
   const editor = useRef<MarkdownEditorHandle>(null);
   const preview = useRef<HTMLDivElement>(null);
   const session = useNoteSession(note, editor);
-  const { mode, setMode, panel, setPanel, livePreview, setLivePreview } = useNotesUi();
+  const ui = useNotesUi();
+  const { mode, setMode, livePreview, setLivePreview } = ui;
   const upload = useUploadAttachment();
   const [liveText, setLiveText] = useState(session.editorText);
   const liveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -107,9 +102,9 @@ export function NoteWorkspace({
   // A note just created is for writing in. Two frames, so that this comes after the page title takes
   // focus on arriving from another section (AppShell), which would otherwise take it back.
   useEffect(() => {
-    const ui = useNotesUi.getState();
-    if (ui.justCreated !== note.id) return;
-    ui.setJustCreated(null);
+    const state = useNotesUi.getState();
+    if (state.justCreated !== note.id || !active) return;
+    state.setJustCreated(null);
     let inner = 0;
     const outer = requestAnimationFrame(() => {
       inner = requestAnimationFrame(() => editor.current?.focus());
@@ -118,7 +113,7 @@ export function NoteWorkspace({
       cancelAnimationFrame(outer);
       cancelAnimationFrame(inner);
     };
-  }, [note.id]);
+  }, [note.id, active]);
 
   const mediaTypes = useMemo(
     () =>
@@ -145,8 +140,6 @@ export function NoteWorkspace({
   const api = useApi();
   const concepts = useQuery(conceptsQuery(api));
   const [newConcept, setNewConcept] = useState<string | null>(null);
-  const [generating, setGenerating] = useState<GenerationScope | null>(null);
-  const inbox = useInboxActions();
   const completions = useMemo(
     () => ({
       notes: () => {
@@ -206,136 +199,143 @@ export function NoteWorkspace({
     if (embeds.length > 0) editor.current?.insertAt(at, embeds.join('\n'));
   };
 
-  const goToHeading = (heading: HeadingRef) => {
-    if (mode === 'preview') {
-      preview.current
-        ?.querySelector(`[id="${CSS.escape(heading.slug)}"]`)
-        ?.scrollIntoView({ block: 'start' });
-    } else {
-      editor.current?.goToLine(heading.line);
-    }
-  };
+  const goToHeading = useCallback(
+    (heading: HeadingRef) => {
+      if (mode === 'preview') {
+        preview.current
+          ?.querySelector(`[id="${CSS.escape(heading.slug)}"]`)
+          ?.scrollIntoView({ block: 'start' });
+      } else {
+        editor.current?.goToLine(heading.line);
+      }
+    },
+    [mode],
+  );
 
-  /** "Make card from selection" (task 8.08): the selected text, and a way back to this line. */
-  const makeCard = () => {
-    const selected = mode === 'preview' ? null : (editor.current?.getSelection() ?? null);
-    const text = selected?.text ?? window.getSelection()?.toString() ?? '';
-    const line = selected?.line ?? 1;
-    useQuickAdd.getState().open({
-      front: text.trim(),
-      locator: {
-        kind: 'markdown',
-        noteId: note.id,
-        headingPath: headingPathAt(analysis.headings, line),
-        line,
+  // The Details panel follows the active pane's note: its outline and properties as typed.
+  const owner = `${paneId}:${note.id}`;
+  const saveNow = session.saveNow;
+  useEffect(() => {
+    if (!active) return;
+    useActiveNote.getState().publish({
+      owner,
+      note,
+      text: liveText,
+      headings: analysis.headings,
+      readOnly: session.readOnly,
+      goToHeading,
+      setText: (text) => {
+        editor.current?.setText(text);
+        setLiveText(text);
       },
+      flush: saveNow,
     });
+  }, [active, owner, note, liveText, analysis.headings, session.readOnly, goToHeading, saveNow]);
+  useEffect(() => () => useActiveNote.getState().clear(owner), [owner]);
+
+  // Items that move focus elsewhere (the find bar, the file tree) keep it there when the menu closes.
+  const focusMoves = useRef(false);
+  const search = (replace: boolean) => {
+    focusMoves.current = true;
+    if (mode === 'preview') setMode('edit');
+    // After the editor is shown again.
+    requestAnimationFrame(() => editor.current?.openSearch({ replace }));
   };
 
-  /** Generate from the selection if there is one, otherwise from the whole note (task 11.12). */
-  const generate = () => {
-    const selected = mode === 'preview' ? null : (editor.current?.getSelection() ?? null);
-    const text = (selected?.text ?? window.getSelection()?.toString() ?? '').trim();
-    const line = selected?.line ?? 1;
-    setGenerating(
-      text
-        ? {
-            kind: 'selection',
-            text,
-            title: note.title,
-            locator: {
-              kind: 'markdown',
-              noteId: note.id,
-              headingPath: headingPathAt(analysis.headings, line),
-              line,
-            },
-          }
-        : { kind: 'note', noteId: note.id },
-    );
-  };
-
-  /** Link suggestions (task 11.09): unlinked mentions and notes close in meaning, to the Inbox. */
-  const suggestLinks = () =>
-    inbox.suggestLinks.mutate(note.id, {
-      onSuccess: ({ created }) =>
-        notifySuccess(
-          created === 0
-            ? 'No new links to suggest'
-            : `${created} link suggestion${created === 1 ? '' : 's'} in the Inbox`,
-        ),
-      onError: notifyError,
-    });
+  const node = nodeForNote(note);
+  const menu = moreOptionsMenu(
+    node,
+    {
+      ...actions,
+      reveal: (target) => {
+        focusMoves.current = true;
+        actions.reveal(target);
+      },
+    },
+    {
+      mode,
+      setMode,
+      livePreview,
+      setLivePreview,
+      backlinksInDocument: ui.backlinksInDocument,
+      setBacklinksInDocument: ui.setBacklinksInDocument,
+      find: () => search(false),
+      replace: () => search(true),
+      exportPdf: () =>
+        exportToPdf({ noteId: note.id, title: note.title, content: liveText, resolve }),
+      addProperty: ui.requestAddProperty,
+      showPanel: ui.showDetails,
+      readOnly: session.readOnly,
+    },
+  );
 
   const conflict = session.conflict;
   return (
-    <Group orientation="horizontal" id="skb-note-layout" className="min-w-0 flex-1">
-      <Panel id="note-text" minSize="30" className="min-w-0">
-        <Pane
-          title={mode === 'preview' ? 'Preview' : 'Editor'}
-          hideTitle
-          actions={
-            <>
-              <span
-                aria-live="polite"
-                className={cn(
-                  'mr-2 text-xs',
-                  session.status === 'failed' ? 'text-danger' : 'text-muted',
-                )}
-              >
-                {session.readOnly ? 'Read-only' : STATUS_TEXT[session.status]}
-                <span className="sr-only">{`, ${analysis.wordCount} words`}</span>
-              </span>
-              <span aria-hidden="true" className="mr-2 hidden text-xs text-subtle xl:inline">
-                {analysis.wordCount} {analysis.wordCount === 1 ? 'word' : 'words'}
-              </span>
-              <IconButton
-                label="Make a card from the selection"
-                icon={<SquarePlus size={16} />}
-                size="sm"
-                onClick={makeCard}
-              />
-              <IconButton
-                label="Generate from this note or the selection"
-                icon={<Sparkles size={16} />}
-                size="sm"
-                onClick={generate}
-              />
-              <IconButton
-                label="Suggest links"
-                icon={<Link2 size={16} />}
-                size="sm"
-                disabled={inbox.suggestLinks.isPending}
-                onClick={suggestLinks}
-              />
-              {mode !== 'preview' && (
-                <LivePreviewToggle on={livePreview} onChange={setLivePreview} />
+    <div
+      data-note-view
+      className="flex min-h-0 min-w-0 flex-1 flex-col"
+      onFocusCapture={() => !active && useWorkspace.getState().focusPane(paneId)}
+      onPointerDownCapture={() => !active && useWorkspace.getState().focusPane(paneId)}
+    >
+      <Pane
+        title={note.title}
+        hideTitle
+        headerStart={<NoteBreadcrumb path={note.path} onFolder={ui.reveal} />}
+        actions={
+          <>
+            <span
+              aria-live="polite"
+              className={cn(
+                // Read out in any pane; shown once the pane has room for it.
+                'sr-only mr-2 text-xs @min-[34rem]:not-sr-only',
+                session.status === 'failed' ? 'text-danger' : 'text-muted',
               )}
-              <ModeToggle mode={mode} onChange={setMode} />
-            </>
-          }
-          toolbar={
-            conflict ? (
-              <ConflictBanner
-                conflict={conflict}
-                onReload={session.reload}
-                onKeepMine={session.keepMine}
-                onRecreate={() => onCreateFromLink(`${note.title} (recovered)`, folder)}
-                loadTheirs={session.loadTheirs}
-                mine={session.currentText}
-              />
-            ) : undefined
-          }
-          bodyClassName="flex overflow-hidden"
-        >
-          {generating && (
-            <GenerateDialog
-              scope={generating}
-              title={
-                generating.kind === 'selection' ? `the selection in “${note.title}”` : note.title
-              }
-              onClose={() => setGenerating(null)}
+            >
+              {session.readOnly ? 'Read-only' : STATUS_TEXT[session.status]}
+              <span className="sr-only">{`, ${analysis.wordCount} words`}</span>
+            </span>
+            <span
+              aria-hidden="true"
+              className="mr-2 hidden text-xs text-subtle @min-[48rem]:inline"
+            >
+              {analysis.wordCount} {analysis.wordCount === 1 ? 'word' : 'words'}
+            </span>
+            <StudyTools note={note} editor={editor} mode={mode} headings={analysis.headings} />
+            {mode !== 'preview' && <LivePreviewToggle on={livePreview} onChange={setLivePreview} />}
+            <ModeToggle mode={mode} onChange={setMode} />
+            {/* Not modal, as in Obsidian: the page stays readable (and reachable) beside it. */}
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <IconButton label="More options" icon={<MoreVertical size={16} />} size="sm" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="min-w-60"
+                onCloseAutoFocus={(event) => {
+                  if (focusMoves.current) event.preventDefault();
+                  focusMoves.current = false;
+                }}
+              >
+                <MenuEntries entries={menu} as="dropdown" />
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        }
+        toolbar={
+          conflict ? (
+            <ConflictBanner
+              conflict={conflict}
+              onReload={session.reload}
+              onKeepMine={session.keepMine}
+              onRecreate={() => onCreateFromLink(`${note.title} (recovered)`, folder)}
+              loadTheirs={session.loadTheirs}
+              mine={session.currentText}
             />
-          )}
+          ) : undefined
+        }
+        className="@container"
+        bodyClassName="flex flex-col overflow-hidden"
+      >
+        <div className="flex min-h-0 flex-1">
           <div className={cn('min-w-0 flex-1', mode === 'preview' && 'hidden')}>
             <MarkdownEditor
               ref={editor}
@@ -377,65 +377,17 @@ export function NoteWorkspace({
               </div>
             </div>
           )}
-        </Pane>
-      </Panel>
-      <Separator className="w-px bg-border outline-none hover:bg-accent focus-visible:bg-focus data-[separator=active]:bg-accent" />
-      <Panel
-        id="note-details"
-        defaultSize="26"
-        minSize="16"
-        collapsible
-        collapsedSize="0"
-        className="min-w-0"
-      >
-        <Tabs
-          value={panel}
-          onValueChange={(value) => setPanel(value as SidePanel)}
-          className="h-full"
-        >
-          <Pane
-            title="Details"
-            toolbar={
-              <TabsList label="Note details" className="-mb-1.5 border-b-0">
-                <TabsTrigger value="outline" icon={<ListTree size={14} />}>
-                  Outline
-                </TabsTrigger>
-                <TabsTrigger value="backlinks" icon={<ArrowLeftFromLine size={14} />}>
-                  Backlinks
-                </TabsTrigger>
-                <TabsTrigger value="properties" icon={<Tags size={14} />}>
-                  Properties
-                </TabsTrigger>
-                <TabsTrigger value="graph" icon={<Network size={14} />}>
-                  Graph
-                </TabsTrigger>
-              </TabsList>
-            }
+        </div>
+        {ui.backlinksInDocument && (
+          <section
+            aria-label={`Backlinks to ${note.title}`}
+            data-scroll-region
+            className="max-h-[40%] flex-none overflow-y-auto border-t border-border bg-surface"
           >
-            <TabsContent value="outline">
-              <OutlinePanel headings={analysis.headings} onSelect={goToHeading} />
-            </TabsContent>
-            <TabsContent value="backlinks">
-              <BacklinksPanel noteId={note.id} />
-            </TabsContent>
-            <TabsContent value="properties">
-              <PropertiesPanel
-                text={liveText}
-                readOnly={session.readOnly}
-                onChange={(text) => {
-                  editor.current?.setText(text);
-                  setLiveText(text);
-                }}
-              />
-            </TabsContent>
-            <TabsContent value="graph">
-              <div className="p-3">
-                <LocalGraph node={note.id} height={240} />
-              </div>
-            </TabsContent>
-          </Pane>
-        </Tabs>
-      </Panel>
-    </Group>
+            <BacklinksPanel noteId={note.id} />
+          </section>
+        )}
+      </Pane>
+    </div>
   );
 }

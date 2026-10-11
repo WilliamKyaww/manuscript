@@ -11,16 +11,19 @@ import {
 } from '@skb/core';
 import {
   applyTextEdits,
+  FrontmatterEditError,
   isMarkdownPath,
   sanitiseFileName,
+  setFrontmatterValues,
   toPortablePath,
 } from '@skb/core/markdown';
 import { writeFileAtomic } from '../../vault/atomic';
 import { movePath } from '../../vault/move';
 import type { Vault } from '../../vault/vault';
 import type { SettingsService } from '../settings/service';
+import type { Bookmarks } from './bookmarks';
 import { SOURCES_FOLDER } from './ignore';
-import { type NoteIndexer, sha256 } from './indexer';
+import { decodeNote, type NoteIndexer, sha256 } from './indexer';
 import { mediaTypeFor } from './media-types';
 import { type MovePlan, planMove } from './moves';
 import type { NotesRepository } from './repository';
@@ -51,6 +54,8 @@ export interface EntriesService {
   createFolder(folder: string): { path: string };
   movePreview(from: string, to: string): MovePreview;
   move(from: string, to: string, rewriteLinks: boolean): MoveResult;
+  /** A copy beside the original ("Name 1.md"); a copied note never keeps the original's id. */
+  copy(entryPath: string): { path: string; noteId: Id<'note'> | null };
   trash(entryPath: string): TrashItem;
   listTrash(): { items: TrashItem[]; retentionDays: number };
   restore(trashId: string): { path: string };
@@ -70,6 +75,7 @@ export interface EntriesServiceDependencies {
   indexer: NoteIndexer;
   settings: SettingsService;
   trash: Trash;
+  bookmarks: Bookmarks;
 }
 
 function cleanPath(value: string): string {
@@ -82,6 +88,7 @@ export function createEntriesService({
   indexer,
   settings,
   trash,
+  bookmarks,
 }: EntriesServiceDependencies): EntriesService {
   const kindOf = (entryPath: string): MovePlan['kind'] => {
     if (repo.byPath(entryPath)) return 'note';
@@ -229,12 +236,46 @@ export function createEntriesService({
         },
         'app',
       );
+      bookmarks.relocate(from, to);
       return {
         from,
         to,
         noteId: noteId as Id<'note'> | null,
         rewritten: { notes: rewritten.length, links },
         failed,
+      };
+    },
+
+    copy(entryInput) {
+      const from = cleanPath(entryInput);
+      const kind = kindOf(from);
+      if (kind === 'folder') throw new ValidationError('Only notes and attachments can be copied.');
+      const slash = from.lastIndexOf('/');
+      const folder = slash === -1 ? '' : from.slice(0, slash);
+      const name = from.slice(slash + 1);
+      const dot = name.lastIndexOf('.');
+      const base = dot > 0 ? name.slice(0, dot) : name;
+      const extension = dot > 0 ? name.slice(dot) : '';
+      const to = uniqueFile(folder, base, extension);
+      const bytes = readFileSync(vault.resolve(from));
+      let content: string | Uint8Array = bytes;
+      if (kind === 'note') {
+        const decoded = decodeNote(bytes);
+        if (decoded.valid) {
+          try {
+            // Two files with one id would be one note to everything that refers to it.
+            content = setFrontmatterValues(decoded.text, { id: undefined });
+          } catch (error) {
+            if (!(error instanceof FrontmatterEditError)) throw error;
+            content = decoded.text;
+          }
+        }
+      }
+      writeFileAtomic(vault.resolve(to), content);
+      indexer.apply({ changed: [to] }, 'app');
+      return {
+        path: to,
+        noteId: kind === 'note' ? ((repo.byPath(to)?.id ?? null) as Id<'note'> | null) : null,
       };
     },
 

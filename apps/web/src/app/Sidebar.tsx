@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { PanelLeftClose, PanelLeftOpen, Search, Sparkles } from 'lucide-react';
-import { useEffect } from 'react';
+import { type CSSProperties, useEffect, useState } from 'react';
 import { IconButton } from '../components/IconButton';
 import { Kbd } from '../components/Kbd';
 import { Tooltip } from '../components/Tooltip';
@@ -11,6 +11,7 @@ import { useApi } from '../lib/api/context';
 import { cn } from '../lib/cn';
 import { isApplePlatform } from '../lib/platform';
 import { NARROW_QUERY, selectSidebarCollapsed, useLayoutStore } from './layout-store';
+import { SidebarResizer } from './SidebarResizer';
 import { sectionIcon } from './section-icons';
 import { GROUP_LABELS, SECTIONS, type Section, type SectionGroup } from './sections';
 import { keyLabels } from './shortcuts/registry';
@@ -35,6 +36,9 @@ export function Sidebar() {
   const collapsed = useLayoutStore(selectSidebarCollapsed);
   const toggleSidebar = useLayoutStore((state) => state.toggleSidebar);
   const openPalette = useLayoutStore((state) => state.setCommandPaletteOpen);
+  const width = useLayoutStore((state) => state.sidebarWidth);
+  const narrow = useLayoutStore((state) => state.narrow);
+  const [resizing, setResizing] = useState(false);
   const settings = SECTIONS.find((section) => section.id === 'settings');
 
   return (
@@ -43,12 +47,14 @@ export function Sidebar() {
       aria-label="Main"
       data-sidebar
       data-collapsed={collapsed}
+      style={{ '--skb-sidebar-width': `${width}px` } as CSSProperties}
       className={cn(
-        'flex h-full flex-none flex-col border-r border-border bg-surface',
-        'transition-[width] duration-(--skb-duration-normal) ease-(--skb-ease)',
+        'relative flex h-full flex-none flex-col border-r border-border bg-surface',
+        !resizing && 'transition-[width] duration-(--skb-duration-normal) ease-(--skb-ease)',
         collapsed ? 'w-(--skb-sidebar-width-collapsed)' : 'w-(--skb-sidebar-width)',
       )}
     >
+      {!collapsed && !narrow && <SidebarResizer onResizing={setResizing} />}
       <div
         className={cn('flex h-14 flex-none items-center gap-2 px-3', collapsed && 'justify-center')}
       >

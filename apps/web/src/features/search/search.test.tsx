@@ -16,6 +16,7 @@ const TREE = {
       type: 'lecture-notes',
       aliases: ['Raft algorithm'],
       updatedAt: now,
+      createdAt: now,
     },
     {
       id: PAXOS,
@@ -24,6 +25,7 @@ const TREE = {
       type: null,
       aliases: ['Synod'],
       updatedAt: now,
+      createdAt: now,
     },
   ],
   folders: ['Modules'],

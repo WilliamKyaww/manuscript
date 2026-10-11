@@ -85,6 +85,7 @@ function fakeEditor(onChange: (text: string) => void) {
     insertAt: () => undefined,
     goToLine: () => undefined,
     getSelection: () => null,
+    openSearch: () => undefined,
   };
   return {
     handle,

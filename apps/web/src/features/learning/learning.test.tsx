@@ -77,7 +77,7 @@ const lecture = {
 };
 const note = { id: NOTE, path: 'Modules/COC251/Paxos.md', title: 'Paxos' };
 const tree = {
-  notes: [{ ...note, type: null, aliases: [], updatedAt: now }],
+  notes: [{ ...note, type: null, aliases: [], updatedAt: now, createdAt: now }],
   folders: ['Modules', 'Modules/COC251'],
   attachments: [],
   index: {

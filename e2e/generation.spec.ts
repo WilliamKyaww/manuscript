@@ -92,8 +92,11 @@ test('flashcards from the first three slides are reviewed, accepted and studied'
         `/library/${sourceId}?slide=${slide}`,
       );
     await expect(drafts.first()).toContainText('What is Two-phase commit?');
+    // The sidebar (collapsed, as it starts) says how many wait in the Inbox link's name.
     await expect(
-      page.getByRole('navigation', { name: 'Main' }).getByText('3', { exact: true }),
+      page
+        .getByRole('navigation', { name: 'Main' })
+        .getByRole('link', { name: /^Inbox\s*, 3 waiting$/u }),
     ).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
 

@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { MenuEntry } from '../../../components/MenuEntries';
 import { useNotesUi } from '../notes-store';
-import { buildTree } from './buildTree';
+import { buildTree, type TreeNode } from './buildTree';
 import { NoteTree, type NoteTreeActions } from './NoteTree';
 
 const root = buildTree(
@@ -19,15 +20,19 @@ const root = buildTree(
 );
 
 function renderTree(activePath: string | null = null) {
-  const actions: NoteTreeActions = {
+  const onMenu = vi.fn();
+  const actions = {
     onOpen: vi.fn(),
-    onCreateNote: vi.fn(),
-    onCreateFolder: vi.fn(),
+    onOpenInNewTab: vi.fn(),
     onRename: vi.fn(),
     onMove: vi.fn(),
     onDelete: vi.fn(),
-    onCopyLink: vi.fn(),
-  };
+    onMenu,
+    menuFor: (node: TreeNode | null, startRename: () => void): MenuEntry[] => [
+      { label: node ? `Act on ${node.name}` : 'New note', onSelect: () => onMenu(node) },
+      { label: 'Rename…', onSelect: startRename },
+    ],
+  } satisfies NoteTreeActions & { onMenu: unknown };
   render(<NoteTree root={root} activePath={activePath} {...actions} />);
   return actions;
 }
@@ -44,12 +49,11 @@ describe('NoteTree', () => {
         root={empty}
         activePath={null}
         onOpen={vi.fn()}
-        onCreateNote={vi.fn()}
-        onCreateFolder={vi.fn()}
+        onOpenInNewTab={vi.fn()}
         onRename={vi.fn()}
         onMove={vi.fn()}
         onDelete={vi.fn()}
-        onCopyLink={vi.fn()}
+        menuFor={() => []}
       />,
     );
     // A tree must contain tree items (WAI-ARIA); an empty one is plain text.
@@ -140,5 +144,38 @@ describe('NoteTree', () => {
       'true',
     );
     expect(screen.getByRole('treeitem', { name: 'Paxos' })).toHaveAttribute('tabindex', '0');
+  });
+
+  it('opens a note in a new tab with Ctrl+click or a middle click (task 23.09)', async () => {
+    const user = userEvent.setup();
+    const actions = renderTree();
+    await user.keyboard('{Control>}');
+    await user.click(screen.getByRole('treeitem', { name: 'Index' }));
+    await user.keyboard('{/Control}');
+    expect(actions.onOpenInNewTab).toHaveBeenCalledWith(expect.objectContaining({ id: 'note_c' }));
+    expect(actions.onOpen).not.toHaveBeenCalled();
+    fireEvent(
+      screen.getByRole('treeitem', { name: 'Index' }),
+      new MouseEvent('auxclick', { bubbles: true, button: 1 }),
+    );
+    expect(actions.onOpenInNewTab).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows the menu it is given for the row right-clicked, and renames in place from it', async () => {
+    const user = userEvent.setup();
+    const actions = renderTree();
+    await user.pointer({
+      keys: '[MouseRight]',
+      target: screen.getByRole('treeitem', { name: 'Index' }),
+    });
+    await user.click(await screen.findByRole('menuitem', { name: 'Act on Index' }));
+    expect(actions.onMenu).toHaveBeenCalledWith(expect.objectContaining({ path: 'Index.md' }));
+
+    await user.pointer({
+      keys: '[MouseRight]',
+      target: screen.getByRole('treeitem', { name: 'Index' }),
+    });
+    await user.click(await screen.findByRole('menuitem', { name: 'Rename…' }));
+    expect(await screen.findByRole('textbox', { name: 'New name' })).toHaveValue('Index');
   });
 });

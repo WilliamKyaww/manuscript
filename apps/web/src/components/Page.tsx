@@ -35,6 +35,8 @@ export interface PageProps {
   width?: PageWidth;
   /** `panes`: the body is a row of independently scrolling panes instead of one scroll container. */
   layout?: PageLayout;
+  /** `compact`: one short header row, for work surfaces with headers of their own (Notes). */
+  density?: 'regular' | 'compact';
   children: ReactNode;
   bodyClassName?: string;
 }
@@ -59,28 +61,46 @@ export function Page({
   toolbar,
   width = 'default',
   layout = 'scroll',
+  density = 'regular',
   children,
   bodyClassName,
 }: PageProps) {
   useDocumentTitle(title);
+  const compact = density === 'compact';
   return (
     <div data-page className="flex min-h-0 min-w-0 flex-1 flex-col">
       <header
         data-page-header
-        className={cn('flex-none border-b border-border bg-surface px-6 pt-4', !toolbar && 'pb-4')}
+        data-density={density}
+        className={cn(
+          'flex-none border-b border-border bg-surface',
+          compact ? 'px-4 py-1.5' : cn('px-6 pt-4', !toolbar && 'pb-4'),
+        )}
       >
         {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} />}
         {/* The actions move below the title, rather than cut it short, when the window is narrow. */}
-        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-          <div className="min-w-0 flex-1 basis-80">
+        <div
+          className={cn(
+            'flex flex-wrap justify-between gap-x-4 gap-y-2',
+            compact ? 'items-center' : 'items-start',
+          )}
+        >
+          <div className={cn('min-w-0 flex-1', compact ? 'flex items-baseline gap-3' : 'basis-80')}>
             <h1
               data-page-title
               tabIndex={-1}
-              className="truncate text-xl font-semibold tracking-tight focus:outline-none"
+              className={cn(
+                'truncate font-semibold tracking-tight focus:outline-none',
+                compact ? 'text-base' : 'text-xl',
+              )}
             >
               {title}
             </h1>
-            {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
+            {description && (
+              <p className={cn('text-sm text-muted', compact ? 'truncate' : 'mt-0.5')}>
+                {description}
+              </p>
+            )}
           </div>
           {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
         </div>

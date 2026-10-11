@@ -35,6 +35,9 @@ export const notesKeys = {
   tags: () => ['notes', 'tags'] as const,
   templates: () => ['notes', 'templates'] as const,
   trash: () => ['notes', 'trash'] as const,
+  versions: (id: string) => ['notes', 'versions', id] as const,
+  version: (id: string, versionId: string) => ['notes', 'versions', id, versionId] as const,
+  bookmarks: () => ['notes', 'bookmarks'] as const,
 };
 
 export function treeQuery(api: ApiClient) {
@@ -99,6 +102,7 @@ export function patchTreeNote(queryClient: QueryClient, note: NoteDetail): void 
       type: note.type,
       aliases: note.aliases,
       updatedAt: note.updatedAt,
+      createdAt: note.createdAt,
     };
     const index = tree.notes.findIndex((entry) => entry.id === note.id);
     const notes = [...tree.notes];
@@ -109,7 +113,7 @@ export function patchTreeNote(queryClient: QueryClient, note: NoteDetail): void 
 }
 
 /** After anything that changes the vault's structure or links. */
-function invalidateStructure(queryClient: QueryClient): Promise<void> {
+export function invalidateStructure(queryClient: QueryClient): Promise<void> {
   return queryClient.invalidateQueries({ queryKey: notesKeys.all });
 }
 

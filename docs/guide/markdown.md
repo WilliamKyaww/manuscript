@@ -15,10 +15,11 @@ second. This page describes the Markdown it understands and how notes behave.
 5. [Templates](#5-templates)
 6. [Attachments and embeds](#6-attachments-and-embeds)
 7. [Editing, saving and edits made elsewhere](#7-editing-saving-and-edits-made-elsewhere)
-8. [Renaming, moving and the trash](#8-renaming-moving-and-the-trash)
-9. [Which files are notes](#9-which-files-are-notes)
-10. [Differences from Obsidian](#10-differences-from-obsidian)
-11. [Keyboard](#11-keyboard)
+8. [Tabs, panes and the file menus](#8-tabs-panes-and-the-file-menus)
+9. [Renaming, moving and the trash](#9-renaming-moving-and-the-trash)
+10. [Which files are notes](#10-which-files-are-notes)
+11. [Differences from Obsidian](#11-differences-from-obsidian)
+12. [Keyboard](#12-keyboard)
 
 ## 1. The Markdown dialect
 
@@ -142,7 +143,8 @@ your behalf — and are shown as a link instead.
 - Changes are saved about a second after you stop typing; **Ctrl+S** saves at once. The status next to
   the view switcher shows *Saved*, *Unsaved changes* or *Saving…*.
 - **Edit**, **Split** and **Preview** switch between the editor, both side by side, and the rendered
-  note. **Outline** jumps to headings.
+  note (**Ctrl+E** switches between reading and editing). In a narrow pane the names give way to
+  their icons, and the three study buttons (make a card, generate, suggest links) to one ✨ menu.
 - **Live preview** (the ¶ button, on unless you turn it off): the editor hides the marks of Markdown —
   a heading's `#`, the `**` and `_` of emphasis, `~~`, the backticks of inline code, a link's brackets
   and address — wherever the cursor is not, so the note reads as it will look. Move the cursor into a
@@ -156,19 +158,75 @@ your behalf — and are shown as a link instead.
 - Line endings (Windows `CRLF` or `LF`) and a byte-order mark are kept as they were. Files that are not
   UTF-8 text, or larger than about 5 MB, open read-only.
 
-## 8. Renaming, moving and the trash
+## 8. Tabs, panes and the file menus
 
-- In the file tree: **F2** (or right-click › Rename) renames; drag a note or folder onto a folder to
-  move it.
+The Notes page works like Obsidian's: the Files pane on the left, your notes in tabs in the middle, and
+the **Details** panel on the right when you want it.
+
+- **The vault** you are in is named at the foot of the Files pane. Its menu opens a recent vault,
+  **Open folder as vault…** (in the desktop app with the system's folder picker; an Obsidian vault
+  works as it is), shows or copies the vault's folder, and **Manage vaults…** goes to Settings. If the
+  vault cannot be read it says *No vault open*. An empty vault says so in the middle of the page and
+  offers to write the first note or open another folder.
+- **The Files pane** toolbar: new note, new folder, **Change sort order** (file name A to Z or Z to A,
+  modified or created time new to old or old to new — folders always by name), show or hide
+  attachments, and one button that is **Expand all** when every folder is closed and **Collapse all**
+  otherwise. Bookmarked notes and folders are listed above the tree.
+- **Tabs.** Clicking a note opens it in the current tab; **Ctrl+click** (or a middle click) opens it in
+  a new one. **+** opens an empty tab; **×** or a middle click on a tab closes it, and anything typed
+  in it is saved as it closes. Tabs can be dragged into another order and have their own right-click
+  menu (Close, Close others, Split right, Split down). The address always shows the note of the
+  active tab, so Back and links work as before, and your tabs are remembered in this browser (the
+  desktop app has its own).
+- **Two panes**: **Split right** or **Split down** (in a note's ⋮ menu or a tab's menu), or **Open to
+  the right** from the file tree, opens a note in a second pane beside or below the first. A note can
+  be open in both; what is typed in one appears in the other once it is saved. Closing a pane's last
+  tab closes the pane.
+- **Details** (the panel button at the top right; closed until you open it) shows the note in the
+  active pane: its **Outline**, **Backlinks**, **Outgoing** links, **Properties** and local **Graph**.
+- **More options (⋮)** on a note has Obsidian's commands: backlinks at the foot of the note, reading
+  view, source mode (live preview off), split right or down, open in a new window, rename, move to a
+  folder, bookmark, merge with another note, add a property, export to PDF, find and replace, copy its
+  path, version history, open a linked view, open it in its default application, show it in Explorer,
+  reveal it in the file tree, and delete it.
+- **The file tree's right-click menu** offers the same for files (open in a new tab, to the right or in
+  a new window, make a copy, move, bookmark, merge, copy path, version history, open in its default
+  application, show in Explorer, rename, delete) and new note, new folder, move, bookmark, copy path,
+  rename and delete for folders.
+
+What some of them do:
+
+- **Make a copy** puts *Name 1.md* beside the note. The copy is a new note: it never keeps the
+  original's `id`.
+- **Merge entire file with…** adds the note's text (not its properties) to the end of the note you
+  choose, changes every link to it into a link to that note (headings and display text kept), and
+  moves it to the trash, from where it can be restored. The other note keeps its previous text in its
+  version history.
+- **Open version history**: the text a save replaced is kept as a version, at most one every five
+  minutes, for 30 days, in `.skb/history/versions/` inside the vault (plain text files). Each version
+  can be read whole or as its changes against the note now, and restored; restoring keeps the current
+  text as a version first, and a restore can be undone from its message. Edits made in other programs
+  are not versioned.
+- **Export to PDF…** prints the note as the reading view shows it. The desktop app asks where to save
+  the PDF; a browser opens its print dialogue, where *Save as PDF* is one of the printers.
+- **Open in new window** shows the note in a window of its own, without the sidebar or the file list.
+- **Open in default app** and **Show in system explorer** are for the desktop app; in a browser an
+  attachment opens in a tab of its own instead.
+
+## 9. Renaming, moving and the trash
+
+- In the file tree: **F2** (or right-click › Rename…) renames in place; **Rename…** in a note's ⋮
+  menu asks for the new name. Drag a note or folder onto a folder to move it, or choose **Move file
+  to…** and type the folder's name.
 - When a rename or move would make links point somewhere else, you are shown how many links in which
   notes, and can **update links and move** or move without updating. Wikilinks are rewritten to the
   shortest name that still finds the note; Markdown links get a correct relative path. Only links that
   would otherwise break or change meaning are touched.
-- **Delete** (or right-click › Move to trash) moves a note, folder or attachment into the trash
+- **Delete** (or right-click › Delete) moves a note, folder or attachment into the trash
   (`.skb/trash` inside your vault). **Trash** in the Files pane lists everything with its expiry date
   (30 days by default) and restores it to where it was, with the same note id.
 
-## 9. Which files are notes
+## 10. Which files are notes
 
 - Every `.md` file is a note, except inside `Sources/` (imported originals) and the folders below.
 - Never indexed: `.skb/` (the app's data), `.obsidian/`, `.trash/`, `.git/`, `node_modules/`, and any
@@ -178,7 +236,7 @@ your behalf — and are shown as a link instead.
   folder (`build/`), and `*`, `?` and `**` are wildcards (`*.excalidraw.md`).
 - Other files (images, PDFs, …) are attachments: they can be linked and embedded.
 
-## 10. Differences from Obsidian
+## 11. Differences from Obsidian
 
 The vault stays fully usable in Obsidian; opening it here changes no file (only `id` lines, and only
 when something needs them). Behaviour differs in a few places (ADR-0026):
@@ -190,7 +248,7 @@ when something needs them). Behaviour differs in a few places (ADR-0026):
 | `[[Note#^block]]` opens the note (block positions are not tracked yet) | Scrolls to the block |
 | An id may be added as `id:` (or `skb-id:`) to notes other data refers to | — |
 
-## 11. Keyboard
+## 12. Keyboard
 
 Press `?` (or `Ctrl+/`) anywhere for the cheat sheet: the shortcuts that work everywhere, then the keys
 of each page.
@@ -202,9 +260,11 @@ of each page.
 | `[[` / `#` | Editor | Complete a note or concept name / a tag (`Enter` accepts) |
 | `Esc`, then `Tab` | Editor | Move focus out of the editor (`Ctrl+M` toggles Tab moving focus) |
 | `Tab` / `Shift+Tab` | Editor | Indent / outdent |
-| `Ctrl+F` | Editor | Find and replace |
+| `Ctrl+F` / `Ctrl+H` | Editor | Find / replace |
+| `Ctrl+E` | Notes | Switch between reading and editing |
 | `↑` `↓` `←` `→`, `Home`, `End` | File tree | Move, open and close folders |
 | `Enter` | File tree | Open the note or folder |
+| `Ctrl+Click` or a middle click | File tree | Open the note in a new tab |
 | `F2` / `Delete` | File tree | Rename / move to the trash |
 | Typing letters | File tree | Jump to a matching name |
 | `Shift+F10` or the Menu key | File tree | Context menu |

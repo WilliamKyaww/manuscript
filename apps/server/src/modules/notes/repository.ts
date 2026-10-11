@@ -81,6 +81,7 @@ export interface SummaryRow {
   type: string | null;
   aliases: string[];
   updatedAt: string;
+  createdAt: string;
 }
 
 export interface BacklinkRow {
@@ -304,7 +305,7 @@ export function createNotesRepository(db: SqlDatabase) {
     summaries(): SummaryRow[] {
       return db
         .all<Raw>(
-          `SELECT n.id, n.path, n.title, n.type, n.updated_at,
+          `SELECT n.id, n.path, n.title, n.type, n.updated_at, n.created_at,
              (SELECT json_group_array(a.alias) FROM note_aliases a WHERE a.doc_id = n.doc_id) AS aliases
            FROM notes n ORDER BY n.path`,
         )
@@ -315,6 +316,7 @@ export function createNotesRepository(db: SqlDatabase) {
           type: (raw.type as string | null) ?? null,
           aliases: JSON.parse(String(raw.aliases ?? '[]')) as string[],
           updatedAt: String(raw.updated_at),
+          createdAt: String(raw.created_at),
         }));
     },
 

@@ -86,6 +86,39 @@
   ::selection {
     background-color: var(--skb-accent-subtle);
   }
+
+  /*
+   * Export to PDF (task 23.08): while a note is being printed, the page is only its print-only copy.
+   * On screen the copy is hidden; the application stays as it was.
+   */
+  #skb-print-root {
+    display: none;
+  }
+
+  @media print {
+    html:has(body.skb-printing),
+    body.skb-printing {
+      height: auto;
+      overflow: visible;
+      background: #fff;
+    }
+
+    body.skb-printing > :not(#skb-print-root) {
+      display: none;
+    }
+
+    body.skb-printing #skb-print-root {
+      display: block;
+      color: var(--skb-text);
+      background: #fff;
+    }
+  }
+
+  /* Thin scrollbars in the theme's colours (task 23.01), in panes, lists and the editor alike. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--skb-border-strong) transparent;
+  }
 }
 
 /* The small label above a group in a panel or card ("Connections", "Why"): one style everywhere. */

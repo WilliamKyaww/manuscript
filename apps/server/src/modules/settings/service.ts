@@ -1,4 +1,6 @@
 import {
+  type Bookmarks,
+  BookmarksSchema,
   DEFAULT_NOTES_SETTINGS,
   DEFAULT_PIPELINE_SETTINGS,
   DEFAULT_PLAN_SETTINGS,
@@ -35,6 +37,9 @@ export interface SettingsService {
   updatePipeline(changes: Partial<PipelineSettings>): PipelineSettings;
   plan(): PlanSettings;
   updatePlan(changes: Partial<PlanSettings>): PlanSettings;
+  /** Bookmarked notes, folders and attachments (ADR-0042), by path. */
+  bookmarks(): Bookmarks;
+  updateBookmarks(next: Bookmarks): Bookmarks;
 }
 
 export interface SettingsDependencies {
@@ -123,7 +128,16 @@ export function createSettingsService(deps: SettingsDependencies): SettingsServi
     DEFAULT_PIPELINE_SETTINGS,
     'lecture pipeline',
   );
+  const bookmarks = settingsGroup<Bookmarks>(
+    deps,
+    'bookmarks',
+    BookmarksSchema,
+    { items: [] },
+    'bookmarks',
+  );
   return {
+    bookmarks: () => bookmarks.get(),
+    updateBookmarks: (next) => bookmarks.update(next),
     pipeline: () => pipeline.get(),
     updatePipeline: (changes) => pipeline.update(changes),
     plan: () => plan.get(),

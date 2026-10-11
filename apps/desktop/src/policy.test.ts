@@ -3,10 +3,13 @@ import { describe, expect, it } from 'vitest';
 import {
   externalUrl,
   isAppUrl,
+  isNoteWindowUrl,
   isRevealable,
+  pdfFileName,
   restoreWindowState,
   sanitisePick,
   senderAllowed,
+  titleBarColour,
 } from './policy';
 
 const ORIGIN = 'http://127.0.0.1:51234';
@@ -141,5 +144,48 @@ describe('where the window opens', () => {
       height: 860,
       maximised: false,
     });
+  });
+});
+
+describe('which pages may open in a window of their own (task 23.10)', () => {
+  const note = 'note_01J9Z3K4M2Q8R5T7V9X1Y3Z5A7';
+  it('is a note of the application, asked for as a note window', () => {
+    expect(isNoteWindowUrl(`${ORIGIN}/notes/${note}?window=note`, ORIGIN)).toBe(true);
+  });
+  it('is nothing else', () => {
+    for (const url of [
+      `${ORIGIN}/notes/${note}`,
+      `${ORIGIN}/notes/${note}?window=other`,
+      `${ORIGIN}/settings?window=note`,
+      `${ORIGIN}/notes/../settings?window=note`,
+      `${ORIGIN}/notes/note_1?window=note`,
+      `http://127.0.0.1:9999/notes/${note}?window=note`,
+      `https://example.com/notes/${note}?window=note`,
+      'javascript:alert(1)',
+      'not a url',
+    ])
+      expect(isNoteWindowUrl(url, ORIGIN), url).toBe(false);
+  });
+});
+
+describe('the title bar colours a page may ask for', () => {
+  it('are hexadecimal colours and nothing else', () => {
+    expect(titleBarColour('#f7f5f1')).toBe('#f7f5f1');
+    expect(titleBarColour('#FFF')).toBe('#FFF');
+    expect(titleBarColour('#12345678')).toBe('#12345678');
+    for (const value of ['red', 'url(x)', '#12', '#1234567', 'rgb(0,0,0)', 42, null])
+      expect(titleBarColour(value)).toBeNull();
+  });
+});
+
+describe('the name of a note printed to PDF', () => {
+  it('is its title, without what Windows forbids in a file name', () => {
+    expect(pdfFileName('Paxos')).toBe('Paxos.pdf');
+    expect(pdfFileName('Week 1: Paxos / Raft?')).toBe('Week 1 Paxos Raft.pdf');
+    expect(pdfFileName('Ends with dots...')).toBe('Ends with dots.pdf');
+    expect(pdfFileName('a\u0000b')).toBe('a b.pdf');
+    expect(pdfFileName('   ')).toBe('Note.pdf');
+    expect(pdfFileName(undefined)).toBe('Note.pdf');
+    expect(pdfFileName('x'.repeat(500))).toHaveLength(124);
   });
 });

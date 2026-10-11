@@ -17,6 +17,7 @@ import {
 import { LinkRewriteDialog, NewFolderDialog, TrashDialog } from './dialogs/EntryDialogs';
 import { NewNoteDialog } from './dialogs/NewNoteDialog';
 import { parentOf, type TreeNode } from './tree/buildTree';
+import { useWorkspace } from './workspace/workspace-store';
 
 /**
  * Vault operations behind the file tree and the notes page (task 3.13): create, rename, move (with a
@@ -38,10 +39,7 @@ export interface VaultActions {
   elements: ReactNode;
 }
 
-export function useVaultActions(
-  tree: NoteTree | undefined,
-  activePath: string | null,
-): VaultActions {
+export function useVaultActions(tree: NoteTree | undefined): VaultActions {
   const api = useApi();
   const navigate = useNavigate();
   const createNote = useCreateNote();
@@ -151,12 +149,15 @@ export function useVaultActions(
           trashEntry.mutate(target.path, {
             onSuccess: (item) => {
               setTrashTarget(null);
-              if (
-                activePath &&
-                (activePath === target.path || activePath.startsWith(`${target.path}/`))
-              ) {
-                void navigate({ to: '/notes' });
-              }
+              // Tabs showing what went to the trash close, as files that are gone do.
+              const gone = new Set(
+                (tree?.notes ?? [])
+                  .filter(
+                    (note) => note.path === target.path || note.path.startsWith(`${target.path}/`),
+                  )
+                  .map((note) => note.id),
+              );
+              useWorkspace.getState().closeNotes(gone);
               toast.success(`Moved “${target.name}” to the trash`, {
                 action: {
                   label: 'Undo',

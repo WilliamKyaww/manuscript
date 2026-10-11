@@ -46,8 +46,12 @@ export const IndexStatusSchema = z.object({
 });
 export type IndexStatus = z.infer<typeof IndexStatusSchema>;
 
+/** A note in the tree, with what the file list sorts by. */
+export const TreeNoteSchema = NoteSummarySchema.extend({ createdAt: z.string() });
+export type TreeNote = z.infer<typeof TreeNoteSchema>;
+
 export const NoteTreeSchema = z.object({
-  notes: z.array(NoteSummarySchema),
+  notes: z.array(TreeNoteSchema),
   /** Every folder, including empty ones, sorted. */
   folders: z.array(z.string()),
   attachments: z.array(AttachmentSummarySchema),
@@ -235,4 +239,63 @@ export const listTemplatesEndpoint = defineEndpoint({
   method: 'GET',
   path: '/api/templates',
   response: z.object({ folder: z.string(), templates: z.array(TemplateSchema) }),
+});
+
+// --- Merging and versions (Phase 23, ADR-0042) ---------------------------------------------------
+
+export const mergeNoteEndpoint = defineEndpoint({
+  method: 'POST',
+  path: '/api/notes/:id/merge',
+  params: NoteParams,
+  body: z.object({
+    /** The note that receives this note's text. */
+    targetId: NoteIdSchema,
+  }),
+  response: z.object({
+    target: NoteSummarySchema,
+    /** Links elsewhere that pointed at the merged note and now point at the target. */
+    retargeted: z.object({
+      notes: z.number().int().nonnegative(),
+      links: z.number().int().nonnegative(),
+    }),
+    failed: z.array(z.object({ path: z.string(), reason: z.string() })),
+    /** The trash item holding the merged note, for undo. */
+    trashId: z.string(),
+  }),
+});
+
+export const VersionIdSchema = z
+  .string()
+  .regex(/^\d{8}T\d{9}Z-(save|merge|restore)$/, 'Not a version id.');
+
+export const NoteVersionSchema = z.object({
+  id: VersionIdSchema,
+  savedAt: z.string(),
+  /** Why it was kept: before a save, before a merge into this note, or before a restore. */
+  reason: z.enum(['save', 'merge', 'restore']),
+  sizeBytes: z.number().int().nonnegative(),
+});
+export type NoteVersion = z.infer<typeof NoteVersionSchema>;
+
+export const listVersionsEndpoint = defineEndpoint({
+  method: 'GET',
+  path: '/api/notes/:id/versions',
+  params: NoteParams,
+  response: z.object({ versions: z.array(NoteVersionSchema), retentionDays: z.number().int() }),
+});
+
+export const getVersionEndpoint = defineEndpoint({
+  method: 'GET',
+  path: '/api/notes/:id/versions/:versionId',
+  params: z.object({ id: NoteIdSchema, versionId: VersionIdSchema }),
+  response: NoteVersionSchema.extend({ content: z.string() }),
+});
+
+/** Keeps the note's current text as a version now (before restoring an older one). */
+export const keepVersionEndpoint = defineEndpoint({
+  method: 'POST',
+  path: '/api/notes/:id/versions',
+  status: 201,
+  params: NoteParams,
+  response: z.object({ version: NoteVersionSchema.nullable() }),
 });
