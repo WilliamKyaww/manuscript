@@ -60,6 +60,8 @@
       "includes": [
         "scripts/**",
         "apps/server/test/perf/**",
+        "apps/server/test/soak/**",
+        "apps/server/test/eval/**",
         "apps/server/src/shared/logger.ts",
         "e2e/**"
       ],
