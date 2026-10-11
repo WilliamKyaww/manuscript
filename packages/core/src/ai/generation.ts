@@ -182,7 +182,8 @@ const words = (text: string) =>
   new Set(
     text
       .toLowerCase()
-      .replace(/\{\{c\d+::|::[^}]*\}\}|\}\}/gu, ' ')
+      // A hint is short: bounding it keeps a text of many `::` and no `}}` linear.
+      .replace(/\{\{c\d+::|::[^}]{0,200}\}\}|\}\}/gu, ' ')
       .match(/[\p{L}\p{N}]+/gu) ?? [],
   );
 

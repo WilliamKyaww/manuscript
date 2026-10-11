@@ -8,8 +8,13 @@
 export const CARD_KINDS = ['basic', 'reversed', 'cloze'] as const;
 export type CardKind = (typeof CARD_KINDS)[number];
 
-/** `{{c1::answer}}` or `{{c1::answer::hint}}`; answers cannot contain `}}`. */
-const CLOZE = /\{\{c(\d{1,3})::((?:(?!\}\})[\s\S])*?)(?:::((?:(?!\}\})[\s\S])*?))?\}\}/g;
+/**
+ * `{{c1::answer}}` or `{{c1::answer::hint}}`. An answer holds no `::` (that starts the hint), and
+ * neither holds `}}` or `{{` (deletions do not nest) — which is also what keeps this linear: before,
+ * "any text until `}}`" for both parts tried every split of an unclosed text, and 6,000 characters of
+ * `{{c1::` took ten seconds (Phase 21 fuzzing).
+ */
+const CLOZE = /\{\{c(\d{1,3})::((?:(?!\}\}|::|\{\{)[\s\S])*)(?:::((?:(?!\}\}|\{\{)[\s\S])*))?\}\}/g;
 
 /** The cloze numbers used in a text, in order. */
 export function clozeNumbers(text: string): number[] {
