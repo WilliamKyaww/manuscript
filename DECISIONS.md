@@ -989,3 +989,44 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   vault is the real one): the Playwright spec does. Code signing, the installer and automatic updates are
   Phase 19.
 - **Date.** 10 October 2026.
+
+## ADR-0042 — Tabs and panes live in the browser; versions are files beside the database; bookmarks are vault settings
+
+- **Context.** After 1.0 the student asked for the Notes section to behave like Obsidian's: tabs, split panes, a
+  file menu and a "More options" menu with every item working — among them version history, bookmarks, merging
+  two notes, opening a note in a window of its own and exporting it to PDF — and a desktop title bar that does
+  not look like a stock window.
+- **Options.** Workspace state on the server (shared by every browser) or in the browser; any number of panes
+  or at most two; versions in the database, in the vault beside the notes, or in the application's folder in the
+  vault; bookmarks in Obsidian's `.obsidian/bookmarks.json`, a file of our own, or the vault settings; a
+  frameless window with controls drawn by the page, or Electron's hidden title bar with the system's controls.
+- **Decision.**
+  - **The workspace is browser state** (a zustand store in `localStorage`): which notes are open in which tabs,
+    one pane or two (side by side or one above the other), and which is active. The address shows the active
+    tab's note, so links, Back and the rest of the application keep working; tabs whose note no longer exists
+    are dropped. A pop-out window shows one note and never writes the workspace.
+  - **Versions are files in `.skb/history/versions/<note id>/`**, one per kept version, written before a save
+    replaces the text (at most one every five minutes per note), before a merge and before a restore; versions
+    older than 30 days are removed when the note is next saved. They are the vault's data, so they travel with
+    the folder, and they are plain text that any editor can open. Restoring puts the old text into the editor, so
+    it is saved like any edit and can be undone.
+  - **Bookmarks are a settings group** (`settings` row `bookmarks`), by path, moved with their files when the
+    application moves them. Obsidian's bookmarks file is not touched: writing into another program's
+    configuration while it may be running would lose one side's changes.
+  - **Copies never share an id**: the `id` key is removed from a copied note's frontmatter. **Merging** appends
+    the note's body (not its frontmatter) to the other note, retargets every link to it — the same planning as a
+    move — and moves it to the trash, so it can be restored.
+  - **The desktop title bar is Electron's hidden title bar with the system's window controls**
+    (`titleBarOverlay`), coloured from the theme by a bridge call; the page draws a 32-pixel strip that the
+    window can be dragged by. The menu is no longer shown but its shortcuts still work. New bridge calls —
+    open a vault file in its default application, print the page to PDF — check in the main process that the
+    path is inside the vault and that the sender is the application, as the existing calls do. A note opens in a
+    window of its own through `window.open`, which the shell allows only for the application's own note
+    addresses.
+- **Reason.** Open tabs are a view, not knowledge: keeping them out of the vault keeps the vault clean, and two
+  machines rarely want the same tabs. Versions are the student's text, so they belong with the vault, not in a
+  database they cannot read without the application. A settings row is exported with everything else.
+- **Consequences.** Tabs are per browser profile (the desktop app and a browser have separate ones). Versions
+  take space in the vault's `.skb` folder (bounded by the five-minute interval and 30 days). Two panes at most:
+  more is rarely useful on a laptop screen. External edits are not versioned (the file changed without us).
+- **Date.** 11 October 2026.
