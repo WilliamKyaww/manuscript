@@ -1,6 +1,6 @@
 import { type APIRequestContext, expect, test } from '@playwright/test';
 import { makePptx } from '../apps/server/test/fixtures/sources/builders';
-import { seriousViolations } from './axe';
+import { headingOutline, seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
 
 /**
@@ -151,6 +151,7 @@ for (const scheme of ['light', 'dark'] as const) {
         await expect(page.getByRole('heading', { level: 1, name: target.heading })).toBeVisible();
         await expect(page.locator('html')).toHaveAttribute('data-theme', scheme);
         expect(await seriousViolations(page)).toEqual([]);
+        expect(await headingOutline(page), target.path).toEqual({ h1: 1, skips: [] });
       });
     }
 
@@ -170,6 +171,7 @@ for (const scheme of ['light', 'dark'] as const) {
         await expect(page.getByRole('heading', { level: 1, name: target.heading })).toBeVisible();
         await expect(page.locator('html')).toHaveAttribute('data-theme', scheme);
         expect(await seriousViolations(page)).toEqual([]);
+        expect(await headingOutline(page), target.path).toEqual({ h1: 1, skips: [] });
       });
     }
 

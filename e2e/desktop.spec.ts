@@ -2,6 +2,8 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { _electron as electron, expect, test } from '@playwright/test';
+import { SECTIONS } from '../apps/web/src/app/sections';
+import { headingOutline, seriousViolations } from './axe';
 
 /**
  * Task 18.09: the desktop shell, for real. Electron starts the server in a utility process, the
@@ -165,6 +167,61 @@ test('the desktop shell starts, shows the application, keeps the page confined, 
     .poll(() => existsSync(path.join(vault, '.skb', 'lock')), { timeout: 15_000 })
     .toBe(false);
   expect(readFileSync(path.join(data, 'window-state.json'), 'utf8')).toContain('width');
+  removeQuietly(dir);
+});
+
+/** Every page of the application, as `shell.spec.ts` visits them in the browser. */
+const ROUTES = [
+  ...SECTIONS.map((section) => ({ path: section.path, title: section.label })),
+  { path: '/practice/questions', title: 'Question bank' },
+  { path: '/diagnostics', title: 'Diagnostics' },
+  { path: '/design-system', title: 'Design system' },
+];
+
+test('every page works in the desktop window as it does in the browser', async () => {
+  // Phase 21, task 21.07: the browser's checks of every page, in the desktop window. The start-up
+  // time is recorded as an annotation for the performance report (task 21.06).
+  test.setTimeout(300_000);
+  const dir = mkdtempSync(path.join(tmpdir(), 'skb-e2e-parity-'));
+  const env = isolatedEnvironment(dir, path.join(dir, 'vault'));
+  const launched = performance.now();
+  const app = await electron.launch({
+    executablePath: electronExecutable(),
+    args: [path.join(root, 'apps', 'desktop')],
+    cwd: root,
+    env,
+  });
+  try {
+    const page = await app.firstWindow();
+    await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible({
+      timeout: 90_000,
+    });
+    test.info().annotations.push({
+      type: 'start-up',
+      description: `${Math.round(performance.now() - launched)} ms from launch to Today`,
+    });
+    const origin = new URL(page.url()).origin;
+    const problems: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') problems.push(`${page.url()}: ${message.text()}`);
+    });
+    page.on('pageerror', (error) => problems.push(`${page.url()}: ${error.message}`));
+    for (const route of ROUTES) {
+      await page.goto(`${origin}${route.path}`);
+      await expect(page.getByRole('heading', { level: 1, name: route.title })).toBeVisible();
+      await expect(page.locator('[data-page-header]')).toHaveCount(1);
+      expect(await seriousViolations(page, { inPageOnly: true }), route.path).toEqual([]);
+      expect(await headingOutline(page), route.path).toEqual({ h1: 1, skips: [] });
+    }
+    expect(problems).toEqual([]);
+
+    // Where the browser copies a path, the desktop window can pick a folder and show one.
+    await page.goto(`${origin}/settings`);
+    await expect(page.getByRole('button', { name: /Browse/u }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Show in folder' }).first()).toBeVisible();
+  } finally {
+    await app.close();
+  }
   removeQuietly(dir);
 });
 

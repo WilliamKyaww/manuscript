@@ -54,11 +54,16 @@ async function settleAnimations(page: Page): Promise<void> {
  * `include` limits the scan to one part of the page (a panel beside a page whose own layout is still
  * settling, such as a PDF being drawn).
  */
-export async function seriousViolations(page: Page, options: { include?: string } = {}) {
+export async function seriousViolations(
+  page: Page,
+  options: { include?: string; inPageOnly?: boolean } = {},
+) {
   await fitViewportToContent(page);
   await settleAnimations(page);
   const builder = new AxeBuilder({ page }).withTags(WCAG_TAGS);
   if (options.include) builder.include(options.include);
+  // An Electron window cannot open the blank page axe finishes its run in: run it in the page itself.
+  if (options.inPageOnly) builder.setLegacyMode(true);
   const results = await builder.analyze();
   return results.violations
     .filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')
@@ -67,4 +72,25 @@ export async function seriousViolations(page: Page, options: { include?: string 
       help: violation.help,
       targets: violation.nodes.map((node) => node.target.join(' ')),
     }));
+}
+
+/**
+ * The page's outline as a screen reader walks it (Phase 21, task 21.02): how many `h1`s, and every
+ * heading that skips a level after the one before it ("h4 Why" straight after an h2). Hidden headings
+ * are left out, as a screen reader leaves them out.
+ */
+export async function headingOutline(page: Page): Promise<{ h1: number; skips: string[] }> {
+  return page.evaluate(() => {
+    const levels = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')]
+      .filter((heading) => heading.getClientRects().length > 0)
+      .map((heading) => ({ level: Number(heading.tagName[1]), text: heading.textContent ?? '' }));
+    return {
+      h1: levels.filter((heading) => heading.level === 1).length,
+      skips: levels
+        .filter(
+          (heading, index) => index > 0 && heading.level > (levels[index - 1]?.level ?? 0) + 1,
+        )
+        .map((heading) => `h${heading.level} ${heading.text.trim()}`),
+    };
+  });
 }

@@ -122,6 +122,7 @@ _Last reviewed: 10 October 2026 (Phase 15)._
 | B-KM-21 | Suggest `prerequisite_for` relations from the lecture order and from wrong answers (A is often wrong when B is) | Credit and at-risk need stated prerequisites, and a student states few | Phase 15 |
 | B-KM-22 | Node shapes in the graph canvas for the mastery stages (a WebGL node program), not only glyphs in the labels | The overlay marks stages in the label text; a drawn shape would read at a glance | Phase 15 |
 | B-LE-37 | Offer a note addition for a mistake on a concept without a note (create the note) | A concept without a backing note gets no suggestion today | Phase 15 |
+| B-LE-38 | One day boundary everywhere: the server counts days from 04:00 (reviews, the plan, before what's next), Today's deadline widget counts calendar days in the browser | Between midnight and 04:00 the two can disagree by a day ("in 2 days" beside "due in 3 days") | Phase 21 (21.01) |
 | B-KM-23 | Agent tools for code graphs: find code by name, say what implements a concept, propose links | The assistant cannot see imported repositories yet; links are made on the concept page | Phase 16 |
 | B-KM-24 | Keep the imported graph.json in the vault, and re-import it when the repository is mapped again, keeping decisions | Re-importing an updated repository today adds a second graph | Phase 16 |
 | B-KM-25 | Group code by file or folder in the graph and expand a file on demand; import other graph formats (GraphML, JSON Canvas) | A repository of thousands of functions is a hairball when shown as a whole | Phase 16 |
