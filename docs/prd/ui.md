@@ -54,12 +54,13 @@ Rules:
 
 ## 3. Information architecture
 
-Sidebar (collapsible, `Ctrl+\`):
+Sidebar (collapsible, `Ctrl+\`; since 1.1 it starts collapsed, and the open sidebar is 13.5 rem wide and
+can be dragged by its edge between 12 and 22 rem, remembered, double-click to reset — task 23.01):
 
 | Section | Route | Contents |
 |---|---|---|
 | Today | `/` | Due reviews, plan for today, upcoming deadlines, weak areas, recent items |
-| Notes | `/notes` | Folder tree, note editor/preview, backlinks, local graph |
+| Notes | `/notes` | Files pane (toolbar, sort orders, bookmarks, tree, the open vault), notes in tabs and up to two panes, the Details panel for the active note (outline, backlinks, outgoing links, properties, local graph — closed by default) — §11 |
 | Library | `/library` | Sources by module/lecture; import; viewer |
 | Modules | `/modules` | Modules → lectures, topics, assessments, mastery, mark calculator |
 | Concepts | `/concepts` | Concept index and concept pages |
@@ -175,3 +176,29 @@ editor live-preview decorations; graph styling; a design-system page documenting
 The review was done from screenshots of every screen with realistic content in both themes and at
 768 px (`e2e/screens.spec.ts`, run with `SKB_SCREENSHOTS=<folder>`); what it found and changed is listed
 in `docs/checklist/phase-20-polish.md` and the 10 October journal.
+
+## 11. The notes workspace (Phase 23, ADR-0042)
+
+The Notes page follows Obsidian's layout and words, so that a student who knows one knows the other:
+
+```text
+<Page density="compact">  title = the active note; actions: Details toggle, New note
+  Files pane              toolbar (new note, new folder, sort, attachments, Expand/Collapse all, trash)
+                          · Bookmarks · tree (right-click: the file menu) · vault switcher (footer)
+  Editor panes (1 or 2)   each: tab bar (+, ×, middle click, drag to reorder, tab menu)
+                          · the active tab's note: breadcrumb, status, study tools, view toggles, ⋮
+  Details (optional)      Outline · Backlinks · Outgoing · Properties · Graph, for the active pane's note
+```
+
+- **Menus are data** (`components/MenuEntries.tsx`): the ⋮ menu and the file tree's right-click menu are
+  built by `features/notes/menus/file-menu.tsx` from the same actions (`useFileActions`), so one file's
+  commands read the same in both. Items a browser cannot do stay listed, disabled, with *Desktop app* beside
+  them. Long menus scroll within the window.
+- **Tabs and panes are browser state** (`workspace/workspace-store.ts`); the address always shows the
+  active tab's note (`workspace/route-sync.ts`). A pop-out window (`?window=note`) has no sidebar or Files
+  pane and does not change the main window's tabs.
+- **Narrow panes** keep the note's name: the breadcrumb's folders give way first, the save status becomes
+  screen-reader-only, the three study buttons fold into one menu and the view toggles show icons only
+  (container queries on the pane).
+- **The desktop title bar** (task 23.10) is a 32-pixel strip drawn by the page (`app/TitleBar.tsx`) above the
+  shell, with the window's own buttons over its right end; nothing interactive sits in it.

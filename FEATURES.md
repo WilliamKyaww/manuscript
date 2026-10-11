@@ -6,7 +6,7 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 11 October 2026 (version 1.0.0, end of Phase 22)._
+_Last updated: 12 October 2026 (version 1.1.0, Phase 23 — the notes workspace)._
 
 ## Platform and architecture
 
@@ -38,6 +38,14 @@ _Last updated: 11 October 2026 (version 1.0.0, end of Phase 22)._
 | F-KN-09 | Live pick-up of external edits (VS Code, Obsidian) | Complete | 3 |
 | F-KN-11 | Frontmatter properties panel and notes settings (ids, ignore patterns, folders, trash) | Complete | 3 |
 | F-KN-10 | Live-preview editing decorations | Complete — the marks of headings, emphasis, inline code and links are hidden away from the cursor (a toolbar toggle, on by default); front matter is shown small and muted | 20 |
+| F-KN-12 | Tabs and up to two panes (split right or down), remembered per browser, the address following the active tab; a note in a window of its own | Complete | 23 |
+| F-KN-13 | Obsidian's file menus: the ⋮ More options menu and the file tree's right-click menu, every item working (desktop-only items disabled in a browser) | Complete | 23 |
+| F-KN-14 | Sort orders (file name, modified and created time, both ways) and Expand all / Collapse all | Complete | 23 |
+| F-KN-15 | Version history of notes (kept on save, at most every five minutes, 30 days; compare and restore, undoable) | Complete — edits made in other programs are not versioned | 23 |
+| F-KN-16 | Make a copy (never sharing the id), merge a note into another (links retargeted, the merged note to the trash), bookmarks (follow moves and merges) | Complete | 23 |
+| F-KN-17 | Export a note to PDF (the desktop app saves a file; a browser prints, with Save as PDF) | Complete | 23 |
+| F-KN-18 | The open vault on the Notes page, with a menu to open a recent vault or another folder, and empty states for an empty vault and an empty tab | Complete | 23 |
+| F-KN-19 | One Details panel (outline, backlinks, outgoing links, properties with "Add property", local graph), closed by default | Complete | 23 |
 
 ## Knowledge — search
 
@@ -162,6 +170,7 @@ _Last updated: 11 October 2026 (version 1.0.0, end of Phase 22)._
 | F-DE-01 | Electron app with server in a utility process (a token per launch, single instance, window state, menu, restart on switching vault, a prompt when the engine stops) | Complete — unpacked build; the installer is Phase 19 | 18 |
 | F-DE-02 | Native pickers and Explorer integration (the bridge has four calls; the page falls back to a file input or "Copy path") | Complete | 18 |
 | F-DE-03 | Encrypted secrets with `safeStorage` (a wrapped key; the server encrypts the keys file with it) | Complete — where the system offers protection; otherwise a file only the user can read, and Settings → About says which | 18 |
+| F-DE-05 | A slim title bar in the application's colours (system buttons kept and themed, menu hidden with its shortcuts working) and bridge calls to open a vault file in its program, print to PDF and allow a note's own window | Complete | 23 |
 | F-DE-04 | Windows NSIS installer (per user, choosable folder, shortcuts, data kept on uninstall; unsigned unless a certificate is given) | Complete — installed, updated in place and uninstalled on the development machine (journal, 10 October); signing needs a certificate | 19 |
 
 ## UI/UX
@@ -175,6 +184,7 @@ _Last updated: 11 October 2026 (version 1.0.0, end of Phase 22)._
 | F-UI-06 | Paned pages (each pane with its own fixed header) and lazily loaded routes | Complete | 3 |
 | F-UI-05 | Final visual polish across all screens | Complete — tokens and components polished, a design-system page, every screen reviewed in both themes and at 768 px, error states in widgets, a complete cheat sheet, motion and a narrow-window rail | 20 |
 | F-UI-07 | Design-system reference page (`/design-system`): every token with its value, every shared component live | Complete | 20 |
+| F-UI-09 | A narrower sidebar (13.5 rem), resizable by its edge (12–22 rem, keyboard too), collapsed until opened; thin themed scrollbars | Complete | 23 |
 | F-UI-08 | Narrow windows (768–1023 px): the sidebar as a rail, header actions that wrap, icon tabs in narrow panels | Complete — side panels stay resizable panes (drawers: B-PL-09) | 20 |
 
 ## Verification
