@@ -34,6 +34,7 @@ import { decodeNote, type NoteIndexer, sha256 } from './indexer';
 import { findMentions, mentionPhrases } from './mentions';
 import type { NoteRow, NotesRepository } from './repository';
 import { instantiateTemplate } from './templates';
+import type { NoteVersions } from './versions';
 
 /**
  * Notes as the API sees them (tasks 3.08, 3.10, 3.12). The file on disk is always the truth: reads
@@ -67,6 +68,7 @@ export interface NotesServiceDependencies {
   indexer: NoteIndexer;
   settings: SettingsService;
   clock: Clock;
+  versions: NoteVersions;
 }
 
 const MAX_MENTION_SOURCES = 50;
@@ -99,6 +101,7 @@ export function createNotesService({
   indexer,
   settings,
   clock,
+  versions,
 }: NotesServiceDependencies): NotesService {
   const requireRow = (id: string): NoteRow => {
     const row = repo.byId(id);
@@ -280,6 +283,7 @@ export function createNotesService({
         });
       }
       if (current.text === content) return toDetail(current.row, current.text, current.hash);
+      versions.keep(current.row.id, current.bytes, 'save');
       writeFileAtomic(file, content);
       indexer.apply({ changed: [current.row.path] }, 'app');
       return detailAt(current.row.path);
@@ -301,6 +305,7 @@ export function createNotesService({
         );
       }
       if (updated === current.text) return toDetail(current.row, current.text, current.hash);
+      versions.keep(current.row.id, current.bytes, 'save');
       writeFileAtomic(indexer.absolute(current.row.path), updated);
       indexer.apply({ changed: [current.row.path] }, 'app');
       return detailAt(current.row.path);

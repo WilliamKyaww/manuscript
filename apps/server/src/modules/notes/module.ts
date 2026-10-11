@@ -1,10 +1,13 @@
 import type { AppContext } from '../../context';
 import type { SettingsService } from '../settings/service';
+import { type Bookmarks, createBookmarks } from './bookmarks';
 import { createEntriesService, type EntriesService } from './entries';
 import { createNoteIndexer, type NoteIndexer } from './indexer';
+import { type MergeResult, mergeNotes } from './merges';
 import { createNotesRepository, type NotesRepository } from './repository';
 import { createNotesService, type NotesService } from './service';
 import { createTrash, type Trash } from './trash';
+import { createNoteVersions, type NoteVersions } from './versions';
 import { type VaultWatcher, watchVault } from './watcher';
 
 /** The notes module: index, watcher, services and their lifecycle. */
@@ -14,6 +17,10 @@ export interface NotesModule {
   readonly notes: NotesService;
   readonly entries: EntriesService;
   readonly trash: Trash;
+  readonly versions: NoteVersions;
+  readonly bookmarks: Bookmarks;
+  /** Merges one note into another (task 23.06). */
+  merge(sourceId: string, targetId: string): MergeResult;
   /** Empties the expired trash, starts watching (optionally) and reconciles the index with the files. */
   start(options: { watch: boolean }): Promise<void>;
   /** The watcher, once started with `watch: true`. */
@@ -30,8 +37,24 @@ export function createNotesModule(ctx: AppContext, settings: SettingsService): N
     logger: ctx.logger,
     retentionDays: () => settings.notes().trashRetentionDays,
   });
-  const notes = createNotesService({ vault: ctx.vault, repo, indexer, settings, clock: ctx.clock });
-  const entries = createEntriesService({ vault: ctx.vault, repo, indexer, settings, trash });
+  const versions = createNoteVersions({ vault: ctx.vault, clock: ctx.clock, logger: ctx.logger });
+  const bookmarks = createBookmarks(settings);
+  const notes = createNotesService({
+    vault: ctx.vault,
+    repo,
+    indexer,
+    settings,
+    clock: ctx.clock,
+    versions,
+  });
+  const entries = createEntriesService({
+    vault: ctx.vault,
+    repo,
+    indexer,
+    settings,
+    trash,
+    bookmarks,
+  });
   let watcher: VaultWatcher | null = null;
 
   return {
@@ -40,6 +63,10 @@ export function createNotesModule(ctx: AppContext, settings: SettingsService): N
     notes,
     entries,
     trash,
+    versions,
+    bookmarks,
+    merge: (sourceId, targetId) =>
+      mergeNotes({ repo, indexer, entries, versions, bookmarks }, sourceId, targetId),
     async start({ watch }) {
       const purged = trash.purgeExpired();
       if (purged > 0) ctx.logger.info('Emptied expired items from the trash', { purged });
