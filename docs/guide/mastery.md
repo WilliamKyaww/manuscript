@@ -129,3 +129,19 @@ check every figure by hand.
   relation means no credit.
 - Figures are recalculated after every review and answer, and every quarter of an hour otherwise, as
   recall keeps falling while you do nothing.
+
+## 6. Checking the predictions against your own reviews
+
+Recall is a prediction: FSRS says how likely you are to remember each card face. After a few hundred
+reviews you can check it against what actually happened. From the project folder:
+
+```powershell
+npm run report:calibration -- "C:\Users\you\Documents\Manuscript"
+```
+
+It opens your vault's database read-only (Manuscript can stay open) and groups your reviews by the
+chance FSRS gave: if faces given about 90 % were remembered about nine times in ten, the predictions —
+and the recall part of mastery — can be trusted. A **calibration error** of a few per cent is good. A
+large gap, recalled well below predicted, means your memories fade faster than the scheduler assumes:
+raise the desired retention in **Settings › Review**, or review more often. `-- --simulate` shows what
+good and poor calibration look like on simulated students.

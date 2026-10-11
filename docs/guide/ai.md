@@ -97,3 +97,21 @@ figure.
 Starting the app with `SKB_AI_PROVIDER=mock` replaces every model with a built-in test model that
 answers from the passages it is given, offline. It exists for automated tests and demonstrations;
 Settings says when it is on.
+
+## 7. How well a model answers from your material
+
+`npm run eval:ai` (from the project folder, after `npm run build`) asks fifty questions about a small
+set of lecture slides and readings — forty-two that the material answers on a known slide or page, and
+eight it does not — and scores each answer: was the right passage found and cited, does the answer
+say what it should, and is a question the material cannot answer declined instead of answered from
+general knowledge? To try a model you are thinking of using:
+
+```powershell
+$env:SKB_EVAL_PROVIDER = 'anthropic'   # or 'openai', or 'openai-compatible' with SKB_EVAL_BASE_URL
+$env:SKB_EVAL_MODEL = '<the model>'
+$env:SKB_EVAL_API_KEY = '<your key>'
+npm run eval:ai
+```
+
+It runs on a temporary vault of its own and deletes it afterwards; the key goes only to that
+temporary server and is never written to the report. A run costs a few cents with most providers.
