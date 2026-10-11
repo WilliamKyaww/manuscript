@@ -1,10 +1,11 @@
 # State — Manuscript
 
-_Last updated: 10 October 2026 — Claude Opus 5.5._
+_Last updated: 11 October 2026 — Claude Opus 5.5._
 
 ## Current phase
 
-**Phase 21 — Verification: next.** Phase 20 (final UI/UX polish) is complete and merged into `main`, as are Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
+**Phase 22 — Release: in progress.** Phase 21 (verification) was closed at the user's request and merged, with four
+checks left open (see Pending); Phase 20 (final UI/UX polish) is complete and merged into `main`, as are Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
 and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
 ingestion pipeline), 6 (course structure and concepts), 7 (knowledge graph), 8 (flashcards and
 spaced repetition), 9 (questions, quizzes and mastery), 10 (AI foundation), 11 (AI generation and
@@ -154,11 +155,17 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
   trash"); a cheat sheet with every page's keys; enter animations on the motion tokens (none under reduced motion);
   below 1024 px the sidebar is a rail. Screenshots of every screen in both themes: `e2e/screens.spec.ts` and
   `e2e/screens-assistant.spec.ts` (`SKB_SCREENSHOTS=<folder>`); thirteen of them illustrate the README and guides.
+- **Verification** (Phase 21, report in the 11 October journal): every use case has an end-to-end walk; axe on every
+  page in the browser and the desktop window, a keyboard-only study session and page outlines for screen readers;
+  fuzz tests for the text and document parsers (which found unclosed cloze text taking ten seconds, now linear);
+  `npm run test:soak` (paced, live heap after collection), `npm run report:calibration` (predicted against actual
+  recall, read-only) and `npm run eval:ai` (fifty grounding questions; real providers with `SKB_EVAL_*`); security
+  and dependency review (0 runtime advisories).
 - **Application shell:** sidebar, sticky page headers (per pane on paned pages), themes, command
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 886 Vitest tests (core 237, server 443, web 198, desktop 8) and 127 Playwright tests, plus 3 that take screenshots only when asked (two of them launch the Electron shell and its unpacked build) (sticky headers on every route and pane,
+- **Tests:** 898 Vitest tests and 134 Playwright tests, plus 3 that take screenshots only when asked (two of them launch the Electron shell and its unpacked build) (sticky headers on every route and pane,
   axe in both themes, the library, the course, the graph, reviewing, practice, chat, generating and an MCP client
   using the stdio bridge) — all green. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
   p95 434 ms, median 71 ms (provisional budget 500 ms; Phase 17 run).
@@ -170,7 +177,7 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## In progress
 
-- Nothing; Phase 21 not yet started.
+- Phase 22: see `docs/checklist/phase-22-release.md`.
 
 ## Incomplete / not started
 
@@ -238,8 +245,9 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## Next steps
 
-1. Create `phase/21-verification` from `main` (done).
-2. Phase 21 — verification: see `docs/checklist/phase-21-verification.md`.
+1. Phase 22 — the release (`phase/22-release`).
+2. When the laptop is idle: `npm run test:perf` (four budgets were over on 11 October under load — so was the Phase 17
+   code, which had met them).
 
 ## Relevant decisions
 
@@ -280,6 +288,11 @@ background load — compare against a worktree of the previous gate (`AGENTS.md`
 
 ## Pending for the user
 
+- **Phase 21 checks that are yours** (each a few minutes; see the 11 October journal): a Narrator spot check
+  (`Ctrl+Win+Enter`, the list is in the report); `npm run report:calibration -- "<your vault>"` once you have a few
+  hundred reviews (read-only); `npm run eval:ai` with your provider (`SKB_EVAL_PROVIDER`, `SKB_EVAL_MODEL`,
+  `SKB_EVAL_API_KEY`), which costs a few cents. The eight-hour soak (`npm run test:soak -- --minutes 480`) can be
+  run whenever the laptop is free; you accepted 45 minutes for now.
 - **Your real vault was opened once by a test** (10 October, 17:38): `Documents\Study Knowledge Base` — its database
   was upgraded to the newest version, which the next start would have done anyway, and a backup was made first
   (`.skb\backups\skb-20261010-163817-migration-0016_code_graphs.db`). No note was changed. The cause is fixed and

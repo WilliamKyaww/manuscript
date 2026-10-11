@@ -66,6 +66,10 @@ All verified on 4 October 2026 (Phase 1):
 | `npm run verify` | typecheck → lint → test → build → smoke — **run before every commit** |
 | `npm run test:perf` | Generates 10,000 notes (and a library of 10,000 PDF pages) and checks the performance budgets (`architecture.md` §14); run before a gate that touches indexing or search |
 | `npm run test:perf:mastery` | Generates a year of learning (1,000 concepts, 5,000 reviewed cards, 20,000 answers) and times the mastery pass (budget 500 ms); run before a gate that touches mastery |
+| `npm run test:soak -- --minutes 480` | Runs the built server for hours through imports, search, notes and reviews, paced (`--pace` ms); fails on a failed request, a growing live heap or a broken budget (Phase 21). Needs `npm run build` |
+| `npm run report:calibration -- <vault>` | How well predicted recall matches what happened, from a vault's review log, read-only; `--simulate` for simulated students |
+| `npm run eval:ai` | Fifty grounding questions over eight documents: retrieval with the test model, or a real model with `SKB_EVAL_PROVIDER`, `SKB_EVAL_MODEL`, `SKB_EVAL_API_KEY` (and `SKB_EVAL_BASE_URL`). Needs `npm run build` |
+| `SKB_FUZZ_RUNS=2000 npx vitest run fuzz` | The parser fuzz tests with more inputs than the default |
 | `npm run docs:tools` | Regenerates the tool catalogue in `docs/guide/agent-tools.md` from the tool registry (a test fails when it is out of date); run after changing a tool |
 | `npm run desktop:dev` | The desktop shell (Electron 44) against the built server; builds the application when it is missing and downloads Electron the first time |
 | `npm run desktop:build` | An unpacked desktop build in `apps/desktop/release/<platform>-unpacked` (Electron's distribution + `resources/app` + `resources/server`) |
@@ -87,9 +91,13 @@ All verified on 4 October 2026 (Phase 1):
 - `NoDefaultCurrentDirectoryInExePath=1` stops `cmd.exe` finding `run-web.bat` by a relative name; call
   batch files by their full path in automation (double-clicking in Explorer is unaffected).
 - Another local project may already use Vite's default port 5173 — this project's dev server uses 5317.
-  E2E ports: 4399 for the shared Playwright server, and 4398 down to 4387 for the tests that run a
+  E2E ports: 4399 for the shared Playwright server, and 4398 down to 4386 for the tests that run a
   server of their own (`e2e/server.ts`, which can pass extra environment such as
-  `SKB_AI_PROVIDER=mock`; the next free one is 4386).
+  `SKB_AI_PROVIDER=mock`); 4385 for the soak and 4383 for the grounding evaluation. The next free one
+  is 4384, then 4382.
+- **`fork()` passes on the parent's Node flags**: a script run with `tsx` that forks the built server
+  runs it through tsx's loader (six times the memory, slower). Pass `execArgv` explicitly (`[]`, or
+  `['--expose-gc', …]` as the soak does).
 - **The application's day starts at 04:00** local time (as in Anki, `modules/cards/days.ts`): between midnight
   and 04:00 it is still the previous day. A test that seeds dates relative to today must use `studyDay()` from
   `e2e/days.ts`, not the calendar, or it fails when a run passes midnight (it happened in the Phase 20 gate).

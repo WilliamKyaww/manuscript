@@ -102,6 +102,18 @@ describe('analyseNote — Markdown links', () => {
       }),
     ]);
   });
+
+  it('allows one level of brackets in the text, and reads a run of brackets quickly', () => {
+    expect(analyseNote('As in [the paper [1]](Raft.md).').links).toEqual([
+      expect.objectContaining({ target: 'Raft.md', alias: 'the paper [1]' }),
+    ]);
+    const started = performance.now();
+    // The last `[` and `](Raft.md)` make a link with empty text, as in CommonMark.
+    expect(analyseNote(`${'['.repeat(20_000)}](Raft.md)`).links).toEqual([
+      expect.objectContaining({ target: 'Raft.md', alias: null }),
+    ]);
+    expect(performance.now() - started).toBeLessThan(1_000);
+  });
 });
 
 describe('analyseNote — tags', () => {

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { SECTIONS } from '../apps/web/src/app/sections';
-import { seriousViolations } from './axe';
+import { headingOutline, seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
 
 /** Every route in the app, plus an unknown address that renders the not-found page. */
@@ -153,6 +153,20 @@ test.describe('navigation and keyboard', () => {
         window: document.documentElement.scrollWidth - window.innerWidth,
       }));
       expect(widths, route.path).toEqual({ page: 0, window: 0 });
+    }
+  });
+
+  test('every page reads in order to a screen reader: one h1, landmarks, no skipped heading level', async ({
+    page,
+  }) => {
+    for (const route of ROUTES) {
+      await page.goto(route.path);
+      await expect(page.getByRole('heading', { level: 1, name: route.title })).toBeVisible();
+      await page.waitForLoadState('networkidle').catch(() => {});
+      const outline = await headingOutline(page);
+      expect(outline, route.path).toEqual({ h1: 1, skips: [] });
+      await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(1);
+      await expect(page.getByRole('main')).toHaveCount(1);
     }
   });
 

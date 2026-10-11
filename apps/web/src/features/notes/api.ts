@@ -23,6 +23,7 @@ import {
 import { type QueryClient, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ApiClient } from '../../lib/api/client';
 import { useApi } from '../../lib/api/context';
+import { useNotesUi } from './notes-store';
 
 /** Query keys for the notes feature (one factory per feature, architecture.md §4). */
 export const notesKeys = {
@@ -119,6 +120,8 @@ export function useCreateNote() {
     mutationFn: (body: CreateNoteInput) => api.request(createNoteEndpoint, { body }),
     onSuccess: async (note) => {
       queryClient.setQueryData(notesKeys.note(note.id), note);
+      // Wherever it was made from, a new note opens ready to write in.
+      useNotesUi.getState().setJustCreated(note.id);
       await invalidateStructure(queryClient);
     },
   });

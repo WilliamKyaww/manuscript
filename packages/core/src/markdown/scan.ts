@@ -136,6 +136,19 @@ function maskBlocks(text: string, chars: string[], from: number, maths = true): 
   }
 }
 
+/** Masks every `open … close` span in one scan (an unclosed `open` ends the search, see blankSpans). */
+function maskSpans(chars: string[], text: string, open: string, close: string): void {
+  let at = 0;
+  for (;;) {
+    const start = text.indexOf(open, at);
+    if (start === -1) return;
+    const end = text.indexOf(close, start + open.length);
+    if (end === -1) return;
+    maskRange(chars, start, end + close.length);
+    at = end + close.length;
+  }
+}
+
 function maskPattern(chars: string[], pattern: RegExp): void {
   const text = chars.join('');
   for (const match of text.matchAll(pattern)) {
@@ -195,8 +208,8 @@ export function maskNonProse(text: string, from = 0): string {
   const chars = text.split('');
   maskRange(chars, 0, from);
   maskBlocks(text, chars, from);
-  maskPattern(chars, /<!--[\s\S]*?-->/g);
-  maskPattern(chars, /%%[\s\S]*?%%/g);
+  maskSpans(chars, chars.join(''), '<!--', '-->');
+  maskSpans(chars, chars.join(''), '%%', '%%');
   maskCodeSpans(chars);
   maskPattern(chars, /(?<!\\)\$\$[^\n]*?\$\$/g);
   // Inline maths: $x$ with no space just inside the dollars and no digit after (so "$5 and $6" is text).
@@ -255,8 +268,10 @@ function positionOf(starts: number[], offset: number): { line: number; column: n
 // Extraction
 
 const WIKILINK = /(!?)\[\[([^[\]\n]+?)\]\]/g;
+// The text may hold one level of brackets (`[see [1]](…)`). Each step matches one way only, so a long
+// run of `[` is read in linear time; "anything but `]`" rescanned the line from every `[` (task 21.03).
 const MARKDOWN_LINK =
-  /(!?)\[([^\]\n]*)\]\(\s*(<[^>\n]+>|[^\s()]+)(?:\s+(?:"[^"\n]*"|'[^'\n]*'))?\s*\)/g;
+  /(!?)\[((?:[^\][\n]|\[[^\][\n]*\])*)\]\(\s*(<[^>\n]+>|[^\s()]+)(?:\s+(?:"[^"\n]*"|'[^'\n]*'))?\s*\)/g;
 const URL_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 const TAG = /(?<=^|[\s([{,;:!?"'])#([\p{L}\p{N}_\-/]*[\p{L}_\-/][\p{L}\p{N}_\-/]*)/gmu;
 const HEADING = /^ {0,3}(#{1,6})[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*$/;
@@ -375,10 +390,10 @@ function extractInlineTags(masked: string, starts: number[]): TagRef[] {
 export function plainHeadingText(text: string): string {
   return text
     .replace(
-      /!?\[\[([^\]|]*?)(?:\|([^\]]*))?\]\]/g,
+      /!?\[\[([^\][|]*?)(?:\|([^\][]*))?\]\]/g,
       (_, target: string, alias?: string) => alias ?? target,
     )
-    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/!?\[((?:[^\][]|\[[^\][]*\])*)\]\([^)]*\)/g, '$1')
     .replace(/(\*\*|__|==|~~|\*|_|`)/g, '')
     .trim();
 }
@@ -410,18 +425,37 @@ function countWords(masked: string, from: number): number {
   return masked.slice(from).match(WORD)?.length ?? 0;
 }
 
-/** Text for full-text search: frontmatter removed, Markdown punctuation stripped, code kept. */
+/**
+ * Replaces every `open … close` span with a space, scanning once: a lazy regular expression would
+ * rescan to the end of the text from every unclosed `open`, which is quadratic (task 21.03).
+ */
+function blankSpans(text: string, open: string, close: string): string {
+  let out = '';
+  let at = 0;
+  for (;;) {
+    const start = text.indexOf(open, at);
+    if (start === -1) break;
+    const end = text.indexOf(close, start + open.length);
+    if (end === -1) break;
+    out += `${text.slice(at, start)} `;
+    at = end + close.length;
+  }
+  return out + text.slice(at);
+}
+
+/**
+ * Text for full-text search: frontmatter removed, Markdown punctuation stripped, code kept. The link
+ * patterns never cross `[` or a line break, so a long run of brackets is read in linear time.
+ */
 export function toSearchText(body: string): string {
-  return body
-    .replace(/<!--[\s\S]*?-->/g, ' ')
-    .replace(/%%[\s\S]*?%%/g, ' ')
+  return blankSpans(blankSpans(body, '<!--', '-->'), '%%', '%%')
     .replace(
-      /!?\[\[([^\]|#]*)(?:#([^\]|]*))?(?:\|([^\]]*))?\]\]/g,
+      /!?\[\[([^\][|#\n]*)(?:#([^\][|\n]*))?(?:\|([^\][\n]*))?\]\]/g,
       (_, target: string, heading?: string, alias?: string) =>
         [alias ?? target, heading].filter(Boolean).join(' '),
     )
-    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/<[^>\n]+>/g, ' ')
+    .replace(/!?\[((?:[^\][\n]|\[[^\][\n]*\])*)\]\([^)\n]*\)/g, '$1')
+    .replace(/<[^<>\n]+>/g, ' ')
     .replace(/^ {0,3}(#{1,6}|>+(\s*\[![^\]]*\][+-]?)?)[ \t]*/gm, '')
     .replace(/(\*\*|__|==|~~)/g, '')
     .replace(/[ \t]+/g, ' ')

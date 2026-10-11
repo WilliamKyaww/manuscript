@@ -85,7 +85,7 @@ const notesFetch: FakeFetch = async (input) => {
 
 beforeEach(() => {
   resetUiState();
-  useNotesUi.setState({ expanded: new Set(), mode: 'edit', panel: 'outline' });
+  useNotesUi.setState({ expanded: new Set(), mode: 'edit', panel: 'outline', justCreated: null });
 });
 
 describe('Notes page', () => {
@@ -119,6 +119,13 @@ describe('Notes page', () => {
     expect(screen.getByRole('treeitem', { name: 'Raft' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('navigation', { name: 'Outline' })).toHaveTextContent('Raft');
     expect(screen.getByText('Saved')).toBeInTheDocument();
+  });
+
+  it('opens a note just created ready to write in, and only once', async () => {
+    useNotesUi.setState({ justCreated: RAFT });
+    renderApp(`/notes/${RAFT}`, notesFetch);
+    await waitFor(() => expect(document.activeElement?.closest('.cm-editor')).not.toBeNull());
+    expect(useNotesUi.getState().justCreated).toBeNull();
   });
 
   it('reveals the open note in the tree and renders the preview with resolved links', async () => {

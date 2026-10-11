@@ -38,6 +38,7 @@ export * from './graph/graphify';
 export * from './graph/vocabulary';
 export * from './ids';
 export * from './learning/anki';
+export * from './learning/calibration';
 export * from './learning/cards';
 export * from './learning/credit';
 export * from './learning/fsrs';
