@@ -21,6 +21,7 @@ import { onServerEvent } from '../../lib/events';
 import { formatBytes, formatCount, formatDateTime } from '../../lib/format';
 import { notifyError } from '../../lib/notify';
 import { Field } from '../learning/Field';
+import { useVaultSwitch } from '../notes/vault/vault-switch';
 import { backupsQuery, dataKeys, dataOverviewQuery, useBackupActions, useDataActions } from './api';
 import { CodeGraphsPanel } from './CodeGraphsPanel';
 
@@ -318,43 +319,17 @@ function VaultsPanel({ overview }: { overview: Overview }) {
   const actions = useDataActions();
   const [folder, setFolder] = useState('');
   const [inspection, setInspection] = useState<VaultInspection | null>(null);
-  const [note, setNote] = useState<string | null>(null);
+  const vaults = useVaultSwitch();
 
   const inspect = (event: FormEvent) => {
     event.preventDefault();
-    setNote(null);
     actions.inspect.mutate(folder.trim(), {
       onSuccess: setInspection,
       onError: notifyError,
     });
   };
-  const open = (path: string) =>
-    actions.switchVault.mutate(path, {
-      onSuccess: (result) =>
-        setNote(
-          result.restarting
-            ? 'Opening that vault… this page reloads when Manuscript is back.'
-            : 'That vault will open the next time you start Manuscript. Close it and start it again to switch now.',
-        ),
-      onError: notifyError,
-    });
-
-  // After a restart the old page has nothing to talk to; reload once the server answers again.
-  useEffect(() => {
-    if (!note?.startsWith('Opening')) return;
-    const timer = window.setInterval(() => {
-      fetch('/api/ping')
-        .then((response) => {
-          if (response.ok) window.location.reload();
-        })
-        .catch(() => undefined);
-    }, 2_000);
-    const stop = window.setTimeout(() => window.clearInterval(timer), 120_000);
-    return () => {
-      window.clearInterval(timer);
-      window.clearTimeout(stop);
-    };
-  }, [note]);
+  const open = vaults.switchTo;
+  const note = vaults.message;
 
   return (
     <Panel
@@ -437,7 +412,7 @@ function VaultsPanel({ overview }: { overview: Overview }) {
           <Button
             variant="primary"
             disabled={inspection.current || inspection.locked}
-            loading={actions.switchVault.isPending}
+            loading={vaults.pending}
             onClick={() => open(inspection.path)}
           >
             Open this vault

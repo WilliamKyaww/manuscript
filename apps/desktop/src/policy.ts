@@ -83,6 +83,42 @@ export function sanitisePick(options: unknown): PickOptions {
   return result;
 }
 
+/**
+ * Whether `window.open` may open this address in a window of its own (task 23.10): a note of the
+ * application, as "Open in new window" asks for (`/notes/<id>?window=note`). Anything else opened
+ * by a page is refused (or goes to the system browser).
+ */
+export function isNoteWindowUrl(candidate: string, origin: string): boolean {
+  if (!isAppUrl(candidate, origin)) return false;
+  const url = new URL(candidate);
+  return (
+    /^\/notes\/note_[0-9A-HJKMNP-TV-Z]{26}$/u.test(url.pathname) &&
+    url.searchParams.get('window') === 'note'
+  );
+}
+
+/** A colour for the window's buttons, as the page sends it: `#rgb`, `#rrggbb` or `#rrggbbaa`. */
+export function titleBarColour(value: unknown): string | null {
+  return typeof value === 'string' && /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/iu.test(value)
+    ? value
+    : null;
+}
+
+/** A file name for a note printed to PDF: its title without what Windows forbids, kept short. */
+export function pdfFileName(title: unknown): string {
+  const clean =
+    typeof title === 'string'
+      ? title
+          // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are what is being removed.
+          .replace(/[<>:"/\\|?*\u0000-\u001f]/gu, ' ')
+          .replace(/\s+/gu, ' ')
+          .replace(/[. ]+$/u, '')
+          .trim()
+          .slice(0, 120)
+      : '';
+  return `${clean || 'Note'}.pdf`;
+}
+
 /** Whether a message to the main process came from a page of the application. */
 export function senderAllowed(frameUrl: string | undefined | null, origin: string | null): boolean {
   return origin !== null && typeof frameUrl === 'string' && isAppUrl(frameUrl, origin);

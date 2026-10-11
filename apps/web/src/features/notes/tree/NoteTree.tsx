@@ -1,24 +1,19 @@
+import { ChevronRight, FileText, Folder, FolderOpen, Paperclip } from 'lucide-react';
 import {
-  ChevronRight,
-  Copy,
-  ExternalLink,
-  FilePlus,
-  FileText,
-  Folder,
-  FolderOpen,
-  FolderPlus,
-  Paperclip,
-  Pencil,
-  Trash2,
-} from 'lucide-react';
-import { type DragEvent, type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
+  type DragEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ContextMenu,
   ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
   ContextMenuTrigger,
 } from '../../../components/ContextMenu';
+import { MenuEntries, type MenuEntry } from '../../../components/MenuEntries';
 import { cn } from '../../../lib/cn';
 import { useNotesUi } from '../notes-store';
 import {
@@ -33,18 +28,19 @@ import {
  * Accessible file tree (WAI-ARIA tree pattern, flat rows with aria-level). Keyboard: arrows move and
  * open/close folders, Home/End jump, Enter opens, F2 renames, Delete moves to the trash, typing jumps
  * to a matching name; Shift+F10 or the Menu key opens the context menu. Rows can be dragged onto
- * folders (or the empty area, for the vault root).
+ * folders (or the empty area, for the vault root). Ctrl+click (⌘+click) or a middle click opens a
+ * note in a new tab (task 23.09).
  */
 
 export interface NoteTreeActions {
   onOpen(node: TreeNode): void;
-  onCreateNote(folder: string): void;
-  onCreateFolder(parent: string): void;
+  onOpenInNewTab(node: TreeNode): void;
   /** `name` is the new file name (without `.md` for notes). */
   onRename(node: TreeNode, name: string): void;
   onMove(node: TreeNode, folder: string): void;
   onDelete(node: TreeNode): void;
-  onCopyLink(node: TreeNode): void;
+  /** The right-click menu for a row (or for the empty area, with `null`). */
+  menuFor(node: TreeNode | null, startRename: () => void): MenuEntry[];
 }
 
 export interface NoteTreeProps extends NoteTreeActions {
@@ -64,10 +60,12 @@ function iconFor(node: TreeNode, expanded: boolean) {
 export function NoteTree({ root, activePath, ...actions }: NoteTreeProps) {
   const expanded = useNotesUi((state) => state.expanded);
   const toggleFolder = useNotesUi((state) => state.toggleFolder);
+  const revealRequest = useNotesUi((state) => state.revealRequest);
   const rows = useMemo(() => visibleNodes(root, expanded), [root, expanded]);
   const [focusedPath, setFocusedPath] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [menuTarget, setMenuTarget] = useState<TreeNode | null>(null);
+  const renamingFromMenu = useRef(false);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const typeAhead = useRef({ text: '', at: 0 });
@@ -93,6 +91,24 @@ export function NoteTree({ root, activePath, ...actions }: NoteTreeProps) {
   useEffect(() => {
     if (renaming && !byPath.has(renaming)) setRenaming(null);
   }, [renaming, byPath]);
+
+  // "Reveal file in navigation": its folders are open by now; scroll to it and focus it.
+  useEffect(() => {
+    if (!revealRequest) return;
+    const { path } = revealRequest;
+    setFocusedPath(path);
+    const frame = requestAnimationFrame(() => {
+      const row = containerRef.current?.querySelector<HTMLElement>(
+        `[data-path="${CSS.escape(path)}"]`,
+      );
+      row?.scrollIntoView({ block: 'center' });
+      row?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [revealRequest]);
+
+  /** Ctrl+click, ⌘+click or a middle click: a note in a new tab. */
+  const opensNewTab = (event: MouseEvent) => event.ctrlKey || event.metaKey || event.button === 1;
 
   const activate = (node: TreeNode) => {
     if (node.kind === 'folder') toggleFolder(node.path);
@@ -188,12 +204,6 @@ export function NoteTree({ root, activePath, ...actions }: NoteTreeProps) {
     },
   });
 
-  const menuFolder = menuTarget
-    ? menuTarget.kind === 'folder'
-      ? menuTarget.path
-      : parentOf(menuTarget.path)
-    : '';
-
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
@@ -247,9 +257,18 @@ export function NoteTree({ root, activePath, ...actions }: NoteTreeProps) {
                   }}
                   {...(isFolder ? dropProps(node.path) : {})}
                   onFocus={() => setFocusedPath(node.path)}
-                  onClick={() => {
+                  onClick={(event) => {
                     setFocusedPath(node.path);
-                    activate(node);
+                    if (node.kind === 'note' && opensNewTab(event)) actions.onOpenInNewTab(node);
+                    else activate(node);
+                  }}
+                  onAuxClick={(event) => {
+                    if (event.button !== 1 || node.kind !== 'note') return;
+                    event.preventDefault();
+                    actions.onOpenInNewTab(node);
+                  }}
+                  onMouseDown={(event) => {
+                    if (event.button === 1) event.preventDefault();
                   }}
                   onKeyDown={(event) => onKeyDown(event, row)}
                   className={cn(
@@ -290,59 +309,23 @@ export function NoteTree({ root, activePath, ...actions }: NoteTreeProps) {
           </div>
         )}
       </ContextMenuTrigger>
-      <ContextMenuContent>
-        {(menuTarget === null || menuTarget.kind === 'folder') && (
-          <>
-            <ContextMenuItem
-              icon={<FilePlus size={15} />}
-              onSelect={() => actions.onCreateNote(menuFolder)}
-            >
-              New note{menuTarget ? ' here' : ''}
-            </ContextMenuItem>
-            <ContextMenuItem
-              icon={<FolderPlus size={15} />}
-              onSelect={() => actions.onCreateFolder(menuFolder)}
-            >
-              New folder{menuTarget ? ' here' : ''}
-            </ContextMenuItem>
-          </>
-        )}
-        {menuTarget && menuTarget.kind !== 'folder' && (
-          <ContextMenuItem
-            icon={<ExternalLink size={15} />}
-            onSelect={() => actions.onOpen(menuTarget)}
-          >
-            Open
-          </ContextMenuItem>
-        )}
-        {menuTarget && (
-          <>
-            {menuTarget.kind !== 'folder' && (
-              <ContextMenuItem
-                icon={<Copy size={15} />}
-                onSelect={() => actions.onCopyLink(menuTarget)}
-              >
-                {menuTarget.kind === 'note' ? 'Copy link' : 'Copy embed'}
-              </ContextMenuItem>
-            )}
-            <ContextMenuSeparator />
-            <ContextMenuItem
-              icon={<Pencil size={15} />}
-              shortcut="F2"
-              onSelect={() => setRenaming(menuTarget.path)}
-            >
-              Rename
-            </ContextMenuItem>
-            <ContextMenuItem
-              icon={<Trash2 size={15} />}
-              tone="danger"
-              shortcut="Del"
-              onSelect={() => actions.onDelete(menuTarget)}
-            >
-              Move to trash
-            </ContextMenuItem>
-          </>
-        )}
+      <ContextMenuContent
+        onCloseAutoFocus={(event) => {
+          // The rename field has focus: the menu must not take it back to the tree.
+          if (renamingFromMenu.current) event.preventDefault();
+          renamingFromMenu.current = false;
+        }}
+      >
+        <MenuEntries
+          as="context"
+          entries={actions.menuFor(menuTarget, () => {
+            if (!menuTarget) return;
+            renamingFromMenu.current = true;
+            // Once the menu has closed: while it is open it keeps focus inside itself.
+            const path = menuTarget.path;
+            setTimeout(() => setRenaming(path), 0);
+          })}
+        />
       </ContextMenuContent>
     </ContextMenu>
   );

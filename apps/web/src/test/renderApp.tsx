@@ -3,6 +3,8 @@ import { render } from '@testing-library/react';
 import { App, AppProviders } from '../app/App';
 import { useLayoutStore } from '../app/layout-store';
 import { useThemeStore } from '../app/theme/theme';
+import { useActiveNote } from '../features/notes/workspace/active-note';
+import { emptyLayout, useWorkspace } from '../features/notes/workspace/workspace-store';
 import { createApiClient } from '../lib/api/client';
 import { createQueryClient } from '../lib/queryClient';
 import { createAppRouter } from '../router';
@@ -49,6 +51,7 @@ export function resetUiState(): void {
   localStorage.clear();
   useLayoutStore.setState({
     sidebarCollapsed: false,
+    sidebarWidth: 216,
     narrow: false,
     narrowExpanded: false,
     commandPaletteOpen: false,
@@ -56,6 +59,8 @@ export function resetUiState(): void {
     quickSwitcherOpen: false,
   });
   useThemeStore.setState({ preference: 'system', resolved: 'light' });
+  useWorkspace.setState(emptyLayout());
+  useActiveNote.setState({ view: null });
   document.documentElement.dataset.theme = 'light';
 }
 

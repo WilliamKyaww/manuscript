@@ -2,6 +2,7 @@ import { useRouterState } from '@tanstack/react-router';
 import { type ReactNode, useEffect, useRef } from 'react';
 import { ChatPanel } from '../features/chat/ChatPanel';
 import { useGenerationJobEvents } from '../features/inbox/generation-jobs';
+import { POPOUT_WINDOW } from '../features/notes/workspace/workspace-store';
 import { QuickAddHost } from '../features/review/QuickAddHost';
 import { QuickSwitcher } from '../features/search/QuickSwitcher';
 import { useServerEvents } from '../lib/events';
@@ -9,17 +10,19 @@ import { CommandPalette } from './CommandPalette';
 import { GlobalShortcuts } from './GlobalShortcuts';
 import { ShortcutsDialog } from './ShortcutsDialog';
 import { Sidebar } from './Sidebar';
+import { TitleBar } from './TitleBar';
 
 /**
- * Application frame (ui.md §2): sidebar + main area filling the viewport. The window never scrolls;
- * each route's <Page> owns the only scroll container below its fixed header.
+ * Application frame (ui.md §2): sidebar + main area filling the viewport, under the desktop app's
+ * slim title bar. The window never scrolls; each route's <Page> owns the only scroll container below
+ * its fixed header. A note's pop-out window has no sidebar.
  */
 export function AppShell({ children }: { children: ReactNode }) {
   useFocusPageTitleOnNavigation();
   useServerEvents();
   useGenerationJobEvents();
   return (
-    <div data-app-shell className="flex h-dvh overflow-hidden bg-bg text-text">
+    <div data-app-shell className="flex h-dvh flex-col overflow-hidden bg-bg text-text">
       {/* A button rather than a fragment link, so the router never sees a "#main" navigation. */}
       <button
         type="button"
@@ -28,15 +31,18 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         Skip to main content
       </button>
-      <Sidebar />
-      <main
-        id="main"
-        tabIndex={-1}
-        className="flex min-w-0 flex-1 flex-col overflow-hidden focus:outline-none"
-      >
-        {children}
-      </main>
-      <ChatPanel />
+      <TitleBar />
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        {!POPOUT_WINDOW && <Sidebar />}
+        <main
+          id="main"
+          tabIndex={-1}
+          className="flex min-w-0 flex-1 flex-col overflow-hidden focus:outline-none"
+        >
+          {children}
+        </main>
+        <ChatPanel />
+      </div>
       <CommandPalette />
       <QuickSwitcher />
       <ShortcutsDialog />

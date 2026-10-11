@@ -9,9 +9,13 @@ export interface PaneProps {
   title: string;
   /** Visually hide the title (it still labels the pane for assistive technology). */
   hideTitle?: boolean;
+  /** Shown at the start of the header, after the title (a breadcrumb, say, when the title is hidden). */
+  headerStart?: ReactNode;
   actions?: ReactNode;
   /** A second header row (tabs, filters), also fixed. */
   toolbar?: ReactNode;
+  /** Fixed below the scroll area (the vault switcher under the file list). */
+  footer?: ReactNode;
   children: ReactNode;
   className?: string;
   bodyClassName?: string;
@@ -20,8 +24,10 @@ export interface PaneProps {
 export function Pane({
   title,
   hideTitle,
+  headerStart,
   actions,
   toolbar,
+  footer,
   children,
   className,
   bodyClassName,
@@ -40,6 +46,7 @@ export function Pane({
         <h2 id={headingId} className={cn('eyebrow truncate', hideTitle && 'sr-only')}>
           {title}
         </h2>
+        {headerStart && <div className="flex min-w-0 flex-1 items-center">{headerStart}</div>}
         {actions && <div className="flex shrink-0 items-center gap-1">{actions}</div>}
       </div>
       {toolbar && (
@@ -53,6 +60,7 @@ export function Pane({
       >
         {children}
       </div>
+      {footer}
     </section>
   );
 }

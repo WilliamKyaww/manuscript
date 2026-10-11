@@ -1,13 +1,22 @@
 import { create } from 'zustand';
 import { readPreference, writePreference } from '../../lib/storage';
+import { SORT_ORDERS, type SortOrder } from './tree/buildTree';
 
 /**
  * UI preferences for the notes page, remembered in this browser: which folders are open, whether
- * attachments show in the tree, the editor mode, live preview and the side panel tab.
+ * attachments show in the tree and in which order, the editor mode, live preview, the Details panel
+ * (open or not, and its tab) and backlinks at the foot of the note.
  */
 
 export type EditorMode = 'edit' | 'split' | 'preview';
-export type SidePanel = 'outline' | 'backlinks' | 'properties' | 'graph';
+export type SidePanel = 'outline' | 'backlinks' | 'outgoing' | 'properties' | 'graph';
+export const SIDE_PANELS: readonly SidePanel[] = [
+  'outline',
+  'backlinks',
+  'outgoing',
+  'properties',
+  'graph',
+];
 
 const KEYS = {
   expanded: 'skb.notes.expanded',
@@ -15,6 +24,9 @@ const KEYS = {
   mode: 'skb.notes.mode',
   panel: 'skb.notes.panel',
   livePreview: 'skb.notes.livePreview',
+  sort: 'skb.notes.sort',
+  details: 'skb.notes.details',
+  backlinksInDocument: 'skb.notes.backlinksInDocument',
 };
 
 function readList(key: string): string[] {
@@ -39,8 +51,16 @@ interface NotesUiState {
   mode: EditorMode;
   panel: SidePanel;
   livePreview: boolean;
+  sort: SortOrder;
+  /** Whether the Details panel is open (closed until the student opens it). */
+  detailsOpen: boolean;
+  backlinksInDocument: boolean;
   /** A note just created, whose editor takes focus when it opens (not remembered). */
   justCreated: string | null;
+  /** "Add file property" waits for the Properties panel to open its form (not remembered). */
+  addPropertyPending: boolean;
+  /** "Reveal file in navigation": the path to show and focus in the file tree, once. */
+  revealRequest: { path: string; at: number } | null;
   toggleFolder(path: string): void;
   expandFolders(paths: readonly string[]): void;
   collapseAll(): void;
@@ -48,7 +68,16 @@ interface NotesUiState {
   setMode(mode: EditorMode): void;
   setPanel(panel: SidePanel): void;
   setLivePreview(on: boolean): void;
+  setSort(sort: SortOrder): void;
+  setDetailsOpen(open: boolean): void;
+  /** Opens the Details panel on a tab. */
+  showDetails(panel: SidePanel): void;
+  setBacklinksInDocument(on: boolean): void;
   setJustCreated(id: string | null): void;
+  requestAddProperty(): void;
+  addPropertyHandled(): void;
+  /** Opens the folders above `path` and asks the tree to scroll to it and focus it. */
+  reveal(path: string): void;
 }
 
 export const useNotesUi = create<NotesUiState>((set, get) => {
@@ -60,7 +89,7 @@ export const useNotesUi = create<NotesUiState>((set, get) => {
     expanded: new Set(readList(KEYS.expanded)),
     showAttachments: readPreference(KEYS.attachments) === 'true',
     mode: readEnum(KEYS.mode, ['edit', 'split', 'preview'], 'edit'),
-    panel: readEnum(KEYS.panel, ['outline', 'backlinks', 'properties'], 'outline'),
+    panel: readEnum(KEYS.panel, SIDE_PANELS, 'outline'),
     // On unless it has been turned off: the marks come back wherever the cursor is.
     livePreview: readPreference(KEYS.livePreview) !== 'false',
     toggleFolder(path) {
@@ -93,9 +122,48 @@ export const useNotesUi = create<NotesUiState>((set, get) => {
       writePreference(KEYS.livePreview, String(on));
       set({ livePreview: on });
     },
+    sort: readEnum(
+      KEYS.sort,
+      SORT_ORDERS.map((order) => order.value),
+      'name-asc',
+    ),
+    detailsOpen: readPreference(KEYS.details) === 'true',
+    backlinksInDocument: readPreference(KEYS.backlinksInDocument) === 'true',
+    setSort(sort) {
+      writePreference(KEYS.sort, sort);
+      set({ sort });
+    },
+    setDetailsOpen(open) {
+      writePreference(KEYS.details, String(open));
+      set({ detailsOpen: open });
+    },
+    showDetails(panel) {
+      get().setPanel(panel);
+      get().setDetailsOpen(true);
+    },
+    setBacklinksInDocument(on) {
+      writePreference(KEYS.backlinksInDocument, String(on));
+      set({ backlinksInDocument: on });
+    },
     justCreated: null,
     setJustCreated(id) {
       set({ justCreated: id });
+    },
+    addPropertyPending: false,
+    addPropertyHandled() {
+      set({ addPropertyPending: false });
+    },
+    revealRequest: null,
+    reveal(path) {
+      const ancestors: string[] = [];
+      for (let index = path.indexOf('/'); index !== -1; index = path.indexOf('/', index + 1))
+        ancestors.push(path.slice(0, index));
+      get().expandFolders(ancestors);
+      set({ revealRequest: { path, at: (get().revealRequest?.at ?? 0) + 1 } });
+    },
+    requestAddProperty() {
+      get().showDetails('properties');
+      set({ addPropertyPending: true });
     },
   };
 });

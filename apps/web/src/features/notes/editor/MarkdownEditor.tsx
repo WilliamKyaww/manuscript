@@ -1,3 +1,4 @@
+import { openSearchPanel } from '@codemirror/search';
 import { Annotation, ChangeSet, Compartment, EditorState, Transaction } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
@@ -31,6 +32,8 @@ export interface MarkdownEditorHandle {
   goToLine(line: number): void;
   /** The selected text and the 1-based line it starts on, or null when nothing is selected. */
   getSelection(): { text: string; line: number } | null;
+  /** Opens the find bar (task 23.08), with the cursor in its replace field if `replace`. */
+  openSearch(options?: { replace?: boolean }): void;
 }
 
 export interface MarkdownEditorProps extends EditorCallbacks {
@@ -208,6 +211,16 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
             effects: EditorView.scrollIntoView(target.from, { y: 'start', yMargin: 24 }),
           });
           current.focus();
+        },
+        openSearch(options) {
+          const current = view.current;
+          if (!current) return;
+          current.focus();
+          openSearchPanel(current);
+          if (options?.replace)
+            current.dom
+              .querySelector<HTMLInputElement>('.cm-search input[name="replace"]')
+              ?.focus();
         },
       }),
       [],

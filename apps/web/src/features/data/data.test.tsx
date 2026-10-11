@@ -345,6 +345,9 @@ describe('in the desktop app', () => {
         return true;
       },
       appInfo: async () => null,
+      openPath: async () => true,
+      printToPdf: async () => null,
+      setTitleBarColours: async () => undefined,
     };
     renderApp('/settings', fakeServer().fetch);
     const form = await screen.findByRole('form', { name: 'Restore from an export' });
