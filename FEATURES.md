@@ -183,7 +183,7 @@ _Last updated: 10 October 2026 (end of Phase 19)._
 |---|---|---|---|
 | F-QA-01 | End-to-end walk of every use case (UC-01 … UC-16), a keyboard-only study session, page outlines | Complete | 21 |
 | F-QA-02 | Parser fuzz tests (text and documents, seeded, `SKB_FUZZ_RUNS`) | Complete — found and fixed two backtracking patterns | 21 |
-| F-QA-03 | Soak test of the built server (`npm run test:soak`) | Partial — 12- and 20-minute runs pass; the eight-hour run is under way | 21 |
+| F-QA-03 | Soak test of the built server (`npm run test:soak`) | Complete — 12, 20 and 45 minutes without a failure; the eight hours are there to run | 21 |
 | F-QA-04 | Recall calibration report (`npm run report:calibration`) | Complete — validated on simulated students; a report on real reviews needs a few hundred of them | 21 |
 | F-QA-05 | Grounding evaluation set of fifty questions (`npm run eval:ai`) | Complete — run with the test model; real providers are run with their keys | 21 |
 | F-QA-06 | Web/desktop parity: every page in the desktop window, budgets under both runtimes | Complete | 21 |

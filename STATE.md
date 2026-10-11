@@ -4,8 +4,8 @@ _Last updated: 11 October 2026 — Claude Opus 5.5._
 
 ## Current phase
 
-**Phase 21 — Verification: in progress** (the eight-hour soak is running; three checks are the user's). Phase 20
-(final UI/UX polish) is complete and merged into `main`, as are Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
+**Phase 22 — Release: in progress.** Phase 21 (verification) was closed at the user's request and merged, with four
+checks left open (see Pending); Phase 20 (final UI/UX polish) is complete and merged into `main`, as are Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
 and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
 ingestion pipeline), 6 (course structure and concepts), 7 (knowledge graph), 8 (flashcards and
 spaced repetition), 9 (questions, quizzes and mastery), 10 (AI foundation), 11 (AI generation and
@@ -177,7 +177,7 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## In progress
 
-- Phase 21: 21.01, 21.07 and 21.08 done; 21.02–21.06 and 21.09 partly (see Next steps and Pending).
+- Phase 22: see `docs/checklist/phase-22-release.md`.
 
 ## Incomplete / not started
 
@@ -245,11 +245,9 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## Next steps
 
-1. The eight-hour soak (`npm run test:soak -- --minutes 480`, started 11 October 17:24, ends about 01:25): add its
-   report to the journal.
-2. `npm run test:perf` on a quiet machine: four budgets were over in both modes under load, and equally on `main`'s
-   code at the same time (journal, 21.06).
-3. The full Playwright suite, then the Phase 21 gate once the user's checks are in (or recorded as theirs).
+1. Phase 22 — the release (`phase/22-release`).
+2. When the laptop is idle: `npm run test:perf` (four budgets were over on 11 October under load — so was the Phase 17
+   code, which had met them).
 
 ## Relevant decisions
 
@@ -293,7 +291,8 @@ background load — compare against a worktree of the previous gate (`AGENTS.md`
 - **Phase 21 checks that are yours** (each a few minutes; see the 11 October journal): a Narrator spot check
   (`Ctrl+Win+Enter`, the list is in the report); `npm run report:calibration -- "<your vault>"` once you have a few
   hundred reviews (read-only); `npm run eval:ai` with your provider (`SKB_EVAL_PROVIDER`, `SKB_EVAL_MODEL`,
-  `SKB_EVAL_API_KEY`), which costs a few cents. The eight-hour soak runs in the background until about 01:25.
+  `SKB_EVAL_API_KEY`), which costs a few cents. The eight-hour soak (`npm run test:soak -- --minutes 480`) can be
+  run whenever the laptop is free; you accepted 45 minutes for now.
 - **Your real vault was opened once by a test** (10 October, 17:38): `Documents\Study Knowledge Base` — its database
   was upgraded to the newest version, which the next start would have done anyway, and a backup was made first
   (`.skb\backups\skb-20261010-163817-migration-0016_code_graphs.db`). No note was changed. The cause is fixed and

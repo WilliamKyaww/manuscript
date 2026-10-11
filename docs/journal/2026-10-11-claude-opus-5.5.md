@@ -231,3 +231,23 @@ the browser has Copy path. With the engine's budgets under both runtimes above, 
 When the soak ends (about 01:25): add its report here, run `npm run test:perf` on a quiet machine, then the full
 Playwright suite and the gate. The user's three checks (Narrator, calibration on real reviews, real providers) can be
 done at any time and recorded.
+
+## Phase 21 closed at the user's request (about 18:10)
+
+The user judged the soak sufficient for personal use ("if anything happens I can always come back, report the bug
+and ask for a fix") and asked to go on to Phase 22. What was done before closing:
+
+- **The soak** was stopped at 45 minutes: 1,237 rounds, **no failed request**, working set flat at 225–235 MB, live
+  heap 37 → 43 MB (about 6 KB a round — the content each round adds). With the 12- and 20-minute runs: some 2,400
+  rounds, no failure. Accepted in place of eight hours; the command stays.
+- **Performance, again, with the soak stopped**: the same four budgets over (search with PDF pages 191 ms, graph first
+  build 3.7 s, after an edit 1.18 s, retrieval 541 ms), and the machine slower than before (a full index took 41.6 s
+  against 24.8 s). The **Phase 17 code** — which met every budget on 10 October — was then measured in the same
+  conditions and was over on the same four by more (227 ms, 5.0 s, 2.4 s, 1.1 s). The cause is the machine's state
+  today, not code from any phase; an idle-machine run is left for when the laptop is free.
+- **The full Playwright suite**: 134 passed, 3 skipped (the screenshot specs). `npm run verify` had passed with 898
+  Vitest tests.
+
+Open, and recorded in the checklist and STATE: 21.02 (a Narrator spot check), 21.04 (calibration on real reviews) and
+21.05 (real providers) — all three the user's — and 21.06 (an idle-machine performance run). Merged as
+"Merge phase 21: full verification".

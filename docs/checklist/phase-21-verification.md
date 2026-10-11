@@ -1,7 +1,7 @@
 # Phase 21 — Full verification: testing, reliability and accessibility
 
-**Status:** In progress — the eight-hour soak and a quiet performance run are under way or next; three checks need
-the user (a screen reader, real review history, real AI providers) · **Branch:** `phase/21-verification`
+**Status:** Closed at the user's request on 11 October — four checks stay open, each recorded below and in STATE ·
+**Branch:** `phase/21-verification`
 
 ## Objective
 Verify the whole system after polish: end-to-end coverage of every use case, accessibility, reliability,
@@ -22,11 +22,12 @@ Phase 20.
   landmarks and no skipped heading level on every page (`headingOutline`).
   Remaining: the spot checks with a real screen reader (Narrator, `Ctrl+Win+Enter`), by the user — the checklist
   is in the report.
-- [~] **21.03** Reliability: parser fuzz tests; 8-hour soak test of ingestion and review loops — Fuzzing found and
+- [x] **21.03** Reliability: parser fuzz tests; 8-hour soak test of ingestion and review loops — Fuzzing found and
   fixed two pieces of quadratic and worse backtracking (unclosed cloze text took ten seconds; runs of brackets);
-  every document parser reads or refuses damaged files in words. The soak harness (`npm run test:soak`) passed 12
-  and 20 minutes: no failure, a flat live heap.
-  Remaining: the eight-hour run, started on 11 October at 17:24 with the user's go-ahead; its report.
+  every document parser reads or refuses damaged files in words. The soak (`npm run test:soak`) ran 12, 20 and 45
+  minutes (2,400 rounds in all) with no failed request and a live heap growing only with the content. The user
+  accepted this in place of the eight hours (11 October: personal use; a fault can be reported and fixed); the
+  eight-hour command stays for later.
 - [~] **21.04** Mastery calibration check (predicted vs actual recall) with a report — `calibrate()` in core and
   `npm run report:calibration`, validated on simulated students (0.5 % error when calibrated; the gap found when
   memories last half or a quarter as long).
@@ -40,7 +41,10 @@ Phase 20.
   Node 24.21) on mains power: the mastery pass, start-up, note opening, search over notes and the cached graph are
   within budget in both; desktop start-up is 2.0 s to Today. Four budgets were over in both modes **and on `main`'s
   code at the same time** (a worktree), so the cause is the machine's load during the soak, not a regression.
-  Remaining: a run on a quiet machine after the soak, for the four.
+  The four were also over, by more, on the **Phase 17 code** — which met them on 10 October — measured in the same
+  conditions on 11 October: today's machine, not the code.
+  Remaining: a run on an idle machine (`npm run test:perf`) to see the four within budget again; left for when the
+  laptop is free, with the user's agreement to move on.
 - [x] **21.07** Web/desktop parity check — `e2e/desktop.spec.ts`: every page in the desktop window as in the
   browser (heading, sticky header, axe, outline, no console errors), the desktop-only folder controls, and the
   engine's budgets under Electron's runtime alongside plain Node's.
@@ -48,12 +52,14 @@ Phase 20.
   installer tooling only (TD-14, unchanged). Code: one raw-HTML insertion (Mermaid, strict mode), no `eval`, SQL
   only from fixed strings or escaped paths, `shell: true` only in launchers built from fixed strings, no keys in
   the repository; the CSP allows scripts only from the app; every API route is still tested against the guards.
-- [~] **21.09** Docs: verification report in `docs/journal/`; STATE/FEATURES updated — The report is in the
-  11 October journal; STATE, FEATURES, AGENTS and the guides (mastery, AI) are updated.
-  Remaining: the soak's and the quiet performance run's results, when they exist.
+- [x] **21.09** Docs: verification report in `docs/journal/`; STATE/FEATURES updated — The report is in the
+  11 October journal, with the soak's and the later performance runs; STATE, FEATURES, AGENTS and the guides
+  (mastery, AI) are updated.
 
 ## Gate
-- [ ] All tasks `[x]` · [ ] all suites green · [ ] report written · [ ] merged
+- [ ] All tasks `[x]` (open, by the user's decision: 21.02 a screen reader, 21.04 real reviews, 21.05 real
+  providers — all three the user's — and 21.06 an idle machine) · [x] all suites green (898 Vitest, 134 Playwright,
+  3 screenshot specs skipped) · [x] report written · [x] merged
 
 ## Recommended commit messages
 ```text
