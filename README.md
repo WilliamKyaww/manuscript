@@ -4,13 +4,24 @@ A personal **Knowledge & Learning OS**: a Markdown knowledge base, a lecture/sou
 graph and a spaced-repetition learning system that share one data model — with an AI agent that can
 search, explain, generate study material and act on the knowledge base through permissioned tools.
 
-> **Status: Phases 0–20 complete** (Phase 20: the final UI polish). Notes, search, the source
-> library, the course model, the knowledge graph, flashcards, practice, mastery and progress, the study
-> plan, optional AI (answers with citations, generation, a tutor and an agentic chat with approvals and
-> undo), export and restore, backups and diagnostics all work, in the browser and as a Windows desktop
-> application with an installer. Verification (Phase 21) and the first release (Phase 22) follow. See
-> [`STATE.md`](./STATE.md), [`FEATURES.md`](./FEATURES.md), the
-> [user guides](./docs/guide/README.md) and [`docs/checklist/`](./docs/checklist/README.md).
+> **Version 1.0.0** (11 October 2026). Notes, search, the source library, the course model, the
+> knowledge graph, flashcards, practice, mastery and progress, the study plan, optional AI (answers with
+> citations, generation, a tutor and an agentic chat with approvals and undo), export and restore,
+> backups and diagnostics — in the browser and as a Windows desktop application with an installer.
+> What changed: [`CHANGELOG.md`](./CHANGELOG.md); what works and what is open: [`STATE.md`](./STATE.md)
+> and [`FEATURES.md`](./FEATURES.md); how to use it: the [user guides](./docs/guide/README.md).
+
+## Getting started
+
+| You want | Do this |
+|---|---|
+| **The desktop app** | Build the installer with `npm install` then `npm run desktop:dist`, and run `apps\desktop\release\Manuscript-Setup-1.0.0.exe` (per user, no administrator prompt; it is not code-signed, so Windows asks once: *More info → Run anyway*). See [Installing](./docs/guide/installing.md). |
+| **It in your browser** | Double-click **`run-web.bat`**: it installs, builds and starts everything the first time, and opens the app signed in. |
+| **To find your way round** | Start with [the study loop](./docs/guide/study-loop.md), then [your course](./docs/guide/course.md); press `?` in the app for the keys. |
+
+Your notes are Markdown files in a folder you choose (`Documents\Manuscript` by default) — open them in
+Obsidian or any editor at any time. Everything works without AI; add a provider in **Settings → AI** when
+you want it.
 
 ![Today: reviews due, upcoming deadlines, progress towards the target, today's plan and the weak spots before the next lecture](./docs/screenshots/today-light.png)
 
@@ -100,7 +111,11 @@ HttpOnly cookie after you open the sign-in link). Requests with a foreign `Host`
 | `npm run lint` / `npm run format` | Biome lint and format (check / write) |
 | `npm run test:smoke` | Starts the built server bundle and checks ping, auth, health and the SPA |
 | `npm run test:e2e` | Builds, then Playwright end-to-end tests in Chromium (first run: `npx playwright install chromium`) |
-| `npm run test:perf` | Generates 10,000 notes (and 10,000 PDF pages) and checks the indexing, search, graph and retrieval budgets |
+| `npm run test:perf` | Generates 10,000 notes (and 10,000 PDF pages) and checks the indexing, search, graph and retrieval budgets (run on an idle machine: timings vary with load) |
+| `npm run test:perf:mastery` | A year of simulated learning; checks the mastery pass (budget 500 ms) |
+| `npm run test:soak -- --minutes 480` | The built server for hours through imports, search, notes and reviews; fails on an error, a growing live heap or a broken budget |
+| `npm run report:calibration -- <vault>` | How well predicted recall matches what happened in a vault's reviews (read-only); `-- --simulate` for simulated students |
+| `npm run eval:ai` | Fifty questions on eight documents: retrieval with the test model, or a real model's answers and citations with `SKB_EVAL_PROVIDER`, `SKB_EVAL_MODEL`, `SKB_EVAL_API_KEY` |
 | `npx playwright test e2e/desktop.spec.ts` | Launches the desktop shell and its unpacked build with Playwright's Electron driver (needs `npm run build`, and `npm run desktop:build` for the second test) |
 | `SKB_SCREENSHOTS=<folder> npx playwright test e2e/screens.spec.ts` | Seeds a realistic course and photographs every screen in both themes (`SKB_SCREENSHOT_WIDTH` sets the width; needs `npm run build`) — how the pictures here were made |
 | **`npm run verify`** | typecheck → lint → tests → build → smoke test (run before every commit) |
@@ -122,6 +137,7 @@ HttpOnly cookie after you open the sign-in link). Requests with a foreign `Host`
 
 | Where | What |
 |---|---|
+| [`CHANGELOG.md`](./CHANGELOG.md) | What each release changed; the 1.0.0 release notes |
 | [`STATE.md`](./STATE.md) | Current state of the project |
 | [`FEATURES.md`](./FEATURES.md) | Feature inventory and statuses |
 | [`DECISIONS.md`](./DECISIONS.md) | Architecture decision records |

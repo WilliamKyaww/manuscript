@@ -4,8 +4,9 @@ _Last updated: 11 October 2026 — Claude Opus 5.5._
 
 ## Current phase
 
-**Phase 22 — Release: in progress.** Phase 21 (verification) was closed at the user's request and merged, with four
-checks left open (see Pending); Phase 20 (final UI/UX polish) is complete and merged into `main`, as are Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
+**Version 1.0.0 — released** (tagged `v1.0.0` on 11 October 2026; `CHANGELOG.md`). All phases are merged into
+`main`: Phase 22 (release), Phase 21 (verification, closed at the user's request with four checks left open — see
+Pending), Phase 20 (final UI/UX polish), and Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
 and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
 ingestion pipeline), 6 (course structure and concepts), 7 (knowledge graph), 8 (flashcards and
 spaced repetition), 9 (questions, quizzes and mastery), 10 (AI foundation), 11 (AI generation and
@@ -177,11 +178,13 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## In progress
 
-- Phase 22: see `docs/checklist/phase-22-release.md`.
+- Nothing: the planned phases are done. New work comes from the backlog (`docs/backlog/`) or from what the user
+  reports.
 
 ## Incomplete / not started
 
-- Phases 21–22: verification and the release do not exist yet.
+- Open from Phase 21: a screen-reader spot check, calibration on real reviews and real-provider evaluation (the
+  user's), and an idle-machine performance run (four budgets were over under load).
 - Not in Phase 20 (backlog): side panels as drawers below 1024 px (B-PL-09) — at 768 px they are narrow resizable
   panes.
 - Not in Phase 19: code signing (needs a certificate), automatic updates (B-PL-06).
@@ -245,7 +248,7 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## Next steps
 
-1. Phase 22 — the release (`phase/22-release`).
+1. Use it, and report what goes wrong or is missing: fixes and backlog items become the next work (1.0.x / 1.1).
 2. When the laptop is idle: `npm run test:perf` (four budgets were over on 11 October under load — so was the Phase 17
    code, which had met them).
 
@@ -304,7 +307,10 @@ background load — compare against a worktree of the previous gate (`AGENTS.md`
   `origin` points at `WilliamKyaww/manuscript`).
 - Optional: rename `Documents\Study Knowledge Base` and `%APPDATA%\StudyKnowledgeBase` to `Manuscript`
   while the app is closed (`docs/guide/README.md`).
-- Push `main` and the phase branches when convenient (the agent never pushes).
+- Push `main`, the phase branches and the tag when convenient: `git push origin main --tags` (the agent never pushes).
+- **Manuscript 1.0.0 is installed** for you (per user, `%LOCALAPPDATA%\Programs\Manuscript`, Start Menu and desktop
+  shortcuts). It opens your existing vault in `Documents\Study Knowledge Base`. The first start shows SmartScreen once
+  (*More info → Run anyway*): the installer is not signed.
 - To try leaving and coming back: **Settings → Data → Export everything**, then restore it into a new folder and open
   that vault from the list (`docs/guide/portability.md`). Keep the zip as carefully as the vault: it holds chats too.
   If you have a coursework repository, map it with Graphify and import its `graph.json` there.
