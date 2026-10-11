@@ -6,7 +6,7 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 10 October 2026 (end of Phase 19)._
+_Last updated: 11 October 2026 (version 1.0.0, end of Phase 22)._
 
 ## Platform and architecture
 
@@ -187,6 +187,7 @@ _Last updated: 10 October 2026 (end of Phase 19)._
 | F-QA-04 | Recall calibration report (`npm run report:calibration`) | Complete — validated on simulated students; a report on real reviews needs a few hundred of them | 21 |
 | F-QA-05 | Grounding evaluation set of fifty questions (`npm run eval:ai`) | Complete — run with the test model; real providers are run with their keys | 21 |
 | F-QA-06 | Web/desktop parity: every page in the desktop window, budgets under both runtimes | Complete | 21 |
+| F-QA-07 | Release 1.0.0: `run-web.bat` on a clean clone, the installer installed and started, CHANGELOG and release notes | Complete | 22 |
 
 ## Deferred
 

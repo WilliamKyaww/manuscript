@@ -251,3 +251,42 @@ and ask for a fix") and asked to go on to Phase 22. What was done before closing
 Open, and recorded in the checklist and STATE: 21.02 (a Narrator spot check), 21.04 (calibration on real reviews) and
 21.05 (real providers) — all three the user's — and 21.06 (an idle-machine performance run). Merged as
 "Merge phase 21: full verification".
+
+---
+
+# Phase 22 — Release (`phase/22-release`), evening
+
+- **Summary:** Version 1.0.0: every package bumped; `run-web.bat` verified on a clean, isolated clone; the installer
+  built, tested and — at the user's choice — installed to keep; README, guide index, CHANGELOG and release notes
+  written; STATE and FEATURES final; tagged `v1.0.0`.
+
+## What was done
+
+- **Version** — the five `package.json` files and the internal `@skb/core` dependencies at 1.0.0, the lockfile
+  updated offline; verify passed (898 tests; the smoke test reports "server 1.0.0").
+- **Clean clone (22.01)** — `git clone` of the branch into a temporary folder; vault, data, home and app-data
+  folders inside it (`USERPROFILE`, `HOME`, `APPDATA`, `LOCALAPPDATA` replaced, as AGENTS.md requires), with
+  `npm_config_cache` and `electron_config_cache` pointed back at the real caches so nothing was downloaded again.
+  `run-web.bat` installed, built and started 1.0.0 in 80 s; SPA served, API 401 without sign-in, a second run reported
+  "Already running". `cmd /c` stripped the outer quotes of the first attempt's command line; wrapping it in one more
+  pair fixed it.
+- **Installer (22.02)** — `Manuscript-Setup-1.0.0.exe`, 121 MB, and the unpacked layout, both 1.0.0; the desktop
+  spec 4/4. The user chose "install and keep": silent per-user install (exit 0), Apps entry 1.0.0, shortcuts, the
+  installed program checked with a throwaway vault and profile (`check-installed.mjs`: packaged, server 1.0.0, quit
+  cleanly), and the real vault and data folders unchanged (`Documents\Study Knowledge Base` and
+  `%APPDATA%\StudyKnowledgeBase`, 7 files: same fingerprint of names, sizes and times; no file was opened). The Apps
+  entry records no install location, which the first script assumed; the default per-user path was used.
+- **Docs (22.03, 22.04)** — the README's status and a Getting started table; every command in its testing table;
+  the guide index regrouped for a newcomer; `CHANGELOG.md` with the release notes and known limitations.
+- **Final STATE and FEATURES (22.05)**, then the gate: the full Playwright suite, the merge and the tag.
+
+## Decisions
+
+- **Installed for the user to keep**, by their choice; the uninstaller keeps the vault and data if they change their
+  mind.
+- **The tag is annotated and local**: the user pushes (`git push origin main --tags`).
+
+## Next steps
+
+Use it; report what breaks or is missing. Open from Phase 21: the user's three checks and an idle-machine
+performance run.
