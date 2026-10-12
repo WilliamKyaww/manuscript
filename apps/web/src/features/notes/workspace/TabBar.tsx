@@ -1,4 +1,4 @@
-import { FileText, Plus, X } from 'lucide-react';
+import { Copy, ExternalLink, FileText, Globe, Plus, X } from 'lucide-react';
 import { type DragEvent, type ReactNode, useState } from 'react';
 import {
   ContextMenu,
@@ -8,6 +8,8 @@ import {
 import { IconButton } from '../../../components/IconButton';
 import { MenuEntries, type MenuEntry } from '../../../components/MenuEntries';
 import { cn } from '../../../lib/cn';
+import { notifySuccess } from '../../../lib/notify';
+import { openInBrowser } from '../links/external';
 import { useWorkspace, type WorkspacePane, type WorkspaceTab } from './workspace-store';
 
 /**
@@ -43,6 +45,24 @@ export function TabBar({
       disabled: pane.tabs.length === 1,
       onSelect: () => store.getState().closeOtherTabs(pane.id, tab.id),
     },
+    ...(tab.url
+      ? ([
+          { kind: 'separator' },
+          {
+            label: 'Open in browser',
+            icon: <ExternalLink size={14} />,
+            onSelect: () => tab.url && openInBrowser(tab.url),
+          },
+          {
+            label: 'Copy link',
+            icon: <Copy size={14} />,
+            onSelect: () =>
+              void navigator.clipboard
+                .writeText(tab.url ?? '')
+                .then(() => notifySuccess('Link copied')),
+          },
+        ] satisfies MenuEntry[])
+      : []),
     ...(tab.noteId
       ? ([
           { kind: 'separator' },
@@ -128,7 +148,11 @@ export function TabBar({
                       }}
                       className="flex h-full min-w-0 flex-1 items-center gap-1.5 rounded-t-md pr-1 pl-2.5 outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset"
                     >
-                      <FileText aria-hidden="true" size={13} className="shrink-0 text-subtle" />
+                      {tab.url ? (
+                        <Globe aria-hidden="true" size={13} className="shrink-0 text-subtle" />
+                      ) : (
+                        <FileText aria-hidden="true" size={13} className="shrink-0 text-subtle" />
+                      )}
                       <span className="truncate">{title}</span>
                     </button>
                   </ContextMenuTrigger>

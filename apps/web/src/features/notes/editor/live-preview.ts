@@ -13,6 +13,7 @@ import { frontmatterLines } from './frontmatter';
 import { liveBlocks } from './live/blocks';
 import { livePreviewContext } from './live/context';
 import { type Item, scanLine } from './live/lines';
+import { linkItems } from './live/links';
 import { liveTheme } from './live/theme';
 import { CalloutTitleWidget, CheckboxWidget, ListMarkerWidget } from './live/widgets';
 
@@ -20,8 +21,9 @@ import { CalloutTitleWidget, CheckboxWidget, ListMarkerWidget } from './live/wid
  * Live preview (tasks 20.05, Phase 25): the marks of Markdown — the `#` of a heading, the `**` around
  * bold, the brackets of a link, a list's `-`, a quote's `>` — are hidden while the cursor is not in the
  * element they belong to, and some elements are drawn as what they are: bullets, task checkboxes,
- * callouts, rules, highlights, maths, images, and (in `live/blocks.ts`) tables. Move the cursor into
- * an element and its source comes back to be edited. The text is never changed: only what is drawn.
+ * callouts, rules, highlights, maths, images, web links with their mark and GitHub links as mentions
+ * (`live/links.ts`), and (in `live/blocks.ts`) tables. Move the cursor into an element and its source
+ * comes back to be edited. The text is never changed: only what is drawn.
  */
 
 const hidden = Decoration.replace({});
@@ -78,14 +80,16 @@ function collect(view: EditorView, comments: readonly Hide[]): Collected {
       to,
       enter(node) {
         const { name } = node;
-        if (name === 'Link') {
-          // [text](address "title") is drawn as its text: the [ before, and everything from ] on.
-          // Only links with an address: [[wikilinks]] and bare [brackets] stay as written.
-          const link = node.node;
-          const [open, close] = link.getChildren('LinkMark');
-          if (!open || !close || !link.getChild('URL') || touches(link.from, link.to)) return;
-          addHide(open.from, open.to);
-          addHide(close.from, link.to);
+        if (name === 'Link' || name === 'Autolink') {
+          // [text](address "title") is drawn as its text; <address> as the address. Only links with
+          // an address: [[wikilinks]] and bare [brackets] stay as written.
+          items.push(...linkItems(state, node.node, touches));
+          return;
+        }
+        if (name === 'URL') {
+          const parent = node.node.parent?.name;
+          if (parent !== 'Link' && parent !== 'Autolink')
+            items.push(...linkItems(state, node.node, touches));
           return;
         }
         if (name === 'InlineCode') {

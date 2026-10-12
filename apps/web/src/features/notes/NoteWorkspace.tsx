@@ -24,11 +24,13 @@ import { cn } from '../../lib/cn';
 import { notifyError } from '../../lib/notify';
 import { conceptsQuery } from '../concepts/api';
 import { ConceptDialog } from '../concepts/ConceptDialog';
-import { useUploadAttachment } from './api';
+import { useCreateNote, useUploadAttachment } from './api';
 import { ConflictBanner } from './editor/ConflictBanner';
 import { MarkdownEditor, type MarkdownEditorHandle } from './editor/MarkdownEditor';
+import type { EditorTools } from './editor/selection/actions';
 import { type SaveStatus, useNoteSession } from './editor/useNoteSession';
 import { exportToPdf } from './export/PrintHost';
+import { openWebLink } from './links/external';
 import { moreOptionsMenu } from './menus/file-menu';
 import { useNotesUi } from './notes-store';
 import { BacklinksPanel } from './panels/BacklinksPanel';
@@ -36,7 +38,7 @@ import type { PreviewTarget } from './preview/remark-obsidian';
 import { type FileActions, nodeForNote } from './useFileActions';
 import { LivePreviewToggle, ModeToggle } from './ViewControls';
 import { NoteBreadcrumb } from './view/NoteBreadcrumb';
-import { StudyTools } from './view/StudyTools';
+import { type StudyActions, StudyTools } from './view/StudyTools';
 import { useActiveNote } from './workspace/active-note';
 import { useWorkspace } from './workspace/workspace-store';
 
@@ -90,6 +92,8 @@ export function NoteWorkspace({
   const ui = useNotesUi();
   const { mode, setMode, livePreview, setLivePreview } = ui;
   const upload = useUploadAttachment();
+  const createNote = useCreateNote();
+  const study = useRef<StudyActions | null>(null);
   const [liveText, setLiveText] = useState(session.editorText);
   const liveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const analysis = useMemo(() => analyseNote(liveText), [liveText]);
@@ -185,6 +189,25 @@ export function NoteWorkspace({
       void navigate({ to: '/concepts/$conceptId', params: { conceptId: resolved.id } });
     else if (resolved.kind === 'unresolved' && target.trim())
       onCreateFromLink(target.trim(), folder);
+  };
+
+  // What the editor's selection toolbar and right-click menu can do here (Phase 26).
+  const tools: EditorTools = {
+    noteTitle: note.title,
+    search: (text) => void navigate({ to: '/search', search: { q: text } }),
+    makeCard: () => study.current?.makeCard(),
+    generate: () => study.current?.generate(),
+    extract: async (title, text) => {
+      const made = await createNote.mutateAsync({ title, content: `${text.trim()}\n`, folder });
+      return noteNameFromPath(made.path);
+    },
+    openNote: (target, where) => {
+      const resolved = resolve(target);
+      if (resolved.kind !== 'note' || where === 'here') followLink(target);
+      else if (where === 'tab') useWorkspace.getState().openInNewTab(resolved.id);
+      else useWorkspace.getState().openInOtherPane(resolved.id, 'right');
+    },
+    openWeb: (url, browser) => openWebLink(url, { paneId, browser }),
   };
 
   const uploadFiles = async (files: File[], at: number) => {
@@ -314,7 +337,13 @@ export function NoteWorkspace({
                 {analysis.wordCount} {analysis.wordCount === 1 ? 'word' : 'words'}
               </span>
             </span>
-            <StudyTools note={note} editor={editor} mode={mode} headings={analysis.headings} />
+            <StudyTools
+              note={note}
+              editor={editor}
+              mode={mode}
+              headings={analysis.headings}
+              actions={study}
+            />
             {mode !== 'preview' && <LivePreviewToggle on={livePreview} onChange={setLivePreview} />}
             <ModeToggle mode={mode} onChange={setMode} />
             {/* Not modal, as in Obsidian: the page stays readable (and reachable) beside it. */}
@@ -359,10 +388,12 @@ export function NoteWorkspace({
               lineSeparator={session.lineSeparator}
               completions={completions}
               livePreview={livePreview}
+              tools={tools}
               className="h-full"
               onChange={onChange}
               onSave={() => void session.saveNow()}
               onFollowLink={followLink}
+              onOpenWebLink={(url, browser) => openWebLink(url, { paneId, browser })}
               onFiles={(files, at) => void uploadFiles(files, at)}
             />
           </div>
@@ -382,6 +413,7 @@ export function NoteWorkspace({
                     content={liveText}
                     resolve={resolve}
                     noteId={note.id}
+                    paneId={paneId}
                     onCreateNote={(title) => onCreateFromLink(title, folder)}
                     onCreateConcept={setNewConcept}
                   />

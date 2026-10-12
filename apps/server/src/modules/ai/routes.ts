@@ -4,6 +4,7 @@ import {
   AskInputSchema,
   aiStatusEndpoint,
   aiUsageEndpoint,
+  assistWritingEndpoint,
   createProviderEndpoint,
   deleteProviderEndpoint,
   embeddingStatusEndpoint,
@@ -23,6 +24,7 @@ import type { AskService } from './ask';
 import type { EmbeddingService } from './embeddings/service';
 import type { RetrievalRepository } from './retrieval-repository';
 import type { AiService } from './service';
+import { assistWriting } from './writing';
 
 const ok = { ok: true as const };
 
@@ -52,6 +54,7 @@ export function registerAiRoutes(registry: ApiRegistry, services: AiRouteService
   registerEndpoint(registry, aiStatusEndpoint, () => ai.status());
   registerEndpoint(registry, aiUsageEndpoint, () => ai.usageReport());
   registerEndpoint(registry, embeddingStatusEndpoint, () => embeddings.status());
+  registerEndpoint(registry, assistWritingEndpoint, ({ body }) => assistWriting(ai, body));
   registerEndpoint(registry, rebuildEmbeddingsEndpoint, () => embeddings.rebuild());
   registerEndpoint(registry, relatedNotesEndpoint, ({ params }) => {
     const hits = embeddings.relatedNotes(params.id, 8);

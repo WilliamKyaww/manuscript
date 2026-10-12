@@ -194,3 +194,76 @@ address: each launch began with empty storage. (Browser use via `run-web.bat` ha
 - Tests: desktop unit 15 passed; desktop specs 5 passed (one run had the zoom-shortcut check read 0 once, sent the
   moment the window opened; it passed in the next two runs); `npm run verify` below.
 - Verify after the fix: 158 files, 957 tests, smoke on 1.2.1 — passed.
+
+## Phase 26 — links and selections (1.4.0), afternoon and evening
+
+- **Model:** Claude Opus 5.5 (the student switched back from Sonnet 5.5 after Phase 25)
+- **Phase:** 26 — `phase/26-links-and-selection`, after 1.3.0
+
+### What was asked
+
+First a question (answered without code): can a browser be shown beside the notes, and does it need Chromium
+installed? Answer: the desktop app is Electron, so Chromium is already inside it; a separate profile, not the
+student's Chrome. Then the request, with screenshots of Notion and Obsidian: the Notion-like link card on hover
+(keeping Manuscript's link colour), Obsidian's external-link mark, a click opening the page **on the left of the
+note** with the panes' split (Ctrl+click or an *Open in browser* button for the browser — the student confirmed both
+suggestions), GitHub links displayed like Notion's mention, and "all relevant features" for highlighted text, as in
+Notion's toolbar and Obsidian's menu.
+
+### What was done
+
+- **Desktop** (`apps/desktop/src/web-views.ts`, `policy.ts`, `preload.ts`, `main.ts`): web tabs are native
+  `WebContentsView`s in a `persist:web` session — no preload, sandboxed, web addresses only and never the app's
+  origin, a user agent without the Electron token, permissions limited to full screen and the clipboard. Links for a
+  new tab stay in the pane; pop-ups (sign-ins) are windows of the same session. `web-contents-created` now hands such
+  contents to `WebViews.harden` before the window's own rules. The app's pages may now read the clipboard (the
+  editor menu's Paste).
+- **Workspace**: web tabs remembered with their latest address; `openWebPage` opens the other pane or a new one on the
+  left, keeping the note's pane active so the address keeps showing the note; `WebTab` places the view over its box
+  (a `ResizeObserver` and a 250 ms position check), and `useCovered` hides it behind a snapshot while a dialogue, or a
+  menu or tooltip over it, is open (the shell's view is above the document, so it would otherwise hide them).
+- **Links**: the external-link mark (Lucide's drawing as a CSS mask), the link card in the editor (a CodeMirror
+  hover tooltip with a React root) and the reading view (Radix HoverCard), GitHub mentions named from the address
+  (Octicons' mark, MIT). A drawn link in the editor now opens on a click (as in Obsidian); Edit selects its address.
+- **Selection**: formatting commands (bold and italic told apart by counting asterisks; highlight colours; clear
+  formatting; blocks; links; insertions), Notion's toolbar and Obsidian's menu drawn from one list of actions,
+  extract to a new note, clipboard commands, Turndown for pasted HTML (with list items as Obsidian writes them, Google
+  Docs' "not bold" wrapper ignored, code editors' copies left plain), and `Settings → Editor`.
+- **AI**: `POST /api/ai/write` (`modules/ai/writing.ts`): ten actions, the quick-tasks model when there is one, the
+  text wrapped as untrusted, usage recorded; the test model answers predictably (`mock-writing.ts`). The editor's
+  panel offers Replace or Insert below; nothing changes until the student chooses (ADR-0045).
+
+### Decisions
+
+ADR-0045 (amends ADR-0041): pages beside notes in a session of their own; GitHub names offline; selection tools as
+editor commands; AI as a suggestion rather than an agent tool. New runtime dependencies `turndown` 7.2.4 and
+`turndown-plugin-gfm` 1.0.2 (MIT), for converting pasted HTML.
+
+### Problems met
+
+- The toolbar's dropdowns closed as soon as they opened: the toolbar waited for every editor change to settle,
+  focus moving into the menu included, and unmounted for a moment. It now waits only for the selection.
+- Three end-to-end steps were wrong, not the application: the selection helper reached for a CodeMirror internal
+  that is not exposed (now a DOM range), and two right-clicks landed outside the selection (now on its middle).
+- In Electron, a link on the note's first line showed its source (the cursor starts there), so nothing was drawn
+  to click; the test's note starts with a line of text.
+- Shell here-documents collapsed backslashes four more times (`\n` in strings, a regular expression, a Windows path);
+  each was fixed with the editor tools.
+- A window capture (`BrowserWindow.capturePage`) does not include native views: the test checks the view's URL,
+  visibility and bounds from the main process instead.
+
+### Tests
+
+- Unit and component: desktop policy 17 (5 new), server writing help 4, web 311 → with the phase's new files (links
+  and GitHub names 7, editor links 6, formatting 11, paste and extract 6) all passing.
+- `npm run verify` on 1.4.0: typecheck, Biome (811 files), 167 test files / 1,040 tests, build, smoke — passed.
+- Whole Playwright suite: **153 passed, 3 skipped, none failed** (5.9 min), including `e2e/links-selection.spec.ts`
+  (4) and the new Electron test of the web pane in `e2e/desktop.spec.ts`.
+- Screenshots of the editor, the link card, the toolbar and its AI menu, the right-click menu with Format, the
+  reading view and the desktop window with the pane were looked at; two faults found that way were fixed (the
+  dropdowns closing, GitHub links with words of their own drawn in the text colour instead of the link colour).
+
+### Next steps
+
+- Install 1.4.0 over the installed application when the student says so; try a few real papers in the pane (some
+  publishers ask for a sign-in, which the pane remembers on its own).

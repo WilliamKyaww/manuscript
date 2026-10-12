@@ -10,6 +10,11 @@ import {
   sanitisePick,
   senderAllowed,
   titleBarColour,
+  webCommand,
+  webPageUrl,
+  webUserAgent,
+  webViewBounds,
+  webViewId,
 } from './policy';
 
 const ORIGIN = 'http://127.0.0.1:51234';
@@ -187,5 +192,73 @@ describe('the name of a note printed to PDF', () => {
     expect(pdfFileName('   ')).toBe('Note.pdf');
     expect(pdfFileName(undefined)).toBe('Note.pdf');
     expect(pdfFileName('x'.repeat(500))).toHaveLength(124);
+  });
+});
+
+describe('the web pane beside a note (Phase 26)', () => {
+  it('shows pages on the web, never the application or anything that is not http(s)', () => {
+    expect(webPageUrl('https://www.sciencedirect.com/science/article/pii/S0168', ORIGIN)).toBe(
+      'https://www.sciencedirect.com/science/article/pii/S0168',
+    );
+    for (const refused of [
+      `${ORIGIN}/api/health`,
+      'file:///C:/Windows/win.ini',
+      'javascript:alert(1)',
+      'mailto:someone@example.org',
+      'https://user:secret@example.org/',
+      `https://example.org/${'a'.repeat(9000)}`,
+      42,
+      null,
+    ])
+      expect(webPageUrl(refused, ORIGIN), String(refused).slice(0, 40)).toBeNull();
+    // Without a server yet, the web is still the web.
+    expect(webPageUrl('http://example.org', null)).toBe('http://example.org/');
+  });
+
+  it('names tabs plainly', () => {
+    expect(webViewId('tlz3k9a1')).toBe('tlz3k9a1');
+    for (const refused of ['', 'a b', '../x', 'x'.repeat(41), 7, undefined])
+      expect(webViewId(refused)).toBeNull();
+  });
+
+  it('places the view in whole pixels, scaled by the page zoom, never off the window', () => {
+    expect(webViewBounds({ x: 10.4, y: 20.6, width: 300, height: 400 }, 1)).toEqual({
+      x: 10,
+      y: 21,
+      width: 300,
+      height: 400,
+    });
+    expect(webViewBounds({ x: 10, y: 20, width: 300, height: 400 }, 1.25)).toEqual({
+      x: 13,
+      y: 25,
+      width: 375,
+      height: 500,
+    });
+    expect(webViewBounds({ x: -5, y: -1, width: 100, height: 100 }, 1)).toMatchObject({
+      x: 0,
+      y: 0,
+    });
+    for (const refused of [
+      null,
+      'x',
+      { x: 0, y: 0, width: 100 },
+      { x: 0, y: 0, width: Number.NaN, height: 1 },
+      { x: 0, y: 0, width: 1e9, height: 1 },
+    ])
+      expect(webViewBounds(refused, 1)).toBeNull();
+  });
+
+  it('accepts only the commands of the toolbar', () => {
+    for (const command of ['back', 'forward', 'reload', 'stop', 'load'])
+      expect(webCommand(command)).toBe(command);
+    expect(webCommand('print')).toBeNull();
+  });
+
+  it('presents the pane as Chromium, without the Electron and application tokens', () => {
+    const fallback =
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) manuscript/1.3.0 Chrome/140.0.0.0 Electron/44.5.1 Safari/537.36';
+    expect(webUserAgent(fallback)).toBe(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+    );
   });
 });

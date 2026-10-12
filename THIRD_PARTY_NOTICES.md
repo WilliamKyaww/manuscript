@@ -72,3 +72,23 @@ This file lists third-party code, algorithms or text that has been **adapted int
 - `pdfjs-dist` itself is an ordinary dependency. Its character maps, standard fonts and image
   decoders are copied unchanged into the web build (`dist/pdfjs/`) together with their licence files
   (`LICENSE_FOXIT`, `LICENSE_LIBERATION`, `LICENSE_OPENJPEG`, `LICENSE_JBIG2`, `LICENSE_QCMS`, …).
+
+## Octicons (the GitHub mark)
+
+- Source: <https://github.com/primer/octicons> (`@primer/octicons` 19.40.0, file `build/svg/mark-github-16.svg`)
+- Licence: MIT — Copyright (c) GitHub Inc.
+- Adapted: the mark's path, unchanged, in `apps/web/src/features/notes/links/github-mark.tsx` (Phase 26), where
+  it marks links to GitHub in notes. The file carries a header naming the source and licence. The mark is
+  GitHub's logo: it is used only to say that a link goes to GitHub, as GitHub's logo guidelines allow.
+
+## Lucide (callout icons)
+
+- Source: <https://github.com/lucide-icons/lucide> (through `lucide-react` 1.52.0, an ordinary dependency)
+- Licence: ISC — Copyright (c) Lucide Contributors (parts MIT — Copyright (c) Cole Bemis, Feather)
+- Adapted: the drawings of thirteen icons (pencil, clipboard-list, info, circle-check, flame, check,
+  circle-question-mark, triangle-alert, x, zap, bug, list, quote), copied as SVG markup into
+  `apps/web/src/features/notes/callouts/icons.ts` and as data URLs into
+  `apps/web/src/features/notes/preview/callout-icons.css` (Phase 25), so that callouts in the editor and the
+  reading view draw the same icons without loading React components into the editor.
+- Adapted (Phase 26): the "external-link" icon's drawing, as a data URL in
+  `apps/web/src/features/notes/links/links.css` — the mark after a link to the web.

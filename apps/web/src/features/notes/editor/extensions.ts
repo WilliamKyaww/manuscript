@@ -40,7 +40,11 @@ import {
 } from '@codemirror/view';
 import { tags as t } from '@lezer/highlight';
 import { analyseNote } from '@skb/core/markdown';
+import { openInBrowser } from '../links/external';
 import { frontmatterStyle } from './frontmatter';
+import { linkInteraction } from './link-interaction';
+import { formattingKeymap } from './selection/keymap';
+import { pasteHandling } from './selection/paste';
 
 /**
  * CodeMirror 6 set-up for notes (task 3.14, ADR-0009): Markdown with GFM and highlighted code
@@ -63,6 +67,8 @@ export interface EditorCallbacks {
   onFollowLink(target: string): void;
   /** Files pasted or dropped into the editor (attachments to upload). */
   onFiles(files: File[], at: number): void;
+  /** A web link clicked (Phase 26): beside the note, or in the browser when `browser`. */
+  onOpenWebLink?(url: string, browser: boolean): void;
 }
 
 const theme = EditorView.theme({
@@ -165,7 +171,7 @@ const WIKILINK = /!?\[\[[^[\]\n]+\]\]/g;
 const HASHTAG = /(?<=^|[\s([{,;:!?"'])#[\p{L}\p{N}_\-/]*[\p{L}_\-/][\p{L}\p{N}_\-/]*/gmu;
 
 /** The wikilink target under a document position, if any. */
-function wikilinkAt(view: EditorView, pos: number): string | null {
+export function wikilinkAt(view: { state: EditorState }, pos: number): string | null {
   const line = view.state.doc.lineAt(pos);
   for (const match of line.text.matchAll(WIKILINK)) {
     const start = line.from + (match.index ?? 0);
@@ -272,6 +278,15 @@ export function createExtensions({
     syntaxHighlighting(highlighting),
     frontmatterStyle,
     ...extra,
+    formattingKeymap,
+    pasteHandling(),
+    linkInteraction(() => ({
+      openWebLink: (url, browser) => {
+        const open = callbacks().onOpenWebLink;
+        if (open) open(url, browser);
+        else openInBrowser(url);
+      },
+    })),
     decorationPlugin(WIKILINK, 'cm-wikilink'),
     decorationPlugin(HASHTAG, 'cm-hashtag'),
     autocompletion({ override: [completionSource(data)], icons: false }),

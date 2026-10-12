@@ -1,0 +1,81 @@
+/*
+ * Web links in notes (Phase 26), in the reading view and the editor alike: the external-link mark
+ * after a link to the web, as Obsidian draws it, and links to GitHub as mentions (the mark and a
+ * short name, as Notion draws them). The mark is Lucide's "external-link" (ISC licence), drawn as a
+ * mask so that it takes the link's colour.
+ */
+
+:root {
+  --skb-icon-external: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M15%203h6v6%22%2F%3E%3Cpath%20d%3D%22M10%2014%2021%203%22%2F%3E%3Cpath%20d%3D%22M18%2013v6a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h6%22%2F%3E%3C%2Fsvg%3E");
+}
+
+.markdown-body a.external-link::after,
+.cm-link-external-mark {
+  content: "";
+  display: inline-block;
+  width: 0.72em;
+  height: 0.72em;
+  margin-left: 0.18em;
+  vertical-align: 0.02em;
+  background-color: currentColor;
+  opacity: 0.75;
+  -webkit-mask: var(--skb-icon-external) center / contain no-repeat;
+  mask: var(--skb-icon-external) center / contain no-repeat;
+}
+
+/*
+ * GitHub. An address on its own is a mention, as Notion draws it: the mark and a short name in the
+ * text's colour, with a quiet underline. A link with words of its own stays a link (the accent and
+ * its underline) with the mark before the words.
+ */
+.markdown-body a.github-mention,
+.cm-github-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  color: var(--skb-text);
+  font-weight: 600;
+  text-decoration: none;
+  vertical-align: bottom;
+}
+.markdown-body a.github-mention > span,
+.cm-github-chip > .cm-github-label {
+  text-decoration: underline;
+  text-decoration-color: var(--skb-border-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.cm-github-chip > svg,
+.cm-github-mark > svg {
+  flex: none;
+  color: var(--skb-text);
+}
+.markdown-body a.github-link > svg {
+  display: inline;
+  flex: none;
+  margin-right: 0.3em;
+  vertical-align: -0.12em;
+  color: var(--skb-text);
+}
+.markdown-body a.github-mention > svg {
+  margin-right: 0;
+}
+.markdown-body a.github-mention:hover,
+.cm-github-chip:hover {
+  color: var(--skb-accent);
+}
+.markdown-body a.github-mention:hover > span,
+.cm-github-chip:hover > .cm-github-label {
+  text-decoration-color: currentColor;
+}
+.cm-github-mark {
+  display: inline-flex;
+  margin-right: 0.3em;
+  vertical-align: -0.12em;
+}
+
+@media print {
+  .markdown-body a.external-link::after {
+    display: none;
+  }
+}

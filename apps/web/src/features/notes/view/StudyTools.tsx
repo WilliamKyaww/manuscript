@@ -1,7 +1,7 @@
 import type { GenerationScope, NoteDetail } from '@skb/core';
 import type { HeadingRef } from '@skb/core/markdown';
 import { Link2, Sparkles, SquarePlus } from 'lucide-react';
-import { type RefObject, useState } from 'react';
+import { type RefObject, useEffect, useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,16 +33,25 @@ export function headingPathAt(headings: readonly HeadingRef[], line: number): st
   return path.map((heading) => heading.text);
 }
 
+/** The study tools' actions, for the editor's selection toolbar and menu (Phase 26). */
+export interface StudyActions {
+  makeCard(): void;
+  generate(): void;
+}
+
 export function StudyTools({
   note,
   editor,
   mode,
   headings,
+  actions,
 }: {
   note: NoteDetail;
   editor: RefObject<MarkdownEditorHandle | null>;
   mode: EditorMode;
   headings: readonly HeadingRef[];
+  /** Filled in with the actions, so that the selection toolbar runs the same ones. */
+  actions?: { current: StudyActions | null };
 }) {
   const inbox = useInboxActions();
   const [generating, setGenerating] = useState<GenerationScope | null>(null);
@@ -89,6 +98,10 @@ export function StudyTools({
         ),
       onError: notifyError,
     });
+
+  useEffect(() => {
+    if (actions) actions.current = { makeCard, generate };
+  });
 
   const suggesting = inbox.suggestLinks.isPending;
   return (

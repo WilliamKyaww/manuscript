@@ -14,6 +14,7 @@ import { AgentSettingsSection } from '../agent/AgentSettingsSection';
 import { AiSettingsSection } from '../ai/settings/AiSettingsSection';
 import { DataSection } from '../data/DataSection';
 import { AppearanceSection } from './AppearanceSection';
+import { EditorSettingsSection } from './EditorSettingsSection';
 import { NotesSettingsSection } from './NotesSettingsSection';
 import { PipelineSettingsSection } from './PipelineSettingsSection';
 import { PlanSettingsSection } from './PlanSettingsSection';
@@ -28,6 +29,7 @@ export function SettingsPage() {
       <VaultSection />
       <DataSection />
       <NotesSettingsSection />
+      <EditorSettingsSection />
       <ReviewSettingsSection />
       <PlanSettingsSection />
       <AiSettingsSection />

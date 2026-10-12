@@ -30,16 +30,22 @@ import {
   senderAllowed,
   titleBarColour,
   type WindowState,
+  webCommand,
+  webPageUrl,
+  webViewBounds,
+  webViewId,
 } from './policy';
 import { choosePort } from './port';
 import { loadSecretsKey, type SecretsKey } from './secrets';
+import { configureWebSession, WebViews, webSession } from './web-views';
 
 /**
  * The desktop shell (Phase 18, ADR-0016): one window onto the same server `npm start` runs, kept in
  * a utility process. It adds only what a web page cannot do — native pickers, showing a file in its
  * folder, the operating system's protection for AI keys, a window that remembers where it was —
  * and refuses to be anything else: the window shows no address but the server's, and links to the
- * web open in the system browser.
+ * web open in the system browser, or in the web pane beside a note (Phase 26, ADR-0045), whose pages
+ * live in a session of their own and never reach the server.
  */
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -79,6 +85,8 @@ let vaultOverride = true;
 const token = randomBytes(32).toString('base64url');
 /** PDFs saved this run, which "Show in folder" may point at wherever they were saved. */
 const exported = new Set<string>();
+/** The web pages shown beside notes. */
+const webViews = new WebViews(() => engine?.origin ?? null);
 
 /**
  * The slim title bar (task 23.10, ADR-0042): no system title bar or menu bar, only the window's
@@ -263,7 +271,13 @@ function openWindow(running: Engine): void {
 
 /** Rules for every page this process ever shows (also the pages other pages might open). */
 function hardenWebContents(): void {
+  const web = webSession();
   app.on('web-contents-created', (_event, contents) => {
+    // A page of the web pane (or a pop-up it opened) has rules of its own: the web, never the app.
+    if (contents.session === web) {
+      webViews.harden(contents);
+      return;
+    }
     const guard = (event: { preventDefault(): void }, url: string) => {
       if (engine && isAppUrl(url, engine.origin)) return;
       event.preventDefault();
@@ -293,8 +307,9 @@ function hardenWebContents(): void {
       return { action: 'deny' };
     });
   });
-  // A page asks for nothing it does not need: writing to the clipboard and full screen, no more.
-  const allowed = new Set(['clipboard-sanitized-write', 'fullscreen']);
+  // The window's pages ask for nothing they do not need: the clipboard (the editor's menu reads it
+  // for Paste) and full screen, no more.
+  const allowed = new Set(['clipboard-sanitized-write', 'clipboard-read', 'fullscreen']);
   session.defaultSession.setPermissionRequestHandler((_contents, permission, callback) =>
     callback(allowed.has(permission)),
   );
@@ -382,6 +397,46 @@ function registerBridge(): void {
       target.setTitleBarOverlay({ color, symbolColor, height: TITLE_BAR_HEIGHT });
   });
 
+  // The web pane (Phase 26): open a tab's page, place or hide it, steer it, picture it, let it go.
+  const webTab = (event: IpcMainInvokeEvent, given: unknown) => {
+    const owner = asking(event);
+    if (!trusted(event) || !owner || typeof given !== 'object' || given === null) return null;
+    const fields = given as Record<string, unknown>;
+    const id = webViewId(fields.id);
+    return id ? { owner, id, fields } : null;
+  };
+  ipcMain.handle('skb:web-open', (event, given: unknown) => {
+    const tab = webTab(event, given);
+    const url = tab ? webPageUrl(tab.fields.url, engine?.origin ?? null) : null;
+    if (!tab || !url) return false;
+    webViews.open(tab.owner, tab.id, url);
+    return true;
+  });
+  ipcMain.handle('skb:web-place', (event, given: unknown) => {
+    const tab = webTab(event, given);
+    if (!tab) return;
+    const bounds =
+      tab.fields.bounds === null
+        ? null
+        : webViewBounds(tab.fields.bounds, tab.owner.webContents.getZoomFactor());
+    webViews.place(tab.owner, tab.id, bounds);
+  });
+  ipcMain.handle('skb:web-command', (event, given: unknown) => {
+    const tab = webTab(event, given);
+    const command = tab ? webCommand(tab.fields.command) : null;
+    if (!tab || !command) return;
+    const url = command === 'load' ? webPageUrl(tab.fields.url, engine?.origin ?? null) : null;
+    webViews.command(tab.owner, tab.id, command, url);
+  });
+  ipcMain.handle('skb:web-snapshot', (event, given: unknown) => {
+    const tab = webTab(event, given);
+    return tab ? webViews.snapshot(tab.owner, tab.id) : null;
+  });
+  ipcMain.handle('skb:web-release', (event, given: unknown) => {
+    const tab = webTab(event, given);
+    if (tab) webViews.release(tab.owner, tab.id);
+  });
+
   ipcMain.handle('skb:app-info', (event) => {
     if (!trusted(event)) return null;
     return {
@@ -418,7 +473,15 @@ if (!app.requestSingleInstanceLock()) {
 
   app.on('window-all-closed', () => app.quit());
 
+  // A window that loads its page again, crashes or closes takes its web pages with it.
+  app.on('browser-window-created', (_event, created) => {
+    created.webContents.on('did-navigate', () => webViews.releaseAll(created));
+    created.webContents.on('render-process-gone', () => webViews.releaseAll(created));
+    created.on('closed', () => webViews.releaseAll(created));
+  });
+
   void app.whenReady().then(async () => {
+    configureWebSession();
     hardenWebContents();
     registerBridge();
     Menu.setApplicationMenu(buildMenu({ folders: () => folders, devTools }));

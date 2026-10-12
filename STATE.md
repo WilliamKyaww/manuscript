@@ -1,13 +1,13 @@
 # State — Manuscript
 
-_Last updated: 12 October 2026 — Claude Sonnet 5.5._
+_Last updated: 12 October 2026 — Claude Opus 5.5._
 
 ## Current phase
 
-**Version 1.3.0 — Markdown as Obsidian writes it** (Phase 25: the editor draws tables, lists, tasks, callouts and
-maths; Obsidian's callout types, highlight colours, inline footnotes, block ids and line breaks in the reading view;
-`CHANGELOG.md`). 1.2.1 (desktop preferences survive a restart), 1.2.0 (appearance), 1.1.0 (the notes workspace) and
-1.0.0 are tagged. All phases are merged into `main`: Phase 25 (Markdown), Phase 24
+**Version 1.4.0 — links and selections** (Phase 26: web pages beside notes in the desktop app, link cards, GitHub
+mentions, the selection toolbar, Obsidian's editor menu, AI on a selection, pasting as Markdown; `CHANGELOG.md`).
+1.3.0 (Markdown as Obsidian writes it), 1.2.1, 1.2.0 (appearance), 1.1.0 (the notes workspace) and 1.0.0 are
+tagged. All phases are merged into `main`: Phase 26 (links and selections), Phase 25 (Markdown), Phase 24
 (appearance), Phase 23 (the notes workspace), Phase 22 (release), Phase 21 (verification, closed at the user's request with four checks left open — see
 Pending), Phase 20 (final UI/UX polish), and Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
 and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
@@ -32,6 +32,12 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
   history (`.skb/history/versions`, five-minute interval, 30 days), merging and copies, export to PDF, the open
   vault and *Open folder as vault…* at the foot of the Files pane, a Details panel that starts closed. The sidebar
   is 13.5 rem, resizable and collapsed until opened; the desktop app has a slim title bar in the app's colours.
+- **Links and selections** (Phase 26, ADR-0045, `docs/guide/markdown.md` §2 and §7, `docs/guide/desktop.md`):
+  a click on a web link opens the page in a pane on the left of the note (desktop app; a sandboxed
+  `persist:web` session; a browser opens a new tab), link cards on hover, GitHub links as offline mentions, a
+  toolbar over selected text, Obsidian's right-click menu (Format, Paragraph, Insert, AI, clipboard), AI on a
+  selection as a suggestion (`POST /api/ai/write`), extract to a new note, pasting HTML as Markdown (Turndown),
+  formatting shortcuts, and *Settings → Editor*.
 - **Obsidian's Markdown** (Phase 25, ADR-0044, `docs/guide/markdown.md` §1): live preview draws tables, lists with
   bullets and indentation, task lists with clickable boxes, callouts (thirteen types, aliases, icons), quotes, rules,
   inline and display maths and embedded images; the reading view adds highlight colours, inline footnotes, block ids,
@@ -271,9 +277,9 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## Next steps
 
-1. Install 1.3.0 over the installed version (`apps\desktop\release\Manuscript-Setup-1.3.0.exe`), use it, and report
-   what goes wrong or is missing: fixes and backlog items (B-KM-26 to B-KM-29 are the Markdown limits) become the
-   next work.
+1. Install 1.4.0 over the installed version (`apps\desktop\release\Manuscript-Setup-1.4.0.exe`), use it, and report
+   what goes wrong or is missing: fixes and backlog items (B-KM-26 to B-KM-33 are the known limits of the last two
+   phases) become the next work.
 2. When the laptop is idle: `npm run test:perf` (four budgets were over on 11 October under load — so was the Phase 17
    code, which had met them).
 
@@ -300,7 +306,8 @@ logs are files in the vault, trouble with the machine is said as such · **ADR-0
 the server, a token per launch, AI keys wrapped and not handed over · **ADR-0042** tabs and panes live in the
 browser, versions are files beside the database · **ADR-0043** appearance is theme, palette and density of chrome on
 the document · **ADR-0044** the editor draws Markdown blocks; Obsidian's line breaks and callout types are the
-defaults.
+defaults · **ADR-0045** web pages beside notes in a sandboxed session of their own (amends ADR-0041); selection
+tools are editor commands; AI suggests and the student applies.
 
 ## Technical debt
 

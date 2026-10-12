@@ -1,11 +1,14 @@
 import { openSearchPanel } from '@codemirror/search';
 import { Annotation, ChangeSet, Compartment, EditorState, Transaction } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { changedRange } from '../../../lib/diff';
 import { type CompletionData, createExtensions, type EditorCallbacks } from './extensions';
 import { contextFromAttachments, livePreviewContext } from './live/context';
 import { livePreview } from './live-preview';
+import type { EditorTools } from './selection/actions';
+import { createHub } from './selection/hub';
+import { SelectionLayer } from './selection/SelectionLayer';
 
 /**
  * Positions and ranges passed to the handle count every line break as one character (as CodeMirror
@@ -46,6 +49,11 @@ export interface MarkdownEditorProps extends EditorCallbacks {
   completions: CompletionData;
   /** Hide the marks of Markdown outside the element under the cursor. */
   livePreview?: boolean;
+  /**
+   * The page's tools for the selection (Phase 26): with them, the editor has its right-click menu,
+   * the toolbar over a selection and AI suggestions; without, it is a plain editor.
+   */
+  tools?: EditorTools;
   className?: string;
 }
 
@@ -61,6 +69,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
       lineSeparator,
       completions,
       livePreview: live = false,
+      tools,
       className,
       ...callbacks
     },
@@ -77,6 +86,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
     liveNow.current = live;
     const checkpoints = useRef(new Map<number, ChangeSet>());
     const nextCheckpoint = useRef(1);
+    const [hub] = useState(createHub);
 
     const makeState = (text: string) =>
       EditorState.create({
@@ -97,6 +107,13 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
             ],
           }),
           EditorView.updateListener.of((update) => {
+            if (
+              update.selectionSet ||
+              update.focusChanged ||
+              update.geometryChanged ||
+              update.docChanged
+            )
+              hub.notify();
             if (!update.docChanged) return;
             for (const [id, changes] of checkpoints.current) {
               checkpoints.current.set(id, changes.compose(update.changes));
@@ -110,9 +127,12 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
     useEffect(() => {
       if (!host.current) return;
       view.current = new EditorView({ state: makeState(initialText), parent: host.current });
+      hub.view = view.current;
+      hub.notify();
       return () => {
         view.current?.destroy();
         view.current = null;
+        hub.view = null;
       };
     }, []);
 
@@ -230,6 +250,12 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
       [],
     );
 
-    return <div ref={host} className={className} data-editor />;
+    const editor = <div ref={host} className={className} data-editor />;
+    if (!tools) return editor;
+    return (
+      <SelectionLayer hub={hub} tools={tools} readOnly={readOnly}>
+        {editor}
+      </SelectionLayer>
+    );
   },
 );

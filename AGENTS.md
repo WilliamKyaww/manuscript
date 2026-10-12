@@ -93,8 +93,12 @@ All verified on 4 October 2026 (Phase 1):
 - Another local project may already use Vite's default port 5173 — this project's dev server uses 5317.
   E2E ports: 4399 for the shared Playwright server, and 4398 down to 4386 for the tests that run a
   server of their own (`e2e/server.ts`, which can pass extra environment such as
-  `SKB_AI_PROVIDER=mock`); 4385 for the soak and 4383 for the grounding evaluation. The next free one
-  is 4384, then 4382.
+  `SKB_AI_PROVIDER=mock`); 4385 for the soak, 4384 for AI on a selection (`e2e/links-selection.spec.ts`)
+  and 4383 for the grounding evaluation. The next free one is 4382, then 4381.
+- **The desktop shell treats web-pane pages differently** (Phase 26, ADR-0045): `web-contents-created` sends
+  every contents of the `persist:web` session to `WebViews.harden` instead of the window's rules. A screenshot
+  of the window (`capturePage`) does not include the native views; check them from the main process
+  (`contentView.children`) as `e2e/desktop.spec.ts` does.
 - **`fork()` passes on the parent's Node flags**: a script run with `tsx` that forks the built server
   runs it through tsx's loader (six times the memory, slower). Pass `execArgv` explicitly (`[]`, or
   `['--expose-gc', …]` as the soak does).
