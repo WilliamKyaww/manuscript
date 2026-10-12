@@ -9,6 +9,7 @@ import type {
 } from '@ai-sdk/provider';
 import { mockAgentTurn } from './mock-agent';
 import { mockStructured } from './mock-generation';
+import { mockWriting } from './mock-writing';
 import { streamOf } from './stream-parts';
 
 /**
@@ -43,6 +44,14 @@ export function mockAnswer(prompt: LanguageModelV4Prompt): string {
   // Compacting a long conversation (Phase 13): a summary that names what was talked about.
   if (/^Task: summarise-chat/mu.test(system))
     return `Earlier in this conversation: ${firstSentence(user.replace(/^(?:student|assistant): /gimu, ''))}`;
+  // Writing help on a selection (Phase 26): a predictable change of the selected text.
+  const writing = /^Task: write-([\w-]+)/mu.exec(system)?.[1];
+  if (writing)
+    return mockWriting(
+      writing,
+      [...user.matchAll(PASSAGE)][0]?.[2] ?? '',
+      /^Instruction: (.*)$/mu.exec(system)?.[1] ?? '',
+    );
   const passages = [...user.matchAll(PASSAGE)].slice(0, 2);
   const general = /Scope: general/u.test(system);
   if (passages.length === 0)

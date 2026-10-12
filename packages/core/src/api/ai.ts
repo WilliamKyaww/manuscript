@@ -385,3 +385,56 @@ export const relatedNotesEndpoint = defineEndpoint({
 
 /** Streams AskEvent lines; not a JSON endpoint, so it is declared here for its path only. */
 export const ASK_PATH = '/api/ai/ask';
+
+/**
+ * Writing help on selected text (Phase 26): improving, correcting, shortening or explaining what the
+ * student wrote. The answer comes back to the editor, where the student chooses whether to use it;
+ * nothing is written to a note by the server.
+ */
+export const WRITING_ACTIONS = [
+  'improve',
+  'proofread',
+  'shorter',
+  'longer',
+  'simplify',
+  'summarise',
+  'explain',
+  'list',
+  'table',
+  'custom',
+] as const;
+export const WritingActionSchema = z.enum(WRITING_ACTIONS);
+export type WritingAction = z.infer<typeof WritingActionSchema>;
+
+export const WritingRequestSchema = z
+  .object({
+    action: WritingActionSchema,
+    text: z
+      .string()
+      .trim()
+      .min(1, 'Select some text first.')
+      .max(20_000, 'Select less text (at most 20,000 characters).'),
+    /** What to do, in the student's words ("Edit with AI…"). */
+    instruction: z.string().trim().max(500).optional(),
+    /** The note's title, for context. */
+    title: z.string().trim().max(300).optional(),
+  })
+  .refine((request) => request.action !== 'custom' || Boolean(request.instruction), {
+    message: 'Say what to do with the text.',
+    path: ['instruction'],
+  });
+export type WritingRequest = z.infer<typeof WritingRequestSchema>;
+
+export const WritingResultSchema = z.object({
+  text: z.string(),
+  /** The model that answered, as Settings → AI names it. */
+  model: z.string(),
+});
+export type WritingResult = z.infer<typeof WritingResultSchema>;
+
+export const assistWritingEndpoint = defineEndpoint({
+  method: 'POST',
+  path: '/api/ai/write',
+  body: WritingRequestSchema,
+  response: WritingResultSchema,
+});

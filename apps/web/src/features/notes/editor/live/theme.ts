@@ -141,6 +141,15 @@ export const liveTheme = EditorView.theme({
   '.cm-inline-footnote': { color: 'var(--skb-text-muted)' },
   '.cm-block-id': { color: 'var(--skb-text-subtle)', fontSize: '0.85em' },
   '.cm-embed': { color: 'var(--skb-accent)' },
+  // Drawn links (Phase 26): underlined like the reading view's, and a click opens them.
+  '.cm-link': {
+    color: 'var(--skb-accent)',
+    textDecoration: 'underline',
+    textUnderlineOffset: '3px',
+    cursor: 'pointer',
+  },
+  '.cm-link-external-mark, .cm-github-chip, .cm-github-mark': { cursor: 'pointer' },
+  '.cm-link-external-mark': { color: 'var(--skb-accent)' },
   '.cm-embed-image': {
     display: 'inline-block',
     maxWidth: '100%',

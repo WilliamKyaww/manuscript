@@ -23,6 +23,8 @@ import {
 import { useApi } from '../../../lib/api/context';
 import { cn } from '../../../lib/cn';
 import { noteQuery } from '../api';
+import { externalUrl } from '../links/external';
+import { WebLink } from '../links/WebLink';
 import { useNotesUi } from '../notes-store';
 import { FileEmbed } from './FileEmbed';
 import { MermaidDiagram } from './MermaidDiagram';
@@ -48,6 +50,8 @@ export interface MarkdownPreviewProps {
   className?: string;
   /** Nesting level of embedded notes (they stop at three levels). */
   depth?: number;
+  /** The note pane this preview is in: web links open beside it (Phase 26), not in the browser. */
+  paneId?: string;
 }
 
 interface PreviewContextValue {
@@ -58,6 +62,7 @@ interface PreviewContextValue {
   depth: number;
   /** Notes already being shown in this chain of embeds (to stop loops). */
   chain: readonly string[];
+  paneId?: string;
 }
 
 const PreviewContext = createContext<PreviewContextValue | null>(null);
@@ -86,9 +91,10 @@ function attribute(props: Record<string, unknown>, name: string): string | null 
 
 function PreviewLink({
   href,
+  text,
   children,
   ...props
-}: { href?: string; children?: ReactNode } & Record<string, unknown>) {
+}: { href?: string; text: string; children?: ReactNode } & Record<string, unknown>) {
   const context = useContext(PreviewContext);
   const navigate = useNavigate();
   const className = typeof props.className === 'string' ? props.className : undefined;
@@ -167,6 +173,13 @@ function PreviewLink({
       </a>
     );
   }
+  const web = attribute(props, 'data-file') === null ? externalUrl(href) : null;
+  if (web)
+    return (
+      <WebLink href={href ?? web} text={text} paneId={context?.paneId} className={className}>
+        {children}
+      </WebLink>
+    );
   const external = /^https?:/i.test(href ?? '') || attribute(props, 'data-file') !== null;
   return (
     <a
@@ -266,7 +279,7 @@ function EmbedPlaceholder(props: Record<string, unknown> & { children?: ReactNod
 }
 
 const COMPONENTS: Components = {
-  a: ({ node: _node, ...props }) => <PreviewLink {...props} />,
+  a: ({ node, ...props }) => <PreviewLink {...props} text={node ? hastText(node) : ''} />,
   img: ({ node: _node, ...props }) => <PreviewImage {...props} />,
   span: ({ node: _node, ...props }) =>
     attribute(props, 'data-embed') ? <EmbedPlaceholder {...props} /> : <span {...props} />,
@@ -328,10 +341,11 @@ export function MarkdownPreview({
   onCreateConcept,
   className,
   depth = 0,
+  paneId,
 }: MarkdownPreviewProps) {
   const value = useMemo<PreviewContextValue>(
-    () => ({ resolve, noteId, onCreateNote, onCreateConcept, depth, chain: [noteId] }),
-    [resolve, noteId, onCreateNote, onCreateConcept, depth],
+    () => ({ resolve, noteId, onCreateNote, onCreateConcept, depth, chain: [noteId], paneId }),
+    [resolve, noteId, onCreateNote, onCreateConcept, depth, paneId],
   );
   return (
     <PreviewContext.Provider value={value}>

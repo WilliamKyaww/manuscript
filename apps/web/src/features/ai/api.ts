@@ -2,6 +2,7 @@ import {
   type AiRole,
   aiStatusEndpoint,
   aiUsageEndpoint,
+  assistWritingEndpoint,
   createProviderEndpoint,
   deleteProviderEndpoint,
   embeddingStatusEndpoint,
@@ -12,6 +13,7 @@ import {
   testProviderEndpoint,
   updateAiPreferencesEndpoint,
   updateProviderEndpoint,
+  type WritingRequest,
 } from '@skb/core';
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
@@ -81,4 +83,17 @@ export function useAiActions() {
     ),
     rebuildEmbeddings: useAiMutation(() => api.request(rebuildEmbeddingsEndpoint)),
   };
+}
+
+/**
+ * Writing help on selected text (Phase 26): one answer per request, which the editor offers as a
+ * suggestion. Usage (and so the month's totals) changes, so the status is refreshed afterwards.
+ */
+export function useWritingHelp() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: WritingRequest) => api.request(assistWritingEndpoint, { body }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: aiKeys.status() }),
+  });
 }
