@@ -50,6 +50,12 @@ _Last updated: 12 October 2026 (version 1.2.0, Phase 24 — appearance)._
 | F-KN-21 | Callouts: the thirteen types and their aliases with their colours and icons in the editor and the reading view; fold marks in the reading view | Complete — a callout does not fold in the editor | 25 |
 | F-KN-22 | Highlight colours (`==🟢text==`), inline footnotes, block ids and links to them, nested heading links, image sizes in Markdown images, PDF page and height | Complete | 25 |
 | F-KN-23 | Obsidian's line breaks in the reading view, with a *Strict line breaks* setting for standard Markdown | Complete | 25 |
+| F-KN-24 | Web links: the external-link mark, a link card on hover (address, Copy, Edit, Open in browser) in the editor and the reading view | Complete | 26 |
+| F-KN-25 | Web pages in a pane on the left of the note (desktop app): back, forward, reload, address bar, remembered tabs; Ctrl+click or the card for the browser; a sandboxed session of their own | Complete — a browser opens a new tab instead | 26 |
+| F-KN-26 | GitHub links as mentions (the mark and a name from the address: repository, issue, pull request, file), offline | Complete | 26 |
+| F-KN-27 | Selection toolbar (turn into, inline formats, highlight colours, link, comment, AI, more) and Obsidian's editor menu (Format, Paragraph, Insert, links, search, extract, clipboard), with shortcuts | Complete | 26 |
+| F-KN-28 | AI on a selection: improve, fix spelling and grammar, shorter, longer, simplify, list, table, summarise, explain, custom; a suggestion to replace or insert | Complete — needs AI set up; one answer at a time, not streamed | 26 |
+| F-KN-29 | Pasting rich text as Markdown (Turndown), plain text with Ctrl+Shift+V; extracting a selection to a new note | Complete | 26 |
 
 ## Knowledge — search
 

@@ -130,6 +130,10 @@ _Last reviewed: 10 October 2026 (Phase 15)._
 | B-KM-27 | Fold and unfold callouts in the editor, and tick a task's box in the reading view | Obsidian does both; here folding only works in the reading view and ticking only in the editor | Phase 25 |
 | B-KM-28 | Draw `![](path)` Markdown images and embedded notes (`![[Note]]`) in the editor | Only the reading view draws them; wikilink image embeds are drawn in both | Phase 25 |
 | B-KM-29 | Scroll the editor to a `[[Note#^block]]` target (block positions in the index) | The reading view scrolls to the block; the editor opens the note at the top | Phase 25 |
+| B-KM-30 | Page previews: rest the pointer on a `[[wikilink]]` to see the note (Obsidian's Page preview) | Web links have a card on hover; links to notes have none yet | Phase 26 |
+| B-KM-31 | AI answers on a selection streamed as they are written, and more than one at a time | The answer comes whole after a few seconds; a second request replaces the first | Phase 26 |
+| B-KM-32 | Titles of GitHub issues and pull requests in mentions, fetched only when the student allows it | Mentions are named from the address (`repo#12`), as nothing is fetched | Phase 26 |
+| B-KM-33 | The web pane: find in page, zoom, downloads listed, and a reading mode for articles | The pane is a plain browser view; the system browser has these | Phase 26 |
 
 ## Platform (PL)
 

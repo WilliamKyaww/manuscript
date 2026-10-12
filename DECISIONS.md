@@ -1082,3 +1082,43 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   edited as source (no cell editing yet), and
   callouts do not fold in the editor; both are recorded in `docs/guide/markdown.md` §11.
 - **Date.** 12 October 2026.
+
+## ADR-0045 — Web pages beside notes in a separate, sandboxed session; the editor's selection tools are local commands; AI suggests, the student applies
+
+- **Context.** The student asked for links to open beside the note rather than in the browser, a link card
+  on hover (as in Notion) with Obsidian's external-link mark, GitHub links shown as mentions, and the
+  selection tools of Notion and Obsidian: a toolbar over selected text and a full right-click menu, AI
+  actions included. ADR-0041 said that the desktop shell shows only the server.
+- **Options.** For the pages: an `<iframe>` (most sites, ScienceDirect among them, forbid being framed), the
+  deprecated `<webview>` tag, or a native `WebContentsView` laid over a box the page keeps for it. For GitHub:
+  fetching titles from GitHub's API, or naming links from their address alone. For AI on a selection: an agent
+  tool that edits the note, or a plain request whose answer the editor offers.
+- **Decision.**
+  - **ADR-0041 is amended:** the main window still shows only the server, but a web tab of the Notes page is a
+    `WebContentsView` in a **session of its own** (`persist:web`, in the data folder, never the vault): no
+    preload, no Node, sandboxed, no permissions beyond full screen and writing to the clipboard, and no address
+    but `http(s)` on the web — never the application's own origin. It never sees the application's cookie or
+    token. A link meant for a new tab stays in the pane; a pop-up a page asks for (a sign-in window) is a window
+    in the same session. Views are kept for six tabs per window and let go when their tab closes, the window
+    reloads or the page crashes. While one of the window's own menus or dialogues would be covered, the view
+    hides and the page shows a picture of it.
+  - **Where pages open:** in the other pane, or a new pane on the left of the note, which stays the active pane
+    (so the address keeps showing the note). A plain click opens a page there; Ctrl/⌘+click, a middle click or
+    *Open in browser* use the system browser. In a browser, links open in a new tab. *Settings → Editor* can
+    turn the pane off.
+  - **GitHub links are named from their address** (`repo`, `repo#12`, `file · repo`): nothing is fetched, so a
+    note still never makes the application contact another site. The mark is GitHub's Octicon (MIT).
+  - **Formatting, links, blocks and insertions are local editor commands** on the Markdown text (undoable like
+    typing), shared by the toolbar, the right-click menu and the shortcuts. Pasted HTML becomes Markdown with
+    Turndown (MIT) unless it comes from a code editor; Ctrl+Shift+V pastes plain text.
+  - **AI on a selection is a request, not a tool** (`POST /api/ai/write`): the quick-tasks model answers, the
+    editor shows the answer, and only the student's *Replace* or *Insert below* changes the note — one undoable
+    edit. The agent's tools and approvals are not involved because the model acts on nothing.
+- **Reason.** A native view is the only way to show sites that refuse frames; a session of its own keeps the web
+  away from the application's token and files. Naming GitHub links offline keeps the no-contact rule. Keeping AI
+  as a suggestion keeps every change to a note the student's.
+- **Consequences.** The shell has more to guard (tests check isolation, bounds and release); a page in the pane
+  uses memory like a browser tab; menus over the pane show a picture of the page for a moment. Sites that refuse
+  embedded browsers (some sign-ins) need *Open in browser*. Runtime dependencies: `turndown`,
+  `turndown-plugin-gfm`.
+- **Date.** 12 October 2026.

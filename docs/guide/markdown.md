@@ -80,6 +80,23 @@ one with the **shortest path**. Such links are reported as ambiguous.
 `[[#Heading]]` links within the same note. A link that leads nowhere yet is shown differently;
 selecting it in the preview offers **Create note** (next to the current one) or **Create concept**.
 
+### Links to the web
+
+- A link to a web page ends with a small **external-link mark** (as in Obsidian), in the editor and the
+  preview. Rest the pointer on it (or tab to it in the preview) for its **card**: the address, **Copy**,
+  **Edit** (in the editor: selects the address, showing the link's source) and **Open in browser**.
+- **A click opens the page beside the note** — in a pane on its left, with back, forward, reload, an address
+  you can type into, *Copy link* and *Open in browser* — when you use the desktop app. **Ctrl+click** (⌘ on a
+  Mac), a middle click or *Open in browser* use your browser instead. A browser cannot show other sites inside
+  a page, so there a click opens a new tab. *Settings → Editor → Open web links beside the note* turns the
+  pane off.
+- **Links to GitHub** show GitHub's mark. An address on its own (`https://github.com/you/project`) becomes a
+  mention with the repository's name (`project`, `project#12` for an issue or pull request, `train.py ·
+  project` for a file); a link with words of its own keeps them. The names come from the address — nothing
+  is fetched from GitHub.
+- In the editor, a link drawn by live preview opens when clicked; to edit it, use the card's **Edit**, click
+  beside it, or move the cursor into it with the keyboard.
+
 **Backlinks** (the Backlinks tab) list every note that links here, with the line containing the link.
 The **Graph** tab shows the note's neighbourhood in the [knowledge graph](./graph.md#6-local-graphs).
 **Unlinked mentions** finds the note's name, title or aliases written as plain words in other notes
@@ -164,6 +181,24 @@ your behalf — and are shown as a link instead.
   (inline and display), images embedded with `![[…]]`, footnote marks and block ids. Move the cursor into a
   line, a link or a block and its source comes back to be edited. Only the display changes, never the file.
   Front matter at the top is shown small and grey.
+- **Selecting text** brings a toolbar over it, as in Notion: *Turn into* (text, headings, lists, a task list,
+  a quote, a callout or a code block), bold, italic, underline, strikethrough, code, maths, highlight colours,
+  a link (to the web, or `[[…]]` to a note), clear formatting, a `%%comment%%`, **Ask AI**, and *More*
+  (search for the text, extract it to a new note, make a card, generate, insert, the clipboard). Escape puts
+  it away; Alt+F10 moves into it from the keyboard. *Settings → Editor* turns it off.
+- **Right-click** (or Shift+F10) for Obsidian's menu: what a link offers (open it, beside or in a new tab,
+  copy or edit it), *Add link*, *Add external link*, *Search for …*, *Extract selection to a new note…*,
+  **Format**, **Paragraph** and **Insert** (footnote, table, callout, rule, code or maths block), **AI**, then
+  Cut, Copy, Paste, *Paste as plain text* and Select all.
+- **AI on a selection** (when AI is set up, [AI](./ai.md)): improve the writing, fix spelling and grammar, make
+  it shorter or longer, simplify, turn it into a list or a table, summarise, explain, or *Edit with AI…* with
+  your own instruction. The answer appears under the text; nothing changes until you choose **Replace
+  selection** or **Insert below**, and Ctrl+Z undoes it. Without AI, the menu says how to set it up.
+- **Extract selection to a new note** moves the text into a new note in the same folder and leaves a
+  `[[link]]` to it.
+- **Pasting** from a web page or a document keeps headings, lists, links, emphasis, code and tables as
+  Markdown (*Settings → Editor* can turn this off); text from a code editor stays as it was, and
+  **Ctrl+Shift+V** always pastes plain text.
 - If the note is changed **outside the editor** (Obsidian, VS Code, a sync tool) while you have no
   unsaved changes, the editor quietly shows the new version.
 - If it changes while you **do** have unsaved changes, nothing is overwritten: a banner offers
@@ -264,6 +299,8 @@ when something needs them). Behaviour differs in a few places (ADR-0026):
 | A task's box can be ticked in the editor, not in the preview | Ticked in both |
 | A callout's fold (`+` / `-`) is applied in the preview; in the editor the callout is always open | Folds in both |
 | Markdown images `![](path)` and embedded notes are drawn in the preview, not in the editor | Drawn in both |
+| A web link opens in a pane beside the note (desktop app), Ctrl+click in the browser | In the browser, or Obsidian's Web viewer when it is on |
+| A toolbar over selected text, and AI actions on it | Neither (plugins add them) |
 | An id may be added as `id:` (or `skb-id:`) to notes other data refers to | — |
 
 ## 12. Keyboard
@@ -274,6 +311,15 @@ of each page.
 | Keys | Where | Action |
 |---|---|---|
 | `Ctrl+S` | Editor | Save now |
+| `Ctrl+B` / `Ctrl+I` / `Ctrl+U` | Editor | Bold / italic / underline the selection |
+| `Ctrl+Shift+S` / `Ctrl+Shift+H` | Editor | Strikethrough / highlight |
+| ``Ctrl+` `` / `Ctrl+Shift+E` | Editor | Inline code / inline maths |
+| `Ctrl+Shift+M` | Editor | `%%comment%%` (hidden in the preview) |
+| `Ctrl+Shift+K` | Editor | Link the selection to a web address |
+| `Ctrl+Shift+V` | Editor | Paste as plain text |
+| `Alt+F10` | Editor | Move into the toolbar over a selection (arrows move along it, Esc goes back) |
+| `Shift+F10` or the Menu key | Editor | The editor's menu |
+| `Ctrl+Click` on a web link | Editor, preview | Open it in the browser (a plain click opens it beside the note) |
 | `Ctrl+Click` on a wikilink | Editor | Open the linked note |
 | `[[` / `#` | Editor | Complete a note or concept name / a tag (`Enter` accepts) |
 | `Esc`, then `Tab` | Editor | Move focus out of the editor (`Ctrl+M` toggles Tab moving focus) |

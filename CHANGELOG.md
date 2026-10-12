@@ -3,6 +3,47 @@
 All notable changes to Manuscript. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] — 2026-10-12
+
+Links and selections (Phase 26): web pages beside your notes, link cards, GitHub mentions, a toolbar over
+selected text, Obsidian's editor menu, AI on a selection and pasting as Markdown.
+
+### Release notes
+
+**Updating.** Install `Manuscript-Setup-1.4.0.exe` over 1.3.0. Your vault, data and settings are untouched. Links
+to the web now open beside the note when clicked in the desktop app; Ctrl+click opens them in your browser, and
+*Settings → Editor* can turn the pane off.
+
+### Added
+
+- **Web pages beside your notes** (desktop app): a click on a web link opens the page in a pane on the left of
+  the note — back, forward, reload, an address bar, *Copy link*, *Open in browser* — and the note stays open
+  beside it. Pages are tabs like notes and come back after a restart. They run in a sandboxed session of their
+  own that cannot see Manuscript's sign-in, your notes or your files. In a browser, links open in a new tab.
+- **Link cards**: rest the pointer on a web link, in the editor or the reading view, for its address with
+  **Copy**, **Edit** and **Open in browser**; links to the web end with Obsidian's external-link mark.
+- **GitHub links as mentions**: GitHub's mark and the repository's name (`repo#12` for an issue or pull request,
+  `file · repo` for a file), read from the address — nothing is fetched from GitHub.
+- **A toolbar over selected text**, as in Notion: *Turn into* (text, headings, lists, tasks, quote, callout,
+  code block), bold, italic, underline, strikethrough, code, maths, highlight colours, link, clear formatting,
+  comment, **Ask AI** and *More*. Alt+F10 reaches it from the keyboard.
+- **Obsidian's editor menu** on a right click: open, copy or edit a link, *Add link*, *Add external link*, *Search
+  for …*, *Extract selection to a new note…*, **Format**, **Paragraph**, **Insert** (footnote, table, callout, rule,
+  code and maths blocks), **AI**, Cut, Copy, Paste, *Paste as plain text*, Select all.
+- **AI on a selection**: improve, fix spelling and grammar, shorter, longer, simpler, a list, a table, a summary,
+  an explanation, or your own instruction. The answer is a suggestion — **Replace selection** or **Insert below**
+  — and Ctrl+Z undoes it.
+- **Pasting keeps formatting**: text from a web page or a document arrives as Markdown (headings, lists, links,
+  tables); Ctrl+Shift+V pastes plain text.
+- **Formatting shortcuts**: Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+Shift+S (strikethrough), Ctrl+Shift+H (highlight),
+  Ctrl+` (code), Ctrl+Shift+E (maths), Ctrl+Shift+M (comment), Ctrl+Shift+K (link).
+- **Settings → Editor**: the toolbar, the web pane and keeping formatting when pasting, each on unless turned off.
+
+### Changed
+
+- In the editor, a link drawn by live preview opens when clicked; edit it with the card's **Edit** or by moving
+  the cursor into it.
+
 ## [1.3.0] — 2026-10-12
 
 Markdown as Obsidian writes it (Phase 25): the editor and the reading view now draw the features of Obsidian's

@@ -32,12 +32,21 @@ share a token made for that run.
   the program Windows uses for it — only files inside the vault), **Show in system explorer**, **Export to
   PDF…** straight to a file you choose, and **Open in new window** for a note in a window of its own (closed
   with the main window).
+- **Web pages beside your notes** (1.4): a click on a link to the web in a note opens the page in a pane on
+  the left of the note, with back, forward, reload, an address bar, *Copy link* and *Open in browser*; the
+  note stays open beside it. Pages are tabs like notes (drag the divider, close the tab when done) and come
+  back after a restart. Ctrl+click opens a link in your browser instead, and *Settings → Editor* can turn the
+  pane off. Sign-ins you make there are remembered for the pane only; some sites (Google's sign-in among
+  them) refuse embedded browsers — use *Open in browser* for those.
 - **One copy at a time**: starting it again brings the open window forward.
 
 ## What it keeps to itself
 
-- **The window shows only Manuscript.** A link to a web page opens in your system browser (plain `http` and
-  `https` links only); the window never navigates to another address.
+- **The window shows only Manuscript.** It never navigates to another address. Web pages are shown only in the
+  web pane, as separate pages in a browsing session of their own: they cannot see Manuscript's sign-in, your
+  notes or your files, have no access to Node, are allowed no camera, microphone, location or notifications,
+  and cannot open Manuscript's own address. Only plain `http` and `https` links open, there or in your system
+  browser.
 - **The page can ask for a few things**, and nothing else: pick files, pick a folder, show a path (only inside
   the vault or the data folder, or a PDF it has just saved), open a file of the vault in its program, print
   itself to a PDF, colour the title bar's buttons and say which application this is. A window of its own opens
