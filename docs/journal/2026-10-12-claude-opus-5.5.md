@@ -165,4 +165,16 @@ with a long folder name, were fixed after the review's last round and checked fr
 - End to end: `appearance.spec.ts` (fresh-install defaults; persistence across a reload; the same controls in both
   interfaces; axe on Notes and Today in every palette and theme and in Standard) and the notes, shell, workspace and
   keyboard specs: 86 passed.
-- RESULTS-OF-FULL-RUN-24
+- `npm run verify`: 157 files, 954 tests, build, smoke on 1.2.0 — passed. `npm run test:e2e`: **145 passed, 0 failed**
+  (3 skipped: the screenshot specs), the desktop shell included.
+
+### Unresolved
+
+- Reported by Impeccable's documenter, not repaired (it predates this phase): the small upper-case `eyebrow` labels
+  on pane titles and panel groups (21 files, `ui.md` §8) are a pattern Impeccable's craft rules refuse; `DESIGN.md`
+  leaves them out of the system. Worth a decision with the student.
+- Phone-width layouts remain best-effort.
+
+### Next steps
+
+- Install 1.2.0 when the student says so; use it and report what is wrong or missing.
