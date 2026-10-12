@@ -99,3 +99,70 @@ its menu items in its order and words, its six sort orders, one *Expand all / Co
 ## Next steps
 
 - Install 1.1.0 over 1.0.0 when the student says so; use it and report what is wrong or missing.
+
+## Impeccable `init` (afternoon)
+
+The student installed the Impeccable design skill and asked for `init`. It found four packages and asked which the
+interface is (`apps/web`); three questions settled who Manuscript is for (the student, perhaps other students later),
+where it is used (mostly the desktop app) and Obsidian's role (Manuscript replaces it and should feel familiar). It
+wrote `apps/web/PRODUCT.md` and the live-mode config (`apps/web/.impeccable/live/config.json`; no CSP change was
+needed). Neither was committed then.
+
+## Phase 24 — Appearance: Simplified UI and colour palettes
+
+- **Date:** Monday 12 October 2026
+- **Model:** Claude Opus 5.5
+- **Phase:** 24 (`phase/24-appearance`), with Impeccable
+- **Summary:** A quieter interface in the spirit of Obsidian, on by default and optional, and six colour palettes for
+  light and dark, all remembered; the existing look stays as the "Manuscript" palette and the "Standard" interface.
+  Version 1.2.0.
+
+### How it was done
+
+Impeccable treated it as a refinement and extension of an established world (no concept tournament): one
+confirmation round with the student — today's colours stay the default; with Simplified UI the Notes title row folds
+into the tab row; the file tree has no icons, as in Obsidian — then a code-led build, one batched screenshot round
+(desktop, 390 px; both modes, several palettes), its mechanical detector (no findings), and a fresh finish reviewer.
+
+- **Appearance** (`app/theme/appearance.ts`, `public/theme-init.js`): `data-palette` and `data-ui` on the document,
+  set before the first paint, beside the existing `data-theme`; Simplified UI is on unless turned off (ADR-0043).
+- **Palettes** (`tokens.css`): Graphite, Sand, Slate, Sage, Iris override only neutrals and the accent per theme.
+  The values were checked numerically before they were written (a scratch script, then generated into the CSS), and
+  `features/design/palettes.test.ts` checks all twelve combinations for AA on every surface.
+- **Chrome tokens** (`--skb-chrome-line`, `--skb-divider`, `--skb-pane-header-bg`, `--skb-active-line`,
+  `--skb-card-edge`) and a `simplified:` Tailwind variant carry the mode; one component tree serves both.
+- **Notes, simplified:** `Page headerHidden` (the h1 stays for screen readers and focus), the page's actions at the
+  tab row's end, the Obsidian file tree (indent guides, type tags, paths on hover), the status chip.
+- **Settings → Appearance** (`features/settings/AppearanceSection.tsx`): theme, palettes in miniature (light and dark
+  side by side), the Simplified UI switch with the student's own description.
+
+### The finish review
+
+The reviewer first asked for a recapture (the Settings shot ended above the switch), then returned **fix** with four
+material findings, all taken in one batch: Simplified UI had barely touched pages other than Notes (section rules,
+cards, Today's icon tiles); window sizes between phone and desktop were unchecked and the Files pane became a 60 px
+sliver at 390 px; the corner status chip could cover text; and, optionally, the Files pane should be separated from
+the note by surface rather than a hairline. Its verdict: three resolved, one partial (cards needed a per-theme
+decision, not a softer token: now no edge in light, a faint one in dark), plus a regression (the Files pane's new
+10 rem minimum cut off its own toolbar at 768 px: now 13.5 rem). The second verdict resolved both and found one more
+regression (the narrower note pane at 768 px hid the save status); that one, and a breadcrumb whose last "/" was cut
+with a long folder name, were fixed after the review's last round and checked from a recapture, not re-scored.
+
+### Problems met
+
+- **The hidden h1** made 23 end-to-end checks fail ("heading Notes not visible"). The checks now use
+  `expectPageTitle` (`e2e/titles.ts`): the title must be there, and visible unless its header is the deliberately
+  hidden one (`data-header-hidden`); the sticky-header and long-note tests check the tab row instead of the hidden
+  header.
+- `scrollIntoView` in a capture scrolled the whole application frame (an invalid screenshot); the capture scrolls the
+  page body instead.
+- Bash here-documents and a Python script collapsed backslashes and a brace again; files with escapes were written
+  with the editor tools.
+
+### Tests run
+
+- Web: 242 tests (store, boot script, palette contrast, settings, tree, Notes page in both modes).
+- End to end: `appearance.spec.ts` (fresh-install defaults; persistence across a reload; the same controls in both
+  interfaces; axe on Notes and Today in every palette and theme and in Standard) and the notes, shell, workspace and
+  keyboard specs: 86 passed.
+- RESULTS-OF-FULL-RUN-24
