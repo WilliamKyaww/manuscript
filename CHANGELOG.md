@@ -3,6 +3,16 @@
 All notable changes to Manuscript. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] — 2026-10-12
+
+### Fixed
+
+- **The desktop app forgot your appearance and layout on every restart** — palette, theme, Simplified UI, open tabs,
+  sidebar width and the other preferences kept in the window. The engine started on a new random port each time, and
+  the page's storage belongs to its address. The port is now remembered in the data folder
+  (`desktop-port.json`) and used again while it is free. Preferences chosen before this fix were already lost and need
+  choosing once more.
+
 ## [1.2.0] — 2026-10-12
 
 Appearance (Phase 24): a quieter interface in the spirit of Obsidian, on by default, and colour palettes. Made with

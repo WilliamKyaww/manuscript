@@ -31,6 +31,7 @@ import {
   titleBarColour,
   type WindowState,
 } from './policy';
+import { choosePort } from './port';
 import { loadSecretsKey, type SecretsKey } from './secrets';
 
 /**
@@ -151,6 +152,8 @@ async function startServer(): Promise<Engine> {
   const started = await startEngine({
     serverPath: serverPath(),
     env: engineEnvironment(),
+    // The same port as last time, so the page keeps its address and with it its preferences.
+    port: await choosePort(dataDir),
     onOutput: (line, stream) =>
       (stream === 'stderr' ? console.error : console.warn)(`[engine] ${line}`),
   });

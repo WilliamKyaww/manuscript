@@ -196,15 +196,24 @@ test('the desktop shell starts, shows the application, keeps the page confined, 
       return (await response.json()) as { restarting: boolean };
     }, other);
     expect(switched.restarting).toBe(true);
-    await expect.poll(() => new URL(page.url()).origin, { timeout: 60_000 }).not.toBe(origin);
+    // The engine comes back on the same port (so the page keeps its preferences), with the other vault.
+    await expect
+      .poll(
+        () =>
+          page
+            .evaluate(async () => {
+              const response = await fetch('/api/health');
+              return ((await response.json()) as { vault: { path: string } }).vault.path;
+            })
+            .then((found) => path.resolve(found))
+            .catch(() => ''),
+        { timeout: 60_000 },
+      )
+      .toBe(path.resolve(other));
+    expect(new URL(page.url()).origin).toBe(origin);
     await expectPageTitle(page, 'Today', {
       timeout: 60_000,
     });
-    const next = await page.evaluate(async () => {
-      const response = await fetch('/api/health');
-      return (await response.json()) as { vault: { path: string } };
-    });
-    expect(path.resolve(next.vault.path)).toBe(path.resolve(other));
     expect(existsSync(path.join(vault, '.skb', 'lock'))).toBe(false);
   } finally {
     await app.close();
@@ -215,6 +224,46 @@ test('the desktop shell starts, shows the application, keeps the page confined, 
     .poll(() => existsSync(path.join(vault, '.skb', 'lock')), { timeout: 15_000 })
     .toBe(false);
   expect(readFileSync(path.join(data, 'window-state.json'), 'utf8')).toContain('width');
+  removeQuietly(dir);
+});
+
+test('appearance chosen in the desktop app is still there after quitting and starting it again', async () => {
+  test.setTimeout(240_000);
+  const dir = mkdtempSync(path.join(tmpdir(), 'skb-e2e-desktop-prefs-'));
+  const env = isolatedEnvironment(dir, path.join(dir, 'vault'));
+  const launch = () =>
+    electron.launch({
+      executablePath: electronExecutable(),
+      args: [path.join(root, 'apps', 'desktop')],
+      cwd: root,
+      env,
+    });
+
+  let app = await launch();
+  let origin = '';
+  try {
+    const page = await app.firstWindow();
+    await expectPageTitle(page, 'Today', { timeout: 90_000 });
+    origin = new URL(page.url()).origin;
+    await page.getByRole('link', { name: 'Settings', exact: true }).first().click();
+    await page.getByRole('radio', { name: /^Sage/u }).click();
+    await page.getByRole('switch', { name: 'Simplified UI' }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-palette', 'sage');
+  } finally {
+    await app.close();
+  }
+
+  app = await launch();
+  try {
+    const page = await app.firstWindow();
+    await expectPageTitle(page, 'Today', { timeout: 90_000 });
+    // The same address as before (the port is remembered), so the page's storage is the same.
+    expect(new URL(page.url()).origin).toBe(origin);
+    await expect(page.locator('html')).toHaveAttribute('data-palette', 'sage');
+    await expect(page.locator('html')).toHaveAttribute('data-ui', 'standard');
+  } finally {
+    await app.close();
+  }
   removeQuietly(dir);
 });
 
