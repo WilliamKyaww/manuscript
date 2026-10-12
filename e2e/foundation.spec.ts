@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { E2E_TOKEN } from './constants';
+import { expectPageTitle } from './titles';
 
 test.describe('foundation', () => {
   test('signs in with the bootstrap link and reaches a healthy app', async ({ page }) => {
@@ -11,7 +12,7 @@ test.describe('foundation', () => {
 
     await page.goto(`/auth?token=${E2E_TOKEN}`);
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+    await expectPageTitle(page, 'Today');
 
     await page.goto('/settings');
     await expect(page.getByText('Healthy')).toBeVisible();
@@ -22,7 +23,7 @@ test.describe('foundation', () => {
 
   test('explains how to sign in when there is no session', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1, name: 'Sign-in required' })).toBeVisible();
+    await expectPageTitle(page, 'Sign-in required');
     await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0);
   });
 

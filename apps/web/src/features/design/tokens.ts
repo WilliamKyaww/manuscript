@@ -12,7 +12,8 @@ export interface TokenGroup {
 export const COLOUR_GROUPS: readonly TokenGroup[] = [
   {
     title: 'Surfaces and borders',
-    description: 'Warm paper neutrals: the page, cards, sunken wells, hover, hairlines.',
+    description:
+      'The page, cards, sunken wells, hover and hairlines: warm paper in the Manuscript palette, retinted by the others.',
     tokens: [
       'bg',
       'surface',
@@ -25,13 +26,20 @@ export const COLOUR_GROUPS: readonly TokenGroup[] = [
     ],
   },
   {
+    title: 'Chrome',
+    description:
+      'The lines and header surfaces framing pages and panes: as before in the standard interface, softened or gone in Simplified UI.',
+    tokens: ['chrome-line', 'divider', 'pane-header-bg', 'active-line', 'card-edge'],
+  },
+  {
     title: 'Text',
     description: 'All three meet WCAG AA (4.5:1) on every surface; subtle is for secondary text.',
     tokens: ['text', 'text-muted', 'text-subtle'],
   },
   {
     title: 'Accent',
-    description: 'One green, for primary actions, links, focus and selection.',
+    description:
+      'One accent per palette (green in Manuscript), for primary actions, links, focus and selection.',
     tokens: ['accent', 'accent-hover', 'accent-subtle', 'accent-contrast', 'focus'],
   },
   {

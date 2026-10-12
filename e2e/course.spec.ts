@@ -2,6 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { makePdf } from '../apps/server/test/fixtures/sources/builders';
 import { seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
+import { expectPageTitle } from './titles';
 
 /**
  * Task 6.15: create a module → a lecture → attach a source → create a concept from an unresolved
@@ -12,7 +13,7 @@ const auth = { Authorization: `Bearer ${E2E_TOKEN}` };
 
 test.beforeEach(async ({ page }) => {
   await page.goto(`/auth?token=${E2E_TOKEN}`);
-  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+  await expectPageTitle(page, 'Today');
 });
 
 async function createNote(page: Page, title: string, content: string) {
@@ -38,9 +39,7 @@ test('a module with a lecture, its material, a concept and the mark calculator',
   await moduleDialog.getByLabel('Target mark (%)').fill('70');
   await moduleDialog.getByRole('button', { name: 'Create module' }).click();
   await page.getByRole('link', { name: /E2E201/ }).click();
-  await expect(
-    page.getByRole('heading', { level: 1, name: 'E2E201 Gossip Systems' }),
-  ).toBeVisible();
+  await expectPageTitle(page, 'E2E201 Gossip Systems');
 
   // Assessments and the calculator: 40 % marked 70, then a 60 % exam.
   for (const [title, kind, weight, mark] of [
@@ -93,9 +92,7 @@ test('a module with a lecture, its material, a concept and the mark calculator',
   await lectureDialog.getByLabel('Title').fill('Epidemic protocols');
   await lectureDialog.getByRole('button', { name: 'Add lecture' }).click();
   await page.getByRole('link', { name: /Epidemic protocols/ }).click();
-  await expect(
-    page.getByRole('heading', { level: 1, name: 'L01 Epidemic protocols' }),
-  ).toBeVisible();
+  await expectPageTitle(page, 'L01 Epidemic protocols');
   await page
     .getByRole('combobox', { name: 'Source to attach' })
     .selectOption({ label: 'E2E201 · Gossip lecture' });
@@ -122,7 +119,7 @@ test('a module with a lecture, its material, a concept and the mark calculator',
   const conceptLink = page.getByRole('link', { name: 'Anti-entropy' });
   await expect(conceptLink).toHaveAttribute('href', /\/concepts\/con_/);
   await conceptLink.click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Anti-entropy' })).toBeVisible();
+  await expectPageTitle(page, 'Anti-entropy');
   await expect(
     page
       .getByRole('list', { name: 'Notes linking here' })

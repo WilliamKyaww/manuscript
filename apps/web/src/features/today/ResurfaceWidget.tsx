@@ -40,7 +40,7 @@ export function ResurfaceWidget() {
       <div className="mb-3 flex items-center gap-3">
         <span
           aria-hidden="true"
-          className="flex size-9 items-center justify-center rounded-md bg-surface-sunken text-muted"
+          className="flex size-9 items-center justify-center rounded-md bg-surface-sunken text-muted simplified:bg-transparent"
         >
           <BookMarked size={18} />
         </span>

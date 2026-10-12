@@ -34,9 +34,12 @@ export function readGraphColours(element: Element = document.documentElement): G
   };
 }
 
-/** Calls `onChange` whenever the theme (the `data-theme` attribute) changes. */
+/** Calls `onChange` whenever the theme or the palette (`data-theme`, `data-palette`) changes. */
 export function watchTheme(onChange: () => void): () => void {
   const observer = new MutationObserver(onChange);
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme', 'data-palette'],
+  });
   return () => observer.disconnect();
 }

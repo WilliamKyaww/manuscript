@@ -1,5 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { E2E_TOKEN } from './constants';
+import { expectPageTitle } from './titles';
 
 /** Task 4.10: search finds text, filters narrow results, a result opens the note at the match. */
 
@@ -19,7 +20,7 @@ const filler = Array.from(
 
 test.beforeEach(async ({ page }) => {
   await page.goto(`/auth?token=${E2E_TOKEN}`);
-  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+  await expectPageTitle(page, 'Today');
 });
 
 test('search finds text, filters narrow the results and a result opens at the match', async ({
@@ -33,7 +34,7 @@ test('search finds text, filters narrow the results and a result opens at the ma
   await createNote(page, 'Zephyr draft', '---\ntags: [draft]\n---\nAnother zephyrquorum mention.');
 
   await page.keyboard.press('Control+Shift+F');
-  await expect(page.getByRole('heading', { level: 1, name: 'Search' })).toBeVisible();
+  await expectPageTitle(page, 'Search');
   const input = page.getByRole('searchbox', { name: 'Search notes and sources' });
   await expect(input).toBeFocused();
   await input.fill('zephyrquorum');
@@ -53,7 +54,7 @@ test('search finds text, filters narrow the results and a result opens at the ma
 
   // Opening the result goes to the line with the match.
   await results.getByRole('link', { name: /Zephyr consensus/ }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Zephyr consensus' })).toBeVisible();
+  await expectPageTitle(page, 'Zephyr consensus');
   // 3 frontmatter lines, the heading and 40 filler lines come first.
   await expect(page).toHaveURL(/line=45/);
   await expect(page.locator('.cm-activeLine')).toContainText(
@@ -73,7 +74,7 @@ test('hostile queries never break the page', async ({ page }) => {
     'tag:',
   ]) {
     await page.goto(`/search?q=${encodeURIComponent(query)}`);
-    await expect(page.getByRole('heading', { level: 1, name: 'Search' })).toBeVisible();
+    await expectPageTitle(page, 'Search');
     await expect(page.getByRole('alert')).toHaveCount(0);
   }
   expect(problems).toEqual([]);
@@ -86,7 +87,7 @@ test('the quick switcher opens notes by name, alias or recent use', async ({ pag
     '---\naliases: [BFT]\n---\n# Byzantine fault tolerance',
   );
   await page.goto('/notes');
-  await expect(page.getByRole('heading', { level: 1, name: 'Notes' })).toBeVisible();
+  await expectPageTitle(page, 'Notes');
   await page.keyboard.press('Control+o');
   const dialog = page.getByRole('dialog', { name: 'Open a note' });
   await expect(dialog).toBeVisible();
@@ -96,9 +97,7 @@ test('the quick switcher opens notes by name, alias or recent use', async ({ pag
   ).toBeVisible();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(new RegExp(`/notes/${note.id}$`));
-  await expect(
-    page.getByRole('heading', { level: 1, name: 'Byzantine fault tolerance' }),
-  ).toBeVisible();
+  await expectPageTitle(page, 'Byzantine fault tolerance');
 
   // Now it is the most recent note.
   await page.keyboard.press('Control+o');

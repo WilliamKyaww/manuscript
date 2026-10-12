@@ -16,22 +16,30 @@ export function NoteBreadcrumb({
   return (
     <nav aria-label="Location" className="flex min-w-0 items-baseline text-sm whitespace-nowrap">
       {folders.length > 0 && (
-        <span className="min-w-0 shrink-[4] truncate text-muted">
-          {folders.map((folder) => (
-            <span key={folder}>
-              <button
-                type="button"
-                className="rounded-sm hover:text-text hover:underline"
-                onClick={() => onFolder(folder)}
-              >
-                {folder.slice(folder.lastIndexOf('/') + 1)}
-              </button>
-              <span aria-hidden="true" className="px-1 text-subtle">
-                /
+        <>
+          <span className="min-w-0 shrink-[4] truncate text-muted">
+            {folders.map((folder, index) => (
+              <span key={folder}>
+                {index > 0 && (
+                  <span aria-hidden="true" className="px-1 text-subtle">
+                    /
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className="rounded-sm hover:text-text hover:underline"
+                  onClick={() => onFolder(folder)}
+                >
+                  {folder.slice(folder.lastIndexOf('/') + 1)}
+                </button>
               </span>
-            </span>
-          ))}
-        </span>
+            ))}
+          </span>
+          {/* Outside the part that shortens, so the folders never run into the note's name. */}
+          <span aria-hidden="true" className="shrink-0 px-1 text-subtle">
+            /
+          </span>
+        </>
       )}
       <span aria-current="page" className="min-w-0 truncate font-medium">
         {noteNameFromPath(path)}

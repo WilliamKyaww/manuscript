@@ -49,7 +49,7 @@ export function Sidebar() {
       data-collapsed={collapsed}
       style={{ '--skb-sidebar-width': `${width}px` } as CSSProperties}
       className={cn(
-        'relative flex h-full flex-none flex-col border-r border-border bg-surface',
+        'relative flex h-full flex-none flex-col border-r border-divider bg-surface',
         !resizing && 'transition-[width] duration-(--skb-duration-normal) ease-(--skb-ease)',
         collapsed ? 'w-(--skb-sidebar-width-collapsed)' : 'w-(--skb-sidebar-width)',
       )}
@@ -92,7 +92,10 @@ export function Sidebar() {
                 </p>
               )}
               {label && collapsed && (
-                <div aria-hidden="true" className="mx-2 mb-2 h-px bg-border" />
+                <div
+                  aria-hidden="true"
+                  className="mx-2 mb-2 h-px bg-border simplified:bg-transparent"
+                />
               )}
               <ul className="space-y-0.5">
                 {items.map((section) => (
@@ -107,7 +110,7 @@ export function Sidebar() {
       </div>
 
       {settings && (
-        <div className="flex-none border-t border-border px-3 py-2">
+        <div className="flex-none border-t border-chrome-line px-3 py-2">
           <SidebarLink section={settings} collapsed={collapsed} />
         </div>
       )}

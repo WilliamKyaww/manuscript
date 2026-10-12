@@ -1,0 +1,1170 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-12T03:38:41.380Z",
+  "title": "Design System: Manuscript",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#f7f5f1",
+        "oklch": "oklch(97.1% 0.006 84.6)",
+        "tonalRamp": [
+          "#0c0b09",
+          "#262522",
+          "#43423f",
+          "#63615e",
+          "#84827e",
+          "#a7a5a1",
+          "#cbc9c5",
+          "#f0eeea"
+        ]
+      },
+      "card-white": {
+        "role": "neutral",
+        "displayName": "Card White",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "sunken-well": {
+        "role": "neutral",
+        "displayName": "Sunken Well",
+        "canonical": "#f0ede7",
+        "oklch": "oklch(94.7% 0.009 84.6)",
+        "tonalRamp": [
+          "#0d0b07",
+          "#272520",
+          "#44423d",
+          "#63615c",
+          "#85827d",
+          "#a7a59f",
+          "#ccc9c3",
+          "#f1eee8"
+        ]
+      },
+      "hover-wash": {
+        "role": "neutral",
+        "displayName": "Hover Wash",
+        "canonical": "#ebe7e0",
+        "oklch": "oklch(92.9% 0.010 81.8)",
+        "tonalRamp": [
+          "#0d0b07",
+          "#28251f",
+          "#45423c",
+          "#64615b",
+          "#85827b",
+          "#a8a49e",
+          "#ccc9c2",
+          "#f2eee7"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e2ddd4",
+        "oklch": "oklch(89.9% 0.013 82.4)",
+        "tonalRamp": [
+          "#0e0b05",
+          "#28251e",
+          "#45413a",
+          "#656159",
+          "#86827a",
+          "#a9a49c",
+          "#cdc8c0",
+          "#f3eee5"
+        ]
+      },
+      "hairline-strong": {
+        "role": "neutral",
+        "displayName": "Hairline Strong",
+        "canonical": "#c9c1b4",
+        "oklch": "oklch(81.4% 0.020 80.1)",
+        "tonalRamp": [
+          "#100a03",
+          "#2a241a",
+          "#484136",
+          "#676055",
+          "#898175",
+          "#aca497",
+          "#d0c8bb",
+          "#f6ede0"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#1f1c18",
+        "oklch": "oklch(22.8% 0.009 75.2)",
+        "tonalRamp": [
+          "#0d0b07",
+          "#282420",
+          "#45413d",
+          "#64615c",
+          "#85827d",
+          "#a8a49f",
+          "#cdc8c3",
+          "#f2eee8"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Ink Muted",
+        "canonical": "#57514a",
+        "oklch": "oklch(43.8% 0.014 71.7)",
+        "tonalRamp": [
+          "#0f0a05",
+          "#29241e",
+          "#47413a",
+          "#666059",
+          "#88817a",
+          "#aba49c",
+          "#cfc8c0",
+          "#f4ede5"
+        ]
+      },
+      "ink-subtle": {
+        "role": "neutral",
+        "displayName": "Ink Subtle",
+        "canonical": "#6e675e",
+        "oklch": "oklch(51.7% 0.016 74.3)",
+        "tonalRamp": [
+          "#0f0a04",
+          "#2a241c",
+          "#474138",
+          "#676057",
+          "#888178",
+          "#aba49a",
+          "#d0c8be",
+          "#f5ede3"
+        ]
+      },
+      "forest": {
+        "role": "primary",
+        "displayName": "Forest",
+        "canonical": "#2f6b5a",
+        "oklch": "oklch(48.3% 0.069 172.2)",
+        "tonalRamp": [
+          "#000f0a",
+          "#002d22",
+          "#0a4e3e",
+          "#326e5d",
+          "#55907e",
+          "#77b3a0",
+          "#9bd8c4",
+          "#c0fee9"
+        ]
+      },
+      "forest-deep": {
+        "role": "primary",
+        "displayName": "Forest Deep",
+        "canonical": "#255748",
+        "oklch": "oklch(41.7% 0.060 171.1)",
+        "tonalRamp": [
+          "#000f09",
+          "#022d22",
+          "#194c3e",
+          "#3b6c5d",
+          "#5c8e7e",
+          "#7fb2a0",
+          "#a2d6c4",
+          "#c7fce9"
+        ]
+      },
+      "forest-tint": {
+        "role": "primary",
+        "displayName": "Forest Tint",
+        "canonical": "#e3efea",
+        "oklch": "oklch(94.2% 0.014 169.2)",
+        "tonalRamp": [
+          "#060d0a",
+          "#1e2724",
+          "#3b4541",
+          "#5a6460",
+          "#7a8581",
+          "#9da8a3",
+          "#c1ccc7",
+          "#e6f2ed"
+        ]
+      },
+      "night-paper": {
+        "role": "neutral",
+        "displayName": "Night Paper",
+        "canonical": "#121211",
+        "oklch": "oklch(18.2% 0.002 106.6)",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#252524",
+          "#424241",
+          "#616160",
+          "#828281",
+          "#a5a5a4",
+          "#c9c9c8",
+          "#eeeeed"
+        ]
+      },
+      "night-surface": {
+        "role": "neutral",
+        "displayName": "Night Surface",
+        "canonical": "#1a1918",
+        "oklch": "oklch(21.4% 0.002 67.7)",
+        "tonalRamp": [
+          "#0c0b0a",
+          "#262524",
+          "#434241",
+          "#626160",
+          "#838281",
+          "#a6a5a3",
+          "#cac9c7",
+          "#f0eeed"
+        ]
+      },
+      "night-raised": {
+        "role": "neutral",
+        "displayName": "Night Raised",
+        "canonical": "#232220",
+        "oklch": "oklch(25.2% 0.004 84.6)",
+        "tonalRamp": [
+          "#0c0b09",
+          "#262523",
+          "#434240",
+          "#62615f",
+          "#838280",
+          "#a6a5a2",
+          "#cac9c6",
+          "#f0eeeb"
+        ]
+      },
+      "night-sunken": {
+        "role": "neutral",
+        "displayName": "Night Sunken",
+        "canonical": "#0e0e0d",
+        "oklch": "oklch(16.3% 0.002 106.6)",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#252524",
+          "#424241",
+          "#616160",
+          "#828281",
+          "#a5a5a4",
+          "#c9c9c8",
+          "#eeeeed"
+        ]
+      },
+      "night-hover": {
+        "role": "neutral",
+        "displayName": "Night Hover",
+        "canonical": "#2a2826",
+        "oklch": "oklch(27.8% 0.005 67.6)",
+        "tonalRamp": [
+          "#0c0b09",
+          "#272523",
+          "#44423f",
+          "#63615e",
+          "#84827f",
+          "#a7a4a2",
+          "#cbc9c6",
+          "#f1eeeb"
+        ]
+      },
+      "night-hairline": {
+        "role": "neutral",
+        "displayName": "Night Hairline",
+        "canonical": "#2e2c29",
+        "oklch": "oklch(29.4% 0.006 78.2)",
+        "tonalRamp": [
+          "#0d0b08",
+          "#272522",
+          "#44423e",
+          "#63615d",
+          "#84827e",
+          "#a7a5a1",
+          "#cbc9c5",
+          "#f1eeea"
+        ]
+      },
+      "night-hairline-strong": {
+        "role": "neutral",
+        "displayName": "Night Hairline Strong",
+        "canonical": "#45423d",
+        "oklch": "oklch(38.0% 0.009 80.7)",
+        "tonalRamp": [
+          "#0d0b07",
+          "#272520",
+          "#45423d",
+          "#64615b",
+          "#85827c",
+          "#a8a49f",
+          "#ccc9c2",
+          "#f2eee8"
+        ]
+      },
+      "night-ink": {
+        "role": "neutral",
+        "displayName": "Night Ink",
+        "canonical": "#ece8e1",
+        "oklch": "oklch(93.2% 0.010 81.8)",
+        "tonalRamp": [
+          "#0d0b07",
+          "#28251f",
+          "#45423c",
+          "#64615b",
+          "#85827b",
+          "#a8a49e",
+          "#ccc9c2",
+          "#f2eee7"
+        ]
+      },
+      "night-ink-muted": {
+        "role": "neutral",
+        "displayName": "Night Ink Muted",
+        "canonical": "#b5aea4",
+        "oklch": "oklch(75.4% 0.016 77.0)",
+        "tonalRamp": [
+          "#0f0a04",
+          "#2a241c",
+          "#474139",
+          "#676057",
+          "#888178",
+          "#aba49a",
+          "#cfc8be",
+          "#f5ede3"
+        ]
+      },
+      "night-ink-subtle": {
+        "role": "neutral",
+        "displayName": "Night Ink Subtle",
+        "canonical": "#9a9389",
+        "oklch": "oklch(66.6% 0.017 77.0)",
+        "tonalRamp": [
+          "#0f0a04",
+          "#2a241c",
+          "#474138",
+          "#676057",
+          "#888177",
+          "#aba49a",
+          "#cfc8bd",
+          "#f5ede2"
+        ]
+      },
+      "mint": {
+        "role": "primary",
+        "displayName": "Mint",
+        "canonical": "#6bbfa6",
+        "oklch": "oklch(74.4% 0.091 172.4)",
+        "tonalRamp": [
+          "#000f0a",
+          "#012d22",
+          "#014e3e",
+          "#11725c",
+          "#3e947d",
+          "#64b89f",
+          "#88ddc3",
+          "#beffe9"
+        ]
+      },
+      "mint-bright": {
+        "role": "primary",
+        "displayName": "Mint Bright",
+        "canonical": "#86cdb8",
+        "oklch": "oklch(79.5% 0.078 173.6)",
+        "tonalRamp": [
+          "#000f0a",
+          "#012d23",
+          "#014e3f",
+          "#26705d",
+          "#4b927e",
+          "#6fb5a1",
+          "#93dac5",
+          "#bdffea"
+        ]
+      },
+      "mint-tint": {
+        "role": "primary",
+        "displayName": "Mint Tint",
+        "canonical": "#1d3530",
+        "oklch": "oklch(30.7% 0.032 179.3)",
+        "tonalRamp": [
+          "#000f0b",
+          "#122a25",
+          "#2f4842",
+          "#4e6762",
+          "#6e8983",
+          "#91aca5",
+          "#b4d0c9",
+          "#d9f6ef"
+        ]
+      },
+      "mint-contrast": {
+        "role": "primary",
+        "displayName": "Mint Contrast",
+        "canonical": "#0b1d17",
+        "oklch": "oklch(21.3% 0.027 170.0)",
+        "tonalRamp": [
+          "#010f09",
+          "#172923",
+          "#344740",
+          "#52665f",
+          "#738880",
+          "#95aba2",
+          "#b9cfc6",
+          "#def5ec"
+        ]
+      },
+      "success": {
+        "role": "semantic",
+        "displayName": "Success",
+        "canonical": "#256b43",
+        "oklch": "oklch(47.3% 0.096 154.9)",
+        "tonalRamp": [
+          "#001005",
+          "#002e16",
+          "#00502b",
+          "#2c7149",
+          "#4f9369",
+          "#72b78b",
+          "#96dcae",
+          "#c6ffd8"
+        ]
+      },
+      "success-tint": {
+        "role": "semantic",
+        "displayName": "Success Tint",
+        "canonical": "#e2f1e7",
+        "oklch": "oklch(94.4% 0.021 156.8)",
+        "tonalRamp": [
+          "#050e08",
+          "#1d2821",
+          "#39453e",
+          "#58655c",
+          "#79867d",
+          "#9ba9a0",
+          "#bfcdc4",
+          "#e4f3e9"
+        ]
+      },
+      "warning": {
+        "role": "semantic",
+        "displayName": "Warning",
+        "canonical": "#8a4f00",
+        "oklch": "oklch(48.6% 0.111 63.4)",
+        "tonalRamp": [
+          "#150700",
+          "#381e01",
+          "#613602",
+          "#8c5104",
+          "#b07233",
+          "#d69557",
+          "#fcb97b",
+          "#ffead9"
+        ]
+      },
+      "warning-tint": {
+        "role": "semantic",
+        "displayName": "Warning Tint",
+        "canonical": "#f8ecd8",
+        "oklch": "oklch(94.7% 0.029 80.7)",
+        "tonalRamp": [
+          "#110a00",
+          "#2c2414",
+          "#4a4130",
+          "#6a604f",
+          "#8c816f",
+          "#afa391",
+          "#d3c8b4",
+          "#f9edd9"
+        ]
+      },
+      "danger": {
+        "role": "semantic",
+        "displayName": "Danger",
+        "canonical": "#a8231b",
+        "oklch": "oklch(47.8% 0.170 28.8)",
+        "tonalRamp": [
+          "#1f0000",
+          "#4d0001",
+          "#810102",
+          "#ad2920",
+          "#d55042",
+          "#fe7565",
+          "#ffb3a8",
+          "#ffe9e5"
+        ]
+      },
+      "danger-tint": {
+        "role": "semantic",
+        "displayName": "Danger Tint",
+        "canonical": "#f8e3e1",
+        "oklch": "oklch(93.2% 0.023 24.1)",
+        "tonalRamp": [
+          "#140707",
+          "#30211f",
+          "#4e3d3c",
+          "#6e5c5b",
+          "#907d7b",
+          "#b3a09e",
+          "#d8c4c2",
+          "#fee9e7"
+        ]
+      },
+      "info": {
+        "role": "semantic",
+        "displayName": "Info",
+        "canonical": "#2a5aa0",
+        "oklch": "oklch(47.2% 0.125 -102.0)",
+        "tonalRamp": [
+          "#000a22",
+          "#002254",
+          "#0e3f83",
+          "#3060a7",
+          "#5183cc",
+          "#73a6f3",
+          "#a9cbfe",
+          "#e5effe"
+        ]
+      },
+      "info-tint": {
+        "role": "semantic",
+        "displayName": "Info Tint",
+        "canonical": "#e2ebf7",
+        "oklch": "oklch(93.7% 0.019 -104.5)",
+        "tonalRamp": [
+          "#060b13",
+          "#1f262e",
+          "#3b434c",
+          "#5a626c",
+          "#7b838e",
+          "#9da6b1",
+          "#c1cad6",
+          "#e6effb"
+        ]
+      },
+      "graphite-paper": {
+        "role": "neutral",
+        "displayName": "Graphite Paper",
+        "canonical": "#f5f5f4",
+        "oklch": "oklch(97.0% 0.001 106.4)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252524",
+          "#424241",
+          "#616160",
+          "#828281",
+          "#a5a5a4",
+          "#c9c9c8",
+          "#eeeeed"
+        ]
+      },
+      "graphite-ink-blue": {
+        "role": "primary",
+        "displayName": "Graphite Ink Blue",
+        "canonical": "#3b5b86",
+        "oklch": "oklch(46.6% 0.080 -103.9)",
+        "tonalRamp": [
+          "#000a20",
+          "#05244b",
+          "#24436c",
+          "#42638e",
+          "#6284b2",
+          "#84a7d7",
+          "#a7ccfd",
+          "#e4f0ff"
+        ]
+      },
+      "graphite-night-paper": {
+        "role": "neutral",
+        "displayName": "Graphite Night Paper",
+        "canonical": "#1c1c1c",
+        "oklch": "oklch(22.6% 0.000 89.9)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "graphite-night-ink-blue": {
+        "role": "primary",
+        "displayName": "Graphite Night Ink Blue",
+        "canonical": "#9bb3d6",
+        "oklch": "oklch(76.1% 0.057 -102.3)",
+        "tonalRamp": [
+          "#000a22",
+          "#122540",
+          "#2e4360",
+          "#4d6282",
+          "#6d84a5",
+          "#8fa7c9",
+          "#b2cbef",
+          "#e5effe"
+        ]
+      },
+      "sand-paper": {
+        "role": "neutral",
+        "displayName": "Sand Paper",
+        "canonical": "#f8f1e7",
+        "oklch": "oklch(96.1% 0.015 77.1)",
+        "tonalRamp": [
+          "#0f0a05",
+          "#29241d",
+          "#474139",
+          "#666058",
+          "#888178",
+          "#aba49b",
+          "#cfc8be",
+          "#f4ede3"
+        ]
+      },
+      "sand-terracotta": {
+        "role": "primary",
+        "displayName": "Sand Terracotta",
+        "canonical": "#9e4a27",
+        "oklch": "oklch(51.0% 0.122 41.9)",
+        "tonalRamp": [
+          "#1a0400",
+          "#431300",
+          "#712700",
+          "#994522",
+          "#be6744",
+          "#e58a66",
+          "#feb599",
+          "#ffe9e1"
+        ]
+      },
+      "sand-night-paper": {
+        "role": "neutral",
+        "displayName": "Sand Night Paper",
+        "canonical": "#16120e",
+        "oklch": "oklch(18.6% 0.010 67.1)",
+        "tonalRamp": [
+          "#0e0a07",
+          "#292420",
+          "#46413c",
+          "#65605b",
+          "#87817c",
+          "#aaa49e",
+          "#cec8c2",
+          "#f3ede7"
+        ]
+      },
+      "sand-night-terracotta": {
+        "role": "primary",
+        "displayName": "Sand Night Terracotta",
+        "canonical": "#e8a27c",
+        "oklch": "oklch(77.1% 0.098 49.3)",
+        "tonalRamp": [
+          "#180500",
+          "#3f1800",
+          "#6a2e04",
+          "#8d4f2a",
+          "#b2704b",
+          "#d7926d",
+          "#feb690",
+          "#feeadf"
+        ]
+      },
+      "slate-paper": {
+        "role": "neutral",
+        "displayName": "Slate Paper",
+        "canonical": "#f3f5f8",
+        "oklch": "oklch(96.9% 0.005 -101.7)",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#242527",
+          "#404244",
+          "#606164",
+          "#818285",
+          "#a3a5a8",
+          "#c7c9cc",
+          "#edeff1"
+        ]
+      },
+      "slate-steel": {
+        "role": "primary",
+        "displayName": "Slate Steel",
+        "canonical": "#2c5d97",
+        "oklch": "oklch(47.4% 0.108 -105.8)",
+        "tonalRamp": [
+          "#000b1f",
+          "#00244c",
+          "#0f4279",
+          "#32639d",
+          "#5385c2",
+          "#75a8e8",
+          "#a5cdfe",
+          "#e4f0ff"
+        ]
+      },
+      "slate-night-paper": {
+        "role": "neutral",
+        "displayName": "Slate Night Paper",
+        "canonical": "#0f1318",
+        "oklch": "oklch(18.5% 0.012 -105.9)",
+        "tonalRamp": [
+          "#080b10",
+          "#21252b",
+          "#3e4248",
+          "#5d6268",
+          "#7d838a",
+          "#a0a6ad",
+          "#c4cad1",
+          "#e9eff7"
+        ]
+      },
+      "slate-night-steel": {
+        "role": "primary",
+        "displayName": "Slate Night Steel",
+        "canonical": "#80b1ec",
+        "oklch": "oklch(74.9% 0.100 -106.4)",
+        "tonalRamp": [
+          "#000b1f",
+          "#00254b",
+          "#134275",
+          "#356399",
+          "#5685bd",
+          "#78a8e3",
+          "#a4cdfe",
+          "#e4f0fe"
+        ]
+      },
+      "sage-paper": {
+        "role": "neutral",
+        "displayName": "Sage Paper",
+        "canonical": "#f2f5f0",
+        "oklch": "oklch(96.6% 0.007 132.4)",
+        "tonalRamp": [
+          "#0a0c09",
+          "#242622",
+          "#40433f",
+          "#60625e",
+          "#81837f",
+          "#a3a6a1",
+          "#c7cac5",
+          "#edf0eb"
+        ]
+      },
+      "sage-leaf": {
+        "role": "primary",
+        "displayName": "Sage Leaf",
+        "canonical": "#41704a",
+        "oklch": "oklch(50.1% 0.079 149.0)",
+        "tonalRamp": [
+          "#001003",
+          "#012e0f",
+          "#1e4d29",
+          "#3f6e48",
+          "#609068",
+          "#82b38a",
+          "#a5d8ad",
+          "#cafed2"
+        ]
+      },
+      "sage-night-paper": {
+        "role": "neutral",
+        "displayName": "Sage Night Paper",
+        "canonical": "#111511",
+        "oklch": "oklch(19.0% 0.010 145.2)",
+        "tonalRamp": [
+          "#090c09",
+          "#222622",
+          "#3f433f",
+          "#5e635e",
+          "#7f847f",
+          "#a1a7a1",
+          "#c5cbc5",
+          "#eaf0ea"
+        ]
+      },
+      "sage-night-leaf": {
+        "role": "primary",
+        "displayName": "Sage Night Leaf",
+        "canonical": "#90c597",
+        "oklch": "oklch(77.4% 0.085 148.2)",
+        "tonalRamp": [
+          "#001002",
+          "#012e0d",
+          "#1b4e26",
+          "#3c6e45",
+          "#5e9165",
+          "#80b487",
+          "#a3d9aa",
+          "#c9ffd0"
+        ]
+      },
+      "iris-paper": {
+        "role": "neutral",
+        "displayName": "Iris Paper",
+        "canonical": "#f6f5f9",
+        "oklch": "oklch(97.2% 0.005 -62.3)",
+        "tonalRamp": [
+          "#0b0b0d",
+          "#252427",
+          "#424145",
+          "#616164",
+          "#828285",
+          "#a5a4a8",
+          "#c9c8cc",
+          "#efeef2"
+        ]
+      },
+      "iris-violet": {
+        "role": "primary",
+        "displayName": "Iris Violet",
+        "canonical": "#674caf",
+        "oklch": "oklch(49.6% 0.151 -67.4)",
+        "tonalRamp": [
+          "#0f002a",
+          "#2c0064",
+          "#482989",
+          "#664bae",
+          "#876ed4",
+          "#a991fb",
+          "#cabfff",
+          "#eeecff"
+        ]
+      },
+      "iris-night-paper": {
+        "role": "neutral",
+        "displayName": "Iris Night Paper",
+        "canonical": "#16141b",
+        "oklch": "oklch(19.7% 0.014 -61.8)",
+        "tonalRamp": [
+          "#0c0a10",
+          "#26242b",
+          "#434049",
+          "#626068",
+          "#83818a",
+          "#a6a3ad",
+          "#cac7d1",
+          "#efedf7"
+        ]
+      },
+      "iris-night-violet": {
+        "role": "primary",
+        "displayName": "Iris Night Violet",
+        "canonical": "#b39ef0",
+        "oklch": "oklch(74.8% 0.118 -64.8)",
+        "tonalRamp": [
+          "#100029",
+          "#2c1056",
+          "#483179",
+          "#67519c",
+          "#8873c1",
+          "#ab96e7",
+          "#cdbefe",
+          "#efebfe"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page titles in a page header (text-xl, semibold, tight tracking)."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card titles; dialogue titles step up to 1.125rem."
+      },
+      "section": {
+        "displayName": "Section",
+        "purpose": "Sticky section headers and grouped headings in a page body."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All interface text: controls, lists, menus, paragraphs."
+      },
+      "reading": {
+        "displayName": "Reading",
+        "purpose": "The note editor and preview, at a 46rem measure; headings 1.6em, 1.35em, 1.15em."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Badges, breadcrumbs, tooltips, hints, the note status chip."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Counts and percentages, always with tabular numerals."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Code blocks and inline code."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-sm",
+        "value": "0 1px 2px rgb(31 28 24 / 0.06)",
+        "dark": "0 1px 2px rgb(0 0 0 / 0.4)",
+        "purpose": "Cards in Standard; the floating note status chip. None on cards in Simplified UI."
+      },
+      {
+        "name": "shadow-md",
+        "value": "0 4px 12px rgb(31 28 24 / 0.08), 0 1px 3px rgb(31 28 24 / 0.06)",
+        "dark": "0 4px 12px rgb(0 0 0 / 0.45)",
+        "purpose": "Menus, popovers and tooltips."
+      },
+      {
+        "name": "shadow-lg",
+        "value": "0 16px 40px rgb(31 28 24 / 0.16), 0 4px 12px rgb(31 28 24 / 0.08)",
+        "dark": "0 16px 40px rgb(0 0 0 / 0.55)",
+        "purpose": "Dialogues over the overlay."
+      }
+    ],
+    "motion": [
+      {
+        "name": "duration-fast",
+        "value": "120ms",
+        "purpose": "Hover and state changes; chevron rotation; 0ms under prefers-reduced-motion."
+      },
+      {
+        "name": "duration-normal",
+        "value": "200ms",
+        "purpose": "Dialogues fade and rise, menus and popovers fade in; 0ms under prefers-reduced-motion."
+      },
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.2, 0, 0, 1)",
+        "purpose": "The single easing curve for every transition."
+      },
+      {
+        "name": "rise-in",
+        "value": "from { opacity: 0; transform: translateY(0.25rem) scale(0.98) }",
+        "purpose": "Dialogue entrance."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "narrow",
+        "value": "768px",
+        "purpose": "Every route stays usable."
+      },
+      {
+        "name": "rail",
+        "value": "1024px",
+        "purpose": "Below this the sidebar is the icon rail."
+      },
+      {
+        "name": "primary",
+        "value": "1280px",
+        "purpose": "The primary target width."
+      },
+      {
+        "name": "note-chip",
+        "value": "62rem (container)",
+        "purpose": "The note status chip floats in the corner from this note width."
+      }
+    ],
+    "modes": {
+      "attributes": [
+        "data-theme: light | dark",
+        "data-palette: manuscript | graphite | sand | slate | sage | iris",
+        "data-ui: simplified | standard"
+      ],
+      "defaults": {
+        "palette": "manuscript",
+        "ui": "simplified"
+      },
+      "chromeTokens": [
+        {
+          "name": "--skb-chrome-line",
+          "standard": "var(--skb-border)",
+          "simplified": "transparent",
+          "purpose": "Header and strip lines."
+        },
+        {
+          "name": "--skb-divider",
+          "standard": "var(--skb-border)",
+          "simplified": "color-mix(in oklab, var(--skb-border) 70%, var(--skb-bg))",
+          "purpose": "Between resizable panes, beside the sidebar, indent guides."
+        },
+        {
+          "name": "--skb-pane-header-bg",
+          "standard": "var(--skb-surface)",
+          "simplified": "transparent",
+          "purpose": "Pane headers sit on the pane's own surface when simplified."
+        },
+        {
+          "name": "--skb-active-line",
+          "standard": "color-mix(in srgb, var(--skb-surface-hover) 55%, transparent)",
+          "simplified": "transparent",
+          "purpose": "The editor's current-line band."
+        },
+        {
+          "name": "--skb-card-edge",
+          "standard": "var(--skb-border)",
+          "simplified": "transparent (light), var(--skb-divider) (dark)",
+          "purpose": "A card's edge."
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one primary action of a view.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Create note</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 0 16px; border-radius: var(--skb-radius-md); border: 1px solid transparent; font-family: var(--skb-font-sans); font-size: 0.875rem; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background-color var(--skb-duration-fast) var(--skb-ease); } .ds-btn:focus-visible { outline: 2px solid var(--skb-focus); outline-offset: 2px; } .ds-btn-primary { background: var(--skb-accent); color: var(--skb-accent-contrast); } .ds-btn-primary:hover { background: var(--skb-accent-hover); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "The default button: surface fill and a strong hairline.",
+      "html": "<button class=\"ds-btn-secondary\">Import sources</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border-radius: var(--skb-radius-md); border: 1px solid var(--skb-border-strong); background: var(--skb-surface); color: var(--skb-text); font-family: var(--skb-font-sans); font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background-color var(--skb-duration-fast) var(--skb-ease); } .ds-btn-secondary:hover { background: var(--skb-surface-hover); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--skb-focus); outline-offset: 2px; }"
+    },
+    {
+      "name": "Danger Outline Button",
+      "kind": "button",
+      "refersTo": "button-danger-outline",
+      "description": "Delete in a page header: present, not where the eye lands first.",
+      "html": "<button class=\"ds-btn-danger-outline\">Delete module</button>",
+      "css": ".ds-btn-danger-outline { display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border-radius: var(--skb-radius-md); border: 1px solid var(--skb-danger); background: var(--skb-surface); color: var(--skb-danger); font-family: var(--skb-font-sans); font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background-color var(--skb-duration-fast) var(--skb-ease); } .ds-btn-danger-outline:hover { background: var(--skb-danger-subtle); } .ds-btn-danger-outline:focus-visible { outline: 2px solid var(--skb-focus); outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "A 36px field with a strong hairline and an accent caret.",
+      "html": "<input class=\"ds-input\" placeholder=\"Search notes\" />",
+      "css": ".ds-input { width: 100%; height: 36px; padding: 0 12px; border-radius: var(--skb-radius-md); border: 1px solid var(--skb-border-strong); background: var(--skb-surface); color: var(--skb-text); font-family: var(--skb-font-sans); font-size: 0.875rem; caret-color: var(--skb-accent); } .ds-input::placeholder { color: var(--skb-text-subtle); } .ds-input:focus-visible { outline: 2px solid var(--skb-focus); outline-offset: 2px; } .ds-input[aria-invalid=\"true\"] { border-color: var(--skb-danger); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "A white sheet on the paper: edge and shadow in Standard, tone alone in Simplified light.",
+      "html": "<div class=\"ds-card\"><h2 class=\"ds-card-title\">Reviews due</h2><p class=\"ds-card-text\">Make your first flashcards.</p></div>",
+      "css": ".ds-card { border-radius: var(--skb-radius-lg); border: 1px solid var(--skb-card-edge); background: var(--skb-surface); box-shadow: var(--skb-shadow-sm); padding: 16px 20px; font-family: var(--skb-font-sans); } :host-context([data-ui=\"simplified\"]) .ds-card { box-shadow: none; } .ds-card-title { margin: 0; font-size: 1rem; font-weight: 600; color: var(--skb-text); } .ds-card-text { margin: 4px 0 0; font-size: 0.875rem; color: var(--skb-text-muted); }"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge-accent",
+      "description": "A full pill on a tint, for status and counts.",
+      "html": "<span class=\"ds-badge ds-badge-accent\">Proposed</span> <span class=\"ds-badge ds-badge-success\">Mastered</span> <span class=\"ds-badge ds-badge-neutral\">Draft</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 9999px; border: 1px solid transparent; font-family: var(--skb-font-sans); font-size: 0.75rem; font-weight: 500; white-space: nowrap; } .ds-badge-accent { background: var(--skb-accent-subtle); color: var(--skb-accent); } .ds-badge-success { background: var(--skb-success-subtle); color: var(--skb-success); } .ds-badge-neutral { background: var(--skb-surface-sunken); color: var(--skb-text-muted); border-color: var(--skb-border); }"
+    },
+    {
+      "name": "Tabs",
+      "kind": "nav",
+      "refersTo": "tabs",
+      "description": "Muted labels; the active tab in Ink with a 2px accent underline.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab\" role=\"tab\" aria-selected=\"true\">Backlinks</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Outgoing</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Properties</button></div>",
+      "css": ".ds-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--skb-border); font-family: var(--skb-font-sans); } .ds-tab { margin-bottom: -1px; padding: 8px 12px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--skb-text-muted); font-size: 0.875rem; font-weight: 500; cursor: pointer; } .ds-tab:hover { color: var(--skb-text); } .ds-tab[aria-selected=\"true\"] { color: var(--skb-text); border-bottom-color: var(--skb-accent); } .ds-tab:focus-visible { outline: 2px solid var(--skb-focus); outline-offset: 2px; }"
+    },
+    {
+      "name": "File Tree (Simplified)",
+      "kind": "custom",
+      "refersTo": "tree-row",
+      "description": "Compact 26px rows inset as soft pills, no icons, indent guides, the open note on the accent tint.",
+      "html": "<div class=\"ds-tree\"><div class=\"ds-row\" style=\"--d:0\"><svg class=\"ds-chev ds-open\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m9 18 6-6-6-6\"/></svg><span>Dissertation</span></div><div class=\"ds-row\" style=\"--d:1\"><span class=\"ds-guide\" style=\"left:11px\"></span><span class=\"ds-chev\"></span><span>confusion-matrix</span><span class=\"ds-tag\">png</span></div><div class=\"ds-row ds-active\" style=\"--d:1\"><span class=\"ds-guide\" style=\"left:11px\"></span><span class=\"ds-chev\"></span><span>Dissertation Proposal Draft</span></div><div class=\"ds-row\" style=\"--d:0\"><span class=\"ds-chev\"></span><span>Welcome</span></div></div>",
+      "css": ".ds-tree { width: 260px; padding: 4px 0; background: var(--skb-surface); font-family: var(--skb-font-sans); } .ds-row { position: relative; display: flex; align-items: center; gap: 4px; height: 26px; margin: 0 6px; padding: 0 6px 0 calc(var(--d) * 16px + 4px); border-radius: var(--skb-radius-md); font-size: 0.8125rem; color: var(--skb-text-muted); cursor: default; } .ds-row:hover { background: var(--skb-surface-hover); } .ds-row:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--skb-focus); } .ds-active, .ds-active:hover { background: var(--skb-accent-subtle); color: var(--skb-text); font-weight: 500; } .ds-chev { display: inline-flex; width: 14px; flex: none; color: var(--skb-text-subtle); } .ds-open { transform: rotate(90deg); } .ds-guide { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--skb-divider); } .ds-tag { padding: 0 4px; border-radius: var(--skb-radius-sm); background: var(--skb-surface-sunken); color: var(--skb-text-subtle); font-size: 0.625rem; line-height: 16px; font-weight: 500; letter-spacing: 0.025em; text-transform: uppercase; }"
+    },
+    {
+      "name": "Menu",
+      "kind": "custom",
+      "refersTo": "menu-item",
+      "description": "Dropdown and right-click menus share one surface and one item style.",
+      "html": "<div class=\"ds-menu\" role=\"menu\"><div class=\"ds-item\" role=\"menuitem\" tabindex=\"0\"><span class=\"ds-ico\"></span><span class=\"ds-label\">Open in new tab</span><span class=\"ds-hint\">Ctrl+Click</span></div><div class=\"ds-item\" role=\"menuitem\" tabindex=\"0\"><span class=\"ds-ico\"></span><span class=\"ds-label\">Rename</span><span class=\"ds-hint\">F2</span></div><div class=\"ds-sep\"></div><div class=\"ds-item ds-danger\" role=\"menuitem\" tabindex=\"0\"><span class=\"ds-ico\"></span><span class=\"ds-label\">Delete</span></div></div>",
+      "css": ".ds-menu { min-width: 208px; padding: 4px; border-radius: var(--skb-radius-md); border: 1px solid var(--skb-border); background: var(--skb-surface-raised); box-shadow: var(--skb-shadow-md); font-family: var(--skb-font-sans); font-size: 0.875rem; color: var(--skb-text); } .ds-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--skb-radius-sm); outline: none; cursor: default; } .ds-item:hover, .ds-item:focus-visible { background: var(--skb-surface-hover); } .ds-ico { width: 16px; flex: none; } .ds-label { flex: 1; } .ds-hint { padding-left: 16px; font-size: 0.75rem; color: var(--skb-text-subtle); } .ds-danger { color: var(--skb-danger); } .ds-sep { height: 1px; margin: 4px 0; background: var(--skb-border); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Study Desk",
+    "overview": "Manuscript is a work surface for long study sessions on a Windows laptop: tinted paper, white sheets laid on it, sunken wells for secondary matter, and one ink accent that marks what can be acted on. The interface is compact and keyboard-first, close to Obsidian and to the operating system in its conventions, so the student's notes, slides and cards stay the loudest thing on screen. Density is deliberate: a 14px interface, 26-36px rows and controls, and no decorative whitespace that would show less material.\n\nThe world has three independent dials, set as attributes on the document before first paint: theme (light, dark), palette (Manuscript, the original warm paper and forest green, plus Graphite, Sand, Slate, Sage and Iris) and interface (Simplified, the default, or Standard). Palettes recolour only the neutrals and the accent. Simplified UI keeps every control and every component, and quietens the frame: a change of surface separates where it already can, and a softened line remains only where a boundary carries structure. Standard draws the frame with hairlines as Manuscript always did.\n\nConfirmed rejections, from the direction for this build: hidden features, whitespace that shows less content, a generic grey look that loses Manuscript's warmth in its default palette, saturated backgrounds, separators removed where panes then blur together, and anything that breaks keyboard use or contrast.",
+    "keyCharacteristics": [
+      "Tinted paper page, white or near-white cards and panes, sunken wells: depth from tone, not shadow.",
+      "One accent per palette, used for primary actions, links, focus, selection, caret and the active tree row.",
+      "Status, mastery and graph colours carry meaning and never change with the palette.",
+      "A compact system sans at 14px for the interface, 15px at a 1.65 line height for reading.",
+      "Simplified UI removes lines, never controls."
+    ],
+    "rules": [
+      {
+        "name": "The One Accent Rule",
+        "body": "Each palette has exactly one accent, and it means \"act here\" or \"you are here\". Status colours never stand in for it, and it never fills a large background.",
+        "section": "colors"
+      },
+      {
+        "name": "The Fixed Meaning Rule",
+        "body": "A palette overrides the neutrals and the accent, and nothing else. Success, warning, danger, info, mastery stages and graph colours read the same in Manuscript as in Iris.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tested Pairing Rule",
+        "body": "Every text, accent, button and focus pairing in every palette and theme meets WCAG AA, and a unit test (`features/design/palettes.test.ts`) proves it. A new palette or token value is not done until that test passes.",
+        "section": "colors"
+      },
+      {
+        "name": "The Token-Only Rule",
+        "body": "Components use the token utilities (`bg-surface`, `text-muted`, `border-border`), never raw colours. The one exception is content drawn on a fixed white page: PDF pages and print.",
+        "section": "colors"
+      },
+      {
+        "name": "The Compact Ramp Rule",
+        "body": "The interface lives between 0.75rem and 1.25rem. Larger sizes are for figures and note headings only.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Figures Rule",
+        "body": "Every number that is compared or counted (due cards, scores, mastery) uses tabular numerals.",
+        "section": "typography"
+      },
+      {
+        "name": "The Fixed Header Rule",
+        "body": "Every page and every pane keeps its header outside its scroll container, so it can never scroll away.",
+        "section": "layout"
+      },
+      {
+        "name": "The Surface Separates Rule",
+        "body": "In Simplified UI, draw no line where a change of surface already separates (page headers, pane headers and toolbars, the tab strip, the Files pane footer). Keep a softened divider where a boundary carries structure: between resizable panes, beside the app sidebar, in indent guides. Never remove a line where two panes would then blur together.",
+        "section": "layout"
+      },
+      {
+        "name": "The Chrome Token Rule",
+        "body": "Draw a frame with the chrome tokens (`border-chrome-line`, `bg-divider`, `bg-pane-header`), not with `border-border`, so it follows the interface setting.",
+        "section": "layout"
+      },
+      {
+        "name": "The Floating Shadow Rule",
+        "body": "A shadow means \"this floats above the page\". Anything that sits in the page's flow is separated by tone or a hairline, and in Simplified UI by tone alone.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep Manuscript (warm paper and forest green) the default palette and Simplified UI the default interface.",
+      "Do add a palette only as overrides of the neutral and accent tokens for both themes, and only once every pairing passes the WCAG AA test.",
+      "Do draw new frames with the chrome tokens so they follow Simplified UI, and reach for the `simplified:` variant only for the few styles that genuinely differ.",
+      "Do offer the same controls in Simplified and Standard; an end-to-end test compares them.",
+      "Do keep the interface at 14px and 26-36px rows and controls; density is how the student sees more material.",
+      "Do let the caret, selection, scrollbars, focus rings, desktop title-bar buttons and graph canvas follow the palette.",
+      "Do keep every motion on the duration tokens (120ms for hover and state, 200ms for overlays), which fall to 0ms under reduced motion."
+    ],
+    "donts": [
+      "Don't hide a feature to make a screen look calmer.",
+      "Don't add whitespace that shows less content.",
+      "Don't turn Manuscript's default palette into a generic grey; the neutral greys belong to Graphite.",
+      "Don't use saturated backgrounds; colour fills are tints, and the accent fills only buttons and small marks.",
+      "Don't remove a separator where panes would then blur together.",
+      "Don't let a palette change a status, mastery or graph colour.",
+      "Don't put a shadow on anything that does not float.",
+      "Don't break keyboard operation or contrast for the sake of quieter chrome."
+    ]
+  }
+}

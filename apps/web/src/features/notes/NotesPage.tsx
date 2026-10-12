@@ -2,7 +2,7 @@ import type { IndexStatus } from '@skb/core';
 import { folderOf, LinkResolver } from '@skb/core/markdown';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useSearch } from '@tanstack/react-router';
-import { FilePlus, PanelRight } from 'lucide-react';
+import { FilePlus, PanelLeft, PanelRight } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Group,
@@ -12,6 +12,7 @@ import {
   useDefaultLayout,
 } from 'react-resizable-panels';
 import { useShortcut } from '../../app/shortcuts/useShortcuts';
+import { useAppearance } from '../../app/theme/appearance';
 import { Button } from '../../components/Button';
 import { IconButton } from '../../components/IconButton';
 import { Page } from '../../components/Page';
@@ -40,8 +41,10 @@ import { POPOUT_WINDOW, selectActiveNoteId, useWorkspace } from './workspace/wor
  * note panes only.
  */
 
+const PHONE_QUERY = '(max-width: 639.98px)';
+
 const SEPARATOR =
-  'w-px bg-border outline-none hover:bg-accent focus-visible:bg-focus data-[separator=active]:bg-accent';
+  'w-px bg-divider outline-none hover:bg-accent simplified:bg-transparent focus-visible:bg-focus data-[separator=active]:bg-accent';
 
 export function NotesPage() {
   const api = useApi();
@@ -77,12 +80,18 @@ export function NotesPage() {
   const vault = useCurrentVault();
 
   const detailsOpen = useNotesUi((state) => state.detailsOpen);
+  const simplified = useAppearance((state) => state.simplified);
   const setDetailsOpen = useNotesUi((state) => state.setDetailsOpen);
   const expandFolders = useNotesUi((state) => state.expandFolders);
   const mode = useNotesUi((state) => state.mode);
   const setMode = useNotesUi((state) => state.setMode);
   const revealRequest = useNotesUi((state) => state.revealRequest);
   const files = useRef<PanelImperativeHandle | null>(null);
+  const [filesOpen, setFilesOpen] = useState(true);
+  // On a phone-sized window the note gets the room; the file list opens from its button.
+  useEffect(() => {
+    if (window.matchMedia?.(PHONE_QUERY).matches) files.current?.collapse();
+  }, []);
 
   const panelIds = [
     ...(POPOUT_WINDOW ? [] : ['notes-files']),
@@ -129,27 +138,48 @@ export function NotesPage() {
     handler: () => setMode(mode === 'preview' ? 'edit' : 'preview'),
   });
 
+  const detailsToggle = (
+    <IconButton
+      label={detailsOpen ? 'Hide details' : 'Show details'}
+      icon={<PanelRight size={16} />}
+      size="sm"
+      aria-pressed={detailsOpen}
+      onClick={() => setDetailsOpen(!detailsOpen)}
+    />
+  );
+  // The file list can be closed and opened again, as Obsidian's left sidebar (Phase 24).
+  const filesToggle = POPOUT_WINDOW ? null : (
+    <IconButton
+      label={filesOpen ? 'Hide files' : 'Show files'}
+      icon={<PanelLeft size={16} />}
+      size="sm"
+      aria-pressed={filesOpen}
+      onClick={() => {
+        if (files.current?.isCollapsed()) files.current.expand();
+        else files.current?.collapse();
+      }}
+    />
+  );
   return (
     <Page
       title={current?.title ?? 'Notes'}
       layout="panes"
       density="compact"
+      // Simplified UI folds the title row into the tab row, as Obsidian has none (ADR-0043).
+      headerHidden={simplified}
       actions={
-        <>
-          <IconButton
-            label={detailsOpen ? 'Hide details' : 'Show details'}
-            icon={<PanelRight size={16} />}
-            size="sm"
-            aria-pressed={detailsOpen}
-            onClick={() => setDetailsOpen(!detailsOpen)}
-          />
-          {!POPOUT_WINDOW && (
-            <Button variant="primary" size="sm" onClick={() => actions.openNewNote(folder)}>
-              <FilePlus aria-hidden="true" size={15} />
-              New note
-            </Button>
-          )}
-        </>
+        simplified ? undefined : (
+          <>
+            {filesToggle}
+            {detailsToggle}
+            {!POPOUT_WINDOW && (
+              <Button variant="primary" size="sm" onClick={() => actions.openNewNote(folder)}>
+                <FilePlus aria-hidden="true" size={15} />
+                New note
+              </Button>
+            )}
+          </>
+        )
       }
     >
       <Group
@@ -165,10 +195,12 @@ export function NotesPage() {
               id="notes-files"
               panelRef={files}
               defaultSize="20"
-              minSize="12"
+              // As wide as the Files toolbar, so no button is ever cut off; narrower, it closes.
+              minSize="13.5rem"
               collapsible
               collapsedSize="0"
               className="min-w-0"
+              onResize={(size) => setFilesOpen(size.asPercentage > 0)}
             >
               <FilesPane
                 tree={tree.data}
@@ -193,6 +225,22 @@ export function NotesPage() {
             routeNoteId={routeNoteId}
             line={line}
             vaultName={vault.vault?.name ?? null}
+            trailing={
+              simplified ? (
+                <>
+                  {filesToggle}
+                  {!POPOUT_WINDOW && (
+                    <IconButton
+                      label="New note"
+                      icon={<FilePlus size={16} />}
+                      size="sm"
+                      onClick={() => actions.openNewNote(folder)}
+                    />
+                  )}
+                  {detailsToggle}
+                </>
+              ) : undefined
+            }
           />
         </Panel>
         {detailsOpen && (

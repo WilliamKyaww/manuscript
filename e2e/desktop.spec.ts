@@ -4,6 +4,7 @@ import path from 'node:path';
 import { _electron as electron, expect, test } from '@playwright/test';
 import { SECTIONS } from '../apps/web/src/app/sections';
 import { headingOutline, seriousViolations } from './axe';
+import { expectPageTitle } from './titles';
 
 /**
  * Task 18.09: the desktop shell, for real. Electron starts the server in a utility process, the
@@ -68,7 +69,7 @@ test('the desktop shell starts, shows the application, keeps the page confined, 
   });
   try {
     const page = await app.firstWindow();
-    await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible({
+    await expectPageTitle(page, 'Today', {
       timeout: 90_000,
     });
 
@@ -118,7 +119,7 @@ test('the desktop shell starts, shows the application, keeps the page confined, 
     const dialog = page.getByRole('dialog', { name: 'New note' });
     await dialog.getByLabel('Title').fill('Desktop smoke note');
     await dialog.getByRole('button', { name: 'Create note' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Desktop smoke note' })).toBeVisible();
+    await expectPageTitle(page, 'Desktop smoke note');
     await page.locator('.cm-content').click();
     await page.keyboard.insertText('Written in the desktop window.');
     await expect
@@ -196,7 +197,7 @@ test('the desktop shell starts, shows the application, keeps the page confined, 
     }, other);
     expect(switched.restarting).toBe(true);
     await expect.poll(() => new URL(page.url()).origin, { timeout: 60_000 }).not.toBe(origin);
-    await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible({
+    await expectPageTitle(page, 'Today', {
       timeout: 60_000,
     });
     const next = await page.evaluate(async () => {
@@ -240,7 +241,7 @@ test('every page works in the desktop window as it does in the browser', async (
   });
   try {
     const page = await app.firstWindow();
-    await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible({
+    await expectPageTitle(page, 'Today', {
       timeout: 90_000,
     });
     test.info().annotations.push({
@@ -255,7 +256,7 @@ test('every page works in the desktop window as it does in the browser', async (
     page.on('pageerror', (error) => problems.push(`${page.url()}: ${error.message}`));
     for (const route of ROUTES) {
       await page.goto(`${origin}${route.path}`);
-      await expect(page.getByRole('heading', { level: 1, name: route.title })).toBeVisible();
+      await expectPageTitle(page, route.title);
       await expect(page.locator('[data-page-header]')).toHaveCount(1);
       expect(await seriousViolations(page, { inPageOnly: true }), route.path).toEqual([]);
       expect(await headingOutline(page), route.path).toEqual({ h1: 1, skips: [] });
@@ -296,7 +297,7 @@ for (const build of packagedBuilds) {
     const app = await electron.launch({ executablePath: packaged, args: [], cwd: dir, env });
     try {
       const page = await app.firstWindow();
-      await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible({
+      await expectPageTitle(page, 'Today', {
         timeout: 90_000,
       });
       expect(await app.evaluate(({ app: electronApp }) => electronApp.isPackaged)).toBe(true);

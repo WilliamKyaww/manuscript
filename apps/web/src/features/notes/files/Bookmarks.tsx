@@ -46,7 +46,7 @@ export function Bookmarks({ tree, actions }: { tree: NoteTree; actions: FileActi
   };
 
   return (
-    <section aria-label="Bookmarks" className="border-b border-border py-1">
+    <section aria-label="Bookmarks" className="border-b border-chrome-line py-1">
       <button
         type="button"
         aria-expanded={open}

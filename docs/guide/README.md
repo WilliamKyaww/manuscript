@@ -15,6 +15,7 @@ Press `?` anywhere in the application for its keyboard shortcuts.
 |---|---|
 | [Installing on Windows](./installing.md) | Building the installer, what it installs and what it leaves alone, the SmartScreen warning, first run, updating in place, uninstalling |
 | [The desktop app](./desktop.md) | Starting it, what the window adds (Browse…, Show in folder, restarting to open another vault), what it keeps to itself, how AI keys are protected, what to do if the engine stops |
+| [Appearance](./appearance.md) | Light and dark, the six colour palettes, and Simplified UI: what it quietens and what it keeps |
 | [The study loop](./study-loop.md) | How the pieces fit together: lecture, study materials, graph, practice, mastery, plan and notes — and what stays in your hands |
 
 ### Notes and material

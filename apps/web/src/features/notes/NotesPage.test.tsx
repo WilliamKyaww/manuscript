@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { useAppearance } from '../../app/theme/appearance';
 import { type FakeFetch, HEALTH, renderApp, resetUiState } from '../../test/renderApp';
 import { useNotesUi } from './notes-store';
 
@@ -298,5 +299,27 @@ describe('Notes page', () => {
     expect(
       await screen.findByRole('heading', { name: 'This note no longer exists' }),
     ).toBeInTheDocument();
+  });
+
+  it('folds its title row into the tab row in Simplified UI, and keeps it in the standard interface', async () => {
+    useAppearance.setState({ simplified: true });
+    const { unmount } = renderApp(`/notes/${RAFT}`, notesFetch);
+    const title = await screen.findByRole('heading', { level: 1, name: 'Raft' });
+    // Still the page's title for screen readers and keyboard focus, shown in the tab instead.
+    expect(title.closest('[data-page-header]')).toHaveClass('sr-only');
+    const tabRow = screen.getByRole('navigation', { name: 'Open notes' })
+      .parentElement as HTMLElement;
+    expect(within(tabRow).getByRole('button', { name: 'New note' })).toBeInTheDocument();
+    expect(within(tabRow).getByRole('button', { name: 'Show details' })).toBeInTheDocument();
+    unmount();
+
+    useAppearance.setState({ simplified: false });
+    renderApp(`/notes/${RAFT}`, notesFetch);
+    const header = (await screen.findByRole('heading', { level: 1, name: 'Raft' })).closest(
+      '[data-page-header]',
+    ) as HTMLElement;
+    expect(header).not.toHaveClass('sr-only');
+    expect(within(header).getByRole('button', { name: 'New note' })).toBeInTheDocument();
+    expect(within(header).getByRole('button', { name: 'Show details' })).toBeInTheDocument();
   });
 });

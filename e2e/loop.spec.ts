@@ -7,6 +7,7 @@ import { seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
 import { studyDay } from './days';
 import { startServer, stopServer } from './server';
+import { expectPageTitle } from './titles';
 
 /**
  * Task 15.09: the study loop with the built-in test model (SKB_AI_PROVIDER=mock). A lecture's slides
@@ -92,9 +93,7 @@ test('a lecture becomes concepts, cards, mastery and a plan', async ({ page }) =
 
     // 1. One request makes the study materials.
     await page.goto(`${origin}/auth?token=${E2E_TOKEN}&next=/lectures/${lecture.id}`);
-    await expect(
-      page.getByRole('heading', { level: 1, name: /L3 Commit protocols/u }),
-    ).toBeVisible();
+    await expectPageTitle(page, /L3 Commit protocols/u);
     await page.getByRole('button', { name: 'Make study materials…' }).click();
     const dialog = page.getByRole('dialog', { name: 'Make study materials' });
     expect(await seriousViolations(page)).toEqual([]);
@@ -109,7 +108,7 @@ test('a lecture becomes concepts, cards, mastery and a plan', async ({ page }) =
 
     // 2. Nothing is saved until it is accepted: concepts first, so that cards can know them.
     await page.getByRole('link', { name: 'Open the Inbox' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Inbox' })).toBeVisible();
+    await expectPageTitle(page, 'Inbox');
     await page.getByRole('tab', { name: /Suggestions/u }).click();
     await page.getByRole('checkbox', { name: 'Select all' }).check();
     await page.getByRole('button', { name: 'Accept selected' }).click();
@@ -154,7 +153,7 @@ test('a lecture becomes concepts, cards, mastery and a plan', async ({ page }) =
       durationMs: 3_000,
     });
     await page.goto(`${origin}/progress`);
-    await expect(page.getByRole('heading', { level: 1, name: 'Progress' })).toBeVisible();
+    await expectPageTitle(page, 'Progress');
     // A concept row now shows a mastery figure (its explanation is one click away).
     const figure = page.locator('summary').filter({ hasText: /\d\.\d\d/u });
     await expect(figure.first()).toBeVisible();

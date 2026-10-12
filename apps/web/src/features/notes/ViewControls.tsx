@@ -27,7 +27,7 @@ export function ModeToggle({
       value={mode}
       onValueChange={(value) => value && onChange(value as EditorMode)}
       aria-label="View"
-      className="flex rounded-md border border-border bg-surface p-0.5"
+      className="flex rounded-md border border-border bg-surface p-0.5 simplified:border-transparent simplified:bg-transparent"
     >
       {MODES.map(({ value, label, icon: Icon }) => (
         <ToggleGroup.Item

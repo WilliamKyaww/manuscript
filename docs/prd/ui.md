@@ -202,3 +202,21 @@ The Notes page follows Obsidian's layout and words, so that a student who knows 
   (container queries on the pane).
 - **The desktop title bar** (task 23.10) is a 32-pixel strip drawn by the page (`app/TitleBar.tsx`) above the
   shell, with the window's own buttons over its right end; nothing interactive sits in it.
+
+## 12. Appearance: palettes and Simplified UI (Phase 24, ADR-0043)
+
+- **Three attributes on `<html>`:** `data-theme` (light, dark), `data-palette` (manuscript — the default and the
+  original look — graphite, sand, slate, sage, iris) and `data-ui` (simplified — the default — or standard), set by
+  `public/theme-init.js` before the first paint and kept in step by `app/theme/appearance.ts`.
+- **Palettes override neutrals and the accent only**, per theme, in `tokens.css`; meaning-bearing colours (status,
+  mastery, graph) are the same in every palette. `features/design/palettes.test.ts` checks every text, accent,
+  button and focus pairing for WCAG AA; `e2e/appearance.spec.ts` runs axe on Notes and Today in every palette and
+  theme.
+- **Chrome tokens** draw the frame: `--skb-chrome-line` (header and strip lines; none when simplified),
+  `--skb-divider` (between resizable panes and beside the sidebar; fainter when simplified), `--skb-pane-header-bg`
+  (pane headers on their own surface when simplified) and `--skb-active-line`. New components draw their frame with
+  these (`border-chrome-line`, `bg-divider`, `bg-pane-header`) so they follow the setting.
+- **`simplified:` is a Tailwind variant** for the few styles that differ (the file tree's rows, the note status chip,
+  the view switch's frame). Structure differs in one place only: the Notes page folds its title row into the tab row
+  (`Page headerHidden`; the h1 stays for screen readers and focus). Both modes offer the same controls — an
+  end-to-end test compares them.

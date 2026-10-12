@@ -179,3 +179,40 @@ describe('NoteTree', () => {
     expect(await screen.findByRole('textbox', { name: 'New name' })).toHaveValue('Index');
   });
 });
+
+describe('NoteTree in Simplified UI (Phase 24)', () => {
+  const nested = buildTree(
+    {
+      notes: [{ id: 'note_n', path: 'Dissertation/Literature/PlantDoc.md', title: 'PlantDoc' }],
+      folders: ['Dissertation', 'Dissertation/Literature'],
+      attachments: [{ path: 'Dissertation/confusion-matrix.png', mediaType: 'image/png' }],
+    },
+    { attachments: true },
+  );
+
+  it('draws an indent guide per containing folder, a type tag for attachments and full paths on hover', () => {
+    useNotesUi.setState({ expanded: new Set(['Dissertation', 'Dissertation/Literature']) });
+    render(
+      <NoteTree
+        root={nested}
+        activePath={null}
+        onOpen={vi.fn()}
+        onOpenInNewTab={vi.fn()}
+        onRename={vi.fn()}
+        onMove={vi.fn()}
+        onDelete={vi.fn()}
+        menuFor={() => []}
+      />,
+    );
+    const guides = (name: string) =>
+      screen.getByRole('treeitem', { name }).querySelectorAll('span.absolute').length;
+    expect(guides('Dissertation')).toBe(0);
+    expect(guides('Literature')).toBe(1);
+    expect(guides('PlantDoc')).toBe(2);
+
+    const attachment = screen.getByRole('treeitem', { name: 'confusion-matrix.png' });
+    expect(attachment).toHaveTextContent('confusion-matrix');
+    expect(attachment).toHaveTextContent('png');
+    expect(screen.getAllByTitle('Dissertation/Literature/PlantDoc.md')).not.toHaveLength(0);
+  });
+});

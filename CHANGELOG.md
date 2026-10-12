@@ -3,6 +3,32 @@
 All notable changes to Manuscript. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] — 2026-10-12
+
+Appearance (Phase 24): a quieter interface in the spirit of Obsidian, on by default, and colour palettes. Made with
+Impeccable (`apps/web/PRODUCT.md`, `apps/web/DESIGN.md`) as a refinement of Manuscript's own design system.
+
+### Release notes
+
+**Updating.** Install `Manuscript-Setup-1.2.0.exe` over 1.1.0. Your vault, data and other settings are untouched. The
+first start shows Simplified UI in the Manuscript palette; *Settings → Appearance* turns it off or picks another
+palette, and the choice is remembered.
+
+### Added
+
+- **Simplified UI** (*Settings → Appearance*, on by default): fewer lines where a change of surface already
+  separates, softer ones where they carry structure; pane headers on their pane's surface; the Files and Details
+  panes on the sidebar's surface; quieter cards and section rules; no band behind the editor's current line. On the
+  Notes page the title row folds into the tab row, the save status and word count sit in the note's corner when
+  there is room, and the file list is Obsidian's: no icons, compact rows, indent guides, file-type tags for
+  attachments, full paths on hover. Every control stays — a test compares both interfaces.
+- **Colour palettes** for light and dark: Manuscript (the original, still the default), Graphite, Sand, Slate, Sage
+  and Iris, shown in miniature in Settings. Status, mastery and graph colours keep their meaning in every palette, and
+  every pairing of text, accent and focus meets WCAG 2.2 AA. The caret, selection, scrollbars, the graph and the
+  desktop title bar follow the palette.
+- **Show files / Hide files** beside *Show details* on the Notes page; the file list starts closed in a phone-sized
+  window and never narrows below its toolbar.
+
 ## [1.1.0] — 2026-10-12
 
 The notes workspace (Phase 23): the Notes page now works the way an Obsidian user expects, from the student's

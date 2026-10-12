@@ -78,15 +78,14 @@ const theme = EditorView.theme({
     padding: '20px 0 40vh',
     maxWidth: '46rem',
     margin: '0 auto',
-    caretColor: 'var(--skb-text)',
+    // The caret takes the palette's accent, as the rest of the selection does.
+    caretColor: 'var(--skb-accent)',
   },
   '.cm-line': { padding: '0 24px' },
-  '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--skb-text)' },
+  '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--skb-accent)' },
   '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, ::selection':
     { backgroundColor: 'var(--skb-accent-subtle)' },
-  '.cm-activeLine': {
-    backgroundColor: 'color-mix(in srgb, var(--skb-surface-hover) 55%, transparent)',
-  },
+  '.cm-activeLine': { backgroundColor: 'var(--skb-active-line)' },
   '.cm-wikilink': {
     color: 'var(--skb-accent)',
     textDecoration: 'underline',

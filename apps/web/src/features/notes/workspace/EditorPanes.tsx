@@ -1,7 +1,7 @@
 import type { NoteTree } from '@skb/core';
 import type { LinkResolver } from '@skb/core/markdown';
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 import { Button } from '../../../components/Button';
 import { EmptyState, ErrorState, LoadingState } from '../../../components/States';
@@ -35,10 +35,12 @@ interface Shared {
   routeNoteId: string | undefined;
   line: number | undefined;
   vaultName: string | null;
+  /** The page's own actions, at the end of the top-right tab row (Simplified UI). */
+  trailing?: ReactNode;
 }
 
 const SEPARATOR =
-  'bg-border outline-none hover:bg-accent focus-visible:bg-focus data-[separator=active]:bg-accent';
+  'bg-divider outline-none hover:bg-accent focus-visible:bg-focus data-[separator=active]:bg-accent';
 
 export function EditorPanes(props: Shared) {
   const panes = useWorkspace((state) => state.panes);
@@ -68,6 +70,7 @@ export function EditorPanes(props: Shared) {
         multiple={false}
         label="Open notes"
         titleOf={titleOf}
+        trailing={props.trailing}
       />
     );
   return (
@@ -84,6 +87,7 @@ export function EditorPanes(props: Shared) {
           multiple
           label="Open notes in the first pane"
           titleOf={titleOf}
+          trailing={direction === 'down' ? props.trailing : undefined}
         />
       </Panel>
       <Separator className={direction === 'right' ? `w-px ${SEPARATOR}` : `h-px ${SEPARATOR}`} />
@@ -99,6 +103,7 @@ export function EditorPanes(props: Shared) {
               : 'Open notes in the pane below'
           }
           titleOf={titleOf}
+          trailing={direction === 'right' ? props.trailing : undefined}
         />
       </Panel>
     </Group>
@@ -111,6 +116,7 @@ function EditorPane({
   multiple,
   label,
   titleOf,
+  trailing,
   ...shared
 }: Shared & {
   pane: WorkspacePane;
@@ -124,7 +130,13 @@ function EditorPane({
   const panesCount = useWorkspace((state) => state.panes.length);
   return (
     <div data-editor-pane data-active={active} className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <TabBar pane={pane} active={active && multiple} titleOf={titleOf} paneLabel={label} />
+      <TabBar
+        pane={pane}
+        active={active && multiple}
+        titleOf={titleOf}
+        paneLabel={label}
+        trailing={trailing}
+      />
       <div className="flex min-h-0 min-w-0 flex-1">
         {tab.noteId ? (
           <NoteTab

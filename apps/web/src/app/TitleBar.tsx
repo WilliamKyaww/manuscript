@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { desktopBridge } from '../lib/desktop';
+import { useAppearance } from './theme/appearance';
 import { useThemeStore } from './theme/theme';
 
 /**
@@ -34,9 +35,10 @@ function useDocumentTitle(): string {
 export function TitleBar() {
   const bridge = desktopBridge();
   const theme = useThemeStore((state) => state.resolved);
+  const palette = useAppearance((state) => state.palette);
   const title = useDocumentTitle();
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: the colours are read again from the page whenever the theme changes.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the colours are read again from the page whenever the theme or palette changes.
   useEffect(() => {
     if (!bridge) return;
     const styles = getComputedStyle(document.documentElement);
@@ -46,13 +48,13 @@ export function TitleBar() {
         symbols: hexColour(styles.getPropertyValue('--skb-text').trim()),
       })
       .catch(() => undefined);
-  }, [bridge, theme]);
+  }, [bridge, theme, palette]);
 
   if (!bridge) return null;
   return (
     <div
       data-title-bar
-      className="flex flex-none items-center gap-2 border-b border-border bg-surface pl-3 text-xs text-muted select-none [-webkit-app-region:drag]"
+      className="flex flex-none items-center gap-2 border-b border-divider bg-surface pl-3 text-xs text-muted select-none [-webkit-app-region:drag]"
       style={{
         height: TITLE_BAR_HEIGHT,
         // Leave room for the window's buttons, wherever the system draws them.

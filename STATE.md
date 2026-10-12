@@ -4,9 +4,9 @@ _Last updated: 12 October 2026 — Claude Opus 5.5._
 
 ## Current phase
 
-**Version 1.1.0 — the notes workspace** (Phase 23, after the student's review of 1.0; `CHANGELOG.md`). Version
-1.0.0 was tagged `v1.0.0` on 11 October 2026. All phases are merged into `main`: Phase 23 (the notes workspace),
-Phase 22 (release), Phase 21 (verification, closed at the user's request with four checks left open — see
+**Version 1.2.0 — appearance** (Phase 24: Simplified UI and colour palettes, made with the Impeccable design skill;
+`CHANGELOG.md`). 1.1.0 (the notes workspace) and 1.0.0 are tagged. All phases are merged into `main`: Phase 24
+(appearance), Phase 23 (the notes workspace), Phase 22 (release), Phase 21 (verification, closed at the user's request with four checks left open — see
 Pending), Phase 20 (final UI/UX polish), and Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
 and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
 ingestion pipeline), 6 (course structure and concepts), 7 (knowledge graph), 8 (flashcards and
@@ -30,6 +30,11 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
   history (`.skb/history/versions`, five-minute interval, 30 days), merging and copies, export to PDF, the open
   vault and *Open folder as vault…* at the foot of the Files pane, a Details panel that starts closed. The sidebar
   is 13.5 rem, resizable and collapsed until opened; the desktop app has a slim title bar in the app's colours.
+- **Appearance** (Phase 24, ADR-0043, `docs/guide/appearance.md`): Simplified UI, on by default — quieter chrome on
+  every page, the Files and Details panes on the sidebar's surface, the Notes title row folded into the tab row, an
+  Obsidian-like file tree — with the same controls as the standard interface; six palettes (Manuscript, Graphite,
+  Sand, Slate, Sage, Iris) for light and dark, all WCAG AA. Design context for Impeccable: `apps/web/PRODUCT.md` and
+  `apps/web/DESIGN.md`.
 - **Search** (Phases 4–5): full-text search over notes **and source passages** (`/search`,
   `Ctrl+Shift+F`) with BM25 ranking, highlighted snippets, phrases, `OR`, exclusions and composable
   tag/type/folder/module/kind filters; notes open at the matching line, sources at their page, slide
@@ -185,10 +190,12 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## In progress
 
-- Nothing: Phase 23 is merged. New work comes from the backlog (`docs/backlog/`) or from what the user reports.
+- Nothing: Phase 24 is merged. New work comes from the backlog (`docs/backlog/`) or from what the user reports.
 
 ## Incomplete / not started
 
+- Not in Phase 24: phone-width layouts stay best-effort (ui.md §9; the file list starts closed below 640 px); the
+  Standard interface was not redesigned, only kept.
 - Not in Phase 23: versions of edits made in other programs (only saves made here are versioned); more than two
   panes; Obsidian's bookmark groups and `bookmarks.json` (bookmarks are a vault setting, ADR-0042).
 - Open from Phase 21: a screen-reader spot check, calibration on real reviews and real-provider evaluation (the
@@ -256,8 +263,8 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## Next steps
 
-1. Install 1.1.0 over 1.0.0 (`npm run desktop:dist`, then run the installer; needs the user's go-ahead), use it, and
-   report what goes wrong or is missing: fixes and backlog items become the next work.
+1. Install 1.2.0 over the installed version (`apps\desktop\release\Manuscript-Setup-1.2.0.exe`), use it, and report
+   what goes wrong or is missing: fixes and backlog items become the next work.
 2. When the laptop is idle: `npm run test:perf` (four budgets were over on 11 October under load — so was the Phase 17
    code, which had met them).
 
@@ -300,8 +307,8 @@ background load — compare against a worktree of the previous gate (`AGENTS.md`
 
 ## Pending for the user
 
-- **Installing 1.1.0** over the installed 1.0.0: `npm run desktop:dist` makes `Manuscript-Setup-1.1.0.exe`; running it
-  replaces the program and keeps the vault and settings (I can run it on your say-so, as for 1.0.0).
+- **Installing 1.2.0**: `apps\desktop\release\Manuscript-Setup-1.2.0.exe` replaces the installed program and keeps
+  the vault and settings (I can run it on your say-so).
 - **Phase 21 checks that are yours** (each a few minutes; see the 11 October journal): a Narrator spot check
   (`Ctrl+Win+Enter`, the list is in the report); `npm run report:calibration -- "<your vault>"` once you have a few
   hundred reviews (read-only); `npm run eval:ai` with your provider (`SKB_EVAL_PROVIDER`, `SKB_EVAL_MODEL`,

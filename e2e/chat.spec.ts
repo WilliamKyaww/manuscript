@@ -6,6 +6,7 @@ import { makePptx } from '../apps/server/test/fixtures/sources/builders';
 import { seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
 import { startServer, stopServer } from './server';
+import { expectPageTitle } from './titles';
 
 /**
  * Tasks 13.11 and 13.12: with the built-in test model (SKB_AI_PROVIDER=mock), "Create flashcards
@@ -96,7 +97,7 @@ test('flashcards from lectures 1–3 show their steps, and a deletion waits for 
     const scratchId = ((await scratch.json()) as { id: string }).id;
 
     await page.goto(`${origin}/auth?token=${E2E_TOKEN}&next=/chat`);
-    await expect(page.getByRole('heading', { level: 1, name: 'Chat' })).toBeVisible();
+    await expectPageTitle(page, 'Chat');
     const box = page.getByRole('textbox', { name: 'Message' });
     await box.fill('Create flashcards from lectures 1–3');
     await box.press('Enter');
@@ -111,7 +112,7 @@ test('flashcards from lectures 1–3 show their steps, and a deletion waits for 
     await expect(page.getByText(/I created \d+ flashcards from lectures 1–3/u)).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
     await page.getByRole('link', { name: 'Review in the Inbox' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Inbox' })).toBeVisible();
+    await expectPageTitle(page, 'Inbox');
     await expect(page.locator('[data-draft]').first()).toBeVisible();
 
     // Deleting asks first. Declining leaves the note where it is.
@@ -196,11 +197,9 @@ test('a Markdown summary of lectures and my notes is written, linked and shown',
 
     // The note is in the vault, written from both kinds of material and linked to mine.
     await open.click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Summary of consensus' })).toBeVisible(
-      {
-        timeout: 15_000,
-      },
-    );
+    await expectPageTitle(page, 'Summary of consensus', {
+      timeout: 15_000,
+    });
     await page.getByRole('radio', { name: 'Preview' }).click();
     await expect(page.getByRole('heading', { name: 'From the lectures' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'From my notes' })).toBeVisible();

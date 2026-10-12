@@ -6,6 +6,7 @@ import { makePdf } from '../apps/server/test/fixtures/sources/builders';
 import { seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
 import { startServer, stopServer } from './server';
+import { expectPageTitle } from './titles';
 
 /**
  * Tasks 10.12 and 13.09: with the built-in test model (SKB_AI_PROVIDER=mock), a question put to the
@@ -56,7 +57,7 @@ test('a grounded answer cites the page it comes from', async ({ page }) => {
       .toBe('ready');
 
     await page.goto(`${origin}/auth?token=${E2E_TOKEN}&next=/library/${sourceId}`);
-    await expect(page.getByRole('heading', { level: 1, name: 'Consensus' })).toBeVisible();
+    await expectPageTitle(page, 'Consensus');
     await page.keyboard.press('Control+j');
     const panel = page.getByRole('complementary', { name: 'Chat panel' });
     await expect(panel.getByRole('checkbox', { name: 'Only this source' })).toBeChecked();
@@ -95,7 +96,7 @@ test('a grounded answer cites the page it comes from', async ({ page }) => {
 
 test('without a provider, the chat panel explains how to set AI up', async ({ page }) => {
   await page.goto(`/auth?token=${E2E_TOKEN}`);
-  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+  await expectPageTitle(page, 'Today');
   // The sidebar starts collapsed: its chat button is the icon named for what it does.
   await page.getByRole('button', { name: 'Chat about your material' }).click();
   const panel = page.getByRole('complementary', { name: 'Chat panel' });
@@ -103,6 +104,6 @@ test('without a provider, the chat panel explains how to set AI up', async ({ pa
   await expect(panel.getByRole('textbox', { name: 'Message' })).toBeDisabled();
   expect(await seriousViolations(page)).toEqual([]);
   await panel.getByRole('link', { name: 'Set up AI in Settings' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
+  await expectPageTitle(page, 'Settings');
   await expect(page.getByText(/AI is off\. Everything else works without it/u)).toBeVisible();
 });

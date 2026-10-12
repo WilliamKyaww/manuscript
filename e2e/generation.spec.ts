@@ -6,6 +6,7 @@ import { makePptx } from '../apps/server/test/fixtures/sources/builders';
 import { seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
 import { startServer, stopServer } from './server';
+import { expectPageTitle } from './titles';
 
 /**
  * Task 11.15: with the built-in test model (SKB_AI_PROVIDER=mock), flashcards generated from the
@@ -67,7 +68,7 @@ test('flashcards from the first three slides are reviewed, accepted and studied'
 
     // Generate from slides 1–3 of the source.
     await page.goto(`${origin}/auth?token=${E2E_TOKEN}&next=/library/${sourceId}`);
-    await expect(page.getByRole('heading', { level: 1, name: 'Commit protocols' })).toBeVisible();
+    await expectPageTitle(page, 'Commit protocols');
     await page.getByRole('button', { name: 'Generate…' }).click();
     const dialog = page.getByRole('dialog', { name: 'Generate with AI' });
     await expect(dialog.getByRole('radio', { name: 'Flashcards' })).toBeChecked();
@@ -83,7 +84,7 @@ test('flashcards from the first three slides are reviewed, accepted and studied'
     await dialog.getByRole('link', { name: 'Open Inbox' }).click();
 
     // Three drafts, each from one of the first three slides.
-    await expect(page.getByRole('heading', { level: 1, name: 'Inbox' })).toBeVisible();
+    await expectPageTitle(page, 'Inbox');
     const drafts = page.locator('[data-draft]');
     await expect(drafts).toHaveCount(3);
     for (const [index, slide] of [1, 2, 3].entries())

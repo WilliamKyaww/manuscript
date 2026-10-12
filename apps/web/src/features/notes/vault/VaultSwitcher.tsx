@@ -29,7 +29,7 @@ export function VaultSwitcher() {
   const name = current.vault?.name ?? null;
 
   return (
-    <div className="flex-none border-t border-border px-2 py-1.5">
+    <div className="flex-none border-t border-chrome-line px-2 py-1.5">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button

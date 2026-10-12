@@ -6,7 +6,7 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 12 October 2026 (version 1.1.0, Phase 23 — the notes workspace)._
+_Last updated: 12 October 2026 (version 1.2.0, Phase 24 — appearance)._
 
 ## Platform and architecture
 
@@ -184,6 +184,8 @@ _Last updated: 12 October 2026 (version 1.1.0, Phase 23 — the notes workspace)
 | F-UI-06 | Paned pages (each pane with its own fixed header) and lazily loaded routes | Complete | 3 |
 | F-UI-05 | Final visual polish across all screens | Complete — tokens and components polished, a design-system page, every screen reviewed in both themes and at 768 px, error states in widgets, a complete cheat sheet, motion and a narrow-window rail | 20 |
 | F-UI-07 | Design-system reference page (`/design-system`): every token with its value, every shared component live | Complete | 20 |
+| F-UI-10 | Colour palettes (Manuscript, Graphite, Sand, Slate, Sage, Iris) for light and dark, as token overrides; every pairing WCAG AA | Complete | 24 |
+| F-UI-11 | Simplified UI (on by default): quieter chrome everywhere, the Notes title row folded into the tab row, an icon-free Obsidian-like file tree; the same controls as the standard interface | Complete | 24 |
 | F-UI-09 | A narrower sidebar (13.5 rem), resizable by its edge (12–22 rem, keyboard too), collapsed until opened; thin themed scrollbars | Complete | 23 |
 | F-UI-08 | Narrow windows (768–1023 px): the sidebar as a rail, header actions that wrap, icon tabs in narrow panels | Complete — side panels stay resizable panes (drawers: B-PL-09) | 20 |
 

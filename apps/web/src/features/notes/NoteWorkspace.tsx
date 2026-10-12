@@ -283,22 +283,36 @@ export function NoteWorkspace({
         headerStart={<NoteBreadcrumb path={note.path} onFolder={ui.reveal} />}
         actions={
           <>
+            {/*
+              Standard UI: in the header, as room allows. Simplified UI: a quiet chip in the note's
+              bottom corner, as Obsidian's status bar (the pane is its positioning context), once the
+              pane is wide enough (62rem) that the text column can never reach that corner.
+            */}
             <span
-              aria-live="polite"
+              data-note-status
               className={cn(
-                // Read out in any pane; shown once the pane has room for it.
-                'sr-only mr-2 text-xs @min-[34rem]:not-sr-only',
-                session.status === 'failed' ? 'text-danger' : 'text-muted',
+                'mr-2 flex items-baseline gap-2 text-xs simplified:@min-[62rem]:mr-0',
+                'simplified:@min-[62rem]:pointer-events-none simplified:@min-[62rem]:absolute simplified:@min-[62rem]:right-3 simplified:@min-[62rem]:bottom-2 simplified:@min-[62rem]:z-10',
+                'simplified:@min-[62rem]:rounded-md simplified:@min-[62rem]:bg-surface/90 simplified:@min-[62rem]:px-2 simplified:@min-[62rem]:py-0.5 simplified:@min-[62rem]:shadow-sm',
               )}
             >
-              {session.readOnly ? 'Read-only' : STATUS_TEXT[session.status]}
-              <span className="sr-only">{`, ${analysis.wordCount} words`}</span>
-            </span>
-            <span
-              aria-hidden="true"
-              className="mr-2 hidden text-xs text-subtle @min-[48rem]:inline"
-            >
-              {analysis.wordCount} {analysis.wordCount === 1 ? 'word' : 'words'}
+              <span
+                aria-live="polite"
+                className={cn(
+                  // Read out in any pane; shown once the pane has room for the short label (about 3rem).
+                  'sr-only @min-[20rem]:not-sr-only',
+                  session.status === 'failed' ? 'text-danger' : 'text-muted',
+                )}
+              >
+                {session.readOnly ? 'Read-only' : STATUS_TEXT[session.status]}
+                <span className="sr-only">{`, ${analysis.wordCount} words`}</span>
+              </span>
+              <span
+                aria-hidden="true"
+                className="hidden text-subtle tabular-nums @min-[48rem]:inline"
+              >
+                {analysis.wordCount} {analysis.wordCount === 1 ? 'word' : 'words'}
+              </span>
             </span>
             <StudyTools note={note} editor={editor} mode={mode} headings={analysis.headings} />
             {mode !== 'preview' && <LivePreviewToggle on={livePreview} onChange={setLivePreview} />}
@@ -357,8 +371,9 @@ export function NoteWorkspace({
               ref={preview}
               data-scroll-region
               className={cn(
-                'min-w-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5',
-                mode === 'split' && 'border-l border-border',
+                // Simplified: room at the end, above the status in the corner.
+                'min-w-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5 simplified:pb-14',
+                mode === 'split' && 'border-l border-divider',
               )}
             >
               <div className="mx-auto max-w-3xl">
@@ -382,7 +397,7 @@ export function NoteWorkspace({
           <section
             aria-label={`Backlinks to ${note.title}`}
             data-scroll-region
-            className="max-h-[40%] flex-none overflow-y-auto border-t border-border bg-surface"
+            className="max-h-[40%] flex-none overflow-y-auto border-t border-divider bg-surface simplified:bg-bg"
           >
             <BacklinksPanel noteId={note.id} />
           </section>
