@@ -1,4 +1,6 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { _electron as electron, expect, test } from '@playwright/test';
@@ -99,6 +101,7 @@ test('the desktop shell starts, shows the application, keeps the page confined, 
         'printToPdf',
         'revealInExplorer',
         'setTitleBarColours',
+        'web',
       ],
       require: 'undefined',
       process: 'undefined',
@@ -361,3 +364,131 @@ for (const build of packagedBuilds) {
     removeQuietly(dir);
   });
 }
+
+test('a web link opens beside the note, in a page of its own that cannot reach the application', async () => {
+  test.setTimeout(180_000);
+  // A small site of the test's own, so that nothing here needs the internet.
+  const site = createServer((request, response) => {
+    response.setHeader('content-type', 'text/html; charset=utf-8');
+    response.end(
+      request.url === '/second'
+        ? '<title>Second page</title><h1>Second</h1>'
+        : '<title>Test paper</title><h1>A paper</h1><a id="next" href="/second" target="_blank">Next</a>',
+    );
+  });
+  await new Promise<void>((resolve) => site.listen(0, '127.0.0.1', resolve));
+  const paper = `http://127.0.0.1:${(site.address() as AddressInfo).port}/paper`;
+  const dir = mkdtempSync(path.join(tmpdir(), 'skb-e2e-desktop-web-'));
+  const app = await electron.launch({
+    executablePath: electronExecutable(),
+    args: [path.join(root, 'apps', 'desktop')],
+    cwd: root,
+    env: isolatedEnvironment(dir, path.join(dir, 'vault')),
+  });
+  const pages = () =>
+    app.evaluate(({ BrowserWindow }) =>
+      (BrowserWindow.getAllWindows()[0]?.contentView.children ?? []).map((child) => {
+        const view = child as unknown as {
+          webContents?: { getURL(): string };
+          getVisible(): boolean;
+        };
+        return { url: view.webContents?.getURL() ?? '', visible: view.getVisible() };
+      }),
+    );
+  const inPage = (script: string) =>
+    app.evaluate(async ({ BrowserWindow }, code) => {
+      const child = BrowserWindow.getAllWindows()[0]?.contentView.children[0] as unknown as {
+        webContents: { executeJavaScript(code: string): Promise<unknown> };
+      };
+      return child.webContents.executeJavaScript(code);
+    }, script);
+  try {
+    const page = await app.firstWindow();
+    await expectPageTitle(page, 'Today', { timeout: 90_000 });
+    const origin = new URL(page.url()).origin;
+    const note = await page.evaluate(async (address) => {
+      const response = await fetch('/api/notes', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        // Below the first line, where the cursor starts (it would show the link's source).
+        body: JSON.stringify({
+          title: 'Reading list',
+          content: `To read:\n\n[The paper](${address})\n`,
+        }),
+      });
+      return (await response.json()) as { id: string };
+    }, paper);
+    await page.evaluate(() => localStorage.setItem('skb.notes.mode', 'edit'));
+    await page.goto(`${origin}/notes/${note.id}`);
+    await page.locator('.cm-content .cm-link[data-href]').click();
+
+    // The page is a tab in a pane on the left of the note, drawn by the shell over its box.
+    await expect(page.locator('[data-web-tab]')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Test paper', exact: true })).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect.poll(pages).toEqual([{ url: paper, visible: true }]);
+    if (process.env.SKB_SCREENSHOTS) {
+      // The window as a whole: the page and, over its box, the web pane's native view.
+      const picture = await app.evaluate(async ({ BrowserWindow }) =>
+        (await BrowserWindow.getAllWindows()[0]?.capturePage())?.toPNG().toString('base64'),
+      );
+      if (picture)
+        writeFileSync(
+          path.join(process.env.SKB_SCREENSHOTS, 'desktop-web-pane.png'),
+          Buffer.from(picture, 'base64'),
+        );
+    }
+    // The native view lies exactly over the box the page keeps for it.
+    const box = await page.locator('[data-web-view-host]').boundingBox();
+    const bounds = await app.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows()[0]?.contentView.children[0]?.getBounds(),
+    );
+    expect(bounds).toEqual({
+      x: Math.round(box?.x ?? -1),
+      y: Math.round(box?.y ?? -1),
+      width: Math.round(box?.width ?? -1),
+      height: Math.round(box?.height ?? -1),
+    });
+    const [webPane, notePane] = await page.locator('[data-editor-pane]').all();
+    const left = await webPane?.boundingBox();
+    const right = await notePane?.boundingBox();
+    expect((left?.x ?? 0) < (right?.x ?? 0)).toBe(true);
+    await expect(notePane?.locator('.cm-content') ?? page.locator('none')).toContainText(
+      'The paper',
+    );
+
+    // It is the web, not the application: no cookie of the app, no Node, and no way into the app.
+    expect(await inPage('document.cookie + "|" + typeof require + "|" + typeof process')).toBe(
+      '|undefined|undefined',
+    );
+    await inPage(`location.href = ${JSON.stringify(`${origin}/`)}; 1`);
+    await page.waitForTimeout(500);
+    expect((await pages())[0]?.url).toBe(paper);
+
+    // A link meant for a new tab stays in the pane; Back goes back.
+    await inPage("document.getElementById('next').click(); 1");
+    await expect(page.getByRole('button', { name: 'Second page', exact: true })).toBeVisible({
+      timeout: 30_000,
+    });
+    await page.getByRole('button', { name: 'Back' }).click();
+    await expect(page.getByRole('button', { name: 'Test paper', exact: true })).toBeVisible({
+      timeout: 30_000,
+    });
+
+    // A dialogue is not hidden behind the page: the page steps aside and leaves a picture of itself.
+    await page.keyboard.press('Control+k');
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect.poll(async () => (await pages())[0]?.visible).toBe(false);
+    await page.keyboard.press('Escape');
+    await expect.poll(async () => (await pages())[0]?.visible).toBe(true);
+
+    // Closing the tab lets the page go.
+    await page.getByRole('button', { name: 'Close Test paper' }).click();
+    await expect.poll(pages).toEqual([]);
+  } finally {
+    await app.close();
+    site.close();
+    removeQuietly(dir);
+  }
+});

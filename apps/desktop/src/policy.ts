@@ -3,8 +3,8 @@ import path from 'node:path';
 /**
  * The desktop shell's rules, as pure functions so that they can be tested without Electron
  * (architecture.md §8, §11): which addresses the window may show, which may be opened outside the
- * application, which paths the renderer may ask to have revealed, and what a file picker may be
- * asked for. The renderer is treated as untrusted: it is a web page, and a page it shows could be
+ * application, which paths the renderer may ask to have revealed, what a file picker may be asked
+ * for, and what the web pane beside a note may show (Phase 26). The renderer is treated as untrusted: it is a web page, and a page it shows could be
  * compromised.
  */
 
@@ -95,6 +95,71 @@ export function isNoteWindowUrl(candidate: string, origin: string): boolean {
     /^\/notes\/note_[0-9A-HJKMNP-TV-Z]{26}$/u.test(url.pathname) &&
     url.searchParams.get('window') === 'note'
   );
+}
+
+/**
+ * An address the web pane may show (Phase 26, ADR-0045): a plain web page, never the application
+ * itself (a page on the web must not reach the server through the pane), and not absurdly long.
+ */
+export function webPageUrl(candidate: unknown, appOrigin: string | null): string | null {
+  if (typeof candidate !== 'string' || candidate.length > 8192) return null;
+  const outside = externalUrl(candidate);
+  if (!outside) return null;
+  if (appOrigin !== null && isAppUrl(outside, appOrigin)) return null;
+  return outside;
+}
+
+/** The id the page gives a web tab: short and plain, so it can be part of a key. */
+export function webViewId(candidate: unknown): string | null {
+  return typeof candidate === 'string' && /^[A-Za-z0-9_-]{1,40}$/u.test(candidate)
+    ? candidate
+    : null;
+}
+
+/**
+ * Where the web pane goes in the window, from the page's measurements (CSS pixels) and the page's
+ * zoom: whole pixels, never negative, and nothing larger than a screen could be.
+ */
+export function webViewBounds(candidate: unknown, zoom: number): Bounds | null {
+  if (typeof candidate !== 'object' || candidate === null) return null;
+  const given = candidate as Record<string, unknown>;
+  const factor = Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
+  const values = [given.x, given.y, given.width, given.height].map((value) =>
+    typeof value === 'number' && Number.isFinite(value) ? value * factor : Number.NaN,
+  );
+  if (values.some((value) => Number.isNaN(value))) return null;
+  const [x = 0, y = 0, width = 0, height = 0] = values;
+  if (width > 30_000 || height > 30_000 || Math.abs(x) > 30_000 || Math.abs(y) > 30_000)
+    return null;
+  return {
+    x: Math.round(Math.max(0, x)),
+    y: Math.round(Math.max(0, y)),
+    width: Math.round(Math.max(0, width)),
+    height: Math.round(Math.max(0, height)),
+  };
+}
+
+/** The commands the web pane's toolbar sends. */
+export type WebCommand = 'back' | 'forward' | 'reload' | 'stop' | 'load';
+export function webCommand(candidate: unknown): WebCommand | null {
+  return candidate === 'back' ||
+    candidate === 'forward' ||
+    candidate === 'reload' ||
+    candidate === 'stop' ||
+    candidate === 'load'
+    ? candidate
+    : null;
+}
+
+/**
+ * The browser's own name for the pane's pages: Chromium's, without the Electron and application
+ * tokens that make some sites refuse to work or treat the pane as an unknown browser.
+ */
+export function webUserAgent(fallback: string): string {
+  return fallback
+    .replace(/\s(?:Electron|Manuscript|manuscript|@skb\/desktop)\/\S+/gu, '')
+    .replace(/\s{2,}/gu, ' ')
+    .trim();
 }
 
 /** A colour for the window's buttons, as the page sends it: `#rgb`, `#rrggbb` or `#rrggbbaa`. */

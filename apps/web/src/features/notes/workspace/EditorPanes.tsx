@@ -14,6 +14,8 @@ import type { FileActions } from '../useFileActions';
 import { useVaultDialog } from '../vault/OpenVaultDialog';
 import { EmptyTab } from './EmptyTab';
 import { TabBar } from './TabBar';
+import { WebTab } from './WebTab';
+import { useWebPages, webTabTitle } from './web-pages';
 import {
   activeTabOf,
   useWorkspace,
@@ -23,8 +25,8 @@ import {
 
 /**
  * The note panes (task 23.04): one, or two side by side or one above the other, each with its tab
- * bar and the note of its active tab. Only the active tab of each pane is mounted; a tab that closes
- * saves what was typed in it as it goes (useNoteSession).
+ * bar and the note (or, Phase 26, the web page) of its active tab. Only the active tab of each pane is
+ * mounted; a tab that closes saves what was typed in it as it goes (useNoteSession).
  */
 
 interface Shared {
@@ -51,7 +53,9 @@ export function EditorPanes(props: Shared) {
     () => new Map<string, string>((tree?.notes ?? []).map((note) => [note.id, note.path])),
     [tree],
   );
+  const pages = useWebPages((state) => state.pages);
   const titleOf = (tab: WorkspaceTab) => {
+    if (tab.url) return { title: webTabTitle(tab.url, pages[tab.id]), path: tab.url };
     if (tab.noteId === null) return { title: 'New tab', path: null };
     const path = files.get(tab.noteId);
     return path
@@ -138,7 +142,9 @@ function EditorPane({
         trailing={trailing}
       />
       <div className="flex min-h-0 min-w-0 flex-1">
-        {tab.noteId ? (
+        {tab.url ? (
+          <WebTab key={tab.id} tab={{ ...tab, url: tab.url }} />
+        ) : tab.noteId ? (
           <NoteTab
             key={tab.noteId}
             noteId={tab.noteId}

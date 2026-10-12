@@ -4,9 +4,11 @@ import { readPreference, writePreference } from '../../../lib/storage';
 
 /**
  * Tabs and panes of the Notes section (task 23.04, ADR-0042): one pane or two (side by side or one
- * above the other), each with its tabs, remembered in this browser. A tab shows one note, or
- * nothing ("New tab"). The address always shows the active tab's note, so the rest of the
- * application opens notes by navigating, as before; `show` puts the note in the active tab.
+ * above the other), each with its tabs, remembered in this browser. A tab shows one note, a web page
+ * (Phase 26, in the desktop app), or nothing ("New tab"). The address always shows the active tab's
+ * note, so the rest of the application opens notes by navigating, as before; `show` puts the note in
+ * the active tab. A web page opens in the other pane — on the left of the note when there is only one
+ * — and the note's pane stays the active one, so the address keeps showing the note.
  */
 
 export type SplitDirection = 'right' | 'down';
@@ -14,6 +16,8 @@ export type SplitDirection = 'right' | 'down';
 export interface WorkspaceTab {
   id: string;
   noteId: string | null;
+  /** A web page (http or https); such a tab has no note. */
+  url?: string | null;
 }
 
 export interface WorkspacePane {
@@ -35,6 +39,13 @@ export interface WorkspaceState extends WorkspaceLayout {
   openInNewTab(noteId: string | null, options?: { background?: boolean }): void;
   /** Opens a note in the other pane, making one (in `direction`) if there is only one. */
   openInOtherPane(noteId: string, direction: SplitDirection): void;
+  /**
+   * Opens a web page beside the note in `fromPane` (the active pane by default): in the other pane,
+   * or in a new pane on its left. A tab already showing the address is shown again.
+   */
+  openWebPage(url: string, fromPane?: string): void;
+  /** Remembers where a web tab's page went, so that it opens there again. */
+  setTabUrl(tabId: string, url: string): void;
   activateTab(paneId: string, tabId: string): void;
   focusPane(paneId: string): void;
   closeTab(paneId: string, tabId: string): void;
@@ -58,7 +69,13 @@ const LayoutSchema = z.object({
       z.object({
         id: z.string().min(1).max(40),
         tabs: z
-          .array(z.object({ id: z.string().min(1).max(40), noteId: z.string().max(80).nullable() }))
+          .array(
+            z.object({
+              id: z.string().min(1).max(40),
+              noteId: z.string().max(80).nullable(),
+              url: z.string().max(8192).nullable().optional(),
+            }),
+          )
           .min(1)
           .max(MAX_TABS),
         activeTab: z.string(),
@@ -90,6 +107,12 @@ export function readLayout(raw: string | null): WorkspaceLayout {
     if (!parsed.success) return emptyLayout();
     const panes = parsed.data.panes.map((pane) => ({
       ...pane,
+      // Only a tab without a note keeps an address, and only a web one.
+      tabs: pane.tabs.map((tab) =>
+        tab.url && tab.noteId === null && /^https?:\/\//iu.test(tab.url)
+          ? { id: tab.id, noteId: null, url: tab.url }
+          : { id: tab.id, noteId: tab.noteId },
+      ),
       activeTab: pane.tabs.some((tab) => tab.id === pane.activeTab)
         ? pane.activeTab
         : (pane.tabs[0]?.id ?? ''),
@@ -126,8 +149,15 @@ function updatePane(
   };
 }
 
-function withTab(pane: WorkspacePane, noteId: string | null, afterActive = true): WorkspacePane {
-  const tab = { id: nextId('t'), noteId };
+function withTab(
+  pane: WorkspacePane,
+  noteId: string | null,
+  afterActive = true,
+  url: string | null = null,
+): WorkspacePane {
+  const tab: WorkspaceTab = url
+    ? { id: nextId('t'), noteId: null, url }
+    : { id: nextId('t'), noteId };
   const index = pane.tabs.findIndex((entry) => entry.id === pane.activeTab);
   const tabs = [...pane.tabs];
   tabs.splice(afterActive && index !== -1 ? index + 1 : tabs.length, 0, tab);
@@ -173,9 +203,15 @@ export function createWorkspaceStore({ persist }: { persist: boolean }) {
       show(noteId) {
         const current = layout();
         const pane = activePaneOf(current);
-        if (activeTabOf(pane).noteId === noteId) return;
+        const tab = activeTabOf(pane);
+        if (tab.noteId === noteId && !tab.url) return;
         const existing =
-          noteId === null ? undefined : pane.tabs.find((tab) => tab.noteId === noteId);
+          noteId === null ? undefined : pane.tabs.find((entry) => entry.noteId === noteId);
+        // A web page is not replaced by a note: the note gets a tab of its own beside it.
+        if (!existing && tab.url) {
+          commit(updatePane(current, pane.id, (entry) => withTab(entry, noteId)));
+          return;
+        }
         commit(
           updatePane(current, pane.id, (entry) =>
             existing
@@ -214,6 +250,42 @@ export function createWorkspaceStore({ persist }: { persist: boolean }) {
         const tab = { id: nextId('t'), noteId };
         const created = { id: nextId('p'), tabs: [tab], activeTab: tab.id };
         commit({ panes: [pane, created], direction, activePane: created.id });
+      },
+
+      openWebPage(url, fromPane) {
+        const current = layout();
+        const from =
+          current.panes.find((pane) => pane.id === (fromPane ?? current.activePane)) ??
+          activePaneOf(current);
+        const other = current.panes.find((pane) => pane.id !== from.id);
+        if (other) {
+          const existing = other.tabs.find((tab) => tab.url === url);
+          const updated = existing
+            ? { ...other, activeTab: existing.id }
+            : withTab(other, null, true, url);
+          commit({ ...updatePane(current, other.id, () => updated), activePane: from.id });
+          return;
+        }
+        const tab: WorkspaceTab = { id: nextId('t'), noteId: null, url };
+        const created = { id: nextId('p'), tabs: [tab], activeTab: tab.id };
+        commit({ panes: [created, from], direction: 'right', activePane: from.id });
+      },
+
+      setTabUrl(tabId, url) {
+        const current = layout();
+        if (
+          !current.panes.some((pane) =>
+            pane.tabs.some((tab) => tab.id === tabId && tab.url && tab.url !== url),
+          )
+        )
+          return;
+        commit({
+          ...current,
+          panes: current.panes.map((pane) => ({
+            ...pane,
+            tabs: pane.tabs.map((tab) => (tab.id === tabId && tab.url ? { ...tab, url } : tab)),
+          })),
+        });
       },
 
       activateTab(paneId, tabId) {
