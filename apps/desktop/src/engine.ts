@@ -22,6 +22,8 @@ export interface Engine {
 export interface EngineOptions {
   serverPath: string;
   env: Record<string, string>;
+  /** The port to listen on (0: any free one). */
+  port?: number;
   /** How long to wait for the server to say it is listening. */
   readyTimeoutMs?: number;
   /** Lines the server writes (the sign-in line, which carries the token, is never passed on). */
@@ -57,11 +59,15 @@ function forwardLines(
 }
 
 export function startEngine(options: EngineOptions): Promise<Engine> {
-  const child: UtilityProcess = utilityProcess.fork(options.serverPath, ['--port', '0'], {
-    env: options.env,
-    stdio: 'pipe',
-    serviceName: 'Manuscript engine',
-  });
+  const child: UtilityProcess = utilityProcess.fork(
+    options.serverPath,
+    ['--port', String(options.port ?? 0)],
+    {
+      env: options.env,
+      stdio: 'pipe',
+      serviceName: 'Manuscript engine',
+    },
+  );
   forwardLines(child.stdout, 'stdout', options.onOutput);
   forwardLines(child.stderr, 'stderr', options.onOutput);
 
