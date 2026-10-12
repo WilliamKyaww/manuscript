@@ -1030,3 +1030,26 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   take space in the vault's `.skb` folder (bounded by the five-minute interval and 30 days). Two panes at most:
   more is rarely useful on a laptop screen. External edits are not versioned (the file changed without us).
 - **Date.** 11 October 2026.
+
+## ADR-0043 — Appearance is three attributes on the document: theme, palette and density of chrome
+
+- **Context.** The student asked for a quieter interface in the spirit of Obsidian, on by default but optional, and
+  for colour palettes in light and dark — without losing features, data or the existing look.
+- **Options.** Separate stylesheets per palette, or overrides of the existing tokens; a second set of components for
+  the simplified interface, or one set of components styled by a document-level switch.
+- **Decision.**
+  - The document carries `data-theme` (light or dark, as before), **`data-palette`** (manuscript, graphite, sand,
+    slate, sage, iris) and **`data-ui`** (simplified or standard). `theme-init.js` sets all three before the first
+    paint from `localStorage`; Simplified UI is on unless the student turned it off.
+  - **A palette overrides only the neutral and accent tokens** (surfaces, borders, text, accent, focus) for each
+    theme in `tokens.css`; status, mastery and graph colours stay the same in every palette, so their meaning never
+    changes. A unit test checks every text, accent and focus pairing of every palette and theme for WCAG AA.
+  - **Simplified UI is styling, not structure, wherever it can be:** chrome tokens (`--skb-chrome-line`,
+    `--skb-divider`, `--skb-pane-header-bg`) and a `simplified:` Tailwind variant. Only the Notes page changes its
+    structure (the title row folds into the tab row), reading the setting from the store; the title stays in the
+    document for screen readers and keyboard focus.
+- **Reason.** One component tree keeps every feature in both modes by construction; token overrides keep each palette
+  a few dozen values rather than a stylesheet; attributes set before React loads mean no flash of the wrong look.
+- **Consequences.** New components draw their dividers with the chrome tokens to follow the setting. Appearance is a
+  per-browser preference (the desktop app and a browser keep their own), like the theme.
+- **Date.** 12 October 2026.
