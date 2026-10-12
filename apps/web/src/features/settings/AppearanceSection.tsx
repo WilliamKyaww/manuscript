@@ -10,6 +10,7 @@ import {
 import { type ThemePreference, useThemeStore } from '../../app/theme/theme';
 import { StickySection } from '../../components/Page';
 import { cn } from '../../lib/cn';
+import { useNotesUi } from '../notes/notes-store';
 
 /**
  * Settings → Appearance (Phase 24, ADR-0043): the theme, the colour palette and Simplified UI. Each applies
@@ -59,6 +60,10 @@ export function AppearanceSection() {
   const paletteLabel = useId();
   const simplifiedLabel = useId();
   const simplifiedHint = useId();
+  const strictLabel = useId();
+  const strictHint = useId();
+  const strict = useNotesUi((state) => state.strictLineBreaks);
+  const setStrict = useNotesUi((state) => state.setStrictLineBreaks);
 
   return (
     <StickySection
@@ -150,6 +155,36 @@ export function AppearanceSection() {
             checked={simplified}
             onCheckedChange={setSimplified}
             aria-describedby={simplifiedHint}
+            className={cn(
+              'relative mt-0.5 inline-flex h-6 w-10 shrink-0 cursor-default items-center rounded-full border border-border-strong bg-surface-sunken p-0.5 outline-none',
+              'transition-colors duration-(--skb-duration-fast) focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface',
+              'data-[state=checked]:border-accent data-[state=checked]:bg-accent',
+            )}
+          >
+            <Switch.Thumb
+              className={cn(
+                'block size-4 rounded-full bg-subtle shadow-sm transition-transform duration-(--skb-duration-fast)',
+                'data-[state=checked]:translate-x-4 data-[state=checked]:bg-accent-contrast',
+              )}
+            />
+          </Switch.Root>
+        </div>
+
+        <div className="flex items-start justify-between gap-6 rounded-lg border border-border bg-surface p-4">
+          <div className="min-w-0">
+            <label htmlFor={strictLabel} className="block text-sm font-medium">
+              Strict line breaks
+            </label>
+            <p id={strictHint} className="mt-0.5 text-xs text-muted">
+              Off, as in Obsidian: a single line break in a note is a line break in the reading
+              view. On: only a blank line starts a new paragraph, as in standard Markdown.
+            </p>
+          </div>
+          <Switch.Root
+            id={strictLabel}
+            checked={strict}
+            onCheckedChange={setStrict}
+            aria-describedby={strictHint}
             className={cn(
               'relative mt-0.5 inline-flex h-6 w-10 shrink-0 cursor-default items-center rounded-full border border-border-strong bg-surface-sunken p-0.5 outline-none',
               'transition-colors duration-(--skb-duration-fast) focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface',

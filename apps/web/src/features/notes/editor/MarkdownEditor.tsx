@@ -4,6 +4,7 @@ import { EditorView } from '@codemirror/view';
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { changedRange } from '../../../lib/diff';
 import { type CompletionData, createExtensions, type EditorCallbacks } from './extensions';
+import { contextFromAttachments, livePreviewContext } from './live/context';
 import { livePreview } from './live-preview';
 
 /**
@@ -90,7 +91,10 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
             callbacks: () => latest.current,
             readOnly,
             lineSeparator,
-            extra: [liveCompartment.current.of(liveNow.current ? livePreview : [])],
+            extra: [
+              livePreviewContext.of(contextFromAttachments(() => data.current.attachments())),
+              liveCompartment.current.of(liveNow.current ? livePreview : []),
+            ],
           }),
           EditorView.updateListener.of((update) => {
             if (!update.docChanged) return;

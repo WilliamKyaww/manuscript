@@ -14,11 +14,19 @@ export function FileEmbed({
   const url = fileUrl(path);
   const name = path.slice(path.lastIndexOf('/') + 1);
   if (mediaType === 'application/pdf') {
-    // `#page=3` is understood by browsers' PDF viewers.
+    // `#page=3` is understood by browsers' PDF viewers; `height=400` (Obsidian's) sets the frame's.
+    const parameters = new URLSearchParams(fragment ?? '');
+    const height = Number(parameters.get('height'));
+    const page = parameters.get('page');
     return (
       <iframe
         className="embed-pdf"
-        src={fragment ? `${url}#${fragment}` : url}
+        src={page ? `${url}#page=${encodeURIComponent(page)}` : url}
+        style={
+          Number.isFinite(height) && height >= 100
+            ? { height: `${Math.min(height, 2000)}px` }
+            : undefined
+        }
         title={`PDF: ${name}`}
         loading="lazy"
       />

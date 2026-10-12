@@ -47,9 +47,11 @@ describe('live preview', () => {
     expect(drawn(doc, 3)).toContain('# Raft');
   });
 
-  it('shows a link as its text, and keeps wikilinks as they are written', () => {
+  it('shows a link as its text, and a wikilink without its brackets', () => {
     const links = 'See [the paper](https://raft.github.io "Raft") and [[Paxos]].\n\nEnd';
-    expect(drawn(links, links.length)).toBe('See the paper and [[Paxos]].\n\nEnd');
+    expect(drawn(links, links.length)).toBe('See the paper and Paxos.\n\nEnd');
+    // Under the cursor it is as written, to be edited.
+    expect(drawn(links, links.indexOf('Paxos'))).toContain('[[Paxos]]');
   });
 
   it('leaves code blocks alone', () => {

@@ -27,6 +27,7 @@ const KEYS = {
   sort: 'skb.notes.sort',
   details: 'skb.notes.details',
   backlinksInDocument: 'skb.notes.backlinksInDocument',
+  strictLineBreaks: 'skb.notes.strictLineBreaks',
 };
 
 function readList(key: string): string[] {
@@ -55,6 +56,11 @@ interface NotesUiState {
   /** Whether the Details panel is open (closed until the student opens it). */
   detailsOpen: boolean;
   backlinksInDocument: boolean;
+  /**
+   * Off (Obsidian's default): a single line break in a note is shown as a line break. On: only a
+   * blank line starts a new paragraph, as in standard Markdown.
+   */
+  strictLineBreaks: boolean;
   /** A note just created, whose editor takes focus when it opens (not remembered). */
   justCreated: string | null;
   /** "Add file property" waits for the Properties panel to open its form (not remembered). */
@@ -73,6 +79,7 @@ interface NotesUiState {
   /** Opens the Details panel on a tab. */
   showDetails(panel: SidePanel): void;
   setBacklinksInDocument(on: boolean): void;
+  setStrictLineBreaks(on: boolean): void;
   setJustCreated(id: string | null): void;
   requestAddProperty(): void;
   addPropertyHandled(): void;
@@ -140,6 +147,11 @@ export const useNotesUi = create<NotesUiState>((set, get) => {
     showDetails(panel) {
       get().setPanel(panel);
       get().setDetailsOpen(true);
+    },
+    strictLineBreaks: readPreference(KEYS.strictLineBreaks) === 'true',
+    setStrictLineBreaks(on) {
+      writePreference(KEYS.strictLineBreaks, String(on));
+      set({ strictLineBreaks: on });
     },
     setBacklinksInDocument(on) {
       writePreference(KEYS.backlinksInDocument, String(on));

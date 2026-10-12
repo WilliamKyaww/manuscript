@@ -1,4 +1,5 @@
 import 'katex/dist/katex.min.css';
+import './callout-icons.css';
 import './preview.css';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
@@ -22,11 +23,12 @@ import {
 import { useApi } from '../../../lib/api/context';
 import { cn } from '../../../lib/cn';
 import { noteQuery } from '../api';
+import { useNotesUi } from '../notes-store';
 import { FileEmbed } from './FileEmbed';
 import { MermaidDiagram } from './MermaidDiagram';
 import { prepareMarkdown } from './prepare';
 import { rehypeHeadingIds, sanitizeSchema } from './rehype-plugins';
-import { type PreviewTarget, remarkObsidian } from './remark-obsidian';
+import { type PreviewTarget, remarkObsidian, remarkSoftBreaks } from './remark-obsidian';
 import { sectionOf } from './section';
 
 /**
@@ -295,9 +297,16 @@ function PreviewBody({
   resolve(target: string): PreviewTarget;
 }) {
   const source = useMemo(() => prepareMarkdown(content), [content]);
+  const strict = useNotesUi((state) => state.strictLineBreaks);
   const remarkPlugins = useMemo<PluginList>(
-    () => [remarkFrontmatter, remarkGfm, remarkMath, [remarkObsidian, { resolve }]],
-    [resolve],
+    () => [
+      remarkFrontmatter,
+      remarkGfm,
+      remarkMath,
+      [remarkObsidian, { resolve }],
+      ...(strict ? [] : [remarkSoftBreaks]),
+    ],
+    [resolve, strict],
   );
   return (
     <Markdown
