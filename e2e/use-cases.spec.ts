@@ -53,8 +53,8 @@ test('UC-01: maths, code and a diagram read as they should in the preview', asyn
   });
   await page.goto(`/notes/${note.id}`);
   await page.getByLabel('Preview', { exact: true }).click();
-  await expect(page.locator('.katex').first()).toBeVisible();
-  await expect(page.locator('.katex-display')).toHaveCount(1);
+  await expect(page.locator('.markdown-body .katex').first()).toBeVisible();
+  await expect(page.locator('.markdown-body .katex-display')).toHaveCount(1);
   await expect(page.locator('code.language-python .hljs-keyword').first()).toHaveText('def');
   const diagram = page.getByRole('img', { name: 'Diagram' });
   await expect(diagram.locator('svg')).toBeVisible({ timeout: 20_000 });

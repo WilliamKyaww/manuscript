@@ -46,6 +46,10 @@ _Last updated: 12 October 2026 (version 1.2.0, Phase 24 — appearance)._
 | F-KN-17 | Export a note to PDF (the desktop app saves a file; a browser prints, with Save as PDF) | Complete | 23 |
 | F-KN-18 | The open vault on the Notes page, with a menu to open a recent vault or another folder, and empty states for an empty vault and an empty tab | Complete | 23 |
 | F-KN-19 | One Details panel (outline, backlinks, outgoing links, properties with "Add property", local graph), closed by default | Complete | 23 |
+| F-KN-20 | Live preview draws blocks as Obsidian does: tables, lists (bullets, numbers, indentation), task lists with clickable boxes and any status character, quotes, rules, code blocks, inline and display maths, embedded images | Complete — a table is edited as its source (click it) | 25 |
+| F-KN-21 | Callouts: the thirteen types and their aliases with their colours and icons in the editor and the reading view; fold marks in the reading view | Complete — a callout does not fold in the editor | 25 |
+| F-KN-22 | Highlight colours (`==🟢text==`), inline footnotes, block ids and links to them, nested heading links, image sizes in Markdown images, PDF page and height | Complete | 25 |
+| F-KN-23 | Obsidian's line breaks in the reading view, with a *Strict line breaks* setting for standard Markdown | Complete | 25 |
 
 ## Knowledge — search
 

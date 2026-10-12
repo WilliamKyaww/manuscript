@@ -1,11 +1,13 @@
 # State — Manuscript
 
-_Last updated: 12 October 2026 — Claude Opus 5.5._
+_Last updated: 12 October 2026 — Claude Sonnet 5.5._
 
 ## Current phase
 
-**Version 1.2.0 — appearance** (Phase 24: Simplified UI and colour palettes, made with the Impeccable design skill;
-`CHANGELOG.md`). 1.1.0 (the notes workspace) and 1.0.0 are tagged. All phases are merged into `main`: Phase 24
+**Version 1.3.0 — Markdown as Obsidian writes it** (Phase 25: the editor draws tables, lists, tasks, callouts and
+maths; Obsidian's callout types, highlight colours, inline footnotes, block ids and line breaks in the reading view;
+`CHANGELOG.md`). 1.2.1 (desktop preferences survive a restart), 1.2.0 (appearance), 1.1.0 (the notes workspace) and
+1.0.0 are tagged. All phases are merged into `main`: Phase 25 (Markdown), Phase 24
 (appearance), Phase 23 (the notes workspace), Phase 22 (release), Phase 21 (verification, closed at the user's request with four checks left open — see
 Pending), Phase 20 (final UI/UX polish), and Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
 and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
@@ -30,6 +32,12 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
   history (`.skb/history/versions`, five-minute interval, 30 days), merging and copies, export to PDF, the open
   vault and *Open folder as vault…* at the foot of the Files pane, a Details panel that starts closed. The sidebar
   is 13.5 rem, resizable and collapsed until opened; the desktop app has a slim title bar in the app's colours.
+- **Obsidian's Markdown** (Phase 25, ADR-0044, `docs/guide/markdown.md` §1): live preview draws tables, lists with
+  bullets and indentation, task lists with clickable boxes, callouts (thirteen types, aliases, icons), quotes, rules,
+  inline and display maths and embedded images; the reading view adds highlight colours, inline footnotes, block ids,
+  nested heading links, image and PDF sizes, and Obsidian's line breaks (*Strict line breaks* in Settings →
+  Appearance). Limits: tables are edited as source, callouts do not fold in the editor, task boxes are not ticked in
+  the reading view.
 - **Appearance** (Phase 24, ADR-0043, `docs/guide/appearance.md`): Simplified UI, on by default — quieter chrome on
   every page, the Files and Details panes on the sidebar's surface, the Notes title row folded into the tab row, an
   Obsidian-like file tree — with the same controls as the standard interface; six palettes (Manuscript, Graphite,
@@ -263,8 +271,9 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## Next steps
 
-1. Install 1.2.0 over the installed version (`apps\desktop\release\Manuscript-Setup-1.2.0.exe`), use it, and report
-   what goes wrong or is missing: fixes and backlog items become the next work.
+1. Install 1.3.0 over the installed version (`apps\desktop\release\Manuscript-Setup-1.3.0.exe`), use it, and report
+   what goes wrong or is missing: fixes and backlog items (B-KM-26 to B-KM-29 are the Markdown limits) become the
+   next work.
 2. When the laptop is idle: `npm run test:perf` (four budgets were over on 11 October under load — so was the Phase 17
    code, which had met them).
 
@@ -288,7 +297,10 @@ credit flows only along accepted prerequisites; the pipeline is a job that fills
 go back to notes as suggestions · **ADR-0039** one archive of open formats, restore only into a new vault, a
 vault is chosen at start-up, code graphs are shown but not analysed · **ADR-0040** backups are copies SQLite makes,
 logs are files in the vault, trouble with the machine is said as such · **ADR-0041** the desktop shell shows only
-the server, a token per launch, AI keys wrapped and not handed over.
+the server, a token per launch, AI keys wrapped and not handed over · **ADR-0042** tabs and panes live in the
+browser, versions are files beside the database · **ADR-0043** appearance is theme, palette and density of chrome on
+the document · **ADR-0044** the editor draws Markdown blocks; Obsidian's line breaks and callout types are the
+defaults.
 
 ## Technical debt
 

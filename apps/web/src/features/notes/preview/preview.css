@@ -142,13 +142,6 @@
   font-weight: 600;
 }
 
-.markdown-body mark {
-  padding: 0 0.15em;
-  border-radius: 2px;
-  background: var(--skb-warning-subtle);
-  color: inherit;
-}
-
 .markdown-body .tag {
   padding: 0.05em 0.45em;
   border-radius: 999px;
@@ -196,45 +189,107 @@
 .markdown-body .callout-content > :last-child {
   margin-bottom: 0;
 }
-.markdown-body
-  :where(
-    .callout-tip,
-    .callout-hint,
-    .callout-important,
-    .callout-success,
-    .callout-check,
-    .callout-done
-  ) {
+/* Colours by the canonical type (aliases such as hint, faq or error resolve to one of the thirteen). */
+.markdown-body .callout:is([data-callout="tip"], [data-callout="success"]) {
   --callout: var(--skb-success);
   --callout-bg: var(--skb-success-subtle);
 }
-.markdown-body
-  :where(
-    .callout-warning,
-    .callout-caution,
-    .callout-attention,
-    .callout-question,
-    .callout-help,
-    .callout-faq
-  ) {
+.markdown-body .callout:is([data-callout="warning"], [data-callout="question"]) {
   --callout: var(--skb-warning);
   --callout-bg: var(--skb-warning-subtle);
 }
 .markdown-body
-  :where(
-    .callout-danger,
-    .callout-error,
-    .callout-failure,
-    .callout-fail,
-    .callout-missing,
-    .callout-bug
-  ) {
+  .callout:is([data-callout="failure"], [data-callout="danger"], [data-callout="bug"]) {
   --callout: var(--skb-danger);
   --callout-bg: var(--skb-danger-subtle);
 }
-.markdown-body :where(.callout-quote, .callout-cite, .callout-example) {
-  --callout: var(--skb-border-strong);
-  --callout-bg: var(--skb-surface);
+.markdown-body .callout[data-callout="example"] {
+  --callout: var(--skb-graph-4);
+  --callout-bg: color-mix(in srgb, var(--skb-graph-4) 12%, transparent);
+}
+.markdown-body .callout[data-callout="quote"] {
+  --callout: var(--skb-text-subtle);
+  --callout-bg: var(--skb-surface-sunken);
+}
+
+/* The type's icon before the title (its drawing is in callout-icons.css). */
+.markdown-body .callout > .callout-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+.markdown-body .callout > .callout-title::before {
+  content: "";
+  flex: none;
+  width: 1.1em;
+  height: 1.1em;
+  background-color: var(--callout);
+  -webkit-mask: var(--callout-icon) center / contain no-repeat;
+  mask: var(--callout-icon) center / contain no-repeat;
+}
+
+/* Highlights: ==text== and ==🟢text== */
+.markdown-body mark {
+  padding: 0 0.15em;
+  border-radius: 3px;
+  color: inherit;
+  background: color-mix(in srgb, var(--skb-warning) 32%, transparent);
+}
+.markdown-body mark.hl-red {
+  background: color-mix(in srgb, var(--skb-danger) 32%, transparent);
+}
+.markdown-body mark.hl-orange {
+  background: color-mix(in srgb, var(--skb-warning) 32%, transparent);
+}
+.markdown-body mark.hl-yellow {
+  background: color-mix(in srgb, var(--skb-stage-practised) 32%, transparent);
+}
+.markdown-body mark.hl-green {
+  background: color-mix(in srgb, var(--skb-success) 32%, transparent);
+}
+.markdown-body mark.hl-blue {
+  background: color-mix(in srgb, var(--skb-info) 32%, transparent);
+}
+.markdown-body mark.hl-purple {
+  background: color-mix(in srgb, var(--skb-graph-4) 32%, transparent);
+}
+
+/* Tasks: done tasks are muted and struck; other statuses ([?], [-], [!]) show their character. */
+.markdown-body li.task-list-item:has(> input:checked),
+.markdown-body li.task-list-item:has(> p > input:checked) {
+  color: var(--skb-text-muted);
+  text-decoration: line-through;
+}
+.markdown-body .task-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 1.15em;
+  height: 1.15em;
+  margin-right: 0.85em;
+  border: 1.5px solid var(--skb-border-strong);
+  border-radius: 4px;
+  font-size: 0.8em;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+}
+.markdown-body li.task-status {
+  list-style: none;
+}
+
+/* Footnotes written inline: ^[text] */
+.markdown-body sup.inline-footnote {
+  color: var(--skb-accent);
+  cursor: help;
+}
+.markdown-body section.inline-footnotes {
+  margin-top: 2em;
+  padding-top: 0.5em;
+  border-top: 1px solid var(--skb-border);
+  font-size: 0.9em;
+  color: var(--skb-text-muted);
 }
 
 /* Embeds */

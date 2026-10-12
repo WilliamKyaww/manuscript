@@ -1053,3 +1053,32 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 - **Consequences.** New components draw their dividers with the chrome tokens to follow the setting. Appearance is a
   per-browser preference (the desktop app and a browser keep their own), like the theme.
 - **Date.** 12 October 2026.
+
+## ADR-0044 — The editor draws Markdown blocks; Obsidian's line breaks and callout types are the defaults
+
+- **Context.** The student compared the editor with Obsidian's and asked for every Obsidian Markdown feature: tables
+  showed as raw pipes, list items as raw `- ` with no bullets or indentation, and a single line break in the preview
+  ran two lines together.
+- **Options.** Keep Live Preview to inline marks and leave blocks as source; or draw blocks (tables, lists, tasks,
+  callouts, maths) in the editor. For line breaks: standard Markdown (a blank line makes a paragraph) or Obsidian's
+  (a single break is shown).
+- **Decision.**
+  - **The editor draws blocks.** Marks and inline objects (emphasis, links, wikilinks, bullets, task boxes, inline
+    maths, images, footnote marks) come from the view plugin as before. Blocks that replace line breaks — tables and
+    display maths — come from a **state field**, because a plugin may not replace across lines. A block's source comes
+    back whenever the selection touches it, so what is edited is always the file's text; nothing is stored apart from
+    the file. Atomic ranges contain only replace decorations, so the cursor skips drawn marks but not marked text.
+  - **Rendered text is built, never injected.** Table cells are drawn by a small inline renderer that creates DOM
+    nodes from the cell's text; the only `innerHTML` is the constant SVG of a callout's icon.
+  - **Callouts have one definition in `@skb/core`** (thirteen types, their aliases, fold marks, labels). The editor
+    and the reading view both read it, and an unknown type is a note, as in Obsidian.
+  - **Line breaks follow Obsidian by default.** The reading view turns a single line break in text into a break;
+    *Settings → Appearance → Strict line breaks* restores standard Markdown. The choice is a per-browser preference,
+    like the theme, and changes only how a note is shown, never the file or the index.
+- **Reason.** A note should look the same in both programs, since the vault is shared with Obsidian. Drawing from the
+  text on each change keeps the file canonical and needs no second representation to keep in step.
+- **Consequences.** The editor does more work on a change; inline marks are computed for the visible range only, and
+  the scans of the whole document (display maths, `%%` comments) are skipped above 400,000 characters. Tables are
+  edited as source (no cell editing yet), and
+  callouts do not fold in the editor; both are recorded in `docs/guide/markdown.md` §11.
+- **Date.** 12 October 2026.

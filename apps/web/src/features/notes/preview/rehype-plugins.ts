@@ -16,7 +16,7 @@ const defaults = defaultSchema.attributes ?? {};
  * classes are dropped, so raw HTML cannot borrow the app's own (utility) classes to restyle the page.
  */
 const CLASS_NAMES =
-  /^(wikilink|internal-link|tag$|callout|embed|external-image|task-list-item|contains-task-list|footnotes$|data-footnote-backref$|sr-only$|language-|math-|table-wrapper$)/;
+  /^(wikilink|internal-link|tag$|callout|embed|external-image|task-list-item|task-mark$|task-status$|contains-task-list|footnotes$|inline-footnotes?$|data-footnote-backref$|hl-|sr-only$|language-|math-|table-wrapper$)/;
 
 type AttributeList = NonNullable<SanitizeSchema['attributes']>[string];
 
@@ -35,6 +35,8 @@ const OUR_DATA_ATTRIBUTES = [
   'dataFile',
   'dataTag',
   'dataCallout',
+  'dataTask',
+  'dataBlockId',
   'dataEmbed',
   'dataEmbedId',
   'dataEmbedHeading',
@@ -64,8 +66,9 @@ function textOf(node: Element | ElementContent): string {
 }
 
 /**
- * Gives headings GitHub-style ids (the same slugs the outline and `[[Note#Heading]]` links use).
- * Runs after sanitisation, which would otherwise prefix the ids.
+ * Gives headings GitHub-style ids (the same slugs the outline and `[[Note#Heading]]` links use), and
+ * blocks that carry a `^block-id` the id `^block-id` (what `[[Note#^block-id]]` points at). Runs
+ * after sanitisation, which would otherwise prefix the ids.
  */
 export function rehypeHeadingIds() {
   return (tree: Root) => {
@@ -74,6 +77,8 @@ export function rehypeHeadingIds() {
       if (/^h[1-6]$/.test(node.tagName) && !node.properties.id) {
         node.properties.id = slugger.slug(textOf(node));
       }
+      const block = node.properties.dataBlockId;
+      if (typeof block === 'string' && block !== '') node.properties.id = `^${block}`;
     });
   };
 }

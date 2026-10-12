@@ -27,21 +27,30 @@ CommonMark with GitHub Flavoured Markdown and Obsidian's extensions:
 
 | Feature | Write | Notes |
 |---|---|---|
-| Headings, emphasis, lists, quotes, code | `# Title`, `**bold**`, `- item`, `> quote`, `` `code` `` | CommonMark |
-| Tables, task lists, strikethrough, footnotes, autolinks | `\| a \| b \|`, `- [x] done`, `~~old~~`, `text[^1]` | GFM |
-| Wikilinks | `[[Note]]`, `[[Note\|shown text]]`, `[[Note#Heading]]`, `[[Note#^block-id]]` | Inside a table, write the pipe as `\|` |
-| Embeds | `![[Note]]`, `![[Note#Heading]]`, `![[diagram.png]]`, `![[diagram.png\|300]]`, `![[slides.pdf#page=3]]` | Images, PDFs, audio, video and other notes |
-| Markdown links | `[text](Folder/Note.md)`, `![alt](img/photo.png)` | Paths are relative to the note; spaces as `%20` or `<…>` |
+| Headings, emphasis, quotes, code | `# Title`, `**bold**`, `*italic*`, `> quote`, `` `code` ``, `---` | CommonMark. Escape a mark with `\`: `\*not italic\*` |
+| Lists | `- item`, `1. item`, nested by indenting | Bullets, numbers, indentation and hanging lines are drawn in the editor, as in the preview |
+| Task lists | `- [ ] open`, `- [x] done`, `- [?] any character` | In the editor a click on the box ticks it (and writes the file). A status other than `x` shows its character |
+| Tables | `\| a \| b \|` with `\|:--\|--:\|` for alignment | Drawn as a table in the editor and the preview; click it to edit the source. Write a pipe inside a cell as `\|` |
+| Strikethrough, autolinks | `~~old~~`, `<https://example.org>` | GFM |
+| Footnotes | `text[^1]` with `[^1]: the note`, and inline `text^[the note]` | Inline footnotes are numbered after the others and listed at the end of the preview |
+| Wikilinks | `[[Note]]`, `[[Note\|shown text]]`, `[[Note#Heading]]`, `[[Note#Heading#Subheading]]`, `[[Note#^block-id]]` | Inside a table, write the pipe as `\|`. A nested heading link goes to its last heading |
+| Block ids | a paragraph or list ending in ` ^block-id` (or `^block-id` alone on the line after it) | Hidden in the preview; the block can be linked with `[[Note#^block-id]]` |
+| Embeds | `![[Note]]`, `![[Note#Heading]]`, `![[diagram.png]]`, `![[diagram.png\|300]]`, `![[diagram.png\|300x200]]`, `![[slides.pdf#page=3&height=400]]` | Images, PDFs, audio, video and other notes |
+| Markdown links | `[text](Folder/Note.md)`, `![alt](img/photo.png)`, `![alt\|300](img/photo.png)` | Paths are relative to the note; spaces as `%20` or `<…>`. `\|300` or `\|300x200` in the text sets the size |
 | Tags | `#exam`, `#cs/distributed` | Letters, digits, `_`, `-`, `/`; at least one non-digit; not in code |
-| Callouts | `> [!tip] Title` then `> body`; `> [!faq]- Folded` / `> [!faq]+ Open` | Types: note, tip, warning, danger, question, quote, … |
-| Highlights | `==important==` | |
+| Callouts | `> [!tip] Title` then `> body`; `> [!faq]- Folded` / `> [!faq]+ Open`; nested with `> >` | The thirteen types — note, abstract, info, todo, tip, success, question, warning, failure, danger, bug, example, quote — and their aliases (`summary`, `hint`, `check`, `faq`, `caution`, `error`, `cite`, …) with their icons |
+| Highlights | `==important==`, `==🟢green==` | A colour emoji (🔴 🟠 🟡 🟢 🔵 🟣) straight after the marks sets the colour |
 | Comments | `%% hidden %%` (may span lines) | Not shown in the preview, not indexed for links |
-| Maths | `$e^{i\pi} + 1 = 0$`, `$$ … $$` | KaTeX. `$5 and $6` stays text, as in Obsidian |
+| Maths | `$e^{i\pi} + 1 = 0$`, `$$ … $$` | KaTeX, also drawn in the editor. `$5 and $6` stays text, as in Obsidian |
 | Diagrams | a ```` ```mermaid ```` code block | Drawn when the preview needs it |
 | HTML | `<details>`, `<sub>`, `<br>` … | Sanitised: no scripts, frames, forms or inline styles |
 
 Links, tags and headings inside code, maths and comments are ignored everywhere (preview, backlinks,
 search), so examples in code blocks never create links.
+
+**Line breaks.** As in Obsidian, a single line break in a note is a line break in the preview. If you prefer
+standard Markdown, where only a blank line starts a new paragraph, turn on *Settings → Appearance → Strict line
+breaks* (it is remembered on this computer).
 
 ## 2. Links and how they are resolved
 
@@ -132,8 +141,10 @@ The template's own id is never copied into new notes.
 
 Paste or drop images and files into the editor to upload them into the **Attachments** folder
 (configurable); an embed such as `![[photo.png]]` is inserted where you dropped them. In the preview,
-images are shown (`![[photo.png|300]]` sets the width), PDFs open in a viewer (`#page=3` jumps to a
-page), audio and video get players, and other files become download links.
+images are shown (`![[photo.png|300]]` sets the width, `|300x200` the width and height), PDFs open in a
+viewer (`#page=3` jumps to a page, `&height=400` sets the frame's height), audio and video get players,
+and other files become download links. In the editor with live preview on, an image embedded with
+`![[photo.png]]` is drawn too.
 
 Images from the internet are **not loaded** in the preview — the app never contacts other sites on
 your behalf — and are shown as a link instead.
@@ -145,11 +156,14 @@ your behalf — and are shown as a link instead.
 - **Edit**, **Split** and **Preview** switch between the editor, both side by side, and the rendered
   note (**Ctrl+E** switches between reading and editing). In a narrow pane the names give way to
   their icons, and the three study buttons (make a card, generate, suggest links) to one ✨ menu.
-- **Live preview** (the ¶ button, on unless you turn it off): the editor hides the marks of Markdown —
-  a heading's `#`, the `**` and `_` of emphasis, `~~`, the backticks of inline code, a link's brackets
-  and address — wherever the cursor is not, so the note reads as it will look. Move the cursor into a
-  line or a link and its marks come back to be edited. Only the display changes, never the file;
-  `[[wikilinks]]` are always shown as written. Front matter at the top is shown small and grey.
+- **Live preview** (the ¶ button, on unless you turn it off): the editor draws the note as it will look
+  wherever the cursor is not. The marks of Markdown go — a heading's `#`, the `**` and `_` of emphasis, `~~`,
+  `==`, the backticks of inline code, a link's brackets and address, a wikilink's `[[ ]]` — and blocks are
+  drawn: **tables** as tables, **lists** with bullets, numbers and indentation, **task lists** with boxes you
+  can click, **callouts** with their icon, colour and title, quotes, rules, code blocks, **maths**
+  (inline and display), images embedded with `![[…]]`, footnote marks and block ids. Move the cursor into a
+  line, a link or a block and its source comes back to be edited. Only the display changes, never the file.
+  Front matter at the top is shown small and grey.
 - If the note is changed **outside the editor** (Obsidian, VS Code, a sync tool) while you have no
   unsaved changes, the editor quietly shows the new version.
 - If it changes while you **do** have unsaved changes, nothing is overwritten: a banner offers
@@ -245,7 +259,11 @@ when something needs them). Behaviour differs in a few places (ADR-0026):
 |---|---|
 | A frontmatter `title` also works as a link target | Only file names and aliases |
 | Images from the internet are not loaded in the preview | Loaded |
-| `[[Note#^block]]` opens the note (block positions are not tracked yet) | Scrolls to the block |
+| `[[Note#^block]]` scrolls to the block in the preview (the editor opens the note at the top) | Scrolls to the block in both |
+| A table is drawn as a table in the editor but edited as its source (click it) | Edited cell by cell in place |
+| A task's box can be ticked in the editor, not in the preview | Ticked in both |
+| A callout's fold (`+` / `-`) is applied in the preview; in the editor the callout is always open | Folds in both |
+| Markdown images `![](path)` and embedded notes are drawn in the preview, not in the editor | Drawn in both |
 | An id may be added as `id:` (or `skb-id:`) to notes other data refers to | — |
 
 ## 12. Keyboard

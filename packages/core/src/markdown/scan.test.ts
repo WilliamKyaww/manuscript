@@ -27,6 +27,12 @@ describe('analyseNote — wikilinks and embeds', () => {
     ]);
   });
 
+  it('points a nested heading link at its innermost heading', () => {
+    const [nested, own] = analyseNote('[[Raft#Safety#Election safety]] and [[#A#B|text]]').links;
+    expect(nested).toMatchObject({ target: 'Raft', heading: 'Election safety', blockRef: null });
+    expect(own).toMatchObject({ target: '', heading: 'B', alias: 'text' });
+  });
+
   it('recognises embeds and same-note heading links', () => {
     const links = analyseNote('![[diagram.png]]\n[[#Summary]]').links;
     expect(links[0]).toMatchObject({ embed: true, target: 'diagram.png' });

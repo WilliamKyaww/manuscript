@@ -1,6 +1,17 @@
 import { fileUrl } from '@skb/core';
+import { calloutLabel, canonicalCallout } from '@skb/core/markdown';
 import GithubSlugger from 'github-slugger';
-import type { Blockquote, Link, Paragraph, PhrasingContent, Root, RootContent, Text } from 'mdast';
+import type {
+  Blockquote,
+  Link,
+  List,
+  ListItem,
+  Paragraph,
+  PhrasingContent,
+  Root,
+  RootContent,
+  Text,
+} from 'mdast';
 import { findAndReplace } from 'mdast-util-find-and-replace';
 import { SKIP, visit } from 'unist-util-visit';
 
@@ -48,9 +59,11 @@ export function parseWikilink(inner: string): WikilinkParts {
   const hash = linkPart.indexOf('#');
   const target = (hash === -1 ? linkPart : linkPart.slice(0, hash)).trim();
   const fragment = hash === -1 ? '' : linkPart.slice(hash + 1).trim();
+  // [[Note#Heading#Subheading]] points at the innermost heading.
+  const heading = fragment.startsWith('^') ? fragment : (fragment.split('#').at(-1)?.trim() ?? '');
   return {
     target,
-    heading: fragment && !fragment.startsWith('^') ? fragment : null,
+    heading: heading && !heading.startsWith('^') ? heading : null,
     blockRef: fragment.startsWith('^') ? fragment.slice(1) || null : null,
     alias,
   };
@@ -60,8 +73,9 @@ function text(value: string): Text {
   return { type: 'text', value };
 }
 
-function noteHref(id: string, heading: string | null): string {
-  return `/notes/${encodeURIComponent(id)}${heading ? `#${headingSlug(heading)}` : ''}`;
+function noteHref(id: string, heading: string | null, blockRef: string | null = null): string {
+  const hash = heading ? `#${headingSlug(heading)}` : blockRef ? `#^${blockRef}` : '';
+  return `/notes/${encodeURIComponent(id)}${hash}`;
 }
 
 function conceptHref(id: string): string {
@@ -69,13 +83,13 @@ function conceptHref(id: string): string {
 }
 
 function wikilink(parts: WikilinkParts, options: ObsidianOptions): PhrasingContent {
-  const { target, heading, alias } = parts;
+  const { target, heading, blockRef, alias } = parts;
   const label =
     alias ?? (target === '' ? (heading ?? '') : heading ? `${target} › ${heading}` : target);
   if (target === '') {
     return {
       type: 'link',
-      url: heading ? `#${headingSlug(heading)}` : '#',
+      url: heading ? `#${headingSlug(heading)}` : blockRef ? `#^${blockRef}` : '#',
       children: [text(label)],
       data: { hProperties: { className: ['wikilink'] } },
     };
@@ -84,7 +98,7 @@ function wikilink(parts: WikilinkParts, options: ObsidianOptions): PhrasingConte
   if (resolved.kind === 'note') {
     return {
       type: 'link',
-      url: noteHref(resolved.id, heading),
+      url: noteHref(resolved.id, heading, blockRef),
       children: [text(label)],
       data: { hProperties: { className: ['wikilink'], dataNoteId: resolved.id } },
     };
@@ -173,7 +187,8 @@ function transformCallout(node: Blockquote): void {
   if (head?.type !== 'text') return;
   const match = CALLOUT.exec(head.value);
   if (!match?.[1]) return;
-  const type = match[1].toLowerCase();
+  const written = match[1];
+  const type = canonicalCallout(written);
   const fold = match[2];
   head.value = head.value.slice(match[0].length);
 
@@ -197,7 +212,7 @@ function transformCallout(node: Blockquote): void {
   const hasTitle = title.some((child) => child.type !== 'text' || child.value.trim() !== '');
   const titleNode: Paragraph = {
     type: 'paragraph',
-    children: hasTitle ? title : [text(type.charAt(0).toUpperCase() + type.slice(1))],
+    children: hasTitle ? title : [text(calloutLabel(written))],
     data: { hName: fold ? 'summary' : 'div', hProperties: { className: ['callout-title'] } },
   };
   const body: RootContent[] = [];
@@ -276,11 +291,126 @@ function resolveRelative(
   }
 }
 
+const HIGHLIGHT_COLOURS: Record<string, string> = {
+  '🔴': 'red',
+  '🟠': 'orange',
+  '🟡': 'yellow',
+  '🟢': 'green',
+  '🔵': 'blue',
+  '🟣': 'purple',
+};
+const INLINE_FOOTNOTE = /\^\[([^\]\n]+)\]/g;
+const TASK_STATUS = /^\[([^\sxX])\][ \t]+/u;
+const BLOCK_ID_END = /[ \t]\^([A-Za-z0-9-]+)[ \t]*$/u;
+const BLOCK_ID_ONLY = /^\^([A-Za-z0-9-]+)[ \t]*$/u;
+const ALT_SIZE = /\|(\d+)(?:x(\d+))?$/u;
+
+/** `- [?] task`: a status other than space and x becomes a small marker, as themes of Obsidian draw it. */
+function transformTaskStatus(item: ListItem): void {
+  if (item.checked !== null && item.checked !== undefined) return;
+  const paragraph = item.children[0];
+  if (paragraph?.type !== 'paragraph') return;
+  const head = paragraph.children[0];
+  if (head?.type !== 'text') return;
+  const match = TASK_STATUS.exec(head.value);
+  if (!match?.[1]) return;
+  head.value = head.value.slice(match[0].length);
+  paragraph.children.unshift({
+    type: 'emphasis',
+    children: [text(match[1])],
+    data: { hName: 'span', hProperties: { className: ['task-mark'], dataTask: match[1] } },
+  });
+  item.data = {
+    ...item.data,
+    hProperties: { className: ['task-list-item', 'task-status'], dataTask: match[1] },
+  };
+}
+
+/** `^block-id` at the end of a paragraph (or alone after a list or quote) names the block. */
+function transformBlockIds(tree: Root): void {
+  visit(tree, 'paragraph', (node, index, parent) => {
+    const last = node.children.at(-1);
+    if (last?.type === 'text') {
+      const only = BLOCK_ID_ONLY.exec(last.value);
+      if (only?.[1] && node.children.length === 1 && parent && index !== undefined && index > 0) {
+        // On a line of its own: the id belongs to the block before it, and the line is not shown.
+        const previous = parent.children[index - 1];
+        if (previous) {
+          previous.data = {
+            ...previous.data,
+            hProperties: {
+              ...(previous.data as { hProperties?: object } | undefined)?.hProperties,
+              dataBlockId: only[1],
+            },
+          };
+          parent.children.splice(index, 1);
+          return index;
+        }
+      }
+      const end = BLOCK_ID_END.exec(last.value);
+      if (end?.[1]) {
+        last.value = last.value.slice(0, end.index);
+        node.data = {
+          ...node.data,
+          hProperties: {
+            ...(node.data as { hProperties?: object } | undefined)?.hProperties,
+            dataBlockId: end[1],
+          },
+        };
+      }
+    }
+    return undefined;
+  });
+}
+
+/** A single line break is a line break (Obsidian's default; "Strict line breaks" turns it off). */
+export function remarkSoftBreaks() {
+  return (tree: Root) => {
+    visit(tree, 'text', (node, index, parent) => {
+      if (!parent || index === undefined || !node.value.includes('\n')) return undefined;
+      const replacement: PhrasingContent[] = [];
+      node.value.split('\n').forEach((part, position) => {
+        if (position > 0) replacement.push({ type: 'break' });
+        if (part !== '') replacement.push(text(part));
+      });
+      parent.children.splice(index, 1, ...(replacement as typeof parent.children));
+      return index + replacement.length;
+    });
+  };
+}
+
 export function remarkObsidian(options: ObsidianOptions) {
   return (tree: Root) => {
     visit(tree, 'blockquote', (node) => {
       transformCallout(node);
     });
+    visit(tree, 'listItem', (node) => transformTaskStatus(node));
+    transformBlockIds(tree);
+    // `![alt|100x145](image.png)` sizes an image, as in Obsidian.
+    visit(tree, 'image', (node) => {
+      const size = ALT_SIZE.exec(node.alt ?? '');
+      if (!size) return;
+      node.alt = (node.alt ?? '').slice(0, size.index);
+      node.data = {
+        ...node.data,
+        hProperties: {
+          ...node.data?.hProperties,
+          width: size[1],
+          ...(size[2] ? { height: size[2] } : {}),
+        },
+      };
+    });
+    const footnotes: string[] = [];
+    // Inline footnotes carry on from the numbers of the ordinary ones, so no two notes share a number.
+    const defined = new Set<string>();
+    visit(tree, 'footnoteDefinition', (node) => {
+      defined.add(node.identifier);
+    });
+    const referenced = new Set<string>();
+    visit(tree, 'footnoteReference', (node) => {
+      if (defined.has(node.identifier)) referenced.add(node.identifier);
+    });
+    const firstInline = referenced.size + 1;
     visit(tree, (node) => {
       if (node.type === 'link' || node.type === 'image') resolveRelative(node, options);
     });
@@ -296,11 +426,33 @@ export function remarkObsidian(options: ObsidianOptions) {
         ],
         [
           HIGHLIGHT,
-          (_: string, value: string) => ({
-            type: 'emphasis',
-            children: [text(value)],
-            data: { hName: 'mark' },
-          }),
+          (_: string, value: string) => {
+            // `==🟢text==`: Obsidian's colour emoji right after the opening marks.
+            const first = [...value][0] ?? '';
+            const colour = HIGHLIGHT_COLOURS[first];
+            return {
+              type: 'emphasis',
+              children: [text(colour ? value.slice(first.length) : value)],
+              data: {
+                hName: 'mark',
+                ...(colour ? { hProperties: { className: [`hl-${colour}`] } } : {}),
+              },
+            };
+          },
+        ],
+        [
+          INLINE_FOOTNOTE,
+          (_: string, value: string) => {
+            footnotes.push(value);
+            return {
+              type: 'emphasis',
+              children: [text(String(firstInline + footnotes.length - 1))],
+              data: {
+                hName: 'sup',
+                hProperties: { className: ['inline-footnote'], title: value },
+              },
+            };
+          },
         ],
         [
           TAG,
@@ -316,6 +468,26 @@ export function remarkObsidian(options: ObsidianOptions) {
       ],
       { ignore: ['link', 'linkReference', 'inlineCode', 'code', 'inlineMath', 'math'] },
     );
+    if (footnotes.length > 0) {
+      const list: List = {
+        type: 'list',
+        ordered: true,
+        start: firstInline,
+        spread: false,
+        children: footnotes.map(
+          (value): ListItem => ({
+            type: 'listItem',
+            spread: false,
+            children: [{ type: 'paragraph', children: [text(value)] }],
+          }),
+        ),
+      };
+      tree.children.push({
+        type: 'blockquote',
+        children: [list],
+        data: { hName: 'section', hProperties: { className: ['footnotes', 'inline-footnotes'] } },
+      });
+    }
     // An embed alone in its paragraph is a block: render it as one.
     visit(tree, 'paragraph', (node, index, parent) => {
       const meaningful = node.children.filter(
