@@ -1,3 +1,4 @@
+export * from './callouts';
 export * from './frontmatter';
 export * from './links';
 export * from './names';

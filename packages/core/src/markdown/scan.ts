@@ -287,7 +287,9 @@ function splitFragment(linkPart: string): {
   const fragment = linkPart.slice(hash + 1).trim();
   if (fragment.startsWith('^'))
     return { target, heading: null, blockRef: fragment.slice(1) || null };
-  return { target, heading: fragment || null, blockRef: null };
+  // [[Note#Heading#Subheading]] points at the innermost heading.
+  const heading = fragment.split('#').at(-1)?.trim() ?? '';
+  return { target, heading: heading || null, blockRef: null };
 }
 
 /** Leading-whitespace-trimmed span of the text before the first `#` in `part`, relative to `part`. */
