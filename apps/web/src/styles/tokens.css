@@ -112,6 +112,220 @@
   --skb-shadow-lg: 0 16px 40px rgb(0 0 0 / 0.55);
 }
 
+/*
+ * Palettes (Phase 24, ADR-0043): each overrides only the neutrals and the accent, per theme; status,
+ * mastery and graph colours keep their meaning in every palette. "manuscript" is the base above.
+ * Every pairing is checked for WCAG AA by features/design/palettes.test.ts.
+ */
+
+/* Graphite: true neutral greys, an ink-blue accent (the closest to Obsidian). */
+:root[data-theme="light"][data-palette="graphite"] {
+  --skb-bg: #f5f5f4;
+  --skb-surface: #ffffff;
+  --skb-surface-raised: #ffffff;
+  --skb-surface-sunken: #ececeb;
+  --skb-surface-hover: #e5e5e4;
+  --skb-border: #dededc;
+  --skb-border-strong: #c3c3c0;
+  --skb-text: #1c1c1e;
+  --skb-text-muted: #525256;
+  --skb-text-subtle: #626267;
+  --skb-accent: #3b5b86;
+  --skb-accent-hover: #2f4a6e;
+  --skb-accent-subtle: #e5ebf3;
+  --skb-accent-contrast: #ffffff;
+  --skb-focus: #3b5b86;
+}
+:root[data-theme="dark"][data-palette="graphite"] {
+  --skb-bg: #1c1c1c;
+  --skb-surface: #232323;
+  --skb-surface-raised: #2a2a2a;
+  --skb-surface-sunken: #171717;
+  --skb-surface-hover: #2e2e2e;
+  --skb-border: #303030;
+  --skb-border-strong: #474747;
+  --skb-text: #e6e6e4;
+  --skb-text-muted: #b4b4b0;
+  --skb-text-subtle: #9a9a96;
+  --skb-accent: #9bb3d6;
+  --skb-accent-hover: #b3c6e2;
+  --skb-accent-subtle: #252e3a;
+  --skb-accent-contrast: #0f1620;
+  --skb-focus: #9bb3d6;
+}
+
+/* Sand: warmer, softer paper, a terracotta accent. */
+:root[data-theme="light"][data-palette="sand"] {
+  --skb-bg: #f8f1e7;
+  --skb-surface: #fffcf7;
+  --skb-surface-raised: #fffcf7;
+  --skb-surface-sunken: #f0e7da;
+  --skb-surface-hover: #eadfcf;
+  --skb-border: #e5d9c7;
+  --skb-border-strong: #cdbda5;
+  --skb-text: #2a2118;
+  --skb-text-muted: #5d5044;
+  --skb-text-subtle: #715f50;
+  --skb-accent: #9e4a27;
+  --skb-accent-hover: #853d20;
+  --skb-accent-subtle: #f6e3d6;
+  --skb-accent-contrast: #ffffff;
+  --skb-focus: #9e4a27;
+}
+:root[data-theme="dark"][data-palette="sand"] {
+  --skb-bg: #16120e;
+  --skb-surface: #1e1914;
+  --skb-surface-raised: #26201a;
+  --skb-surface-sunken: #110e0b;
+  --skb-surface-hover: #2c2520;
+  --skb-border: #332a22;
+  --skb-border-strong: #4c4036;
+  --skb-text: #f0e6da;
+  --skb-text-muted: #c4b5a4;
+  --skb-text-subtle: #a8988a;
+  --skb-accent: #e8a27c;
+  --skb-accent-hover: #f0b998;
+  --skb-accent-subtle: #3a2619;
+  --skb-accent-contrast: #2a1409;
+  --skb-focus: #e8a27c;
+}
+
+/* Slate: cool blue-grey surfaces, a steel-blue accent. */
+:root[data-theme="light"][data-palette="slate"] {
+  --skb-bg: #f3f5f8;
+  --skb-surface: #ffffff;
+  --skb-surface-raised: #ffffff;
+  --skb-surface-sunken: #e9edf2;
+  --skb-surface-hover: #e1e6ed;
+  --skb-border: #d9e0e8;
+  --skb-border-strong: #b9c4d1;
+  --skb-text: #17202b;
+  --skb-text-muted: #4a5463;
+  --skb-text-subtle: #596575;
+  --skb-accent: #2c5d97;
+  --skb-accent-hover: #224b7b;
+  --skb-accent-subtle: #e0eaf6;
+  --skb-accent-contrast: #ffffff;
+  --skb-focus: #2c5d97;
+}
+:root[data-theme="dark"][data-palette="slate"] {
+  --skb-bg: #0f1318;
+  --skb-surface: #161b22;
+  --skb-surface-raised: #1d232c;
+  --skb-surface-sunken: #0b0e12;
+  --skb-surface-hover: #222934;
+  --skb-border: #262e39;
+  --skb-border-strong: #3a4452;
+  --skb-text: #e3e8ef;
+  --skb-text-muted: #a9b3c1;
+  --skb-text-subtle: #8e99a9;
+  --skb-accent: #80b1ec;
+  --skb-accent-hover: #9dc3f1;
+  --skb-accent-subtle: #1a2a3d;
+  --skb-accent-contrast: #0a1626;
+  --skb-focus: #80b1ec;
+}
+
+/* Sage: green-tinted neutrals, a muted sage accent. */
+:root[data-theme="light"][data-palette="sage"] {
+  --skb-bg: #f2f5f0;
+  --skb-surface: #fcfdfb;
+  --skb-surface-raised: #fcfdfb;
+  --skb-surface-sunken: #e8ede5;
+  --skb-surface-hover: #e0e7dc;
+  --skb-border: #d9e1d5;
+  --skb-border-strong: #b9c8b4;
+  --skb-text: #1a2019;
+  --skb-text-muted: #4c574a;
+  --skb-text-subtle: #5a6658;
+  --skb-accent: #41704a;
+  --skb-accent-hover: #355c3d;
+  --skb-accent-subtle: #e0ecdf;
+  --skb-accent-contrast: #ffffff;
+  --skb-focus: #41704a;
+}
+:root[data-theme="dark"][data-palette="sage"] {
+  --skb-bg: #111511;
+  --skb-surface: #181d18;
+  --skb-surface-raised: #1f251f;
+  --skb-surface-sunken: #0c0f0c;
+  --skb-surface-hover: #252c25;
+  --skb-border: #2a322a;
+  --skb-border-strong: #3f4a3f;
+  --skb-text: #e4ebe2;
+  --skb-text-muted: #adb8aa;
+  --skb-text-subtle: #929e8f;
+  --skb-accent: #90c597;
+  --skb-accent-hover: #a8d3ad;
+  --skb-accent-subtle: #1e3121;
+  --skb-accent-contrast: #0d1c10;
+  --skb-focus: #90c597;
+}
+
+/* Iris: violet-tinted neutrals, a muted iris accent. */
+:root[data-theme="light"][data-palette="iris"] {
+  --skb-bg: #f6f5f9;
+  --skb-surface: #ffffff;
+  --skb-surface-raised: #ffffff;
+  --skb-surface-sunken: #edebf3;
+  --skb-surface-hover: #e6e3ee;
+  --skb-border: #dfdbe8;
+  --skb-border-strong: #c4bdd3;
+  --skb-text: #1e1b26;
+  --skb-text-muted: #524d5e;
+  --skb-text-subtle: #686275;
+  --skb-accent: #674caf;
+  --skb-accent-hover: #553e93;
+  --skb-accent-subtle: #ece6f8;
+  --skb-accent-contrast: #ffffff;
+  --skb-focus: #674caf;
+}
+:root[data-theme="dark"][data-palette="iris"] {
+  --skb-bg: #16141b;
+  --skb-surface: #1d1a23;
+  --skb-surface-raised: #25212c;
+  --skb-surface-sunken: #110f15;
+  --skb-surface-hover: #2b2733;
+  --skb-border: #2f2a38;
+  --skb-border-strong: #46404f;
+  --skb-text: #ebe7f1;
+  --skb-text-muted: #b8b0c4;
+  --skb-text-subtle: #9c94a9;
+  --skb-accent: #b39ef0;
+  --skb-accent-hover: #c5b3f4;
+  --skb-accent-subtle: #2d2442;
+  --skb-accent-contrast: #1a1030;
+  --skb-focus: #b39ef0;
+}
+
+/*
+ * Chrome (Phase 24): the lines and header surfaces that frame pages and panes. The standard interface
+ * draws them as before; Simplified UI lets a change of surface separate where it already does, and
+ * keeps a softer line where a boundary carries structure (between resizable panes, beside the sidebar).
+ */
+:root {
+  --skb-chrome-line: var(--skb-border);
+  --skb-divider: var(--skb-border);
+  --skb-pane-header-bg: var(--skb-surface);
+  /* The editor's current line: a hint where the cursor is (none when simplified). */
+  --skb-active-line: color-mix(in srgb, var(--skb-surface-hover) 55%, transparent);
+  /* A card's edge: in Simplified UI none in light (white on tinted paper separates), faint in dark. */
+  --skb-card-edge: var(--skb-border);
+}
+
+:root[data-ui="simplified"] {
+  --skb-chrome-line: transparent;
+  --skb-divider: color-mix(in oklab, var(--skb-border) 70%, var(--skb-bg));
+  --skb-pane-header-bg: transparent;
+  /* No band behind the current line, as in Obsidian: the accent caret marks the place. */
+  --skb-active-line: transparent;
+  --skb-card-edge: transparent;
+}
+
+:root[data-ui="simplified"][data-theme="dark"] {
+  --skb-card-edge: var(--skb-divider);
+}
+
 :root {
   --skb-font-sans:
     "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial,

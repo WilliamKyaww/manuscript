@@ -2,6 +2,7 @@ import { type APIRequestContext, expect, test } from '@playwright/test';
 import { seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
 import { studyDay } from './days';
+import { expectPageTitle } from './titles';
 
 /**
  * Phase 21, task 21.01: the parts of the use cases in `product.md` §8 that no other spec walks through
@@ -20,7 +21,7 @@ async function create<T>(request: APIRequestContext, url: string, data: unknown)
 
 test.beforeEach(async ({ page }) => {
   await page.goto(`/auth?token=${E2E_TOKEN}`);
-  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+  await expectPageTitle(page, 'Today');
 });
 
 test('UC-01: maths, code and a diagram read as they should in the preview', async ({

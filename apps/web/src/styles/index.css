@@ -4,6 +4,9 @@
 /* Dark-mode utilities follow our data-theme attribute rather than the OS setting directly. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
+/* Simplified UI (Phase 24, ADR-0043): `simplified:` styles apply while the setting is on. */
+@custom-variant simplified (&:where([data-ui="simplified"], [data-ui="simplified"] *));
+
 /* Map design tokens to Tailwind utilities; `inline` keeps them live when data-theme changes. */
 @theme inline {
   --color-bg: var(--skb-bg);
@@ -31,6 +34,10 @@
   --color-info: var(--skb-info);
   --color-info-subtle: var(--skb-info-subtle);
   --color-overlay: var(--skb-overlay);
+  --color-chrome-line: var(--skb-chrome-line);
+  --color-divider: var(--skb-divider);
+  --color-pane-header: var(--skb-pane-header-bg);
+  --color-card-edge: var(--skb-card-edge);
   --font-sans: var(--skb-font-sans);
   --font-mono: var(--skb-font-mono);
   --radius-sm: var(--skb-radius-sm);
@@ -85,6 +92,13 @@
 
   ::selection {
     background-color: var(--skb-accent-subtle);
+  }
+
+  /* The caret of every field takes the palette's accent (Phase 24). */
+  input,
+  textarea,
+  [contenteditable] {
+    caret-color: var(--skb-accent);
   }
 
   /*

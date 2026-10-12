@@ -6,6 +6,7 @@ import { seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
 import { studyDay } from './days';
 import { startServer, stopServer } from './server';
+import { expectPageTitle } from './titles';
 
 /**
  * Tasks 14.12 and 14.01–14.02: a 7-day plan is made from a module with a deadline, an exam and a
@@ -79,7 +80,7 @@ test('a 7-day plan explains itself, and planning again keeps what was done', asy
     });
 
     await page.goto(`${origin}/auth?token=${E2E_TOKEN}&next=/plan`);
-    await expect(page.getByRole('heading', { level: 1, name: 'Plan' })).toBeVisible();
+    await expectPageTitle(page, 'Plan');
     await expect(page.getByRole('heading', { name: 'No plan yet' })).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
 

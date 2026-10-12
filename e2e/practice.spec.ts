@@ -5,6 +5,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
 import { startServer, stopServer } from './server';
+import { expectPageTitle } from './titles';
 
 /**
  * Task 9.15: write questions → build a quiz → answer it (grading a written answer yourself) →
@@ -116,7 +117,7 @@ test('questions become a quiz whose answers move mastery, with the reasons shown
     // rung with material — the multiple-choice question.
     await page.goto(`${origin}/practice`);
     await page.getByRole('button', { name: 'Start Learn' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Learn' })).toBeVisible();
+    await expectPageTitle(page, 'Learn');
     await page.getByRole('radio', { name: /A leader/ }).check();
     await page.getByRole('button', { name: /^Check/ }).click();
     await expect(feedback(page)).toHaveText('Right');

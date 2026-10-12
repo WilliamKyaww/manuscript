@@ -27,6 +27,7 @@ export function DetailsPanel() {
     <Tabs value={panel} onValueChange={(value) => setPanel(value as SidePanel)} className="h-full">
       <Pane
         title="Details"
+        className="simplified:bg-surface"
         actions={
           <IconButton
             label="Close details"

@@ -4,7 +4,11 @@ import { cn } from '../lib/cn';
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('rounded-lg border border-border bg-surface shadow-sm', className)}
+      className={cn(
+        // The edge is a token (--skb-card-edge): gone in Simplified UI's light themes, faint in dark.
+        'rounded-lg border border-card-edge bg-surface shadow-sm simplified:shadow-none',
+        className,
+      )}
       {...props}
     />
   );

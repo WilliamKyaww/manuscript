@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { SECTIONS } from '../apps/web/src/app/sections';
 import { headingOutline, seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
+import { expectPageTitle, headerHidden } from './titles';
 
 /** Every route in the app, plus an unknown address that renders the not-found page. */
 const ROUTES = [
@@ -23,7 +24,7 @@ function fillAndScroll(element: Element) {
 
 test.beforeEach(async ({ page }) => {
   await page.goto(`/auth?token=${E2E_TOKEN}`);
-  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+  await expectPageTitle(page, 'Today');
 });
 
 test.describe('sticky headers (permanent requirement, ui.md §2)', () => {
@@ -31,7 +32,9 @@ test.describe('sticky headers (permanent requirement, ui.md §2)', () => {
     test(`the header stays fixed while ${route.path} scrolls`, async ({ page }) => {
       await page.goto(route.path);
       const title = page.getByRole('heading', { level: 1, name: route.title });
-      await expect(title).toBeVisible();
+      await expectPageTitle(page, route.title);
+      // The Notes page in Simplified UI shows no page header: its tab row and pane headers are what stay put.
+      const hidden = await headerHidden(page);
       const header = page.locator('[data-page-header]');
       await expect(header).toHaveCount(1);
       const before = await header.boundingBox();
@@ -60,8 +63,10 @@ test.describe('sticky headers (permanent requirement, ui.md §2)', () => {
         expect(scroll.window).toBe(0);
       }
       expect((await header.boundingBox())?.y).toBe(before?.y);
-      await expect(header).toBeInViewport();
-      await expect(title).toBeInViewport();
+      if (!hidden) {
+        await expect(header).toBeInViewport();
+        await expect(title).toBeInViewport();
+      }
     });
   }
 
@@ -88,7 +93,7 @@ test.describe('navigation and keyboard', () => {
     await page.keyboard.type('graph');
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/\/graph$/);
-    await expect(page.getByRole('heading', { level: 1, name: 'Graph' })).toBeVisible();
+    await expectPageTitle(page, 'Graph');
     await expect(palette).toHaveCount(0);
   });
 
@@ -175,7 +180,7 @@ test.describe('navigation and keyboard', () => {
     await page.setViewportSize({ width: 800, height: 700 });
     for (const route of ROUTES) {
       await page.goto(route.path);
-      await expect(page.getByRole('heading', { level: 1, name: route.title })).toBeVisible();
+      await expectPageTitle(page, route.title);
       await expect(page.locator('[data-sidebar]')).toHaveAttribute('data-collapsed', 'true');
       const widths = await page.locator('[data-page]').evaluate((element) => ({
         page: element.scrollWidth - element.clientWidth,
@@ -190,7 +195,7 @@ test.describe('navigation and keyboard', () => {
   }) => {
     for (const route of ROUTES) {
       await page.goto(route.path);
-      await expect(page.getByRole('heading', { level: 1, name: route.title })).toBeVisible();
+      await expectPageTitle(page, route.title);
       await page.waitForLoadState('networkidle').catch(() => {});
       const outline = await headingOutline(page);
       expect(outline, route.path).toEqual({ h1: 1, skips: [] });
@@ -220,7 +225,7 @@ test.describe('navigation and keyboard', () => {
     });
     for (const route of ROUTES) {
       await page.goto(route.path);
-      await expect(page.getByRole('heading', { level: 1, name: route.title })).toBeVisible();
+      await expectPageTitle(page, route.title);
     }
     expect(outside).toEqual([]);
   });
@@ -233,7 +238,7 @@ test.describe('navigation and keyboard', () => {
     page.on('pageerror', (error) => problems.push(`${page.url()}: ${error.message}`));
     for (const route of ROUTES) {
       await page.goto(route.path);
-      await expect(page.getByRole('heading', { level: 1, name: route.title })).toBeVisible();
+      await expectPageTitle(page, route.title);
     }
     expect(problems).toEqual([]);
   });
@@ -245,7 +250,7 @@ test.describe('accessibility (axe: no serious or critical violations)', () => {
       test(`${route.path} (${scheme} theme)`, async ({ page }) => {
         await page.emulateMedia({ colorScheme: scheme });
         await page.goto(route.path);
-        await expect(page.getByRole('heading', { level: 1, name: route.title })).toBeVisible();
+        await expectPageTitle(page, route.title);
         await expect(page.locator('html')).toHaveAttribute('data-theme', scheme);
         expect(await seriousViolations(page)).toEqual([]);
       });

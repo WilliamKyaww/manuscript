@@ -1,5 +1,6 @@
 import { ChevronRight, FileText, Folder, FolderOpen, Paperclip } from 'lucide-react';
 import {
+  type CSSProperties,
   type DragEvent,
   type KeyboardEvent,
   type MouseEvent,
@@ -50,6 +51,12 @@ export interface NoteTreeProps extends NoteTreeActions {
 }
 
 const DRAG_TYPE = 'application/x-skb-vault-path';
+
+/** "diagram.png" → "diagram" and "png" (no extension for "README" or ".hidden"). */
+const stem = (name: string) =>
+  name.lastIndexOf('.') > 0 ? name.slice(0, name.lastIndexOf('.')) : name;
+const extension = (name: string) =>
+  name.lastIndexOf('.') > 0 ? name.slice(name.lastIndexOf('.') + 1) : '';
 
 function iconFor(node: TreeNode, expanded: boolean) {
   if (node.kind === 'folder') return expanded ? <FolderOpen size={15} /> : <Folder size={15} />;
@@ -272,13 +279,27 @@ export function NoteTree({ root, activePath, ...actions }: NoteTreeProps) {
                   }}
                   onKeyDown={(event) => onKeyDown(event, row)}
                   className={cn(
-                    'flex h-7 cursor-default items-center gap-1.5 pr-2 outline-none select-none',
+                    'relative flex h-7 cursor-default items-center gap-1.5 pr-2 outline-none select-none',
+                    'pl-[calc(var(--tree-depth)*14px+6px)]',
                     'hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset',
-                    isActive && 'bg-accent-subtle font-medium text-text',
+                    // Simplified UI (Phase 24): compact rows inset as soft pills, quieter names.
+                    'simplified:mx-1.5 simplified:h-[26px] simplified:gap-1 simplified:rounded-md simplified:pr-1.5',
+                    'simplified:pl-[calc(var(--tree-depth)*16px+4px)] simplified:text-[0.8125rem] simplified:text-muted',
+                    isActive && 'bg-accent-subtle font-medium text-text simplified:text-text',
                     dropTarget === node.path && 'bg-accent-subtle ring-1 ring-accent ring-inset',
                   )}
-                  style={{ paddingLeft: `${(depth - 1) * 14 + 6}px` }}
+                  style={{ '--tree-depth': depth - 1 } as CSSProperties}
                 >
+                  {/* Indent guides, one per containing folder, joined from row to row. */}
+                  {Array.from({ length: depth - 1 }, (_, level) => (
+                    <span
+                      // biome-ignore lint/suspicious/noArrayIndexKey: one guide per level, never reordered.
+                      key={level}
+                      aria-hidden="true"
+                      className="absolute inset-y-0 hidden w-px bg-divider simplified:block"
+                      style={{ left: `${level * 16 + 11}px` }}
+                    />
+                  ))}
                   <ChevronRight
                     aria-hidden="true"
                     size={14}
@@ -288,7 +309,7 @@ export function NoteTree({ root, activePath, ...actions }: NoteTreeProps) {
                       isOpen && 'rotate-90',
                     )}
                   />
-                  <span aria-hidden="true" className="flex shrink-0 text-muted">
+                  <span aria-hidden="true" className="flex shrink-0 text-muted simplified:hidden">
                     {iconFor(node, isOpen)}
                   </span>
                   {renaming === node.path ? (
@@ -300,8 +321,25 @@ export function NoteTree({ root, activePath, ...actions }: NoteTreeProps) {
                         if (name && name !== node.name) actions.onRename(node, name);
                       }}
                     />
+                  ) : node.kind === 'attachment' ? (
+                    <>
+                      <span className="truncate simplified:hidden" title={node.path}>
+                        {node.name}
+                      </span>
+                      {/* Simplified: the name, then its file type as a small tag (as in Obsidian). */}
+                      <span className="hidden truncate simplified:inline" title={node.path}>
+                        {stem(node.name)}
+                      </span>
+                      {extension(node.name) && (
+                        <span className="hidden shrink-0 rounded-sm bg-surface-sunken px-1 text-[0.625rem] leading-4 font-medium tracking-wide text-subtle uppercase simplified:inline">
+                          {extension(node.name)}
+                        </span>
+                      )}
+                    </>
                   ) : (
-                    <span className="truncate">{node.name}</span>
+                    <span className="truncate" title={node.path}>
+                      {node.name}
+                    </span>
                   )}
                 </div>
               );

@@ -2,6 +2,7 @@ import { type APIRequestContext, expect, test } from '@playwright/test';
 import { makePptx } from '../apps/server/test/fixtures/sources/builders';
 import { headingOutline, seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
+import { expectPageTitle } from './titles';
 
 /**
  * Task 17.09: the screens that have content, in both themes. The shell spec scans every route as it
@@ -140,7 +141,7 @@ for (const scheme of ['light', 'dark'] as const) {
     test.beforeEach(async ({ page }) => {
       await page.emulateMedia({ colorScheme: scheme });
       await page.goto(`/auth?token=${E2E_TOKEN}`);
-      await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+      await expectPageTitle(page, 'Today');
     });
 
     for (const item of ['search results', 'a note', 'a module', 'a lecture', 'a concept']) {
@@ -148,7 +149,7 @@ for (const scheme of ['light', 'dark'] as const) {
         const target = pages().find((entry) => entry.name === item);
         if (!target) throw new Error(`no such page: ${item}`);
         await page.goto(target.path);
-        await expect(page.getByRole('heading', { level: 1, name: target.heading })).toBeVisible();
+        await expectPageTitle(page, target.heading);
         await expect(page.locator('html')).toHaveAttribute('data-theme', scheme);
         expect(await seriousViolations(page)).toEqual([]);
         expect(await headingOutline(page), target.path).toEqual({ h1: 1, skips: [] });
@@ -168,7 +169,7 @@ for (const scheme of ['light', 'dark'] as const) {
         const target = pages().find((entry) => entry.name === item);
         if (!target) throw new Error(`no such page: ${item}`);
         await page.goto(target.path);
-        await expect(page.getByRole('heading', { level: 1, name: target.heading })).toBeVisible();
+        await expectPageTitle(page, target.heading);
         await expect(page.locator('html')).toHaveAttribute('data-theme', scheme);
         expect(await seriousViolations(page)).toEqual([]);
         expect(await headingOutline(page), target.path).toEqual({ h1: 1, skips: [] });

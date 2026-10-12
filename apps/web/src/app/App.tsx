@@ -7,6 +7,7 @@ import { ApiProvider } from '../lib/api/context';
 import type { AppRouter } from '../router';
 import { useShortcutDispatcher } from './shortcuts/useShortcuts';
 import { Toaster } from './Toaster';
+import { useAppearanceSync } from './theme/appearance';
 import { useThemeSync } from './theme/theme';
 
 /** Context providers shared by the real app and component tests. */
@@ -31,6 +32,7 @@ export function AppProviders({
 /** The application: global behaviour (theme, keyboard) plus the router and toasts. */
 export function App({ router }: { router: AppRouter }) {
   useThemeSync();
+  useAppearanceSync();
   useShortcutDispatcher();
   return (
     <>

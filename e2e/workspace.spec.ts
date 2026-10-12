@@ -4,6 +4,7 @@ import path from 'node:path';
 import { expect, type Page, test } from '@playwright/test';
 import { seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
+import { expectPageTitle } from './titles';
 
 /**
  * The notes workspace of Phase 23 (tasks 23.02–23.09) against the real server: tabs and panes, the
@@ -48,7 +49,7 @@ async function openMenuOf(page: Page, name: string) {
 
 test.beforeEach(async ({ page }) => {
   await page.goto(`/auth?token=${E2E_TOKEN}&next=/notes`);
-  await expect(page.getByRole('heading', { level: 1, name: 'Notes' })).toBeVisible();
+  await expectPageTitle(page, 'Notes');
 });
 
 test('tabs and a second pane: Ctrl+click, Split right, remembered across a reload', async ({
@@ -62,7 +63,7 @@ test('tabs and a second pane: Ctrl+click, Split right, remembered across a reloa
   await page
     .getByRole('treeitem', { name: 'Tabs two', exact: true })
     .click({ modifiers: ['Control'] });
-  await expect(page.getByRole('heading', { level: 1, name: 'Tabs two' })).toBeVisible();
+  await expectPageTitle(page, 'Tabs two');
   expect(await tabs(page)).toEqual(['Tabs one', 'Tabs two']);
 
   // A middle click on a tab closes it; the other takes its place.
@@ -70,7 +71,7 @@ test('tabs and a second pane: Ctrl+click, Split right, remembered across a reloa
     .getByRole('navigation', { name: 'Open notes' })
     .getByRole('button', { name: 'Tabs two', exact: true })
     .click({ button: 'middle' });
-  await expect(page.getByRole('heading', { level: 1, name: 'Tabs one' })).toBeVisible();
+  await expectPageTitle(page, 'Tabs one');
 
   await page.getByRole('button', { name: 'More options' }).click();
   await page.getByRole('menuitem', { name: 'Split right' }).click();

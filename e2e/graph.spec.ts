@@ -1,6 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 import { seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
+import { expectPageTitle } from './titles';
 
 /**
  * Task 7.13: the graph renders, filters narrow it, and clicking a node opens its page; a proposed
@@ -17,7 +18,7 @@ async function post(page: Page, path: string, data: unknown) {
 
 test.beforeEach(async ({ page }) => {
   await page.goto(`/auth?token=${E2E_TOKEN}`);
-  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+  await expectPageTitle(page, 'Today');
 });
 
 test('the graph renders, filters by module, and a clicked node opens its page', async ({
@@ -86,7 +87,7 @@ test('the graph renders, filters by module, and a clicked node opens its page', 
   expect(await seriousViolations(page)).toEqual([]);
 
   await details.getByRole('button', { name: 'Open' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: quorumName })).toBeVisible();
+  await expectPageTitle(page, quorumName);
 
   // The proposal is reviewed where it belongs: on the concept page.
   await page.goto(`/concepts/${clocks.id}`);

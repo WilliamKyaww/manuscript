@@ -4,6 +4,7 @@ import path from 'node:path';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { E2E_TOKEN } from './constants';
 import { startServer, stopServer } from './server';
+import { expectPageTitle } from './titles';
 
 /**
  * Phase 21, task 21.02: a study session with the keyboard alone — skip to the page, make a note by
@@ -35,7 +36,7 @@ test('a study session with the keyboard alone', async ({ page }) => {
     });
     expect(set.status()).toBe(201);
     await page.goto(`${origin}/auth?token=${E2E_TOKEN}`);
-    await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+    await expectPageTitle(page, 'Today');
 
     // The skip link comes first and takes focus to the page.
     await page.keyboard.press('Tab');
@@ -48,7 +49,7 @@ test('a study session with the keyboard alone', async ({ page }) => {
     await expect(page.getByRole('dialog', { name: 'Open a note' })).toBeVisible();
     await page.keyboard.type('Keyboard only');
     await page.keyboard.press('Shift+Enter');
-    await expect(page.getByRole('heading', { level: 1, name: 'Keyboard only' })).toBeVisible();
+    await expectPageTitle(page, 'Keyboard only');
     await expect(page.locator('.cm-content')).toBeFocused();
     await page.keyboard.type('Raft elects one leader per term.');
     await page.keyboard.press('Control+s');

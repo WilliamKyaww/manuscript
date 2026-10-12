@@ -37,6 +37,11 @@ export interface PageProps {
   layout?: PageLayout;
   /** `compact`: one short header row, for work surfaces with headers of their own (Notes). */
   density?: 'regular' | 'compact';
+  /**
+   * The header is only for assistive technology and keyboard focus (the title is still the page's
+   * h1): the page shows its title elsewhere, as the Notes page does in its tab row (ADR-0043).
+   */
+  headerHidden?: boolean;
   children: ReactNode;
   bodyClassName?: string;
 }
@@ -62,6 +67,7 @@ export function Page({
   width = 'default',
   layout = 'scroll',
   density = 'regular',
+  headerHidden = false,
   children,
   bodyClassName,
 }: PageProps) {
@@ -72,9 +78,11 @@ export function Page({
       <header
         data-page-header
         data-density={density}
+        data-header-hidden={headerHidden || undefined}
         className={cn(
-          'flex-none border-b border-border bg-surface',
+          'flex-none border-b border-chrome-line bg-surface',
           compact ? 'px-4 py-1.5' : cn('px-6 pt-4', !toolbar && 'pb-4'),
+          headerHidden && 'sr-only',
         )}
       >
         {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} />}
@@ -171,7 +179,7 @@ export function StickySection({
     <section aria-labelledby={headingId} className={cn('mb-8', className)}>
       <div
         data-sticky-header
-        className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-border bg-bg py-2"
+        className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-chrome-line bg-bg py-2"
       >
         <div className="min-w-0">
           <h2 id={headingId} className="text-sm font-semibold">

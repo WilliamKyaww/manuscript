@@ -2,6 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { makePdf, makePptx } from '../apps/server/test/fixtures/sources/builders';
 import { seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
+import { expectPageTitle } from './titles';
 
 /**
  * Task 5.19: import a PDF and a PPTX → both become ready → search finds their text → a result
@@ -14,12 +15,12 @@ const PPTX_TYPE = 'application/vnd.openxmlformats-officedocument.presentationml.
 
 test.beforeEach(async ({ page }) => {
   await page.goto(`/auth?token=${E2E_TOKEN}`);
-  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+  await expectPageTitle(page, 'Today');
 });
 
 async function importLectureFiles(page: Page) {
   await page.goto('/library');
-  await expect(page.getByRole('heading', { level: 1, name: 'Library' })).toBeVisible();
+  await expectPageTitle(page, 'Library');
   await page.getByRole('combobox', { name: /Module for new imports/ }).fill('E2E101');
   await page.locator('input[type="file"]').setInputFiles([
     {
@@ -66,7 +67,7 @@ test('imported sources are searchable and results open at the page or slide', as
   const results = page.getByRole('list', { name: 'Search results' });
   await results.getByRole('link', { name: /Lecture 7 › p\. 3/ }).click();
   await expect(page).toHaveURL(/\/library\/src_[0-9A-Z]+\?page=3$/);
-  await expect(page.getByRole('heading', { level: 1, name: 'Lecture 7' })).toBeVisible();
+  await expectPageTitle(page, 'Lecture 7');
   const page3 = page.locator(
     '[data-pane-body] section[aria-label="Page 3"] [data-page-number="3"]',
   );
@@ -104,7 +105,7 @@ test('imported sources are searchable and results open at the page or slide', as
 
 test('unsupported files are refused with a reason and nothing is imported', async ({ page }) => {
   await page.goto('/library');
-  await expect(page.getByRole('heading', { level: 1, name: 'Library' })).toBeVisible();
+  await expectPageTitle(page, 'Library');
   await page.locator('input[type="file"]').setInputFiles({
     name: 'setup.exe',
     mimeType: 'application/octet-stream',

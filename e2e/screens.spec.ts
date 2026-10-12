@@ -4,6 +4,7 @@ import { type APIRequestContext, expect, test } from '@playwright/test';
 import { makePptx } from '../apps/server/test/fixtures/sources/builders';
 import { E2E_TOKEN } from './constants';
 import { studyDay } from './days';
+import { expectPageTitle } from './titles';
 
 /**
  * Screenshots of every major screen with content, in both themes (Phase 20, tasks 20.01–20.24): the
@@ -293,7 +294,7 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.setViewportSize({ width, height: Math.round((width * 9) / 16) });
     await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
     await page.goto(`/auth?token=${E2E_TOKEN}`);
-    await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+    await expectPageTitle(page, 'Today');
     for (const screen of SCREENS()) {
       await page.goto(screen.path);
       await expect(page.locator('[data-page-header]')).toBeVisible();

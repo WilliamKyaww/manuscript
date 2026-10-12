@@ -37,11 +37,11 @@ export function Pane({
     <section
       data-pane
       aria-labelledby={headingId}
-      className={cn('flex h-full min-h-0 min-w-0 flex-col bg-bg', className)}
+      className={cn('relative flex h-full min-h-0 min-w-0 flex-col bg-bg', className)}
     >
       <div
         data-pane-header
-        className="flex h-10 flex-none items-center justify-between gap-2 border-b border-border bg-surface px-3"
+        className="flex h-10 flex-none items-center justify-between gap-2 border-b border-chrome-line bg-pane-header px-3"
       >
         <h2 id={headingId} className={cn('eyebrow truncate', hideTitle && 'sr-only')}>
           {title}
@@ -52,7 +52,10 @@ export function Pane({
         {actions && <div className="flex shrink-0 items-center gap-1">{actions}</div>}
       </div>
       {toolbar && (
-        <div data-pane-toolbar className="flex-none border-b border-border bg-surface px-3 py-1.5">
+        <div
+          data-pane-toolbar
+          className="flex-none border-b border-chrome-line bg-pane-header px-3 py-1.5"
+        >
           {toolbar}
         </div>
       )}

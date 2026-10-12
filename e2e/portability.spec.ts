@@ -6,6 +6,7 @@ import { graphifyBytes, raftRepository } from '../apps/server/test/fixtures/grap
 import { seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
 import { startServer, stopServer } from './server';
+import { expectPageTitle } from './titles';
 
 /**
  * Task 16.01–16.09: everything can leave and come back. The student exports, restores the export into
@@ -46,7 +47,7 @@ test('export, restore, open another vault and link code to a concept', async ({ 
 
     // 1. Export everything.
     await page.goto(`${origin}/auth?token=${E2E_TOKEN}&next=/settings`);
-    await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
+    await expectPageTitle(page, 'Settings');
     await page.getByRole('button', { name: 'Export everything' }).click();
     const exports = page.getByRole('list', { name: 'Exports' });
     await expect(exports.getByRole('link', { name: 'Download' })).toBeVisible({ timeout: 30_000 });
@@ -103,7 +104,7 @@ test('export, restore, open another vault and link code to a concept', async ({ 
 
     // 5. On the concept's page, the suggestions wait for a decision.
     await page.goto(`${origin}/concepts/${raft.id}`);
-    await expect(page.getByRole('heading', { level: 1, name: 'Raft' })).toBeVisible();
+    await expectPageTitle(page, 'Raft');
     const suggested = page.getByRole('list', { name: 'Suggested code' });
     await expect(suggested.getByRole('button', { name: 'Accept raft.py' })).toBeVisible();
     await suggested.getByRole('button', { name: 'Accept raft.py' }).click();

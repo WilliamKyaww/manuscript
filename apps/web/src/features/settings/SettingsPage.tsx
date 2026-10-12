@@ -1,46 +1,23 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { Keyboard, Monitor, Moon, Sun } from 'lucide-react';
-import { RadioGroup } from 'radix-ui';
+import { Keyboard } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useLayoutStore } from '../../app/layout-store';
-import { type ThemePreference, useThemeStore } from '../../app/theme/theme';
 import { Button } from '../../components/Button';
 import { Page, StickySection } from '../../components/Page';
 import { ErrorState, LoadingState } from '../../components/States';
 import { useApi } from '../../lib/api/context';
-import { cn } from '../../lib/cn';
 import { desktopBridge } from '../../lib/desktop';
 import { formatUptime } from '../../lib/format';
 import { healthQuery } from '../../lib/queries';
 import { AgentSettingsSection } from '../agent/AgentSettingsSection';
 import { AiSettingsSection } from '../ai/settings/AiSettingsSection';
 import { DataSection } from '../data/DataSection';
+import { AppearanceSection } from './AppearanceSection';
 import { NotesSettingsSection } from './NotesSettingsSection';
 import { PipelineSettingsSection } from './PipelineSettingsSection';
 import { PlanSettingsSection } from './PlanSettingsSection';
 import { ReviewSettingsSection } from './ReviewSettingsSection';
-
-const THEME_OPTIONS: {
-  value: ThemePreference;
-  label: string;
-  description: string;
-  icon: ReactNode;
-}[] = [
-  { value: 'light', label: 'Light', description: 'Warm paper tones', icon: <Sun size={18} /> },
-  {
-    value: 'dark',
-    label: 'Dark',
-    description: 'Low glare for long sessions',
-    icon: <Moon size={18} />,
-  },
-  {
-    value: 'system',
-    label: 'Match system',
-    description: 'Follow the Windows setting',
-    icon: <Monitor size={18} />,
-  },
-];
 
 export function SettingsPage() {
   return (
@@ -107,46 +84,6 @@ function VaultSection() {
           ]}
         />
       )}
-    </StickySection>
-  );
-}
-
-function AppearanceSection() {
-  const preference = useThemeStore((state) => state.preference);
-  const setPreference = useThemeStore((state) => state.setPreference);
-  return (
-    <StickySection
-      title="Appearance"
-      description="Applies immediately and is remembered on this computer."
-    >
-      <div id="theme-label" className="mb-3 text-sm font-medium">
-        Theme
-      </div>
-      <RadioGroup.Root
-        aria-labelledby="theme-label"
-        value={preference}
-        onValueChange={(value) => setPreference(value as ThemePreference)}
-        className="grid gap-3 sm:grid-cols-3"
-      >
-        {THEME_OPTIONS.map((option) => (
-          <RadioGroup.Item
-            key={option.value}
-            value={option.value}
-            className={cn(
-              'flex items-center gap-3 rounded-lg border border-border bg-surface p-3 text-left',
-              'hover:border-border-strong data-[state=checked]:border-accent data-[state=checked]:bg-accent-subtle',
-            )}
-          >
-            <span aria-hidden="true" className="text-muted">
-              {option.icon}
-            </span>
-            <span className="min-w-0">
-              <span className="block text-sm font-medium">{option.label}</span>
-              <span className="block text-xs text-muted">{option.description}</span>
-            </span>
-          </RadioGroup.Item>
-        ))}
-      </RadioGroup.Root>
     </StickySection>
   );
 }

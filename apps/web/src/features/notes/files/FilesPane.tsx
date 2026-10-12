@@ -78,6 +78,8 @@ export function FilesPane({
       title="Files"
       // As in Obsidian, the toolbar is the header; the name is for assistive technology.
       hideTitle
+      // Simplified UI: on the sidebar's surface, so the change of surface separates it from the note.
+      className="simplified:bg-surface"
       actions={
         <>
           <IconButton
@@ -146,7 +148,7 @@ export function FilesPane({
       footer={
         <>
           {indexStatus?.state === 'scanning' && (
-            <p role="status" className="border-t border-border px-3 py-2 text-xs text-muted">
+            <p role="status" className="border-t border-chrome-line px-3 py-2 text-xs text-muted">
               Indexing the vault… {indexStatus.processed} of {indexStatus.total}
             </p>
           )}

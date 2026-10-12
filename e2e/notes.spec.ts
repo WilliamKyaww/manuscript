@@ -5,6 +5,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 import { E2E_TOKEN } from './constants';
 import { startServer, stopServer } from './server';
+import { expectPageTitle, headerHidden } from './titles';
 
 /** The vault the Playwright web server uses (see playwright.config.ts). */
 const VAULT = path.join(process.env.SKB_E2E_DIR ?? '', 'vault');
@@ -46,7 +47,7 @@ async function typeAtEnd(page: Page, text: string): Promise<void> {
 
 test.beforeEach(async ({ page }) => {
   await page.goto(`/auth?token=${E2E_TOKEN}&next=/notes`);
-  await expect(page.getByRole('heading', { level: 1, name: 'Notes' })).toBeVisible();
+  await expectPageTitle(page, 'Notes');
 });
 
 test('a link to a new note shows up as a backlink there', async ({ page }) => {
@@ -54,7 +55,7 @@ test('a link to a new note shows up as a backlink there', async ({ page }) => {
   const dialog = page.getByRole('dialog', { name: 'New note' });
   await dialog.getByLabel('Title').fill('Consensus overview');
   await dialog.getByRole('button', { name: 'Create note' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Consensus overview' })).toBeVisible();
+  await expectPageTitle(page, 'Consensus overview');
   await expect(page.getByRole('treeitem', { name: 'Consensus overview' })).toHaveAttribute(
     'aria-selected',
     'true',
@@ -70,7 +71,7 @@ test('a link to a new note shows up as a backlink there', async ({ page }) => {
   await page.getByLabel('Preview', { exact: true }).click();
   await page.getByRole('button', { name: 'Leader election' }).click();
   await page.getByRole('menuitem', { name: /Create note/ }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Leader election' })).toBeVisible();
+  await expectPageTitle(page, 'Leader election');
 
   // The Details panel starts closed (task 23.05).
   await page.getByRole('button', { name: 'Show details' }).click();
@@ -83,7 +84,7 @@ test('a link to a new note shows up as a backlink there', async ({ page }) => {
 
   // Following the backlink opens the linking note.
   await panel.getByRole('link', { name: 'Consensus overview' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Consensus overview' })).toBeVisible();
+  await expectPageTitle(page, 'Consensus overview');
   await page.getByLabel('Edit', { exact: true }).click();
 });
 
@@ -171,7 +172,9 @@ test('the editor and details panes keep their headers while scrolling a long not
   expect(scrolled).toBeGreaterThan(1000);
   const after = await Promise.all((await paneHeaders.all()).map((header) => header.boundingBox()));
   expect(after.map((box) => box?.y)).toEqual(before.map((box) => box?.y));
-  await expect(page.locator('[data-page-header]')).toBeInViewport();
+  // In Simplified UI the page header is folded into the tab row, which stays put instead.
+  if (await headerHidden(page)) await expect(page.locator('[data-tab-bar]')).toBeInViewport();
+  else await expect(page.locator('[data-page-header]')).toBeInViewport();
 });
 
 test('the notes page has no serious accessibility violations', async ({ page }) => {
@@ -183,7 +186,7 @@ test('the notes page has no serious accessibility violations', async ({ page }) 
   for (const mode of ['Edit', 'Split', 'Preview'] as const) {
     await page.goto(`/notes/${note.id}`);
     await page.getByLabel(mode, { exact: true }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Accessible note' })).toBeVisible();
+    await expectPageTitle(page, 'Accessible note');
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
       .analyze();
@@ -225,7 +228,7 @@ test.describe('persistence', () => {
       const dialog = page.getByRole('dialog', { name: 'New note' });
       await dialog.getByLabel('Title').fill('Persistent');
       await dialog.getByRole('button', { name: 'Create note' }).click();
-      await expect(page.getByRole('heading', { level: 1, name: 'Persistent' })).toBeVisible();
+      await expectPageTitle(page, 'Persistent');
       const id = page.url().split('/').pop() ?? '';
       await typeAtEnd(page, 'Survives restarts.');
       await expect

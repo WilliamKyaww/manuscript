@@ -2,6 +2,7 @@ import { createMemoryHistory } from '@tanstack/react-router';
 import { render } from '@testing-library/react';
 import { App, AppProviders } from '../app/App';
 import { useLayoutStore } from '../app/layout-store';
+import { useAppearance } from '../app/theme/appearance';
 import { useThemeStore } from '../app/theme/theme';
 import { useActiveNote } from '../features/notes/workspace/active-note';
 import { emptyLayout, useWorkspace } from '../features/notes/workspace/workspace-store';
@@ -59,6 +60,7 @@ export function resetUiState(): void {
     quickSwitcherOpen: false,
   });
   useThemeStore.setState({ preference: 'system', resolved: 'light' });
+  useAppearance.setState({ palette: 'manuscript', simplified: true });
   useWorkspace.setState(emptyLayout());
   useActiveNote.setState({ view: null });
   document.documentElement.dataset.theme = 'light';
