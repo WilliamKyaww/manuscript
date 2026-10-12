@@ -3,6 +3,45 @@
 All notable changes to Manuscript. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] — 2026-10-12
+
+Markdown as Obsidian writes it (Phase 25): the editor and the reading view now draw the features of Obsidian's
+Markdown that notes use, so a note looks the same in both programs. Researched from Obsidian's own help pages.
+
+### Release notes
+
+**Updating.** Install `Manuscript-Setup-1.3.0.exe` over 1.2.1. Your vault, data and settings are untouched; no file
+is changed by drawing it differently. One thing looks different at once: in the reading view a single line break in a
+note is now shown as a line break, as in Obsidian. *Settings → Appearance → Strict line breaks* turns that off.
+
+### Added
+
+- **The editor draws blocks** (live preview, on by default), with the source back as soon as the cursor is in them:
+  **tables** as tables (alignment, bold, links and highlights in cells; click to edit), **lists** with bullets,
+  numbers, indentation and hanging lines, **task lists** with boxes you can click (which writes `[x]` to the file),
+  any other status character (`[?]`, `[-]`, `[!]`), done tasks struck through, **callouts** with their colour, icon
+  and title, quotes, rules, code blocks, **maths** (inline and display) and images embedded with `![[…]]`.
+- **All thirteen callout types and their aliases** (`summary`, `tldr`, `hint`, `important`, `check`, `done`, `help`,
+  `faq`, `caution`, `attention`, `fail`, `missing`, `error`, `cite`), each with its own colour and icon, in both views;
+  an unknown type is a note, as in Obsidian.
+- **Highlight colours**: `==🟢text==` with a colour emoji straight after the marks (🔴 🟠 🟡 🟢 🔵 🟣).
+- **Inline footnotes** `text^[the note]`, numbered after the ordinary footnotes and listed at the end of the preview.
+- **Block ids** (` ^block-id`) are hidden in the preview and can be linked with `[[Note#^block-id]]`, which scrolls to
+  the block.
+- **Nested heading links** `[[Note#Heading#Subheading]]`, image sizes in Markdown images (`![alt|300x200](img.png)`),
+  and PDF embeds with `#page=3&height=400`.
+- **Strict line breaks** in *Settings → Appearance* (off by default, as in Obsidian).
+
+### Changed
+
+- A single line break in a note is a line break in the reading view (Obsidian's default). Standard Markdown is one
+  switch away.
+
+### Known limits
+
+- A table is edited as its source (no cell-by-cell editing yet); callouts do not fold in the editor; a task's box
+  cannot be ticked in the reading view; Markdown images and embedded notes are drawn in the reading view only.
+
 ## [1.2.1] — 2026-10-12
 
 ### Fixed

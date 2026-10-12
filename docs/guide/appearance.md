@@ -45,3 +45,9 @@ above the tabs. Switching back and forth changes nothing else.
 
 In either interface, **Show files** / **Hide files** opens and closes the file list. It never narrows below the width
 of its toolbar, and in a phone-sized window it starts closed so that the note has the room.
+
+## Strict line breaks
+
+Off unless you turn it on. Off is how Obsidian behaves: a single line break in a note is a line break in the reading
+view. On follows standard Markdown, where only a blank line starts a new paragraph. It changes how notes are shown,
+never the files.

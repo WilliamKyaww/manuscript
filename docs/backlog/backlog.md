@@ -126,6 +126,10 @@ _Last reviewed: 10 October 2026 (Phase 15)._
 | B-KM-23 | Agent tools for code graphs: find code by name, say what implements a concept, propose links | The assistant cannot see imported repositories yet; links are made on the concept page | Phase 16 |
 | B-KM-24 | Keep the imported graph.json in the vault, and re-import it when the repository is mapped again, keeping decisions | Re-importing an updated repository today adds a second graph | Phase 16 |
 | B-KM-25 | Group code by file or folder in the graph and expand a file on demand; import other graph formats (GraphML, JSON Canvas) | A repository of thousands of functions is a hairball when shown as a whole | Phase 16 |
+| B-KM-26 | Edit a table cell by cell in place in the editor (Tab between cells, add a row or column), not as source | Obsidian does; here a click opens the table's source | Phase 25 |
+| B-KM-27 | Fold and unfold callouts in the editor, and tick a task's box in the reading view | Obsidian does both; here folding only works in the reading view and ticking only in the editor | Phase 25 |
+| B-KM-28 | Draw `![](path)` Markdown images and embedded notes (`![[Note]]`) in the editor | Only the reading view draws them; wikilink image embeds are drawn in both | Phase 25 |
+| B-KM-29 | Scroll the editor to a `[[Note#^block]]` target (block positions in the index) | The reading view scrolls to the block; the editor opens the note at the top | Phase 25 |
 
 ## Platform (PL)
 
