@@ -178,3 +178,19 @@ with a long folder name, were fixed after the review's last round and checked fr
 ### Next steps
 
 - Install 1.2.0 when the student says so; use it and report what is wrong or missing.
+
+## 1.2.1 — appearance not remembered in the desktop app
+
+The student reported that a chosen palette reverted to the default after leaving the app. Cause: the desktop shell
+started the engine with `--port 0`, so every launch had a new address (`http://127.0.0.1:<random>`), and the page's
+local storage — theme, palette, Simplified UI, tabs, sidebar width, every per-browser preference — belongs to the
+address: each launch began with empty storage. (Browser use via `run-web.bat` has a fixed port and was not affected.)
+
+- `apps/desktop/src/port.ts`: the port chosen at the first launch is remembered in `<data>/desktop-port.json` and used
+  again while it is free; if another program holds it, a new one is chosen and remembered. Unit tests (3).
+- `e2e/desktop.spec.ts`: a new test chooses Sage and turns Simplified UI off, quits, starts again with the same data
+  folder, and finds the same address and both choices. The vault-switch test now waits for the server to report the
+  new vault rather than for a new address (the restarted engine keeps the port by design).
+- Tests: desktop unit 15 passed; desktop specs 5 passed (one run had the zoom-shortcut check read 0 once, sent the
+  moment the window opened; it passed in the next two runs); `npm run verify` below.
+- Verify after the fix: 158 files, 957 tests, smoke on 1.2.1 — passed.
