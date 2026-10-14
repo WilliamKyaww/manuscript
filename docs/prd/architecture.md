@@ -49,8 +49,9 @@ flowchart LR
 | **Desktop** | Electron main process → server in an Electron `utilityProcess` → `BrowserWindow` loads the server URL | `npm run desktop:dev`; packaged installer |
 
 The UI never talks to the filesystem or database directly in any mode; it only calls the HTTP API.
-Electron adds a minimal preload bridge for native capabilities (file/folder pickers, reveal in
-Explorer, app info) and secure secret storage.
+Electron adds a validated preload bridge for native capabilities (file/folder pickers, reveal in
+Explorer, note windows, PDF export, title-bar colours and web-pane controls) and secure secret storage.
+External web panes use a separate browser session; they receive no preload bridge (ADR-0045/0046).
 
 ## 2. Repository structure
 
@@ -245,24 +246,45 @@ working.
   truly unexpected error is an `internal` 500. JSON bodies over 8 MB are refused; uploads have limits of
   their own.
 
-## 11. Electron architecture (Phase 18; de-risked by a Phase 1 spike)
+## 11. Electron architecture (Phases 18, 23, 26–27; de-risked by a Phase 1 spike)
 
 ```text
-Electron main ──fork──► utilityProcess: server.mjs (same bundle as web mode; --port 0)
+Electron main ──fork──► utilityProcess: server.mjs (same bundle as web mode; remembered available port)
      │  env: SKB_AUTH_TOKEN (made for the run), SKB_RESTARTABLE=1, SKB_SECRETS_KEY, SKB_DATA_DIR
      │  ◄── "skb:ready" {port, origin}
      ├─ sets the auth cookie skb_session_<port> for http://127.0.0.1:<port> before the first load
      ├─ BrowserWindow(loadURL server origin; contextIsolation, sandbox, no nodeIntegration; the
-     │    server's CSP; navigation and window.open confined to the origin; permissions denied but
-     │    clipboard writes and full screen; links go to the system browser if plain http(s))
-     ├─ preload: window.skbDesktop = { pickFiles, pickFolder, revealInExplorer, appInfo }; every call is
-     │    checked in main (the frame's origin, the path inside the vault or data folder)
+     │    server's CSP; navigation confined to the origin; note windows checked by isNoteWindowUrl)
+     ├─ preload: window.skbDesktop — pickers, reveal/open path, PDF export, title-bar colours, app info,
+     │    web { open, place, command, snapshot, release, onState }; every call checked in main
+     ├─ WebContentsView(s), laid over the Notes page's measured web-pane hosts
+     │    persist:web session; no preload/Node; sandbox, contextIsolation and webSecurity enabled
+     │    only validated http(s), never the app origin; popups use the same isolated web session
      ├─ safeStorage wraps a random 32-byte key kept in <data>/secrets.key; the server encrypts
      │    secrets.json with it (AES-256-GCM), so a copy of the data folder is not a copy of the keys
      ├─ exit code 75 from the server (another vault chosen) → start it again, load the new origin
      └─ single-instance lock, window state in <data>/window-state.json, Electron's own profile in
           <data>/desktop (never in the vault)
 ```
+
+`port.ts` keeps the first available port in `<data>/desktop-port.json` and reuses it while free (1.2.1).
+This preserves the application's origin and its `localStorage` preferences across launches. Workspace tabs,
+pane order and active state live in `workspace-store.ts`; a web link opens to the right of its source note
+(ADR-0046). `WebTab.tsx` follows its host with `ResizeObserver`, window resize and a position check; validated
+bounds go through `skb:web-place` to `WebViews.place`. At most six native views are kept per window; closing a
+tab releases its view, and reloading, closing or crashing the application window releases its owned views.
+A crashed external page retains its entry and address so the student can retry loading it.
+
+`web-contents-created` sends contents from `persist:web` to `WebViews.harden`, rather than applying the main
+window's app-origin-only rules. Cookies and browser storage persist independently of Manuscript's authentication
+and of the system browser. Normal JavaScript, frame rendering and web security remain enabled. The web session
+permits only full screen and clipboard writes; its pages never receive native application capabilities.
+
+Browser state returns through `skb:web-state`, including `issue: { kind: 'http' | 'load' | 'crash', code } | null`.
+HTTP failures retain the website's HTML and interaction, including any verification form; load failures preserve
+the requested address for retry or external browsing. The session uses Electron's normal user agent, without the
+Phase 26 token-stripping override. These changes provide accurate feedback, not a guarantee that a publisher
+will offer or accept human verification. See the Phase 27 checklist and 13 October journal for evidence.
 
 The unpacked build (`npm run desktop:build`, Phase 18) is Electron's own distribution with
 `resources/app` (the shell) and `resources/server` (the server bundle and the web app); the installer

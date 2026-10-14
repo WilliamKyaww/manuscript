@@ -62,6 +62,7 @@ Rules:
 | 20 | [Final UI/UX polish](./phase-20-polish.md) | 19 | Not started |
 | 21 | [Full verification: testing, reliability, accessibility](./phase-21-verification.md) | 20 | Not started |
 | 22 | [Release and final documentation](./phase-22-release.md) | 21 | Not started |
+| 27 | [Web pane placement and verification feedback](./phase-27-web-pane-right.md) | 26 (complete; its own checklist is authoritative) | In progress |
 
 Why this order (revised from the brief's example after research):
 - **Non-AI value first** (3–9): the knowledge base and learning loop must work without a provider

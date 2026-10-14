@@ -1,13 +1,18 @@
 # State — Manuscript
 
-_Last updated: 12 October 2026 — Claude Opus 5.5._
+_Last updated: 14 October 2026 — GPT-6 Astra (handover for the 13 October task)._
 
 ## Current phase
 
-**Version 1.4.0 — links and selections** (Phase 26: web pages beside notes in the desktop app, link cards, GitHub
+**Phase 27 — web pane placement and verification feedback**, implemented and automatically verified on
+`phase/27-web-pane-right`, with live human verification still open;
+[checklist](docs/checklist/phase-27-web-pane-right.md), [Claude handover](docs/journal/2026-10-13-gpt-6-astra.md).
+The user explicitly requested this follow-up after Phase 26. No new release or installation is claimed.
+
+**Latest released version: 1.4.0 — links and selections** (Phase 26: web pages beside notes in the desktop app, link cards, GitHub
 mentions, the selection toolbar, Obsidian's editor menu, AI on a selection, pasting as Markdown; `CHANGELOG.md`).
 1.3.0 (Markdown as Obsidian writes it), 1.2.1, 1.2.0 (appearance), 1.1.0 (the notes workspace) and 1.0.0 are
-tagged. All phases are merged into `main`: Phase 26 (links and selections), Phase 25 (Markdown), Phase 24
+tagged. Phases through 26 are merged into `main`: Phase 26 (links and selections), Phase 25 (Markdown), Phase 24
 (appearance), Phase 23 (the notes workspace), Phase 22 (release), Phase 21 (verification, closed at the user's request with four checks left open — see
 Pending), Phase 20 (final UI/UX polish), and Phases 0 (research), 1 (foundation), 2 (application shell), 3 (notes
 and Markdown knowledge base), 4 (lexical search and quick navigation), 5 (source library and
@@ -33,11 +38,12 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
   vault and *Open folder as vault…* at the foot of the Files pane, a Details panel that starts closed. The sidebar
   is 13.5 rem, resizable and collapsed until opened; the desktop app has a slim title bar in the app's colours.
 - **Links and selections** (Phase 26, ADR-0045, `docs/guide/markdown.md` §2 and §7, `docs/guide/desktop.md`):
-  a click on a web link opens the page in a pane on the left of the note (desktop app; a sandboxed
+  a click on a web link opens the page beside the note (desktop app; a sandboxed
   `persist:web` session; a browser opens a new tab), link cards on hover, GitHub links as offline mentions, a
   toolbar over selected text, Obsidian's right-click menu (Format, Paragraph, Insert, AI, clipboard), AI on a
   selection as a suggestion (`POST /api/ai/write`), extract to a new note, pasting HTML as Markdown (Turndown),
   formatting shortcuts, and *Settings → Editor*.
+  Phase 27 changes placement to the right and adds browsing failure feedback; its new checks are tracked separately.
 - **Obsidian's Markdown** (Phase 25, ADR-0044, `docs/guide/markdown.md` §1): live preview draws tables, lists with
   bullets and indentation, task lists with clickable boxes, callouts (thirteen types, aliases, icons), quotes, rules,
   inline and display maths and embedded images; the reading view adds highlight colours, inline footnotes, block ids,
@@ -192,9 +198,10 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 898 Vitest tests and 134 Playwright tests, plus 3 that take screenshots only when asked (two of them launch the Electron shell and its unpacked build) (sticky headers on every route and pane,
+- **Tests:** 1,056 Vitest tests and 154 passing Playwright tests, plus 3 opt-in screenshot cases skipped
+  in the full Phase 27 run (including Electron and the rebuilt unpacked application). Coverage includes sticky headers on every route and pane,
   axe in both themes, the library, the course, the graph, reviewing, practice, chat, generating and an MCP client
-  using the stdio bridge) — all green. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
+  using the stdio bridge — all green. `npm run verify` and `npm run desktop:build` passed. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
   p95 434 ms, median 71 ms (provisional budget 500 ms; Phase 17 run).
   Reviewing: 7 ms median between cards over 100 (budget 50 ms). Mastery pass over a year of learning
   (1,000 concepts, 5,000 reviewed cards, 20,000 answers): 254 ms with credit along prerequisites (budget 500 ms). On mains power at 10,000
@@ -204,9 +211,15 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## In progress
 
-- Nothing: Phase 24 is merged. New work comes from the backlog (`docs/backlog/`) or from what the user reports.
+- Phase 27 implementation, regression tests and documentation are complete; the phase remains open for manual
+  ScienceDirect verification (27.06/B-KM-35). Working-tree changes are uncommitted; no release or installation.
 
 ## Incomplete / not started
+
+- Phase 27: successful live ScienceDirect human verification and article access remain unverified. Before
+  the change the site returned HTTP 403/CPE00001; afterwards a live Cloudflare **Verifying…** widget rendered.
+  No human challenge was completed and the site still returned 403. The reason for its changed response is not
+  established. Local interaction/session/recovery tests pass; they do not establish a successful live flow.
 
 - Not in Phase 24: phone-width layouts stay best-effort (ui.md §9; the file list starts closed below 640 px); the
   Standard interface was not redesigned, only kept.
@@ -268,7 +281,8 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## Broken
 
-- Nothing known.
+- ScienceDirect article access remains unresolved: a live challenge widget now renders, but verification was
+  not completed. Browser feedback preserves its response and offers retry or the system browser; see the journal.
 - Performance budgets: all met in the Phase 17 run (mains power, below-normal priority, Discord and VS Code
   open). The four that an earlier, busier run had over were load, as suspected. The figures swing two- to
   three-fold with background load (`AGENTS.md` §5); retrieval p95 (434 ms of 500) is the one with least room.
@@ -277,10 +291,11 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## Next steps
 
-1. Install 1.4.0 over the installed version (`apps\desktop\release\Manuscript-Setup-1.4.0.exe`), use it, and report
-   what goes wrong or is missing: fixes and backlog items (B-KM-26 to B-KM-33 are the known limits of the last two
-   phases) become the next work.
-2. When the laptop is idle: `npm run test:perf` (four budgets were over on 11 October under load — so was the Phase 17
+1. Follow the journal's Claude handover: manually complete any live ScienceDirect challenge in a normal app
+   launch and record whether the paper opens. Automated checks have passed; live access has not been established.
+2. Release or install the follow-up only after its verification and the repository's gate workflow; the current
+   installed version has not been changed by this session. B-KM-26 to B-KM-33 remain the earlier known limits.
+3. When the laptop is idle: `npm run test:perf` (four budgets were over on 11 October under load — so was the Phase 17
    code, which had met them).
 
 ## Relevant decisions
@@ -307,7 +322,8 @@ the server, a token per launch, AI keys wrapped and not handed over · **ADR-004
 browser, versions are files beside the database · **ADR-0043** appearance is theme, palette and density of chrome on
 the document · **ADR-0044** the editor draws Markdown blocks; Obsidian's line breaks and callout types are the
 defaults · **ADR-0045** web pages beside notes in a sandboxed session of their own (amends ADR-0041); selection
-tools are editor commands; AI suggests and the student applies.
+tools are editor commands; AI suggests and the student applies · **ADR-0046** web pages open on the right;
+website responses remain visible and browsing failures are reported without changing browser identity.
 
 ## Technical debt
 

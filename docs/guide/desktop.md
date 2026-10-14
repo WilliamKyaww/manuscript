@@ -33,12 +33,29 @@ share a token made for that run.
   PDF…** straight to a file you choose, and **Open in new window** for a note in a window of its own (closed
   with the main window).
 - **Web pages beside your notes** (1.4): a click on a link to the web in a note opens the page in a pane on
-  the left of the note, with back, forward, reload, an address bar, *Copy link* and *Open in browser*; the
+  the right of the note (Phase 27), with back, forward, reload, an address bar, *Copy link* and *Open in browser*; the
   note stays open beside it. Pages are tabs like notes (drag the divider, close the tab when done) and come
   back after a restart. Ctrl+click opens a link in your browser instead, and *Settings → Editor* can turn the
   pane off. Sign-ins you make there are remembered for the pane only; some sites (Google's sign-in among
   them) refuse embedded browsers — use *Open in browser* for those.
 - **One copy at a time**: starting it again brings the open window forward.
+
+## Website verification and browsing failures
+
+A website can ask you to verify that you are human. When it supplies a verification page, complete the
+challenge yourself in the web pane. Manuscript retains the website's response, including an HTTP 403 response,
+so a verification form is not replaced by an application error. A website-response notice can appear above the
+page; it does not mean the application knows why that website refused the request.
+
+If a page fails to load or stops responding, its address remains available for retry or **Open in browser**.
+The system browser has its own cookies and sign-ins: verification performed there is not transferred into
+Manuscript. Manuscript uses Electron's normal browser identity and does not bypass verification or change
+security settings to gain access.
+
+The reported ScienceDirect paper is tracked in [Phase 27](../checklist/phase-27-web-pane-right.md). Its Cloudflare
+widget rendered in the rebuilt app, but successful human verification and access to the paper remain unverified;
+the [13 October investigation](../journal/2026-10-13-gpt-6-astra.md) records the observations and checks.
+Some sites offer different content or refuse embedded browsers.
 
 ## What it keeps to itself
 
@@ -70,3 +87,9 @@ again; your notes and data are files and a database on disk and are not affected
 (`engine.ts`), and the rules that are pure functions with tests (`policy.ts`). `SKB_SERVER_BUNDLE` points the shell at
 another server bundle; `SKB_DEVTOOLS=1` allows the developer tools in an unpacked build. VS Code's extension host
 sets `ELECTRON_RUN_AS_NODE`, which makes Electron run as plain Node: the scripts and tests remove it.
+
+Web panes use `WebContentsView`, not an iframe or a `<webview>` element. Their `persist:web` session lives
+under `<data>/desktop`; the application renderer has its own session. `WebTab.tsx` measures a DOM host and sends
+its bounds through the preload bridge; the main process owns the view and validates each call. A window
+`capturePage` image does not include these native views: inspect their bounds and capture their web contents
+separately. Tests must isolate the vault, data directory and all profile folders (see `AGENTS.md`).

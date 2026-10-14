@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -6,6 +6,12 @@ import path from 'node:path';
 import { _electron as electron, expect, test } from '@playwright/test';
 import { SECTIONS } from '../apps/web/src/app/sections';
 import { headingOutline, seriousViolations } from './axe';
+import {
+  captureWebPane,
+  electronExecutable,
+  isolatedEnvironment,
+  removeQuietly,
+} from './desktop-harness';
 import { expectPageTitle } from './titles';
 
 /**
@@ -15,46 +21,6 @@ import { expectPageTitle } from './titles';
  */
 
 const root = process.cwd();
-
-/**
- * The environment a launched application runs in. The user's profile is replaced by a folder of the
- * test's own: whatever a vault or data folder falls back to (the default vault is in Documents), it
- * is inside the test's temporary folder and never the real one.
- */
-function isolatedEnvironment(dir: string, vault: string): Record<string, string> {
-  const env: Record<string, string> = {};
-  for (const [name, value] of Object.entries(process.env))
-    if (typeof value === 'string' && name !== 'ELECTRON_RUN_AS_NODE') env[name] = value;
-  const home = path.join(dir, 'home');
-  return Object.assign(env, {
-    USERPROFILE: home,
-    HOME: home,
-    APPDATA: path.join(home, 'AppData', 'Roaming'),
-    LOCALAPPDATA: path.join(home, 'AppData', 'Local'),
-    XDG_CONFIG_HOME: path.join(home, '.config'),
-    SKB_VAULT: vault,
-    SKB_DATA_DIR: path.join(dir, 'data'),
-    SKB_LOG_LEVEL: 'warn',
-  });
-}
-
-/** Chromium's helper processes can hold a file for a moment after quitting: not worth failing for. */
-function removeQuietly(folder: string): void {
-  try {
-    rmSync(folder, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
-  } catch {
-    // The playwright config removes old temporary folders at the start of the next run.
-  }
-}
-
-function electronExecutable(): string {
-  const folder = path.join(root, 'node_modules', 'electron');
-  const name = readFileSync(path.join(folder, 'path.txt'), 'utf8').trim();
-  const executable = path.join(folder, 'dist', name);
-  if (!existsSync(executable))
-    throw new Error('Electron is not downloaded: run "node node_modules/electron/install.js".');
-  return executable;
-}
 
 test('the desktop shell starts, shows the application, keeps the page confined, and quits cleanly', async () => {
   test.setTimeout(180_000);
@@ -422,41 +388,57 @@ test('a web link opens beside the note, in a page of its own that cannot reach t
     await page.goto(`${origin}/notes/${note.id}`);
     await page.locator('.cm-content .cm-link[data-href]').click();
 
-    // The page is a tab in a pane on the left of the note, drawn by the shell over its box.
+    // The page is on the right of the note; its native bounds follow the actual DOM host.
     await expect(page.locator('[data-web-tab]')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Test paper', exact: true })).toBeVisible({
       timeout: 30_000,
     });
     await expect.poll(pages).toEqual([{ url: paper, visible: true }]);
-    if (process.env.SKB_SCREENSHOTS) {
-      // The window as a whole: the page and, over its box, the web pane's native view.
-      const picture = await app.evaluate(async ({ BrowserWindow }) =>
-        (await BrowserWindow.getAllWindows()[0]?.capturePage())?.toPNG().toString('base64'),
-      );
-      if (picture)
-        writeFileSync(
-          path.join(process.env.SKB_SCREENSHOTS, 'desktop-web-pane.png'),
-          Buffer.from(picture, 'base64'),
-        );
+    const checkLayout = async () => {
+      const [left, right] = await page.locator('[data-editor-pane]').all();
+      if (!left || !right) throw new Error('Missing notes/browser panes');
+      await expect(left.locator('.cm-content')).toContainText('The paper');
+      await expect(right.locator('[data-web-tab]')).toBeVisible();
+      const noteBox = await left.boundingBox();
+      const browserBox = await right.boundingBox();
+      if (!noteBox || !browserBox) throw new Error('Missing pane bounds');
+      expect(noteBox.x + noteBox.width).toBeLessThanOrEqual(browserBox.x + 1);
+      expect(noteBox.width).toBeGreaterThan(200);
+      expect(browserBox.width).toBeGreaterThan(200);
+      await expect
+        .poll(async () => {
+          const box = await page.locator('[data-web-view-host]').boundingBox();
+          const bounds = await app.evaluate(({ BrowserWindow }) =>
+            BrowserWindow.getAllWindows()[0]?.contentView.children[0]?.getBounds(),
+          );
+          return Boolean(
+            box &&
+              bounds &&
+              Math.abs(bounds.x - box.x) <= 1 &&
+              Math.abs(bounds.y - box.y) <= 1 &&
+              Math.abs(bounds.width - box.width) <= 1 &&
+              Math.abs(bounds.height - box.height) <= 1,
+          );
+        })
+        .toBe(true);
+    };
+    for (const width of [1400, 1000]) {
+      await app.evaluate(({ BrowserWindow }, value) => {
+        BrowserWindow.getAllWindows()[0]?.setSize(value, 800);
+      }, width);
+      await checkLayout();
+      await captureWebPane(app, `web-pane-right-${width}`);
     }
-    // The native view lies exactly over the box the page keeps for it.
-    const box = await page.locator('[data-web-view-host]').boundingBox();
-    const bounds = await app.evaluate(({ BrowserWindow }) =>
-      BrowserWindow.getAllWindows()[0]?.contentView.children[0]?.getBounds(),
-    );
-    expect(bounds).toEqual({
-      x: Math.round(box?.x ?? -1),
-      y: Math.round(box?.y ?? -1),
-      width: Math.round(box?.width ?? -1),
-      height: Math.round(box?.height ?? -1),
-    });
-    const [webPane, notePane] = await page.locator('[data-editor-pane]').all();
-    const left = await webPane?.boundingBox();
-    const right = await notePane?.boundingBox();
-    expect((left?.x ?? 0) < (right?.x ?? 0)).toBe(true);
-    await expect(notePane?.locator('.cm-content') ?? page.locator('none')).toContainText(
-      'The paper',
-    );
+
+    // Dragging the pane divider changes the native browser bounds too.
+    const divider = page.locator('#skb-panes-right [role="separator"]');
+    const handle = await divider.boundingBox();
+    if (!handle) throw new Error('Missing pane divider');
+    await page.mouse.move(handle.x, handle.y + handle.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(handle.x + 35, handle.y + handle.height / 2);
+    await page.mouse.up();
+    await checkLayout();
 
     // It is the web, not the application: no cookie of the app, no Node, and no way into the app.
     expect(await inPage('document.cookie + "|" + typeof require + "|" + typeof process')).toBe(
@@ -486,6 +468,39 @@ test('a web link opens beside the note, in a page of its own that cannot reach t
     // Closing the tab lets the page go.
     await page.getByRole('button', { name: 'Close Test paper' }).click();
     await expect.poll(pages).toEqual([]);
+    await expect(page.locator('[data-editor-pane]')).toHaveCount(1);
+    await page.locator('.cm-content .cm-link[data-href]').click();
+    await expect.poll(pages).toEqual([{ url: paper, visible: true }]);
+    await checkLayout();
+
+    // Navigating and editing notes keeps the browser open, on the right.
+    await page.getByRole('button', { name: 'New note', exact: true }).first().click();
+    const dialogue = page.getByRole('dialog', { name: 'New note' });
+    await dialogue.getByLabel('Title').fill('Beside the browser');
+    await dialogue.getByRole('button', { name: 'Create note' }).click();
+    const editor = page.locator('[data-editor-pane]').first().locator('.cm-content');
+    await expect(editor).toBeVisible();
+    await editor.click();
+    await page.keyboard.insertText('Notes still save beside the browser.');
+    await expect
+      .poll(() => {
+        const file = path.join(dir, 'vault', 'Beside the browser.md');
+        return existsSync(file) ? readFileSync(file, 'utf8') : '';
+      })
+      .toContain('Notes still save beside the browser.');
+    await page.getByRole('treeitem', { name: 'Reading list', exact: true }).click();
+    await checkLayout();
+    // A restored Phase 26 layout is repaired without losing either tab.
+    await page.evaluate(() => {
+      const raw = localStorage.getItem('skb.notes.workspace');
+      if (!raw) throw new Error('No saved workspace');
+      const saved = JSON.parse(raw) as { panes: unknown[] };
+      saved.panes.reverse();
+      localStorage.setItem('skb.notes.workspace', JSON.stringify(saved));
+    });
+    await page.reload();
+    await expect.poll(pages).toEqual([{ url: paper, visible: true }]);
+    await checkLayout();
   } finally {
     await app.close();
     site.close();

@@ -48,7 +48,7 @@ describe('web addresses', () => {
     window.skbDesktop = { web: {} } as unknown as NonNullable<typeof window.skbDesktop>;
     const { useWorkspace } = await import('../workspace/workspace-store');
     openWebLink('https://example.org/paper');
-    expect(useWorkspace.getState().panes[0]?.tabs[0]?.url).toBe('https://example.org/paper');
+    expect(useWorkspace.getState().panes[1]?.tabs[0]?.url).toBe('https://example.org/paper');
     expect(open).toHaveBeenCalledTimes(1);
     openWebLink('https://example.org/other', { browser: true });
     expect(open).toHaveBeenCalledTimes(2);
@@ -60,20 +60,20 @@ describe('web addresses', () => {
 });
 
 describe('web pages in the workspace', () => {
-  it('open on the left of the note, which stays the active pane', () => {
+  it('open on the right of the note, which stays the active pane', () => {
     localStorage.clear();
     const store = createWorkspaceStore({ persist: true });
     store.getState().show('note-a');
     const notePane = store.getState().activePane;
     store.getState().openWebPage('https://example.org/a');
     const [left, right] = store.getState().panes;
-    expect(left?.tabs.map((tab) => tab.url)).toEqual(['https://example.org/a']);
-    expect(right?.id).toBe(notePane);
+    expect(right?.tabs.map((tab) => tab.url)).toEqual(['https://example.org/a']);
+    expect(left?.id).toBe(notePane);
     expect(store.getState().activePane).toBe(notePane);
     // Another link opens another tab there; the same link shows its tab again.
     store.getState().openWebPage('https://example.org/b');
     store.getState().openWebPage('https://example.org/a');
-    const web = store.getState().panes[0];
+    const web = store.getState().panes[1];
     expect(web?.tabs.map((tab) => tab.url)).toEqual([
       'https://example.org/a',
       'https://example.org/b',
@@ -86,15 +86,15 @@ describe('web pages in the workspace', () => {
     const store = createWorkspaceStore({ persist: true });
     store.getState().show('note-a');
     store.getState().openWebPage('https://example.org/a');
-    const web = store.getState().panes[0];
+    const web = store.getState().panes[1];
     if (!web) throw new Error('no web pane');
     store.getState().activateTab(web.id, web.activeTab);
     store.getState().show('note-b');
-    const tabs = store.getState().panes[0]?.tabs ?? [];
+    const tabs = store.getState().panes[1]?.tabs ?? [];
     expect(tabs.map((tab) => tab.url ?? tab.noteId)).toEqual(['https://example.org/a', 'note-b']);
     store.getState().setTabUrl(web.activeTab, 'https://example.org/a#section');
     const again = createWorkspaceStore({ persist: true });
-    expect(again.getState().panes[0]?.tabs[0]?.url).toBe('https://example.org/a#section');
+    expect(again.getState().panes[1]?.tabs[0]?.url).toBe('https://example.org/a#section');
   });
 });
 

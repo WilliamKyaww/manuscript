@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { desktopBridge } from '../../../lib/desktop';
+import { type DesktopWebIssue, desktopBridge } from '../../../lib/desktop';
 import { useWorkspace, type WorkspaceLayout } from './workspace-store';
 
 /**
@@ -14,6 +14,7 @@ export interface WebPageState {
   loading: boolean;
   canGoBack: boolean;
   canGoForward: boolean;
+  issue?: DesktopWebIssue | null;
 }
 
 export const useWebPages = create<{ pages: Record<string, WebPageState> }>(() => ({ pages: {} }));
@@ -29,9 +30,9 @@ export function followWebPages(): void {
   if (following || !web) return;
   following = true;
   web.onState((state) => {
-    const { id, url, title, loading, canGoBack, canGoForward } = state;
+    const { id, url, title, loading, canGoBack, canGoForward, issue } = state;
     useWebPages.setState((current) => ({
-      pages: { ...current.pages, [id]: { url, title, loading, canGoBack, canGoForward } },
+      pages: { ...current.pages, [id]: { url, title, loading, canGoBack, canGoForward, issue } },
     }));
     if (/^https?:\/\//iu.test(url)) useWorkspace.getState().setTabUrl(id, url);
   });

@@ -12,7 +12,6 @@ import {
   titleBarColour,
   webCommand,
   webPageUrl,
-  webUserAgent,
   webViewBounds,
   webViewId,
 } from './policy';
@@ -252,13 +251,5 @@ describe('the web pane beside a note (Phase 26)', () => {
     for (const command of ['back', 'forward', 'reload', 'stop', 'load'])
       expect(webCommand(command)).toBe(command);
     expect(webCommand('print')).toBeNull();
-  });
-
-  it('presents the pane as Chromium, without the Electron and application tokens', () => {
-    const fallback =
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) manuscript/1.3.0 Chrome/140.0.0.0 Electron/44.5.1 Safari/537.36';
-    expect(webUserAgent(fallback)).toBe(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
-    );
   });
 });

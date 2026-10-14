@@ -9,7 +9,8 @@ import {
   type WebContents,
   WebContentsView,
 } from 'electron';
-import { type Bounds, externalUrl, type WebCommand, webPageUrl, webUserAgent } from './policy';
+import { type Bounds, externalUrl, type WebCommand, webPageUrl } from './policy';
+import { type WebLoadIssue, type WebLoadState, watchWebLoad } from './web-load';
 
 /**
  * Web pages beside a note (Phase 26, ADR-0045). A web tab of the page is a native view laid over the
@@ -31,11 +32,12 @@ export interface WebViewState {
   loading: boolean;
   canGoBack: boolean;
   canGoForward: boolean;
+  issue: WebLoadIssue | null;
   /** Set when the page took the keyboard (the student clicked into it). */
   focused?: boolean;
 }
 
-interface Entry {
+interface Entry extends WebLoadState {
   id: string;
   owner: BrowserWindow;
   view: WebContentsView;
@@ -46,10 +48,9 @@ export function webSession(): Session {
   return session.fromPartition(PARTITION);
 }
 
-/** Permissions, the browser's name and downloads for the pane's session, once at start-up. */
+/** Permissions for the pane's session, once at start-up. Chromium keeps its native identity. */
 export function configureWebSession(): void {
   const web = webSession();
-  web.setUserAgent(webUserAgent(web.getUserAgent()));
   // Full screen for videos and writing to the clipboard; no camera, microphone, location or the rest.
   const allowed = new Set(['fullscreen', 'clipboard-sanitized-write']);
   web.setPermissionRequestHandler((_contents, permission, callback) =>
@@ -90,11 +91,11 @@ export class WebViews {
     view.setBackgroundColor('#ffffff');
     view.setVisible(false);
     owner.contentView.addChildView(view);
-    const entry: Entry = { id, owner, view, used: ++this.clock };
+    const entry: Entry = { id, owner, view, used: ++this.clock, url, issue: null };
     this.entries.set(key, entry);
     this.watch(entry);
     void view.webContents.loadURL(url).catch(() => {
-      // A page that fails to load says so itself (Chromium's error page); nothing to add here.
+      // did-fail-load reports this to the toolbar while preserving the requested address.
     });
     this.trim(owner);
   }
@@ -178,11 +179,12 @@ export class WebViews {
     if (entry.owner.isDestroyed() || contents.isDestroyed()) return;
     const state: WebViewState = {
       id: entry.id,
-      url: contents.getURL(),
+      url: entry.url,
       title: contents.getTitle(),
       loading: contents.isLoading(),
       canGoBack: contents.navigationHistory.canGoBack(),
       canGoForward: contents.navigationHistory.canGoForward(),
+      issue: entry.issue,
       ...extra,
     };
     entry.owner.webContents.send(STATE_CHANNEL, state);
@@ -191,10 +193,9 @@ export class WebViews {
   private watch(entry: Entry): void {
     const contents = entry.view.webContents;
     const update = () => this.send(entry);
+    watchWebLoad(contents, entry, update, this.appOrigin);
     contents.on('did-start-loading', update);
     contents.on('did-stop-loading', update);
-    contents.on('did-navigate', update);
-    contents.on('did-navigate-in-page', update);
     contents.on('page-title-updated', update);
     contents.on('focus', () => this.send(entry, { focused: true }));
     contents.on('context-menu', (_event, params) => this.contextMenu(entry, params));

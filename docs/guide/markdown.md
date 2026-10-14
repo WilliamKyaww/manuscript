@@ -85,11 +85,14 @@ selecting it in the preview offers **Create note** (next to the current one) or 
 - A link to a web page ends with a small **external-link mark** (as in Obsidian), in the editor and the
   preview. Rest the pointer on it (or tab to it in the preview) for its **card**: the address, **Copy**,
   **Edit** (in the editor: selects the address, showing the link's source) and **Open in browser**.
-- **A click opens the page beside the note** — in a pane on its left, with back, forward, reload, an address
+- **A click opens the page beside the note** — in a pane on its right, with back, forward, reload, an address
   you can type into, *Copy link* and *Open in browser* — when you use the desktop app. **Ctrl+click** (⌘ on a
   Mac), a middle click or *Open in browser* use your browser instead. A browser cannot show other sites inside
   a page, so there a click opens a new tab. *Settings → Editor → Open web links beside the note* turns the
   pane off.
+- A website may ask for human verification or refuse access. Its response remains visible in the pane;
+  browsing failures offer retry and **Open in browser**. See [website verification](./desktop.md#website-verification-and-browsing-failures)
+  for the separate browsing session and current verification limits.
 - **Links to GitHub** show GitHub's mark. An address on its own (`https://github.com/you/project`) becomes a
   mention with the repository's name (`project`, `project#12` for an issue or pull request, `train.py ·
   project` for a file); a link with words of its own keeps them. The names come from the address — nothing

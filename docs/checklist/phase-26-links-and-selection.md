@@ -2,6 +2,10 @@
 
 **Status:** Complete · **Branch:** `phase/26-links-and-selection`
 
+**Follow-up, 13 October:** the student changed the placement requirement to the right and reported a
+ScienceDirect verification problem. [Phase 27](./phase-27-web-pane-right.md) and ADR-0046 track that work;
+this checklist records the original 1.4.0 implementation and gate.
+
 ## Objective
 From the student's requests of 12 October (screenshots of Notion and Obsidian): a link card on hover as in Notion,
 Obsidian's external-link mark, a click on a web link opening the page **beside the note, on its left** (Ctrl+click

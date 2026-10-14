@@ -7,8 +7,8 @@ import { readPreference, writePreference } from '../../../lib/storage';
  * above the other), each with its tabs, remembered in this browser. A tab shows one note, a web page
  * (Phase 26, in the desktop app), or nothing ("New tab"). The address always shows the active tab's
  * note, so the rest of the application opens notes by navigating, as before; `show` puts the note in
- * the active tab. A web page opens in the other pane — on the left of the note when there is only one
- * — and the note's pane stays the active one, so the address keeps showing the note.
+ * the active tab. A web page opens on the right of the source note, reusing the other pane's tabs,
+ * and the note's pane stays the active one, so the address keeps showing the note.
  */
 
 export type SplitDirection = 'right' | 'down';
@@ -40,8 +40,8 @@ export interface WorkspaceState extends WorkspaceLayout {
   /** Opens a note in the other pane, making one (in `direction`) if there is only one. */
   openInOtherPane(noteId: string, direction: SplitDirection): void;
   /**
-   * Opens a web page beside the note in `fromPane` (the active pane by default): in the other pane,
-   * or in a new pane on its left. A tab already showing the address is shown again.
+   * Opens a web page on the right of `fromPane` (the active pane by default), reusing the other pane
+   * or creating one. A tab already showing the address is shown again; existing note tabs are kept.
    */
   openWebPage(url: string, fromPane?: string): void;
   /** Remembers where a web tab's page went, so that it opens there again. */
@@ -120,6 +120,15 @@ export function readLayout(raw: string | null): WorkspaceLayout {
     const activePane = panes.some((pane) => pane.id === parsed.data.activePane)
       ? parsed.data.activePane
       : (panes[0]?.id ?? '');
+    const [first, second] = panes;
+    // Phase 26 remembered the browser on the left. Repair that unambiguous layout without moving
+    // mixed tabs or the student's two-note splits, and retain every tab, pane id and focus choice.
+    if (
+      first?.tabs.every((tab) => Boolean(tab.url)) &&
+      second?.tabs.every((tab) => !tab.url) &&
+      second.tabs.some((tab) => tab.noteId !== null)
+    )
+      return { panes: [second, first], direction: 'right', activePane };
     return { panes, direction: parsed.data.direction, activePane };
   } catch {
     return emptyLayout();
@@ -263,12 +272,12 @@ export function createWorkspaceStore({ persist }: { persist: boolean }) {
           const updated = existing
             ? { ...other, activeTab: existing.id }
             : withTab(other, null, true, url);
-          commit({ ...updatePane(current, other.id, () => updated), activePane: from.id });
+          commit({ panes: [from, updated], direction: 'right', activePane: from.id });
           return;
         }
         const tab: WorkspaceTab = { id: nextId('t'), noteId: null, url };
         const created = { id: nextId('p'), tabs: [tab], activeTab: tab.id };
-        commit({ panes: [created, from], direction: 'right', activePane: from.id });
+        commit({ panes: [from, created], direction: 'right', activePane: from.id });
       },
 
       setTabUrl(tabId, url) {

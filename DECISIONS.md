@@ -47,6 +47,7 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 | [0039](#adr-0039--one-archive-of-open-formats-restore-into-a-new-vault-a-vault-is-chosen-at-start-up-code-graphs-are-shown-not-analysed) | One archive of open formats; restore into a new vault; a vault is chosen at start-up; code graphs are shown, not analysed | Accepted | 2026-10-10 |
 | [0040](#adr-0040--backups-are-copies-sqlite-makes-logs-are-files-in-the-vault-trouble-with-the-machine-is-said-as-such) | Backups are copies SQLite makes; logs are files in the vault; trouble with the machine is said as such | Accepted | 2026-10-10 |
 | [0041](#adr-0041--the-desktop-shell-shows-only-the-server-a-token-per-launch-ai-keys-wrapped-not-handed-over) | The desktop shell shows only the server; a token per launch; AI keys wrapped, not handed over | Accepted | 2026-10-10 |
+| [0046](#adr-0046--web-pages-open-on-the-right-browser-failures-are-reported-without-replacing-website-responses) | Web pages open on the right; browser failures are reported without replacing website responses | Accepted; amends ADR-0045 | 2026-10-13 |
 
 ---
 
@@ -1085,6 +1086,9 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
 
 ## ADR-0045 — Web pages beside notes in a separate, sandboxed session; the editor's selection tools are local commands; AI suggests, the student applies
 
+**Placement rule superseded by ADR-0046 on 13 October 2026.** The original decision below is retained as history;
+the separate session, native views, link handling and selection tools remain in force.
+
 - **Context.** The student asked for links to open beside the note rather than in the browser, a link card
   on hover (as in Notion) with Obsidian's external-link mark, GitHub links shown as mentions, and the
   selection tools of Notion and Obsidian: a toolbar over selected text and a full right-click menu, AI
@@ -1122,3 +1126,34 @@ To change a decision, add a new entry that supersedes it and mark the old one `S
   embedded browsers (some sign-ins) need *Open in browser*. Runtime dependencies: `turndown`,
   `turndown-plugin-gfm`.
 - **Date.** 12 October 2026.
+
+## ADR-0046 — Web pages open on the right; browser failures are reported without replacing website responses
+
+- **Context.** The student now wants notes on the left and research pages on the right, reversing the explicit
+  Phase 26 choice. ScienceDirect showed a publisher error in the pane while Chrome showed a Cloudflare challenge.
+  The pane already uses genuine Chromium `WebContentsView`s; the screenshot alone cannot establish why the
+  publisher served different content. Load failures previously had no useful state for the renderer to display.
+- **Options.** Reverse CSS or native bounds independently of workspace state; or keep pane order canonical in the
+  workspace. For browsing failures, replace failed HTTP responses with an application error; or retain their HTML
+  and show diagnostic feedback beside it. Keep removing Electron/application tokens from the user agent; or use
+  the browser identity supplied by Electron.
+- **Decision.**
+  - **ADR-0045's placement rule is superseded:** opening a web link puts the source note on the left and its web
+    pane on the right. Keep the existing two-pane architecture, the note's active state and the measured native
+    bounds; preserve tabs when arranging an existing split. Ordinary note-only splits retain their behaviour.
+  - **Use Electron's native browser identity.** Remove the existing user-agent token stripping rather than
+    impersonating another browser. No challenge solving, cookie/token copying, injected verification scripts,
+    certificate exceptions or weaker web-security settings are introduced.
+  - **A failed HTTP status is still a page.** Preserve the response HTML, scripts, cookies, frames and user input
+    so a legitimate verification interface can render. Send a compact `issue` state (`http`, `load` or `crash`,
+    with its code, or `null`) through the existing bridge; distinguish website responses from transport failure.
+    Preserve the requested URL, and offer retry and the existing system-browser fallback.
+  - **Keep the security boundary:** `persist:web`, no preload or Node, sandbox and context isolation, validated
+    navigation and IPC, and the existing narrow permission policy. Do not expose privileged APIs to websites.
+- **Reason.** Workspace order is the source of truth for both the DOM host and the native view. An HTTP 403 may
+  contain a usable verification form; hiding it would create the defect being investigated. Clear feedback can
+  explain a refusal without claiming the application can force a website to offer or accept verification.
+- **Consequences.** Some publishers may still refuse embedded browsers. Local response and navigation tests do
+  not prove that ScienceDirect's live human-verification flow succeeds. The journal and Phase 27 checklist keep
+  those outcomes separate; external browsing uses the system browser's own session.
+- **Date.** 13 October 2026.

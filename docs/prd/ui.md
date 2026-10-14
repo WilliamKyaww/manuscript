@@ -203,6 +203,26 @@ The Notes page follows Obsidian's layout and words, so that a student who knows 
 - **The desktop title bar** (task 23.10) is a 32-pixel strip drawn by the page (`app/TitleBar.tsx`) above the
   shell, with the window's own buttons over its right end; nothing interactive sits in it.
 
+### Web pages beside notes (Phases 26–27, ADR-0045 and ADR-0046)
+
+A plain web-link click in the desktop app keeps the source note on the left and opens the page on the right.
+The workspace store determines pane order; existing tabs are retained when opening another page. Note-only
+splits still support right and down. The note remains active so its address, Files selection and Details panel
+continue to refer to it. Ctrl/⌘+click, middle click and **Open in browser** use the system browser.
+Remembered Phase 26 layouts are reordered automatically only when the first pane contains exclusively web tabs
+and the second contains only note/empty tabs with at least one note. Mixed tab collections retain their order
+until a new link is opened; all tab and pane identifiers are preserved.
+
+`WebTab` supplies browser controls and a measured host. Electron places a sandboxed native `WebContentsView`
+over that host; resizing the window or divider updates the bounds. Native views hide behind a snapshot when
+an application menu or dialogue would otherwise be obscured. The same chrome tokens, labelled icon buttons
+and compact controls apply as elsewhere in Notes.
+
+HTTP errors are website responses and remain visible and interactable: a 403 can contain a human-verification
+form. Browsing feedback distinguishes those responses from a failed load or crashed page, preserves the URL,
+and offers **Try again** and **Open in system browser**. It must not claim a challenge is solved or assume why a publisher
+refused access. Live compatibility is tracked separately in the Phase 27 checklist.
+
 ## 12. Appearance: palettes and Simplified UI (Phase 24, ADR-0043)
 
 - **Three attributes on `<html>`:** `data-theme` (light, dark), `data-palette` (manuscript — the default and the

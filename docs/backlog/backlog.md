@@ -1,6 +1,27 @@
 # Backlog items
 
-_Last reviewed: 10 October 2026 (Phase 15)._
+_Last reviewed: 13 October 2026 (Phase 27 browser follow-up; unrelated entries retained)._
+
+## Browser follow-up — 13 October 2026
+
+- [x] **B-KM-34** Open the browser pane to the right of the note, including an existing or remembered split.
+  Why: keep the student's writing on the left while researching. Promoted to [27.02](../checklist/phase-27-web-pane-right.md).
+  Verified by workspace tests and Electron bounds at two window sizes, divider resizing, close/reopen,
+  note creation/editing/navigation and conservative repair of Phase 26's web-only-left layout.
+- [~] **B-KM-35** Show legitimate website verification responses and explain browser failures without bypassing
+  the website's checks. Why: the reported ScienceDirect page showed a publisher error where Chrome offered a
+  human challenge. Promoted to [27.03 and 27.06](../checklist/phase-27-web-pane-right.md).
+  Local response rendering, native mouse/keyboard interaction, sessions, redirects, popups and recovery pass.
+  The rebuilt app visibly rendered a live Cloudflare widget saying **Verifying…**, but did not reach the paper.
+  - Remaining: human completion and article access in a normal app launch; the reason for differing site
+    responses remains unknown. Do not infer a successful Cloudflare fix from local fixture tests.
+- [x] **B-KM-36** Browser and Notes regression evidence for this change. Why: native views sit above the DOM and
+  can regress bounds, visibility or editing even when the workspace state is correct. Promoted to
+  [27.04](../checklist/phase-27-web-pane-right.md).
+  `npm run verify` passed (1,056 tests), the unpacked build passed, and the full E2E suite passed
+  (154 passed, 3 opt-in screenshot cases skipped). New desktop tests cover layout, native bounds and local
+  interactive HTTP errors, sessions, popups and recovery; light/dark browser chrome passes axe.
+  Live human verification remains separate under B-KM-35, not silently included in this completion.
 
 ## Knowledge (KM)
 

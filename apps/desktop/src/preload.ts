@@ -15,6 +15,7 @@ interface WebState {
   loading: boolean;
   canGoBack: boolean;
   canGoForward: boolean;
+  issue?: { kind: 'http' | 'load' | 'crash'; code: number } | null;
   focused?: boolean;
 }
 

@@ -151,17 +151,6 @@ export function webCommand(candidate: unknown): WebCommand | null {
     : null;
 }
 
-/**
- * The browser's own name for the pane's pages: Chromium's, without the Electron and application
- * tokens that make some sites refuse to work or treat the pane as an unknown browser.
- */
-export function webUserAgent(fallback: string): string {
-  return fallback
-    .replace(/\s(?:Electron|Manuscript|manuscript|@skb\/desktop)\/\S+/gu, '')
-    .replace(/\s{2,}/gu, ' ')
-    .trim();
-}
-
 /** A colour for the window's buttons, as the page sends it: `#rgb`, `#rrggbb` or `#rrggbbaa`. */
 export function titleBarColour(value: unknown): string | null {
   return typeof value === 'string' && /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/iu.test(value)

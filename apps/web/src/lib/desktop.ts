@@ -32,6 +32,11 @@ export interface DesktopBridge {
 }
 
 /** What the page and the main process say about one web tab. */
+export interface DesktopWebIssue {
+  kind: 'http' | 'load' | 'crash';
+  code: number;
+}
+
 export interface DesktopWebState {
   id: string;
   url: string;
@@ -39,6 +44,8 @@ export interface DesktopWebState {
   loading: boolean;
   canGoBack: boolean;
   canGoForward: boolean;
+  /** Older shells omit this field; an HTTP response remains visible, including verification pages. */
+  issue?: DesktopWebIssue | null;
   /** The student clicked into the page. */
   focused?: boolean;
 }

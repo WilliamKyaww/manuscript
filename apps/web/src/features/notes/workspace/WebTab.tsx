@@ -4,9 +4,10 @@ import { Button } from '../../../components/Button';
 import { IconButton } from '../../../components/IconButton';
 import { EmptyState } from '../../../components/States';
 import { desktopBridge } from '../../../lib/desktop';
-import { notifySuccess } from '../../../lib/notify';
+import { notifyError, notifySuccess } from '../../../lib/notify';
 import { externalUrl, openInBrowser } from '../links/external';
 import { useCovered } from './use-covered';
+import { WebPageNotice } from './WebPageNotice';
 import { followWebPages, useWebPages } from './web-pages';
 import type { WorkspaceTab } from './workspace-store';
 
@@ -36,6 +37,7 @@ function DesktopWebTab({ tab }: { tab: WorkspaceTab & { url: string } }) {
   const web = desktopBridge()?.web;
   const host = useRef<HTMLElement>(null);
   const page = useWebPages((state) => state.pages[tab.id]);
+  const failed = page?.issue?.kind === 'load' || page?.issue?.kind === 'crash';
   const covered = useCovered(host, true);
   const [picture, setPicture] = useState<string | null>(null);
   const current = page?.url || tab.url;
@@ -60,6 +62,11 @@ function DesktopWebTab({ tab }: { tab: WorkspaceTab & { url: string } }) {
   useEffect(() => {
     const element = host.current;
     if (!web || !element) return;
+    if (failed) {
+      setPicture(null);
+      void web.place(tab.id, null);
+      return;
+    }
     if (covered) {
       let cancelled = false;
       void web.snapshot(tab.id).then((image) => {
@@ -101,7 +108,7 @@ function DesktopWebTab({ tab }: { tab: WorkspaceTab & { url: string } }) {
       window.clearInterval(watch);
       window.removeEventListener('resize', place);
     };
-  }, [web, tab.id, covered]);
+  }, [web, tab.id, covered, failed]);
 
   if (!web) return null;
   const go = (event: FormEvent) => {
@@ -181,10 +188,17 @@ function DesktopWebTab({ tab }: { tab: WorkspaceTab & { url: string } }) {
           <div className="h-full w-1/3 animate-loading bg-accent motion-reduce:animate-none" />
         </div>
       )}
+      {page?.issue && (
+        <WebPageNotice
+          issue={page.issue}
+          onRetry={() => void web.command(tab.id, 'load', current).catch(notifyError)}
+          onOpen={() => openInBrowser(current)}
+        />
+      )}
       <section
         ref={host}
         data-web-view-host
-        className="relative min-h-0 flex-1 bg-white"
+        className={`relative min-h-0 flex-1 ${failed ? 'bg-surface' : 'bg-white'}`}
         aria-label={`Web page: ${page?.title || current}`}
       >
         {covered && picture && (
