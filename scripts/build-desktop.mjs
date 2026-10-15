@@ -4,6 +4,7 @@ import { readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
+import { buildWebView2 } from './build-webview2.mjs';
 
 const root = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const desktop = path.join(root, 'apps', 'desktop');
@@ -42,4 +43,5 @@ await build({
   logLevel: 'warning',
 });
 
+await buildWebView2();
 console.log(`Desktop shell ${version} bundled -> ${path.relative(root, out)}`);

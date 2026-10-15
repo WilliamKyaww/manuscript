@@ -12,6 +12,10 @@ files:
   - dist/preload.cjs
   - package.json
 extraResources:
+  - from: dist/webview2
+    to: webview2
+    filter:
+      - '**/*'
   - from: ../server/dist
     to: server
     filter:

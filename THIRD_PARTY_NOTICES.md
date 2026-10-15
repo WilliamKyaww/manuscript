@@ -92,3 +92,13 @@ This file lists third-party code, algorithms or text that has been **adapted int
   reading view draw the same icons without loading React components into the editor.
 - Adapted (Phase 26): the "external-link" icon's drawing, as a data URL in
   `apps/web/src/features/notes/links/links.css` — the mark after a link to the web.
+
+## Microsoft WebView2 SDK
+
+- Source: <https://www.nuget.org/packages/Microsoft.Web.WebView2/1.0.4258.31>
+- Licence: BSD 3-Clause — Copyright Microsoft Corporation. The SDK's complete `LICENSE.txt` is copied as
+  `WebView2-LICENSE.txt` beside the Windows helper in builds and packages.
+- Unmodified SDK files distributed on Windows: `Microsoft.Web.WebView2.Core.dll` and `WebView2Loader.dll`.
+  `scripts/build-webview2.mjs` checks the pinned archive's SHA-512 before extracting these files. The system
+  Microsoft Edge WebView2 Runtime is separate and is not copied from a user's browser installation.
+- The host/helper source under `apps/desktop/native/WebPane` is project code, using the public WebView2 APIs.

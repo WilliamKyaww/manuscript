@@ -64,6 +64,8 @@ mkdirSync(app, { recursive: true });
 const dist = path.join(root, 'apps', 'desktop', 'dist');
 cpSync(path.join(dist, 'main.mjs'), path.join(app, 'main.mjs'));
 cpSync(path.join(dist, 'preload.cjs'), path.join(app, 'preload.cjs'));
+if (existsSync(path.join(dist, 'webview2')))
+  cpSync(path.join(dist, 'webview2'), path.join(resources, 'webview2'), { recursive: true });
 writeFileSync(
   path.join(app, 'package.json'),
   `${JSON.stringify({ name: 'manuscript', productName: 'Manuscript', version, type: 'module', main: 'main.mjs' }, null, 2)}\n`,

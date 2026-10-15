@@ -4,6 +4,7 @@ node_modules/
 # Build output
 dist/
 apps/desktop/release/
+apps/desktop/.cache/
 *.tsbuildinfo
 
 # Local data — never commit vaults or app data

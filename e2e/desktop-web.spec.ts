@@ -20,7 +20,7 @@ test('HTTP error documents stay interactive; browser sessions, pop-ups and failu
     executablePath: electronExecutable(),
     args: [path.join(process.cwd(), 'apps', 'desktop')],
     cwd: process.cwd(),
-    env: isolatedEnvironment(dir, path.join(dir, 'vault')),
+    env: { ...isolatedEnvironment(dir, path.join(dir, 'vault')), SKB_BROWSER_ENGINE: 'electron' },
   });
   const inPage = (code: string) =>
     app.evaluate(async ({ BrowserWindow }, script) => {

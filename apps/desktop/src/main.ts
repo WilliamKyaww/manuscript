@@ -17,6 +17,7 @@ import {
   shell,
 } from 'electron';
 import { defaultDataDir } from '../../server/src/config/config';
+import { BrowserViews } from './browser-views';
 import { type Engine, RESTART_EXIT_CODE, startEngine } from './engine';
 import { buildMenu } from './menu';
 import {
@@ -37,7 +38,7 @@ import {
 } from './policy';
 import { choosePort } from './port';
 import { loadSecretsKey, type SecretsKey } from './secrets';
-import { configureWebSession, WebViews, webSession } from './web-views';
+import { configureWebSession, webSession } from './web-views';
 
 /**
  * The desktop shell (Phase 18, ADR-0016): one window onto the same server `npm start` runs, kept in
@@ -86,7 +87,13 @@ const token = randomBytes(32).toString('base64url');
 /** PDFs saved this run, which "Show in folder" may point at wherever they were saved. */
 const exported = new Set<string>();
 /** The web pages shown beside notes. */
-const webViews = new WebViews(() => engine?.origin ?? null);
+export const webViews = new BrowserViews({
+  appOrigin: () => engine?.origin ?? null,
+  executable: path.join(app.isPackaged ? process.resourcesPath : here, 'webview2', 'WebPane.exe'),
+  profile: path.join(dataDir, 'desktop-webview2'),
+  legacy: process.env.SKB_BROWSER_ENGINE === 'electron',
+  diagnostics: devTools && process.env.SKB_WEBVIEW2_DIAGNOSTICS === '1',
+});
 
 /**
  * The slim title bar (task 23.10, ADR-0042): no system title bar or menu bar, only the window's
@@ -405,11 +412,11 @@ function registerBridge(): void {
     const id = webViewId(fields.id);
     return id ? { owner, id, fields } : null;
   };
-  ipcMain.handle('skb:web-open', (event, given: unknown) => {
+  ipcMain.handle('skb:web-open', async (event, given: unknown) => {
     const tab = webTab(event, given);
     const url = tab ? webPageUrl(tab.fields.url, engine?.origin ?? null) : null;
     if (!tab || !url) return false;
-    webViews.open(tab.owner, tab.id, url);
+    await webViews.open(tab.owner, tab.id, url);
     return true;
   });
   ipcMain.handle('skb:web-place', (event, given: unknown) => {
@@ -426,7 +433,7 @@ function registerBridge(): void {
     const command = tab ? webCommand(tab.fields.command) : null;
     if (!tab || !command) return;
     const url = command === 'load' ? webPageUrl(tab.fields.url, engine?.origin ?? null) : null;
-    webViews.command(tab.owner, tab.id, command, url);
+    return webViews.command(tab.owner, tab.id, command, url);
   });
   ipcMain.handle('skb:web-snapshot', (event, given: unknown) => {
     const tab = webTab(event, given);
@@ -467,6 +474,7 @@ if (!app.requestSingleInstanceLock()) {
     const running = engine;
     void (running ? running.stop() : Promise.resolve(0)).finally(() => {
       stopped = true;
+      webViews.dispose();
       app.quit();
     });
   });

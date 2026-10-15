@@ -41,17 +41,20 @@ export async function createResearchSite() {
         <script>
           localStorage.setItem('research', 'remembered');
           addEventListener('message', event => {
+            if (event.origin === location.origin && event.data.kind === 'popup-ready') window.popupResult = event.data;
             if (event.origin === '${frameOrigin}' && event.data === 'confirmed') {
               document.querySelector('#continue').disabled = false;
             }
           });
           document.querySelector('#continue').onclick = () => location.href = '/accept';
-          document.querySelector('#popup').onclick = () => window.open('/popup', '_blank', 'popup,width=520,height=680');
+          document.querySelector('#popup').onclick = () => { window.fixturePopup = window.open('/popup', '_blank', 'popup,width=520,height=680'); };
         </script>`);
       return;
     }
     if (request.url === '/popup') {
-      response.end('<title>Research sign-in</title><h1>Local sign-in window</h1>');
+      response.end(`<title>Research sign-in</title><h1>Local sign-in window</h1>
+        <script>opener.postMessage({ kind: 'popup-ready', storage: localStorage.getItem('research'),
+          cookie: document.cookie, node: typeof window.require, bridge: typeof window.skbDesktop }, location.origin);</script>`);
       return;
     }
     response.end(

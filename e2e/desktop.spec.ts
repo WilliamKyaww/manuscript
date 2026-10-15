@@ -349,7 +349,7 @@ test('a web link opens beside the note, in a page of its own that cannot reach t
     executablePath: electronExecutable(),
     args: [path.join(root, 'apps', 'desktop')],
     cwd: root,
-    env: isolatedEnvironment(dir, path.join(dir, 'vault')),
+    env: { ...isolatedEnvironment(dir, path.join(dir, 'vault')), SKB_BROWSER_ENGINE: 'electron' },
   });
   const pages = () =>
     app.evaluate(({ BrowserWindow }) =>

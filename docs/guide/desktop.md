@@ -49,12 +49,12 @@ page; it does not mean the application knows why that website refused the reques
 
 If a page fails to load or stops responding, its address remains available for retry or **Open in browser**.
 The system browser has its own cookies and sign-ins: verification performed there is not transferred into
-Manuscript. Manuscript uses Electron's normal browser identity and does not bypass verification or change
+Manuscript. Manuscript uses its browser engine's normal identity and does not bypass verification or change
 security settings to gain access.
 
 The reported ScienceDirect paper is tracked in [Phase 27](../checklist/phase-27-web-pane-right.md). Its Cloudflare
-widget rendered in the rebuilt app, but successful human verification and access to the paper remain unverified;
-the [13 October investigation](../journal/2026-10-13-gpt-6-astra.md) records the observations and checks.
+widget looped in Electron. On 15 October the user confirmed article access and normal interaction in the
+integrated Windows WebView2 tab; the [15 October journal](../journal/2026-10-15-gpt-6-astra.md) records this result.
 Some sites offer different content or refuse embedded browsers.
 
 ## What it keeps to itself
@@ -88,8 +88,34 @@ again; your notes and data are files and a database on disk and are not affected
 another server bundle; `SKB_DEVTOOLS=1` allows the developer tools in an unpacked build. VS Code's extension host
 sets `ELECTRON_RUN_AS_NODE`, which makes Electron run as plain Node: the scripts and tests remove it.
 
-Web panes use `WebContentsView`, not an iframe or a `<webview>` element. Their `persist:web` session lives
+On Windows x64, web panes prefer Microsoft Edge WebView2, hosted in native child windows by
+`apps/desktop/native/WebPane/`. The helper uses .NET Framework 4.8 and the installed Evergreen WebView2 runtime;
+the pinned SDK is needed only at build time. Its profile is `<data>/desktop-webview2`. It has no Node,
+application preload, host objects or web-message bridge. Other platforms, or Windows without a working
+helper/runtime, retain Electron `WebContentsView`. `SKB_BROWSER_ENGINE=electron` explicitly selects this
+fallback for regression testing. Website sessions are separate and are not migrated between engines.
+
+Electron's `persist:web` session lives
 under `<data>/desktop`; the application renderer has its own session. `WebTab.tsx` measures a DOM host and sends
 its bounds through the preload bridge; the main process owns the view and validates each call. A window
 `capturePage` image does not include these native views: inspect their bounds and capture their web contents
 separately. Tests must isolate the vault, data directory and all profile folders (see `AGENTS.md`).
+
+For a minimal, secure browser-compatibility reproduction independent of the application, run
+`node scripts/diagnose-browser.mjs`. It opens Cloudflare's official checker in a sandboxed Electron window with
+a new temporary profile and prints the location of sanitised event logs. Complete any checkbox manually and
+close the window afterwards. An optional absolute Electron executable path compares another already-downloaded
+runtime without changing the project dependency. Do not share the temporary profile or raw diagnostic reports;
+they can contain site cookies or identifying information. The [14 October investigation](../journal/2026-10-14-gpt-6-astra.md)
+records the tested versions and the fresh-Chrome control result.
+
+For local fixture regression tests only, `SKB_WEBVIEW2_DIAGNOSTICS=1` enables SDK diagnostic calls on the
+private helper pipe when desktop developer tools are enabled (`SKB_DEVTOOLS=1` for a packaged build).
+It opens no debugging port and adds no renderer/preload interface. The tests inspect the main-process
+driver directly. Do not enable it for live human-verification checks. `e2e/webview2.spec.ts` covers both
+the source shell and `desktop:build` output; the Electron-specific tests explicitly select the legacy engine.
+
+The blank hidden controller in the helper keeps the website session alive while no visible web tabs remain.
+Closing Manuscript ends that session; persistent website cookies/storage remain in its dedicated profile.
+The helper exits on pipe closure or parent-process exit. Packaged resources include `WebPane.exe`, the
+WebView2 Core/loader DLLs and their licence; no separate .NET 9 installation is needed.

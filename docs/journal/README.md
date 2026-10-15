@@ -17,6 +17,8 @@ Useful engineering history — not a diary.
 
 | Date | Model | Phase | Summary |
 |---|---|---|---|
+| [15 October 2026](./2026-10-15-gpt-6-astra.md) | GPT-6 Astra | 27 | Windows embedded WebView2 integration; user-confirmed ScienceDirect article access and native regression checks |
+| [14 October 2026](./2026-10-14-gpt-6-astra.md) | GPT-6 Astra | 27 | User-reported ScienceDirect verification loop; fresh-profile checkbox observation and remaining diagnosis |
 | [13 October 2026](./2026-10-13-gpt-6-astra.md) | GPT-6 Astra | 27 | Browser placement review, ScienceDirect diagnosis, browsing feedback and Claude handover; verification tracked in the phase checklist |
 | [4 October 2026](./2026-10-04-claude-opus-5.5.md) | Claude Opus 5.5 | 0, 1, 2 | Research, PRD, ADRs, roadmap (Phase 0); foundation and Electron spike (Phase 1); application shell (Phase 2) |
 | [7 October 2026](./2026-10-07-claude-opus-5.5.md) | Claude Opus 5.5 | 3 | Markdown core, notes index and watcher, notes API, editor/preview/tree UI, code splitting, E2E, Obsidian and performance checks |

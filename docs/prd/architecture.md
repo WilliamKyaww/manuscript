@@ -52,6 +52,10 @@ The UI never talks to the filesystem or database directly in any mode; it only c
 Electron adds a validated preload bridge for native capabilities (file/folder pickers, reveal in
 Explorer, note windows, PDF export, title-bar colours and web-pane controls) and secure secret storage.
 External web panes use a separate browser session; they receive no preload bridge (ADR-0045/0046).
+On Windows x64, ADR-0047 uses a WebView2 helper with native child windows and a separate profile at
+`<data>/desktop-webview2`. The existing validated preload commands still control bounds and navigation.
+The helper communicates with the main process over private pipes; external websites have no host objects
+or web-message bridge. Electron `WebContentsView` remains the other-platform/unavailable-runtime fallback.
 
 ## 2. Repository structure
 
@@ -257,7 +261,9 @@ Electron main ──fork──► utilityProcess: server.mjs (same bundle as web
      │    server's CSP; navigation confined to the origin; note windows checked by isNoteWindowUrl)
      ├─ preload: window.skbDesktop — pickers, reveal/open path, PDF export, title-bar colours, app info,
      │    web { open, place, command, snapshot, release, onState }; every call checked in main
-     ├─ WebContentsView(s), laid over the Notes page's measured web-pane hosts
+     ├─ Windows: private pipe → WebView2 helper → native child HWNDs over measured web-pane hosts
+     │    desktop-webview2 profile; no host objects, web messages, Node or application preload
+     ├─ Other platforms / fallback: WebContentsView(s), over the same measured hosts
      │    persist:web session; no preload/Node; sandbox, contextIsolation and webSecurity enabled
      │    only validated http(s), never the app origin; popups use the same isolated web session
      ├─ safeStorage wraps a random 32-byte key kept in <data>/secrets.key; the server encrypts
@@ -271,11 +277,11 @@ Electron main ──fork──► utilityProcess: server.mjs (same bundle as web
 This preserves the application's origin and its `localStorage` preferences across launches. Workspace tabs,
 pane order and active state live in `workspace-store.ts`; a web link opens to the right of its source note
 (ADR-0046). `WebTab.tsx` follows its host with `ResizeObserver`, window resize and a position check; validated
-bounds go through `skb:web-place` to `WebViews.place`. At most six native views are kept per window; closing a
+bounds go through `skb:web-place` to `BrowserViews.place`, then the selected backend. At most six native views are kept per window; closing a
 tab releases its view, and reloading, closing or crashing the application window releases its owned views.
 A crashed external page retains its entry and address so the student can retry loading it.
 
-`web-contents-created` sends contents from `persist:web` to `WebViews.harden`, rather than applying the main
+For the Electron backend, `web-contents-created` sends contents from `persist:web` to `WebViews.harden`, rather than applying the main
 window's app-origin-only rules. Cookies and browser storage persist independently of Manuscript's authentication
 and of the system browser. Normal JavaScript, frame rendering and web security remain enabled. The web session
 permits only full screen and clipboard writes; its pages never receive native application capabilities.

@@ -1,6 +1,6 @@
 # Backlog items
 
-_Last reviewed: 13 October 2026 (Phase 27 browser follow-up; unrelated entries retained)._
+_Last reviewed: 15 October 2026 (Phase 27 browser follow-up; unrelated entries retained)._
 
 ## Browser follow-up — 13 October 2026
 
@@ -8,13 +8,20 @@ _Last reviewed: 13 October 2026 (Phase 27 browser follow-up; unrelated entries r
   Why: keep the student's writing on the left while researching. Promoted to [27.02](../checklist/phase-27-web-pane-right.md).
   Verified by workspace tests and Electron bounds at two window sizes, divider resizing, close/reopen,
   note creation/editing/navigation and conservative repair of Phase 26's web-only-left layout.
-- [~] **B-KM-35** Show legitimate website verification responses and explain browser failures without bypassing
+- [x] **B-KM-35** Show legitimate website verification responses and explain browser failures without bypassing
   the website's checks. Why: the reported ScienceDirect page showed a publisher error where Chrome offered a
   human challenge. Promoted to [27.03 and 27.06](../checklist/phase-27-web-pane-right.md).
   Local response rendering, native mouse/keyboard interaction, sessions, redirects, popups and recovery pass.
   The rebuilt app visibly rendered a live Cloudflare widget saying **Verifying…**, but did not reach the paper.
-  - Remaining: human completion and article access in a normal app launch; the reason for differing site
-    responses remains unknown. Do not infer a successful Cloudflare fix from local fixture tests.
+  The user reports a verification loop on 14 October: ticking the checkbox repeatedly does not open the paper.
+  Regular Chrome reaches the paper on the same connection (user confirmed).
+  The normal diagnostic session sends its clearance cookie but gets a fresh challenge; Cloudflare's official
+  checker also fails after passing all local checks. See the 14 October journal's reproduction summary.
+  Three minimal Electron versions fail with 600010; a fresh genuine-Chrome profile succeeds. The user rejected
+  a companion window. WebView2 passed both standalone checks and the actual Manuscript tab: on 15 October the
+  user confirmed article access and normal interaction, with a screenshot. ADR-0047 records the new backend.
+  Native regression/package gate and documentation complete. The Electron incompatibility remains
+  unexplained; no universal website-acceptance guarantee is implied.
 - [x] **B-KM-36** Browser and Notes regression evidence for this change. Why: native views sit above the DOM and
   can regress bounds, visibility or editing even when the workspace state is correct. Promoted to
   [27.04](../checklist/phase-27-web-pane-right.md).
@@ -22,6 +29,10 @@ _Last reviewed: 13 October 2026 (Phase 27 browser follow-up; unrelated entries r
   (154 passed, 3 opt-in screenshot cases skipped). New desktop tests cover layout, native bounds and local
   interactive HTTP errors, sessions, popups and recovery; light/dark browser chrome passes axe.
   Live human verification remains separate under B-KM-35, not silently included in this completion.
+- [x] **B-KM-37** Verify Windows WebView2 integration and packaging (27.07–27.09). Local native interaction,
+  session/popup/redirect/history, bounds, overlays, close/reopen, reload and recovery pass in source and
+  packaged builds. Full E2E: 156 passed, 3 optional screenshot cases skipped. Installer-payload smoke confirms
+  note creation/edit/save/navigation alongside WebView2; actual installer installation remains a user action.
 
 ## Knowledge (KM)
 

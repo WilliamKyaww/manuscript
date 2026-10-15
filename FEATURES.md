@@ -6,7 +6,7 @@ when it works end to end, is tested and is documented — never because code exi
 Statuses: **Planned** · **In Progress** · **Partial** (say what is missing) · **Complete** ·
 **Deferred** (see backlog ID) · **Rejected** (reason in research/ADR).
 
-_Last updated: 13 October 2026 (Phase 27 — browser follow-up; latest released version 1.4.0)._
+_Last updated: 15 October 2026 (Phase 27 — Windows WebView2 follow-up; latest released version 1.4.0)._
 
 ## Platform and architecture
 
@@ -51,7 +51,7 @@ _Last updated: 13 October 2026 (Phase 27 — browser follow-up; latest released 
 | F-KN-22 | Highlight colours (`==🟢text==`), inline footnotes, block ids and links to them, nested heading links, image sizes in Markdown images, PDF page and height | Complete | 25 |
 | F-KN-23 | Obsidian's line breaks in the reading view, with a *Strict line breaks* setting for standard Markdown | Complete | 25 |
 | F-KN-24 | Web links: the external-link mark, a link card on hover (address, Copy, Edit, Open in browser) in the editor and the reading view | Complete | 26 |
-| F-KN-25 | Web pages on the right of the note (desktop app): back, forward, reload, address bar, remembered tabs, failure feedback and browser fallback; a sandboxed session of their own | Placement and recovery verified in Phase 27; live Cloudflare widget rendered, but human verification and ScienceDirect article access remain unconfirmed | 26–27 |
+| F-KN-25 | Web pages on the right of the note (desktop app): back, forward, reload, address bar, remembered tabs, failure feedback and browser fallback; an isolated browsing session | Complete on tested Windows configuration: WebView2 article access/interaction user-confirmed on 15 October; native, packaged and full E2E checks pass. Electron fallback retains the verification limitation | 26–27 |
 | F-KN-26 | GitHub links as mentions (the mark and a name from the address: repository, issue, pull request, file), offline | Complete | 26 |
 | F-KN-27 | Selection toolbar (turn into, inline formats, highlight colours, link, comment, AI, more) and Obsidian's editor menu (Format, Paragraph, Insert, links, search, extract, clipboard), with shortcuts | Complete | 26 |
 | F-KN-28 | AI on a selection: improve, fix spelling and grammar, shorter, longer, simplify, list, table, summarise, explain, custom; a suggestion to replace or insert | Complete — needs AI set up; one answer at a time, not streamed | 26 |

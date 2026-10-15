@@ -9,6 +9,9 @@
     "build": "node ../../scripts/build-desktop.mjs",
     "typecheck": "tsc -p tsconfig.json"
   },
+  "dependencies": {
+    "zod": "4.6.5"
+  },
   "devDependencies": {
     "electron": "44.5.1",
     "electron-builder": "26.17.0"

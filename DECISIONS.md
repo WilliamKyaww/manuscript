@@ -1157,3 +1157,38 @@ the separate session, native views, link handling and selection tools remain in 
   not prove that ScienceDirect's live human-verification flow succeeds. The journal and Phase 27 checklist keep
   those outcomes separate; external browsing uses the system browser's own session.
 - **Date.** 13 October 2026.
+
+## ADR-0047 — Windows web tabs use an isolated WebView2 child surface
+
+- **Context.** Human verification loops in the real Electron pane and a minimal secure Electron window on
+  44.5.1, 44.7.2 and 45.0.0-beta.3. A fresh genuine Chrome profile succeeds. The user requires an embedded tab,
+  not a companion browser window. A secure WebView2 probe using the installed Edge runtime completed both
+  Cloudflare's checker and the requested ScienceDirect article (user-confirmed screenshots, 14 October journal).
+- **Options.** Wait for an Electron/provider compatibility resolution; open genuine Chrome separately; or use
+  the Windows system WebView2 runtime behind the existing tab controls. Identity spoofing, token transfer and
+  weaker browser security are excluded by the user's requirements.
+- **Decision.** On Windows x64, prefer a small .NET Framework 4.8 helper hosting WebView2 in native child windows
+  of the Electron window. Keep the existing preload `web` interface and renderer measurement/overlay behaviour.
+  External pages get no host objects, web messages, Node or application preload. Their persistent profile lives
+  at `<data>/desktop-webview2`, separate from the app token and from Chrome/Edge's regular profiles. The helper
+  receives validated commands over private stdin/stdout pipes; replies are checked with Zod. No listening port
+  is opened normally. Website navigation is HTTP(S) only, never the application origin; response documents,
+  including HTTP 403 challenges, remain visible. Explicit website popups use the same isolated profile.
+  - Electron remains the browser engine on other platforms, when the helper/runtime is unavailable, and for
+    legacy regression checks. No cookie migration or copying between engines is performed.
+  - The SDK is pinned to Microsoft.Web.WebView2 1.0.4258.31, its archive checked against a pinned SHA-512 digest.
+    Only the required Core DLL, native loader and licence accompany the helper. The system Evergreen runtime
+    is used; the SDK and a new .NET runtime are not required on the user's machine. Build uses Windows' .NET
+    Framework compiler. The installed WebView2 runtime must be current.
+  - SDK environment overrides are stripped from the helper environment. `SKB_WEBVIEW2_DIAGNOSTICS=1`, only
+    when desktop developer tools are enabled, permits SDK diagnostic calls through the private pipe for local
+    fixture tests. No debugging port or renderer/website API is exposed. Human live tests omit this flag.
+- **Reason.** WebView2 is an actual supported Windows embedding API and passed the user's target-site test
+  without disguising its identity. Keeping the tab contract leaves the Notes UI intact. A helper-owned child
+  window preserves clipping and lets Windows remove the surface if its host dies.
+- **Consequences.** Windows has an additional native helper to build, package and test. Its lifetime, DPI/bounds,
+  focus, popups and private protocol need regression coverage. WebView2 and Electron have distinct website
+  sessions. An unavailable WebView2 runtime falls back to Electron, whose verification limitation remains.
+  Zod is declared directly in the desktop package for pipe validation; fflate is a build dependency for SDK
+  extraction. No application release or completed integration is implied by this decision; Phase 27 tracks it.
+- **Date.** 14 October 2026.

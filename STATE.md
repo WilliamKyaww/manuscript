@@ -1,12 +1,12 @@
 # State — Manuscript
 
-_Last updated: 14 October 2026 — GPT-6 Astra (handover for the 13 October task)._
+_Last updated: 15 October 2026 — GPT-6 Astra (embedded WebView2 integration)._
 
 ## Current phase
 
 **Phase 27 — web pane placement and verification feedback**, implemented and automatically verified on
-`phase/27-web-pane-right`, with live human verification still open;
-[checklist](docs/checklist/phase-27-web-pane-right.md), [Claude handover](docs/journal/2026-10-13-gpt-6-astra.md).
+`phase/27-web-pane-right`, with live Windows WebView2 article access and automated/package checks confirmed;
+[checklist](docs/checklist/phase-27-web-pane-right.md), [current Claude handover](docs/journal/2026-10-15-gpt-6-astra.md).
 The user explicitly requested this follow-up after Phase 26. No new release or installation is claimed.
 
 **Latest released version: 1.4.0 — links and selections** (Phase 26: web pages beside notes in the desktop app, link cards, GitHub
@@ -211,15 +211,24 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## In progress
 
-- Phase 27 implementation, regression tests and documentation are complete; the phase remains open for manual
-  ScienceDirect verification (27.06/B-KM-35). Working-tree changes are uncommitted; no release or installation.
+- Phase 27 placement and feedback are committed as `7ae6636`; the subsequent WebView2 follow-up is verified
+  but uncommitted (27.06–27.09/B-KM-35/37). See the [15 October handover](docs/journal/2026-10-15-gpt-6-astra.md).
+  The user also reproduced the loop in a normal, non-automated disposable instance. Its requests send the
+  clearance cookie but receive fresh HTTP 403 challenges; the native pane is visible/focused. No browser policy
+  change has been made. Cloudflare's official checker also fails after passing all local checks; the user
+  confirms retesting loops. The temporary session is closed; see the journal's upstream reproduction summary.
+  Minimal Electron 44.5.1, stable 44.7.2 and beta 45.0.0-beta.3 all fail with 600010; genuine Chrome with a fresh
+  profile succeeds. No runtime upgrade adopted. `node scripts/diagnose-browser.mjs` preserves the secure repro.
+  The user rejected a companion window. WebView2 passed the standalone checks and, on 15 October, the user
+  confirmed the article opens and clicking/scrolling works in the actual Manuscript tab, with a screenshot.
+  Windows native integration and its regression/package gate pass (ADR-0047,
+  [15 October journal](docs/journal/2026-10-15-gpt-6-astra.md)).
 
 ## Incomplete / not started
 
-- Phase 27: successful live ScienceDirect human verification and article access remain unverified. Before
-  the change the site returned HTTP 403/CPE00001; afterwards a live Cloudflare **Verifying…** widget rendered.
-  No human challenge was completed and the site still returned 403. The reason for its changed response is not
-  established. Local interaction/session/recovery tests pass; they do not establish a successful live flow.
+- Phase 27 follow-up is uncommitted/unreleased, with no installation performed. `npm run verify` passes
+  (1,069 tests), full E2E passes (156, three optional screenshots skipped), and the unpacked build plus
+  separate installer-payload smoke pass. The local candidate is under `apps/desktop/release/webview2-preview/`.
 
 - Not in Phase 24: phone-width layouts stay best-effort (ui.md §9; the file list starts closed below 640 px); the
   Standard interface was not redesigned, only kept.
@@ -281,8 +290,8 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## Broken
 
-- ScienceDirect article access remains unresolved: a live challenge widget now renders, but verification was
-  not completed. Browser feedback preserves its response and offers retry or the system browser; see the journal.
+- The Electron fallback still loops on ScienceDirect verification in the tested environment. The Windows
+  WebView2 integration reaches the article (user-confirmed on 15 October); no Electron/upstream fix is claimed.
 - Performance budgets: all met in the Phase 17 run (mains power, below-normal priority, Discord and VS Code
   open). The four that an earlier, busier run had over were load, as suspected. The figures swing two- to
   three-fold with background load (`AGENTS.md` §5); retrieval p95 (434 ms of 500) is the one with least room.
@@ -291,8 +300,8 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## Next steps
 
-1. Follow the journal's Claude handover: manually complete any live ScienceDirect challenge in a normal app
-   launch and record whether the paper opens. Automated checks have passed; live access has not been established.
+1. Review/commit the verified WebView2 follow-up using the 15 October handover. The user confirmed live access
+   and interaction in the actual embedded tab; source, packaged and installer-payload regressions pass.
 2. Release or install the follow-up only after its verification and the repository's gate workflow; the current
    installed version has not been changed by this session. B-KM-26 to B-KM-33 remain the earlier known limits.
 3. When the laptop is idle: `npm run test:perf` (four budgets were over on 11 October under load — so was the Phase 17
