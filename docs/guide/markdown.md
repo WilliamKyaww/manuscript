@@ -335,3 +335,38 @@ of each page.
 | `F2` / `Delete` | File tree | Rename / move to the trash |
 | Typing letters | File tree | Jump to a matching name |
 | `Shift+F10` or the Menu key | File tree | Context menu |
+## File previews
+
+Use **Show attachments** (the paperclip in Files), then select a file to open a read-only tab. Existing note
+and browser tabs stay open. File links in a note's reading view also open file tabs; **Download** keeps access
+to the original. **Refresh** reloads the current preview after an external edit.
+
+| Format | In-app view |
+|---|---|
+| PDF | Pages, thumbnails, selectable text, page navigation and zoom |
+| DOC / DOCX | Reading text (DOC), headings/lists/tables (DOCX); **Page layout** for a rendered PDF |
+| TXT | Readable, wrapped text |
+| CSV | Table with quoted fields/newlines; **Source** for original CSV |
+| JPEG/JPG, PNG, GIF, SVG, WebP | Image preview; GIF animation is retained; SVG is an image, not executable app content |
+| XLSX | Sheet selector and cell values; **Page layout** uses the workbook's print layout |
+| JSON | Formatted JSON, with **Source** for original text; invalid JSON explains the issue and shows text |
+| XML | Highlighted XML text with a source view |
+| PY, JS, C | Syntax-highlighted source; no code execution |
+| HTML | Scriptless, isolated visual preview; **Source** shows markup. External resources are blocked |
+
+**Reading / Page layout:** Word and spreadsheet tabs offer both modes. Page layout uses a local LibreOffice
+installation to convert a temporary copy to PDF; originals are never rewritten, and no cloud converter is
+used. LibreOffice's pagination/font substitution can differ from Microsoft Office. Missing fonts, protected
+documents and unusual features may affect fidelity. Reading remains available without LibreOffice.
+
+Install LibreOffice from its official distribution on the machine running Manuscript's server. Standard
+Windows, macOS and Linux locations are detected; an alternative executable can be set using the server
+environment variable `SKB_LIBREOFFICE_PATH` (absolute path). A missing renderer or conversion failure is
+explained in the tab, with Retry and Reading available. Conversion uses a private profile with macros and
+link updates disabled, one document at a time, with a 45-second deadline.
+
+Limits: Office inputs up to 16 MB; text/data inputs up to 2 MB; text output up to 500,000 characters;
+highlighting up to 50,000 characters (larger text stays readable); CSV/XLSX up to 1,000 rows and 100 columns
+per sheet, and XLSX up to 20 sheets. Spreadsheet formulas are not executed in Reading mode: saved results
+are shown, or the formula text when no saved result exists. Reading does not preserve workbook number/date
+formats or merged-cell styling; use Page layout for formatting. Embedded DOCX images are shown in Page layout.

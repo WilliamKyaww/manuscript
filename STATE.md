@@ -1,13 +1,26 @@
 # State — Manuscript
 
-_Last updated: 15 October 2026 — GPT-6 Astra (embedded WebView2 integration)._
+_Last updated: 17 October 2026 — GPT-6 Astra (user-requested Phase 28 handover)._
 
 ## Current phase
+
+**Active user-requested work: Phase 28 — read-only file previews**, branch `phase/28-file-previews`.
+Reading / Page layout toggles were requested for Word and spreadsheets; the user chose LibreOffice.
+Paused at the user's request for Claude to continue. Implementation exists and `npm run verify` passed
+(175 files / 1,075 tests, type-check, lint, build, smoke). All-format browser and desktop preview E2E passed
+(2 tests), including real LibreOffice layouts. Final hardening, screenshot inspection, wider E2E and packaging
+remain; this is not a completed phase or release. LibreOffice 26.8.1.1 is installed separately.
+See the [checklist](docs/checklist/phase-28-file-previews.md) and
+[current Claude handover](docs/journal/2026-10-17-gpt-6-astra.md). No Phase 28 installer has been produced.
 
 **Phase 27 — web pane placement and verification feedback**, implemented and automatically verified on
 `phase/27-web-pane-right`, with live Windows WebView2 article access and automated/package checks confirmed;
 [checklist](docs/checklist/phase-27-web-pane-right.md), [current Claude handover](docs/journal/2026-10-15-gpt-6-astra.md).
 The user explicitly requested this follow-up after Phase 26. No new release or installation is claimed.
+The WebView2 implementation is now committed as `840119d`. The reported repeat loop was traced on
+15 October to the older installed build, without the WebView2 helper. Use the verified candidate
+`apps/desktop/release/Manuscript-Setup-1.4.0-WebView2.exe`; installation of that candidate is not yet confirmed.
+See the [16 October follow-up](docs/journal/2026-10-16-gpt-6-astra.md).
 
 **Latest released version: 1.4.0 — links and selections** (Phase 26: web pages beside notes in the desktop app, link cards, GitHub
 mentions, the selection toolbar, Obsidian's editor menu, AI on a selection, pasting as Markdown; `CHANGELOG.md`).

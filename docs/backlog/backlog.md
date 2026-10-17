@@ -36,6 +36,12 @@ _Last reviewed: 15 October 2026 (Phase 27 browser follow-up; unrelated entries r
 
 ## Knowledge (KM)
 
+- [~] **B-KM-38** Preview non-Markdown files inside workspace tabs rather than leaving the app.
+  User-requested Phase 28, including Reading / Page layout modes and a local LibreOffice renderer.
+  Verify (1,075 tests), all-format browser, desktop and real conversion checks pass; see 17 October handover.
+  - Remaining: JSON/sparse-sheet fidelity review, failure/limit coverage, conversion timeout cleanup review,
+    screenshot inspection, wider E2E and packaging. Paused at the user's request for Claude continuation.
+
 | ID | Item | Why | Origin |
 |---|---|---|---|
 | B-KM-01 | Git integration for the vault (history viewer, optional commit on save) | Version history beyond agent snapshots | Brief: "version/history where appropriate" |

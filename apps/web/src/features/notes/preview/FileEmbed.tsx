@@ -1,5 +1,6 @@
 import { fileUrl } from '@skb/core';
 import { FileText } from 'lucide-react';
+import { useWorkspace } from '../workspace/workspace-store';
 
 /** Embedded vault files: PDFs in a frame, audio and video players, and a link card for the rest. */
 export function FileEmbed({
@@ -49,7 +50,16 @@ export function FileEmbed({
     );
   }
   return (
-    <a className="embed-file" href={url} target="_blank" rel="noreferrer noopener">
+    <a
+      className="embed-file"
+      href={url}
+      onClick={(event) => {
+        if (!event.ctrlKey && !event.metaKey) {
+          event.preventDefault();
+          useWorkspace.getState().openFile(path);
+        }
+      }}
+    >
       <FileText aria-hidden="true" size={16} />
       <span>{name}</span>
     </a>

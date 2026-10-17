@@ -20,6 +20,10 @@ await build({
   entryPoints: {
     server: path.join(serverDir, 'src', 'main.ts'),
     mcp: path.join(serverDir, 'src', 'mcp-stdio.ts'),
+    'file-preview-worker': path.join(
+      serverDir,
+      'src/modules/notes/preview/file-preview-worker.mjs',
+    ),
   },
   outdir: outDir,
   outExtension: { '.js': '.mjs' },

@@ -8,6 +8,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../../components/States
 import { ApiError } from '../../../lib/api/client';
 import { useApi } from '../../../lib/api/context';
 import { noteQuery } from '../api';
+import { FileTab } from '../files/FileTab';
 import { NoteWorkspace } from '../NoteWorkspace';
 import { baseName } from '../tree/buildTree';
 import type { FileActions } from '../useFileActions';
@@ -55,6 +56,7 @@ export function EditorPanes(props: Shared) {
   );
   const pages = useWebPages((state) => state.pages);
   const titleOf = (tab: WorkspaceTab) => {
+    if (tab.filePath) return { title: baseName(tab.filePath), path: tab.filePath };
     if (tab.url) return { title: webTabTitle(tab.url, pages[tab.id]), path: tab.url };
     if (tab.noteId === null) return { title: 'New tab', path: null };
     const path = files.get(tab.noteId);
@@ -144,6 +146,8 @@ function EditorPane({
       <div className="flex min-h-0 min-w-0 flex-1">
         {tab.url ? (
           <WebTab key={tab.id} tab={{ ...tab, url: tab.url }} />
+        ) : tab.filePath ? (
+          <FileTab key={tab.filePath} path={tab.filePath} />
         ) : tab.noteId ? (
           <NoteTab
             key={tab.noteId}

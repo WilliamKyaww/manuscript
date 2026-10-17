@@ -12,9 +12,9 @@ GlobalWorkerOptions.workerSrc = workerUrl;
 
 const ASSETS = '/pdfjs/';
 
-export function openPdf(url: string) {
+export function openPdf(url: string | Uint8Array) {
   return getDocument({
-    url,
+    ...(typeof url === 'string' ? { url } : { data: url.slice() }),
     cMapUrl: `${ASSETS}cmaps/`,
     cMapPacked: true,
     standardFontDataUrl: `${ASSETS}standard_fonts/`,

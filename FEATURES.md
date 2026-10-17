@@ -56,6 +56,7 @@ _Last updated: 15 October 2026 (Phase 27 — Windows WebView2 follow-up; latest 
 | F-KN-27 | Selection toolbar (turn into, inline formats, highlight colours, link, comment, AI, more) and Obsidian's editor menu (Format, Paragraph, Insert, links, search, extract, clipboard), with shortcuts | Complete | 26 |
 | F-KN-28 | AI on a selection: improve, fix spelling and grammar, shorter, longer, simplify, list, table, summarise, explain, custom; a suggestion to replace or insert | Complete — needs AI set up; one answer at a time, not streamed | 26 |
 | F-KN-29 | Pasting rich text as Markdown (Turndown), plain text with Ctrl+Shift+V; extracting a selection to a new note | Complete | 26 |
+| F-KN-30 | Read-only file tabs: PDF, DOC/DOCX, TXT/CSV, JPEG/PNG/GIF/SVG/WebP, XLSX, JSON/XML and source code; Reading / Page layout toggle for Office files using local LibreOffice | Partial: verify (1,075 tests), all-format browser and desktop checks pass; hardening, visual/wider E2E review and packaging remain. Paused for Claude handover | 28 |
 
 ## Knowledge — search
 

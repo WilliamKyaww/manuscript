@@ -1,4 +1,4 @@
-import { fileUrl, type MovePreview, type NoteTree } from '@skb/core';
+import type { MovePreview, NoteTree } from '@skb/core';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { type ReactNode, useState } from 'react';
@@ -208,7 +208,7 @@ export function useVaultActions(tree: NoteTree | undefined): VaultActions {
     },
     open(node) {
       if (node.kind === 'note') openNote(node.id);
-      else if (node.kind === 'attachment') window.open(fileUrl(node.path), '_blank', 'noopener');
+      else if (node.kind === 'attachment') useWorkspace.getState().openFile(node.path);
     },
     elements,
   };

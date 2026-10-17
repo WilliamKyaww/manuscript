@@ -19,6 +19,12 @@ minutes.
 
 ## Installing
 
+For the Phase 27 WebView2 follow-up, the tested local candidate is
+`apps\desktop\release\Manuscript-Setup-1.4.0-WebView2.exe`. The older
+`Manuscript-Setup-1.4.0.exe` in the release root does not contain that fix. Both report version 1.4.0;
+use the distinctly named candidate, close Manuscript fully, and install over the existing application.
+No uninstallation or deletion of the vault/browser profile is needed. A formal release should use a new version.
+
 Run `Manuscript-Setup-<version>.exe`.
 
 - **It installs for you only.** No administrator prompt: the program goes to

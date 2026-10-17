@@ -22,7 +22,7 @@ export default function PdfViewer({
   page,
   onNavigate,
 }: {
-  url: string;
+  url: string | Uint8Array;
   page: number | undefined;
   onNavigate(page: number): void;
 }) {
@@ -38,6 +38,8 @@ export default function PdfViewer({
   const pageInputId = useId();
 
   useEffect(() => {
+    setError(null);
+    setDocument(null);
     const task = openPdf(url);
     let cancelled = false;
     task.promise

@@ -13,6 +13,7 @@
 | Frontmatter properties | Typed editor for known keys (`type`, `tags`, `aliases`, `module`, `lecture`, `concepts`); raw YAML for the rest | 3 |
 | Templates | `Templates/*.md` with `{{title}}`, `{{date}}`, `{{module}}`, `{{lecture}}` substitution | 3 |
 | Attachments | Images/files stored beside notes (default `Attachments/`), embedded with `![[…]]` | 3 |
+| File previews | Read-only tabs for PDF, DOC/DOCX, TXT, CSV, images, XLSX, JSON/XML and source code; Word/spreadsheets offer Reading and local LibreOffice Page layout modes (ADR-0048) | 28 |
 | External edits | File watcher re-indexes changes made in VS Code/Obsidian; open editors warn and reload | 3 |
 | History | Snapshots before agent edits (Phase 12); vault can also be a Git repo (user's choice) | 12 |
 

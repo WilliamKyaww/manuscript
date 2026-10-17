@@ -70,7 +70,11 @@ export function FilesPane({
   // As in Obsidian: "Collapse all" while any folder is open, "Expand all" once none is.
   const folders = tree?.folders ?? [];
   const anyOpen = folders.some((path) => expanded.has(path));
-  const empty = tree !== undefined && tree.notes.length === 0 && tree.folders.length === 0;
+  const empty =
+    tree !== undefined &&
+    tree.notes.length === 0 &&
+    tree.folders.length === 0 &&
+    tree.attachments.length === 0;
   const hasAttachments = (tree?.attachments.length ?? 0) > 0;
 
   return (

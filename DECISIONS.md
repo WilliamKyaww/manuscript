@@ -1192,3 +1192,22 @@ the separate session, native views, link handling and selection tools remain in 
   Zod is declared directly in the desktop package for pipe validation; fflate is a build dependency for SDK
   extraction. No application release or completed integration is implied by this decision; Phase 27 tracks it.
 - **Date.** 14 October 2026.
+## ADR-0048 — Read-only file tabs and local Office page layouts
+
+- **Context.** The user requests PDF, Word, text, CSV, images, XLSX, JSON, XML and source-code viewers in
+  the Notes workspace. They explicitly want both readable and page-layout views for Word/spreadsheets,
+  and selected LibreOffice rather than Microsoft Office integration.
+- **Options.** Continue opening attachments externally; embed online converters; implement all binary/layout
+  formats internally; or combine existing parsers/viewers with local document conversion.
+- **Decision.** Add file-path workspace tabs and a validated preview endpoint. Reuse PDF.js and the DOCX
+  parser, use bounded OOXML/CSV readers, and use MIT-licensed `word-extractor` in a memory/time-limited worker
+  for legacy DOC text. HTML is rendered in a scriptless sandbox; SVG remains an image, never inline app DOM.
+  Page layout converts a temporary copy with LibreOffice using a separate profile, macros disabled and link
+  updates disabled, then displays PDF.js pages. LibreOffice is a separately installed local dependency;
+  reading previews do not require it. No cloud converter, note migration or original-file rewrite is used.
+- **Reason.** This preserves the established workspace and local-first boundary while offering readable
+  content and actual document pagination without pretending text extraction is original layout.
+- **Consequences.** Office layout depends on LibreOffice/fonts and may differ from Microsoft Office.
+  Conversion is serialised and bounded; missing/conversion-failing dependencies get actionable feedback.
+  Reading previews have explicit size/row limits. The binary DOC worker must be included in server builds.
+- **Date.** 16 October 2026.

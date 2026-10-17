@@ -17,6 +17,8 @@ Useful engineering history — not a diary.
 
 | Date | Model | Phase | Summary |
 |---|---|---|---|
+| [17 October 2026](./2026-10-17-gpt-6-astra.md) | GPT-6 Astra | 28 | User-requested checkpoint: verified file previews, LibreOffice layouts, remaining hardening and Claude relay |
+| [16 October 2026](./2026-10-16-gpt-6-astra.md) | GPT-6 Astra | 27 | Confirmed installer identity/hash and documented the older installed-build mismatch |
 | [15 October 2026](./2026-10-15-gpt-6-astra.md) | GPT-6 Astra | 27 | Windows embedded WebView2 integration; user-confirmed ScienceDirect article access and native regression checks |
 | [14 October 2026](./2026-10-14-gpt-6-astra.md) | GPT-6 Astra | 27 | User-reported ScienceDirect verification loop; fresh-profile checkbox observation and remaining diagnosis |
 | [13 October 2026](./2026-10-13-gpt-6-astra.md) | GPT-6 Astra | 27 | Browser placement review, ScienceDirect diagnosis, browsing feedback and Claude handover; verification tracked in the phase checklist |

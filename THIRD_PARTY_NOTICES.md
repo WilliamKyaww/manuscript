@@ -102,3 +102,15 @@ This file lists third-party code, algorithms or text that has been **adapted int
   `scripts/build-webview2.mjs` checks the pinned archive's SHA-512 before extracting these files. The system
   Microsoft Edge WebView2 Runtime is separate and is not copied from a user's browser installation.
 - The host/helper source under `apps/desktop/native/WebPane` is project code, using the public WebView2 APIs.
+## word-extractor
+
+- Source: <https://github.com/morungos/node-word-extractor>, version 1.0.4.
+- Licence: MIT; the dependency's licence is retained in `node_modules/word-extractor/LICENSE`.
+- Used unmodified in the separately bundled legacy DOC text-extraction worker. No library source is copied
+  into application source files. Runtime dependency added for local legacy Word reading without Microsoft Office.
+
+## LibreOffice (optional local renderer)
+
+- Source: <https://www.libreoffice.org/>, The Document Foundation, MPL-2.0 and associated component licences.
+- Installed separately by the user/system package manager; not redistributed in Manuscript's installer.
+  Invoked locally for Word/spreadsheet page-layout PDF conversion using temporary copies/private profiles.

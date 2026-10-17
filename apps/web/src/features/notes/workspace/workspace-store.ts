@@ -18,6 +18,7 @@ export interface WorkspaceTab {
   noteId: string | null;
   /** A web page (http or https); such a tab has no note. */
   url?: string | null;
+  filePath?: string;
 }
 
 export interface WorkspacePane {
@@ -44,6 +45,7 @@ export interface WorkspaceState extends WorkspaceLayout {
    * or creating one. A tab already showing the address is shown again; existing note tabs are kept.
    */
   openWebPage(url: string, fromPane?: string): void;
+  openFile(path: string): void;
   /** Remembers where a web tab's page went, so that it opens there again. */
   setTabUrl(tabId: string, url: string): void;
   activateTab(paneId: string, tabId: string): void;
@@ -74,6 +76,7 @@ const LayoutSchema = z.object({
               id: z.string().min(1).max(40),
               noteId: z.string().max(80).nullable(),
               url: z.string().max(8192).nullable().optional(),
+              filePath: z.string().min(1).max(1024).optional(),
             }),
           )
           .min(1)
@@ -111,7 +114,9 @@ export function readLayout(raw: string | null): WorkspaceLayout {
       tabs: pane.tabs.map((tab) =>
         tab.url && tab.noteId === null && /^https?:\/\//iu.test(tab.url)
           ? { id: tab.id, noteId: null, url: tab.url }
-          : { id: tab.id, noteId: tab.noteId },
+          : tab.filePath && tab.noteId === null
+            ? { id: tab.id, noteId: null, filePath: tab.filePath }
+            : { id: tab.id, noteId: tab.noteId },
       ),
       activeTab: pane.tabs.some((tab) => tab.id === pane.activeTab)
         ? pane.activeTab
@@ -213,11 +218,11 @@ export function createWorkspaceStore({ persist }: { persist: boolean }) {
         const current = layout();
         const pane = activePaneOf(current);
         const tab = activeTabOf(pane);
-        if (tab.noteId === noteId && !tab.url) return;
+        if (tab.noteId === noteId && !tab.url && !tab.filePath) return;
         const existing =
           noteId === null ? undefined : pane.tabs.find((entry) => entry.noteId === noteId);
         // A web page is not replaced by a note: the note gets a tab of its own beside it.
-        if (!existing && tab.url) {
+        if (!existing && (tab.url || tab.filePath)) {
           commit(updatePane(current, pane.id, (entry) => withTab(entry, noteId)));
           return;
         }
@@ -244,6 +249,21 @@ export function createWorkspaceStore({ persist }: { persist: boolean }) {
             options?.background ? { ...next, activeTab: pane.activeTab } : next,
           ),
         );
+      },
+
+      openFile(path) {
+        const current = layout();
+        const pane = activePaneOf(current);
+        const existing = pane.tabs.find((tab) => tab.filePath === path);
+        if (existing) {
+          commit(updatePane(current, pane.id, (entry) => ({ ...entry, activeTab: existing.id })));
+          return;
+        }
+        const next = withTab(pane, null);
+        next.tabs = next.tabs.map((tab) =>
+          tab.id === next.activeTab ? { ...tab, filePath: path } : tab,
+        );
+        commit(updatePane(current, pane.id, () => next));
       },
 
       openInOtherPane(noteId, direction) {

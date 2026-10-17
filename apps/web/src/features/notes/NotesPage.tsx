@@ -32,7 +32,13 @@ import { OpenVaultDialog } from './vault/OpenVaultDialog';
 import { DetailsPanel } from './workspace/DetailsPanel';
 import { EditorPanes } from './workspace/EditorPanes';
 import { useRouteSync } from './workspace/route-sync';
-import { POPOUT_WINDOW, selectActiveNoteId, useWorkspace } from './workspace/workspace-store';
+import {
+  activePaneOf,
+  activeTabOf,
+  POPOUT_WINDOW,
+  selectActiveNoteId,
+  useWorkspace,
+} from './workspace/workspace-store';
 
 /**
  * The Notes section (tasks 3.13, 23.02–23.05): the Files pane, one or two panes of tabbed notes, and
@@ -74,7 +80,8 @@ export function NotesPage() {
     enabled: activeNoteId !== null,
   });
   const current = active.data?.id === activeNoteId ? active.data : undefined;
-  const activePath = current?.path ?? null;
+  const activeFilePath = useWorkspace((state) => activeTabOf(activePaneOf(state)).filePath);
+  const activePath = activeFilePath ?? current?.path ?? null;
   const folder = activePath ? folderOf(activePath) : '';
   const actions = useFileActions(tree.data);
   const vault = useCurrentVault();

@@ -26,6 +26,7 @@ import { noteQuery } from '../api';
 import { externalUrl } from '../links/external';
 import { WebLink } from '../links/WebLink';
 import { useNotesUi } from '../notes-store';
+import { useWorkspace } from '../workspace/workspace-store';
 import { FileEmbed } from './FileEmbed';
 import { MermaidDiagram } from './MermaidDiagram';
 import { prepareMarkdown } from './prepare';
@@ -186,6 +187,29 @@ function PreviewLink({
       href={href}
       className={className}
       title={attribute(props, 'title') ?? undefined}
+      onClick={(event) => {
+        if (
+          !href?.startsWith('/api/files/') ||
+          event.button !== 0 ||
+          event.ctrlKey ||
+          event.metaKey
+        )
+          return;
+        try {
+          const path = href
+            .slice('/api/files/'.length)
+            .split('#')[0]
+            ?.split('/')
+            .map(decodeURIComponent)
+            .join('/');
+          if (path) {
+            event.preventDefault();
+            useWorkspace.getState().openFile(path);
+          }
+        } catch {
+          /* Keep the normal link behaviour if its encoded path is invalid. */
+        }
+      }}
       {...(external ? { target: '_blank', rel: 'noreferrer noopener' } : {})}
     >
       {children}

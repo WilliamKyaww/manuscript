@@ -7,6 +7,7 @@ import {
   createFolderEndpoint,
   createNoteEndpoint,
   FILES_PATH_PREFIX,
+  filePreviewEndpoint,
   getBookmarksEndpoint,
   getNoteEndpoint,
   getVersionEndpoint,
@@ -29,6 +30,7 @@ import {
   unlinkedMentionsEndpoint,
   updateNoteEndpoint,
   ValidationError,
+  VaultPathSchema,
 } from '@skb/core';
 import type { Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
@@ -36,10 +38,26 @@ import { type ApiRegistry, registerEndpoint } from '../../http/endpoint';
 import type { EntriesService, VaultFile } from './entries';
 import { isInlineSafe } from './media-types';
 import type { NotesModule } from './module';
+import { renderFileLayout } from './preview/layout';
+import { previewFile } from './preview/service';
 import { VERSION_RETENTION_DAYS } from './versions';
 
 export function registerNotesRoutes(registry: ApiRegistry, module: NotesModule): void {
   const { notes, entries, versions, bookmarks } = module;
+  registerEndpoint(registry, filePreviewEndpoint, ({ query }) => previewFile(entries, query.path));
+  registry.app.get('/api/file-layout', async (c) => {
+    const requested = VaultPathSchema.safeParse(c.req.query('path'));
+    if (!requested.success) throw new ValidationError('Choose a valid vault file.');
+    const bytes = await renderFileLayout(entries, requested.data);
+    return new Response(bytes, {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Cache-Control': 'no-store',
+        'Content-Security-Policy': "default-src 'none'; frame-ancestors 'self'",
+        'X-Frame-Options': 'SAMEORIGIN',
+      },
+    });
+  });
   registerEndpoint(registry, listNotesEndpoint, () => notes.tree());
   registerEndpoint(registry, getNoteEndpoint, ({ params }) => notes.get(params.id));
   registerEndpoint(registry, createNoteEndpoint, ({ body }) => notes.create(body));
