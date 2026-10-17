@@ -348,8 +348,8 @@ to the original. **Refresh** reloads the current preview after an external edit.
 | TXT | Readable, wrapped text |
 | CSV | Table with quoted fields/newlines; **Source** for original CSV |
 | JPEG/JPG, PNG, GIF, SVG, WebP | Image preview; GIF animation is retained; SVG is an image, not executable app content |
-| XLSX | Sheet selector and cell values; **Page layout** uses the workbook's print layout |
-| JSON | Formatted JSON, with **Source** for original text; invalid JSON explains the issue and shows text |
+| XLSX | Sheet selector (when there is more than one), cell values at their own row numbers and columns; **Page layout** uses the workbook's print layout |
+| JSON | Re-indented JSON with every number, key and repeated key kept exactly as written (a 20-digit id is not rounded); **Source** shows the original text; invalid JSON says so and shows its text |
 | XML | Highlighted XML text with a source view |
 | PY, JS, C | Syntax-highlighted source; no code execution |
 | HTML | Scriptless, isolated visual preview; **Source** shows markup. External resources are blocked |
@@ -363,10 +363,21 @@ Install LibreOffice from its official distribution on the machine running Manusc
 Windows, macOS and Linux locations are detected; an alternative executable can be set using the server
 environment variable `SKB_LIBREOFFICE_PATH` (absolute path). A missing renderer or conversion failure is
 explained in the tab, with Retry and Reading available. Conversion uses a private profile with macros and
-link updates disabled, one document at a time, with a 45-second deadline.
+link updates disabled and names the file format explicitly, so a damaged `.docx` or `.xlsx` is refused
+instead of being drawn as text (an old `.doc` is still recognised by its content, as Word does).
+
+Page layout takes about ten seconds to open (LibreOffice starts afresh with an empty private profile each time;
+the tab says so while it works). One conversion runs at a time and up to three more wait their turn; a fifth request is asked to try again.
+Closing the tab, or switching back to Reading, stops the conversion and everything LibreOffice started. A
+conversion that has not finished after 45 seconds is stopped and says so; leftovers in the temporary folder are
+removed straight away, or by the next conversion if Windows still holds them.
 
 Limits: Office inputs up to 16 MB; text/data inputs up to 2 MB; text output up to 500,000 characters;
 highlighting up to 50,000 characters (larger text stays readable); CSV/XLSX up to 1,000 rows and 100 columns
 per sheet, and XLSX up to 20 sheets. Spreadsheet formulas are not executed in Reading mode: saved results
-are shown, or the formula text when no saved result exists. Reading does not preserve workbook number/date
-formats or merged-cell styling; use Page layout for formatting. Embedded DOCX images are shown in Page layout.
+are shown, or the formula text when no saved result exists. A sheet's rows keep their own numbers (blank rows
+are not squeezed out); rows after 1,000 are not shown. Reading does not apply workbook number/date formats
+(a date appears as its stored serial number) or merged-cell styling; use Page layout for formatting. Embedded
+DOCX images are shown in Page layout. An image is drawn on a white backing, so a diagram with a transparent
+background stays legible in the dark theme. Page layout shows nothing for an empty file, and refuses a
+document whose layout would exceed 64 MB.

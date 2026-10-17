@@ -1,6 +1,6 @@
 import { type FilePreview, filePreviewEndpoint, fileUrl } from '@skb/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { lazy, Suspense, useState } from 'react';
+import { useState } from 'react';
 import Markdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import remarkGfm from 'remark-gfm';
@@ -9,8 +9,7 @@ import { ErrorState, LoadingState } from '../../../components/States';
 import { useApi } from '../../../lib/api/context';
 import { baseName } from '../tree/buildTree';
 import { LayoutPreview } from './LayoutPreview';
-
-const PdfViewer = lazy(() => import('../../library/viewer/PdfViewer'));
+import { PdfFrame } from './PdfFrame';
 
 export function FileTab({ path }: { path: string }) {
   const api = useApi();
@@ -89,7 +88,11 @@ export function FileTab({ path }: { path: string }) {
       {mode === 'layout' && <LayoutPreview path={path} />}
       {mode !== 'layout' && preview.isPending && <LoadingState label="Opening file" />}
       {mode !== 'layout' && preview.isError && (
-        <ErrorState message={preview.error.message} onRetry={() => void preview.refetch()} />
+        <ErrorState
+          title="This file cannot be previewed"
+          message={preview.error.message}
+          onRetry={() => void preview.refetch()}
+        />
       )}
       {mode !== 'layout' && preview.data && (
         <>
@@ -98,13 +101,11 @@ export function FileTab({ path }: { path: string }) {
               {preview.data.notice}
             </p>
           )}
-          <Suspense fallback={<LoadingState label="Opening PDF" />}>
-            {preview.data.kind === 'pdf' ? (
-              <PdfViewer url={url} page={page} onNavigate={setPage} />
-            ) : (
-              <Reading preview={preview.data} source={mode === 'source'} url={url} />
-            )}
-          </Suspense>
+          {preview.data.kind === 'pdf' ? (
+            <PdfFrame url={url} page={page} onNavigate={setPage} loading="Opening PDF" />
+          ) : (
+            <Reading preview={preview.data} source={mode === 'source'} url={url} />
+          )}
         </>
       )}
     </section>
@@ -142,7 +143,8 @@ function Reading({ preview, source, url }: { preview: FilePreview; source: boole
         <img
           src={url}
           alt={baseName(preview.path)}
-          className="mx-auto max-w-full"
+          // White behind it: a diagram with a transparent background and dark lines would vanish on a dark theme.
+          className="mx-auto max-w-full bg-white"
           onError={() => setImageError(true)}
         />
       </div>
@@ -158,22 +160,28 @@ function Reading({ preview, source, url }: { preview: FilePreview; source: boole
     return (
       <>
         <div className="flex shrink-0 items-center gap-2 border-b border-chrome-line px-3 py-2">
-          <label htmlFor={`sheet-${encodeURIComponent(preview.path)}`} className="text-sm">
-            Sheet
-          </label>
-          <select
-            id={`sheet-${encodeURIComponent(preview.path)}`}
-            className="rounded border border-divider bg-surface px-2 py-1 text-sm"
-            value={sheet}
-            onChange={(event) => setSheet(Number(event.target.value))}
-          >
-            {preview.sheets.map((item, index) => (
-              <option key={item.name} value={index}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-          <span className="text-xs text-muted">{current?.rows.length ?? 0} rows</span>
+          {preview.sheets.length > 1 && (
+            <>
+              <label htmlFor={`sheet-${encodeURIComponent(preview.path)}`} className="text-sm">
+                Sheet
+              </label>
+              <select
+                id={`sheet-${encodeURIComponent(preview.path)}`}
+                className="rounded border border-divider bg-surface px-2 py-1 text-sm"
+                value={sheet}
+                onChange={(event) => setSheet(Number(event.target.value))}
+              >
+                {preview.sheets.map((item, index) => (
+                  <option key={item.name} value={index}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+          <span className="text-xs text-muted">
+            {current?.rows.length ?? 0} {current?.rows.length === 1 ? 'row' : 'rows'}
+          </span>
         </div>
         <div className="min-h-0 flex-1 overflow-auto">
           <table

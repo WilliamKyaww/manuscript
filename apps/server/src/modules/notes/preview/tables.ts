@@ -12,8 +12,10 @@ import { decodeXml, readZipEntries, resolvePartPath } from '../../sources/parser
 
 const ROWS = 1000;
 const COLUMNS = 100;
-export const TABLE_NOTICE =
-  'Reading view shows up to 1,000 rows and 100 columns per sheet. Formula results use the values saved in the workbook.';
+export const CSV_NOTICE =
+  'Reading view shows up to 1,000 rows and 100 columns. Source shows the original text.';
+export const WORKBOOK_NOTICE =
+  'Reading view shows rows 1 to 1,000 and up to 100 columns of each sheet, with values as stored: formulas are not recalculated and dates and number formats are not applied. Page layout shows the formatting.';
 
 export function csvRows(text: string): string[][] {
   const rows: string[][] = [];
@@ -47,6 +49,22 @@ export function csvRows(text: string): string[][] {
   return rows;
 }
 
+/**
+ * The text up to the element that follows the first `count` of them. Only the first rows and strings are
+ * ever shown, and reading 8 MB of sheet XML blocks the server for about three seconds, so the rest is
+ * not parsed at all. (The XML reader accepts the unclosed elements this leaves.)
+ */
+function leading(xml: string, element: string, count: number): string {
+  const open = new RegExp(`<(?:[\\w.-]+:)?${element}[\\s>/]`, 'g');
+  let seen = 0;
+  for (let match = open.exec(xml); match; match = open.exec(xml))
+    if (++seen > count) return xml.slice(0, match.index);
+  return xml;
+}
+
+/** A shared string is looked up once the rows are read, so that only the strings they use are parsed. */
+type Cell = string | { shared: number };
+
 export function workbookSheets(bytes: Uint8Array): FilePreview['sheets'] {
   const files = readZipEntries(
     bytes,
@@ -62,25 +80,33 @@ export function workbookSheets(bytes: Uint8Array): FilePreview['sheets'] {
       maxRatio: 1000,
     },
   );
-  const xml = (name: string) => parseXml(decodeXml(files.get(name)) ?? '', 'workbook');
-  const workbook = xml('xl/workbook.xml');
+  const text = (name: string) => decodeXml(files.get(name)) ?? '';
+  const workbook = parseXml(text('xl/workbook.xml'), 'workbook');
   if (!find(workbook, 'workbook')) throw new Error('The workbook contents are missing.');
-  const strings = findAll(xml('xl/sharedStrings.xml'), 'si').map(textContent);
   const relations = new Map(
-    findAll(xml('xl/_rels/workbook.xml.rels'), 'Relationship')
+    findAll(parseXml(text('xl/_rels/workbook.xml.rels'), 'workbook'), 'Relationship')
       .filter((node) => attribute(node, 'TargetMode') !== 'External')
       .map((node) => [
         attribute(node, 'Id'),
         resolvePartPath('xl', attribute(node, 'Target') ?? ''),
       ]),
   );
-  return findAll(workbook, 'sheet')
+  let lastString = -1;
+  const sheets = findAll(workbook, 'sheet')
     .slice(0, 20)
     .map((sheet) => {
       const target = relations.get(attribute(sheet, 'id'));
-      const rows: string[][] = [];
-      for (const row of findAll(xml(target ?? ''), 'row').slice(0, ROWS)) {
-        const cells: string[] = [];
+      // A row's place is its address, not its position among the row elements: blank rows are
+      // usually left out of the file, and the numbers shown beside the cells must match the sheet.
+      const rows: Cell[][] = [];
+      let previous = 0;
+      const sheetXml = parseXml(leading(text(target ?? ''), 'row', ROWS), 'workbook');
+      for (const row of findAll(sheetXml, 'row')) {
+        const declared = Number(attribute(row, 'r'));
+        const number = Number.isInteger(declared) && declared > previous ? declared : previous + 1;
+        if (number > ROWS) break;
+        previous = number;
+        const cells: Cell[] = [];
         for (const cell of elements(row, 'c')) {
           const reference = attribute(cell, 'r')?.match(/^[A-Z]+/i)?.[0];
           let column = reference ? 0 : cells.length + 1;
@@ -92,10 +118,13 @@ export function workbookSheets(bytes: Uint8Array): FilePreview['sheets'] {
           const raw = value ? textContent(value) : '';
           const type = attribute(cell, 't');
           const formula = child(cell, 'f');
-          cells[column - 1] =
-            type === 's'
-              ? (strings[Number(raw)] ?? '')
-              : type === 'inlineStr'
+          if (type === 's') {
+            const shared = Number(raw);
+            if (Number.isInteger(shared) && shared >= 0) lastString = Math.max(lastString, shared);
+            cells[column - 1] = { shared };
+          } else
+            cells[column - 1] =
+              type === 'inlineStr'
                 ? textContent(child(cell, 'is') ?? cell)
                 : type === 'b'
                   ? raw === '1'
@@ -103,8 +132,21 @@ export function workbookSheets(bytes: Uint8Array): FilePreview['sheets'] {
                     : 'FALSE'
                   : raw || (formula ? `=${textContent(formula)}` : '');
         }
-        rows.push(Array.from({ length: cells.length }, (_, index) => cells[index] ?? ''));
+        rows[number - 1] = Array.from({ length: cells.length }, (_, index) => cells[index] ?? '');
       }
-      return { name: attribute(sheet, 'name') ?? 'Sheet', rows };
+      return {
+        name: attribute(sheet, 'name') ?? 'Sheet',
+        rows: Array.from({ length: rows.length }, (_, index) => rows[index] ?? []),
+      };
     });
+  const strings = findAll(
+    parseXml(leading(text('xl/sharedStrings.xml'), 'si', lastString + 1), 'workbook'),
+    'si',
+  ).map(textContent);
+  return sheets.map(({ name, rows }) => ({
+    name,
+    rows: rows.map((row) =>
+      row.map((cell) => (typeof cell === 'string' ? cell : (strings[cell.shared] ?? ''))),
+    ),
+  }));
 }

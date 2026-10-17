@@ -3,8 +3,12 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { _electron as electron, expect, test } from '@playwright/test';
-import { makeOfficeDocument, makeWorkbook } from '../apps/server/test/fixtures/file-previews';
+import { _electron as electron, expect, type Page, test } from '@playwright/test';
+import {
+  makeOfficeDocument,
+  makeSparseWorkbook,
+  makeWorkbook,
+} from '../apps/server/test/fixtures/file-previews';
 import { makePdf } from '../apps/server/test/fixtures/sources/builders';
 import { seriousViolations } from './axe';
 import { E2E_TOKEN } from './constants';
@@ -12,6 +16,82 @@ import { electronExecutable, isolatedEnvironment, removeQuietly } from './deskto
 
 const office =
   process.env.SKB_LIBREOFFICE_PATH ?? 'C:/Program Files/LibreOffice/program/soffice.exe';
+
+/** A real binary .doc, which nothing else here can write: LibreOffice saves a .docx as one. */
+function legacyWordFile(docx: Uint8Array): Buffer | null {
+  if (!existsSync(office)) return null;
+  const temporary = mkdtempSync(path.join(tmpdir(), 'skb-e2e-preview-doc-'));
+  try {
+    writeFileSync(path.join(temporary, 'preview.docx'), docx);
+    execFileSync(
+      office,
+      [
+        `-env:UserInstallation=${pathToFileURL(path.join(temporary, 'profile')).href}`,
+        '--headless',
+        '--convert-to',
+        'doc:MS Word 97',
+        '--outdir',
+        temporary,
+        path.join(temporary, 'preview.docx'),
+      ],
+      { windowsHide: true, timeout: 45_000 },
+    );
+    return readFileSync(path.join(temporary, 'preview.doc'));
+  } finally {
+    rmSync(temporary, { recursive: true, force: true });
+  }
+}
+/** Pictures of what the student sees, in both themes, when SKB_SCREENSHOTS names a folder. */
+async function capture(page: Page, name: string) {
+  const folder = process.env.SKB_SCREENSHOTS;
+  if (!folder) return;
+  mkdirSync(folder, { recursive: true });
+  for (const theme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: theme });
+    await page.waitForTimeout(150);
+    await page.screenshot({ path: path.join(folder, `files-${name}-${theme}.png`) });
+  }
+  await page.emulateMedia({ colorScheme: null });
+}
+
+/** Serious WCAG violations in the preview, in both themes (the viewport is grown to fit what it holds). */
+async function expectAccessible(page: Page) {
+  const size = page.viewportSize();
+  for (const theme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: theme });
+    expect(
+      await seriousViolations(page, { include: '[data-file-preview]', inPageOnly: true }),
+      `accessibility in the ${theme} theme`,
+    ).toEqual([]);
+  }
+  await page.emulateMedia({ colorScheme: null });
+  if (size) await page.setViewportSize(size);
+}
+
+/**
+ * The viewer is a thumbnail pane beside a pages pane. Placed in a column they stack at twice the
+ * height and push the file's own header out of view, which a "some canvas is visible" check misses
+ * because the thumbnail is a canvas too.
+ */
+async function expectPagesBesideThumbnails(page: Page) {
+  const frame = page.locator('[data-file-preview] [data-pdf-frame]');
+  await expect(frame.locator('section[aria-label^="Page "] canvas').first()).toBeVisible({
+    timeout: 60_000,
+  });
+  const [thumbnails, pages, header, area] = await Promise.all([
+    frame.locator('[data-pane]').first().boundingBox(),
+    frame.locator('[data-pane]').nth(1).boundingBox(),
+    page.locator('[data-file-preview] > header').boundingBox(),
+    frame.boundingBox(),
+  ]);
+  if (!thumbnails || !pages || !header || !area) throw new Error('The viewer is not laid out');
+  expect(pages.x).toBeGreaterThanOrEqual(thumbnails.x + thumbnails.width - 1);
+  expect(Math.abs(pages.y - thumbnails.y)).toBeLessThan(2);
+  expect(pages.height).toBeLessThanOrEqual(area.height + 1);
+  expect(header.y).toBeGreaterThanOrEqual(0);
+  await expect(page.locator('[data-file-preview] > header h2')).toBeInViewport();
+}
+
 test('file tabs render documents, data, images and safe HTML; mode switches preserve notes', async ({
   page,
 }) => {
@@ -71,28 +151,8 @@ test('file tabs render documents, data, images and safe HTML; mode switches pres
     }, mime);
     documents[`preview.${extension}`] = Buffer.from(data ?? '', 'base64');
   }
-  if (existsSync(office)) {
-    const temporary = mkdtempSync(path.join(tmpdir(), 'skb-e2e-preview-doc-'));
-    try {
-      writeFileSync(path.join(temporary, 'preview.docx'), documents['preview.docx'] ?? '');
-      execFileSync(
-        office,
-        [
-          `-env:UserInstallation=${pathToFileURL(path.join(temporary, 'profile')).href}`,
-          '--headless',
-          '--convert-to',
-          'doc:MS Word 97',
-          '--outdir',
-          temporary,
-          path.join(temporary, 'preview.docx'),
-        ],
-        { windowsHide: true, timeout: 45_000 },
-      );
-      documents['preview.doc'] = readFileSync(path.join(temporary, 'preview.doc'));
-    } finally {
-      rmSync(temporary, { recursive: true, force: true });
-    }
-  }
+  const legacyDoc = legacyWordFile(documents['preview.docx'] as Uint8Array);
+  if (legacyDoc) documents['preview.doc'] = legacyDoc;
   const paths = new Map<string, string>();
   for (const [name, content] of Object.entries(documents))
     paths.set(name, await upload(name, content));
@@ -101,6 +161,19 @@ test('file tabs render documents, data, images and safe HTML; mode switches pres
   const openFile = async (name: string) => {
     await page.getByRole('treeitem', { name, exact: true }).click();
     await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+    // With a dozen files open the row of tabs scrolls: the open one must not be out of sight.
+    await expect
+      .poll(async () => {
+        const row = await page.locator('[data-tab-bar] nav').first().boundingBox();
+        const tab = await page
+          .locator('[data-tab-bar] [aria-current="page"]')
+          .first()
+          .boundingBox();
+        return Boolean(
+          row && tab && tab.x >= row.x - 1 && tab.x + tab.width <= row.x + row.width + 1,
+        );
+      })
+      .toBe(true);
   };
   await openFile('preview.csv');
   await expect(page.getByRole('table')).toContainText('Tomato, red');
@@ -110,17 +183,10 @@ test('file tabs render documents, data, images and safe HTML; mode switches pres
   expect(
     await seriousViolations(page, { include: '[data-file-preview]', inPageOnly: true }),
   ).toEqual([]);
+  await capture(page, 'csv');
   if (process.env.SKB_SCREENSHOTS) {
-    mkdirSync(process.env.SKB_SCREENSHOTS, { recursive: true });
-    for (const theme of ['light', 'dark'] as const) {
-      await page.emulateMedia({ colorScheme: theme });
-      for (const width of [1280, 760]) {
-        await page.setViewportSize({ width, height: 800 });
-        await page.screenshot({
-          path: path.join(process.env.SKB_SCREENSHOTS, `files-csv-${theme}-${width}.png`),
-        });
-      }
-    }
+    await page.setViewportSize({ width: 760, height: 800 });
+    await capture(page, 'csv-760');
     await page.setViewportSize({ width: 1280, height: 800 });
   }
   for (const name of [
@@ -133,10 +199,12 @@ test('file tabs render documents, data, images and safe HTML; mode switches pres
   ]) {
     await openFile(name);
     await expect(page.locator('[data-file-preview] pre')).not.toBeEmpty();
+    await capture(page, name.replace('preview.', 'text-'));
   }
   await openFile('preview.html');
   const html = page.frameLocator('iframe[title="HTML preview: preview.html"]');
   await expect(html.getByRole('heading', { name: 'HTML document' })).toBeVisible();
+  await capture(page, 'html');
   expect(
     await html
       .locator('body')
@@ -151,9 +219,12 @@ test('file tabs render documents, data, images and safe HTML; mode switches pres
           .evaluate((image: HTMLImageElement) => image.naturalWidth),
       )
       .toBeGreaterThan(0);
+    if (extension === 'svg') await capture(page, 'image');
   }
   await openFile('preview.pdf');
-  await expect(page.locator('[data-file-preview] canvas').first()).toBeVisible();
+  await expectPagesBesideThumbnails(page);
+  await expectAccessible(page);
+  await capture(page, 'pdf');
   for (const name of [
     'preview.docx',
     'preview.xlsx',
@@ -167,21 +238,15 @@ test('file tabs render documents, data, images and safe HTML; mode switches pres
       await page.getByLabel('Sheet', { exact: true }).selectOption('1');
       await expect(page.getByRole('table')).toContainText('Overall result');
     }
+    await capture(page, `${name.split('.')[1]}-reading`);
+    if (name !== 'preview.doc') await expectAccessible(page);
     await page.getByRole('button', { name: 'Page layout', exact: true }).click();
-    if (existsSync(office))
-      await expect(page.locator('[data-file-preview] canvas').first()).toBeVisible({
-        timeout: 60_000,
-      });
-    else await expect(page.locator('[data-file-preview]')).toContainText('needs LibreOffice');
-    if (process.env.SKB_SCREENSHOTS && name === 'preview.docx')
-      await page.screenshot({
-        path: path.join(process.env.SKB_SCREENSHOTS, 'files-word-layout.png'),
-      });
+    if (existsSync(office)) {
+      await expectPagesBesideThumbnails(page);
+      if (name === 'preview.docx') await expectAccessible(page);
+      await capture(page, `${name.split('.')[1]}-layout`);
+    } else await expect(page.locator('[data-file-preview]')).toContainText('needs LibreOffice');
     await page.getByRole('button', { name: 'Reading', exact: true }).click();
-    if (process.env.SKB_SCREENSHOTS && name === 'preview.docx')
-      await page.screenshot({
-        path: path.join(process.env.SKB_SCREENSHOTS, 'files-word-reading.png'),
-      });
   }
   await page.reload();
   await expect(page.locator('[data-file-preview]')).toBeVisible();
@@ -197,6 +262,76 @@ test('file tabs render documents, data, images and safe HTML; mode switches pres
   );
   await page.getByRole('treeitem', { name: 'Beside file previews', exact: true }).click();
   await expect(page.locator('.cm-content')).toContainText('Notes still work.');
+});
+
+test('files that cannot be shown say why, and data keeps its numbers and row addresses', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.goto(`/auth?token=${E2E_TOKEN}&next=/notes`);
+  const upload = async (name: string, bytes: string | Uint8Array) => {
+    const response = await page.request.post('/api/attachments', {
+      headers: { Authorization: `Bearer ${E2E_TOKEN}` },
+      multipart: {
+        file: { name, mimeType: 'application/octet-stream', buffer: Buffer.from(bytes) },
+      },
+    });
+    expect(response.status()).toBe(201);
+  };
+  await upload('states-empty.txt', '');
+  await upload('states-damaged.docx', 'PK this is not a Word document');
+  await upload('states-unknown.bin', 'unknown');
+  await upload('states-huge.txt', 'x'.repeat(2 * 1024 * 1024 + 1));
+  await upload('states-ids.json', '{"id":12345678901234567890,"ratio":1.0}');
+  await upload('states-sparse.xlsx', makeSparseWorkbook());
+  await page.getByRole('button', { name: 'Show attachments', exact: true }).click();
+  await page.getByRole('treeitem', { name: 'Attachments', exact: true }).click();
+  const openFile = async (name: string) => {
+    await page.getByRole('treeitem', { name, exact: true }).click();
+    await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  };
+  const alert = page.locator('[data-file-preview] [role="alert"]');
+
+  await openFile('states-unknown.bin');
+  await expect(page.locator('[data-file-preview]')).toContainText('A preview is not available');
+  await expectAccessible(page);
+  await capture(page, 'state-unsupported');
+
+  await openFile('states-huge.txt');
+  await expect(alert).toContainText('too large to preview');
+  await expect(alert.getByRole('heading')).toHaveText('This file cannot be previewed');
+  await expect(page.getByRole('link', { name: 'Download' })).toBeVisible();
+  await expectAccessible(page);
+  await capture(page, 'state-too-large');
+
+  await openFile('states-damaged.docx');
+  await expect(alert).toContainText('is damaged or is not a valid Office file');
+  await page.getByRole('button', { name: 'Page layout', exact: true }).click();
+  await expect(alert).toContainText(
+    existsSync(office) ? 'could not be prepared' : 'needs LibreOffice',
+    { timeout: 60_000 },
+  );
+  await expect(alert.getByRole('heading')).toHaveText('Page layout is not available');
+  // The way back to the readable view is still there.
+  await expect(page.getByRole('button', { name: 'Reading', exact: true })).toBeInViewport();
+  await expectAccessible(page);
+  await capture(page, 'state-layout-failed');
+
+  await openFile('states-ids.json');
+  await expect(page.locator('[data-file-preview]')).toContainText('12345678901234567890');
+  await expect(page.locator('[data-file-preview]')).toContainText('"ratio": 1.0');
+
+  await openFile('states-sparse.xlsx');
+  const table = page.getByRole('table', { name: 'Results' });
+  await expect(table.getByRole('rowheader')).toHaveText(['1', '2', '3', '4', '5']);
+  await expect(table.getByRole('row', { name: /^3 Third row/ })).toBeVisible();
+  await expect(table.getByRole('row', { name: /^5 .*5$/ })).toBeVisible();
+  await expectAccessible(page);
+  await capture(page, 'xlsx-sparse');
+
+  await openFile('states-empty.txt');
+  await expect(page.locator('[data-file-preview]')).toContainText('This file is empty.');
+  await expectAccessible(page);
 });
 
 test('desktop file tabs render an attachment-only vault and switch Office viewing modes', async () => {
@@ -228,10 +363,7 @@ test('desktop file tabs render an attachment-only vault and switch Office viewin
       'Desktop file preview content.',
     );
     await page.getByRole('button', { name: 'Page layout', exact: true }).click();
-    if (existsSync(office))
-      await expect(page.locator('[data-file-preview] canvas').first()).toBeVisible({
-        timeout: 60_000,
-      });
+    if (existsSync(office)) await expectPagesBesideThumbnails(page);
     else await expect(page.locator('[data-file-preview]')).toContainText('needs LibreOffice');
     await page.getByRole('button', { name: 'Reading', exact: true }).click();
     await expect(page.locator('[data-file-preview]')).toContainText(
@@ -244,3 +376,64 @@ test('desktop file tabs render an attachment-only vault and switch Office viewin
     removeQuietly(dir);
   }
 });
+
+/** `desktop:build` (our own layout) and `desktop:dist` (electron-builder's, which the installer holds). */
+const packagedBuilds = [
+  {
+    name: 'the unpacked build',
+    folder: `${process.platform}-unpacked`,
+    how: 'npm run desktop:build',
+  },
+  { name: "the installer's payload", folder: 'win-unpacked', how: 'npm run desktop:dist' },
+];
+const executable = process.platform === 'win32' ? 'Manuscript.exe' : 'Manuscript';
+
+for (const build of packagedBuilds) {
+  const packaged = path.resolve('apps/desktop/release', build.folder, executable);
+  test(`${build.name} reads a legacy Word file in its worker and prepares a page layout`, async () => {
+    test.skip(!existsSync(packaged), `Run "${build.how}" first.`);
+    test.skip(!existsSync(office), 'LibreOffice is needed to make a binary .doc.');
+    test.setTimeout(180_000);
+    const dir = mkdtempSync(path.join(tmpdir(), 'skb-e2e-packaged-files-'));
+    const vault = path.join(dir, 'vault');
+    mkdirSync(vault);
+    const docx = makeOfficeDocument([
+      { heading: 1, text: 'Packaged report' },
+      { p: 'Legacy Word text from the packaged worker.' },
+    ]);
+    writeFileSync(path.join(vault, 'legacy.doc'), legacyWordFile(docx) ?? '');
+    writeFileSync(path.join(vault, 'results.xlsx'), makeWorkbook());
+    // The worker and the bundled word-extractor sit beside the server in the package.
+    expect(
+      existsSync(path.join(path.dirname(packaged), 'resources/server/file-preview-worker.mjs')),
+    ).toBe(true);
+    const app = await electron.launch({
+      executablePath: packaged,
+      args: [],
+      cwd: dir,
+      env: isolatedEnvironment(dir, vault),
+    });
+    try {
+      const page = await app.firstWindow();
+      await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible({
+        timeout: 90_000,
+      });
+      expect(await app.evaluate(({ app: electronApp }) => electronApp.isPackaged)).toBe(true);
+      await page.goto(`${new URL(page.url()).origin}/notes`);
+      await page.getByRole('button', { name: 'Show attachments', exact: true }).click();
+      for (const [name, text] of [
+        ['legacy.doc', 'Legacy Word text from the packaged worker.'],
+        ['results.xlsx', 'Tomato'],
+      ]) {
+        await page.getByRole('treeitem', { name, exact: true }).click();
+        await expect(page.locator('[data-file-preview]')).toContainText(text as string);
+        await page.getByRole('button', { name: 'Page layout', exact: true }).click();
+        await expectPagesBesideThumbnails(page);
+        await page.getByRole('button', { name: 'Reading', exact: true }).click();
+      }
+    } finally {
+      await app.close();
+      removeQuietly(dir);
+    }
+  });
+}

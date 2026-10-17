@@ -48,7 +48,8 @@ export function registerNotesRoutes(registry: ApiRegistry, module: NotesModule):
   registry.app.get('/api/file-layout', async (c) => {
     const requested = VaultPathSchema.safeParse(c.req.query('path'));
     if (!requested.success) throw new ValidationError('Choose a valid vault file.');
-    const bytes = await renderFileLayout(entries, requested.data);
+    // A closed tab or a changed mode abandons the request, and with it the conversion.
+    const bytes = await renderFileLayout(entries, requested.data, { signal: c.req.raw.signal });
     return new Response(bytes, {
       headers: {
         'Content-Type': 'application/pdf',

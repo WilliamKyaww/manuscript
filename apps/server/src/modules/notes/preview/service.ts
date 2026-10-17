@@ -1,9 +1,11 @@
 import { open } from 'node:fs/promises';
 import { type FilePreview, FilePreviewSchema, ValidationError } from '@skb/core';
 import { docxParser } from '../../sources/parsers/docx';
+import { SourceParseError } from '../../sources/parsers/errors';
 import type { EntriesService } from '../entries';
+import { formatJson } from './json';
 import { legacyWord } from './legacy-word';
-import { csvRows, TABLE_NOTICE, workbookSheets } from './tables';
+import { CSV_NOTICE, csvRows, WORKBOOK_NOTICE, workbookSheets } from './tables';
 
 const LANGUAGES: Record<string, string> = {
   py: 'python',
@@ -28,9 +30,10 @@ export async function previewFile(entries: EntriesService, path: string): Promis
     return { ...result, kind: 'image' };
   const office = ['doc', 'docx', 'xlsx'].includes(extension);
   if (!office && extension !== 'txt' && extension !== 'csv' && !LANGUAGES[extension]) return result;
-  if (file.sizeBytes > (office ? 16 : 2) * 1024 * 1024)
+  const limitMb = office ? 16 : 2;
+  if (file.sizeBytes > limitMb * 1024 * 1024)
     throw new ValidationError(
-      'This file is too large to preview. Download or open the original instead.',
+      `This file is too large to preview (${limitMb} MB is the most for this type). Download it or open the original instead.`,
     );
   const handle = await open(file.absolute, 'r');
   let bytes: Buffer;
@@ -44,7 +47,7 @@ export async function previewFile(entries: EntriesService, path: string): Promis
   }
   try {
     if (extension === 'xlsx')
-      return { ...result, kind: 'table', sheets: workbookSheets(bytes), notice: TABLE_NOTICE };
+      return { ...result, kind: 'table', sheets: workbookSheets(bytes), notice: WORKBOOK_NOTICE };
     if (extension === 'docx') {
       const document = await docxParser.parse({
         bytes,
@@ -77,14 +80,13 @@ export async function previewFile(entries: EntriesService, path: string): Promis
         : bytes[0] === 0xfe && bytes[1] === 0xff
           ? 'utf-16be'
           : 'utf-8';
-    let text = new TextDecoder(encoding, { fatal: true }).decode(bytes);
-    if (text.includes('\0')) throw new Error('Binary content');
-    let notice: string | null =
-      text.length > TEXT_LIMIT
-        ? 'Preview limited to the first 500,000 characters. The original file is unchanged.'
-        : null;
-    text = text.slice(0, TEXT_LIMIT);
-    const sourceText = text;
+    const full = new TextDecoder(encoding, { fatal: true }).decode(bytes);
+    if (full.includes('\0')) throw new Error('Binary content');
+    const cutShort =
+      'Preview limited to the first 500,000 characters. The original file is unchanged.';
+    let notice: string | null = full.length > TEXT_LIMIT ? cutShort : null;
+    const sourceText = full.slice(0, TEXT_LIMIT);
+    let text = sourceText;
     if (extension === 'csv')
       return {
         ...result,
@@ -92,11 +94,14 @@ export async function previewFile(entries: EntriesService, path: string): Promis
         text,
         sourceText,
         sheets: [{ name: 'Data', rows: csvRows(text) }],
-        notice: TABLE_NOTICE,
+        notice: notice ? `${CSV_NOTICE} ${notice}` : CSV_NOTICE,
       };
     if (extension === 'json') {
       try {
-        text = JSON.stringify(JSON.parse(text), null, 2).slice(0, TEXT_LIMIT);
+        // Formatted from the whole file: a file cut at 500,000 characters would no longer be JSON.
+        const formatted = formatJson(full, TEXT_LIMIT);
+        text = formatted.slice(0, TEXT_LIMIT);
+        notice = formatted.length > TEXT_LIMIT ? cutShort : null;
       } catch {
         notice = 'This is not valid JSON. Its original text is shown.';
       }
@@ -111,6 +116,9 @@ export async function previewFile(entries: EntriesService, path: string): Promis
     };
   } catch (error) {
     if (error instanceof ValidationError) throw error;
+    // The parsers word their reasons for the student (too large, damaged, protected).
+    if (error instanceof SourceParseError)
+      throw new ValidationError(`${error.message} Open the original instead.`);
     throw new ValidationError(
       'This file could not be previewed. It may be damaged, encrypted or use an unsupported encoding. Open the original instead.',
     );

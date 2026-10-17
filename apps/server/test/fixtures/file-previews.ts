@@ -29,3 +29,12 @@ export function makeWorkbook(): Uint8Array {
     Object.fromEntries(Object.entries(parts).map(([name, xml]) => [name, strToU8(xml)])),
   );
 }
+
+/** A sheet whose first rows are blank and whose data starts at row 3, with another block at row 5. */
+export function makeSparseWorkbook(): Uint8Array {
+  const files = unzipSync(makeWorkbook());
+  files['xl/worksheets/sheet1.xml'] = strToU8(
+    `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="3"><c r="A3" t="inlineStr"><is><t>Third row</t></is></c></row><row r="5"><c r="B5"><v>5</v></c></row></sheetData></worksheet>`,
+  );
+  return zipSync(files);
+}

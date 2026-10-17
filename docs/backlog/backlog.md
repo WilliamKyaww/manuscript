@@ -38,9 +38,9 @@ _Last reviewed: 15 October 2026 (Phase 27 browser follow-up; unrelated entries r
 
 - [~] **B-KM-38** Preview non-Markdown files inside workspace tabs rather than leaving the app.
   User-requested Phase 28, including Reading / Page layout modes and a local LibreOffice renderer.
-  Verify (1,075 tests), all-format browser, desktop and real conversion checks pass; see 17 October handover.
-  - Remaining: JSON/sparse-sheet fidelity review, failure/limit coverage, conversion timeout cleanup review,
-    screenshot inspection, wider E2E and packaging. Paused at the user's request for Claude continuation.
+  Implemented and hardened (JSON numbers and sheet row addresses kept as written, process-tree cleanup,
+  queueing and cancellation, explicit failure and size messages); see the 17 October journals and the
+  phase checklist for what was verified and what remains. Known limits are B-KM-39 to B-KM-42.
 
 | ID | Item | Why | Origin |
 |---|---|---|---|
@@ -172,6 +172,11 @@ _Last reviewed: 15 October 2026 (Phase 27 browser follow-up; unrelated entries r
 | B-KM-31 | AI answers on a selection streamed as they are written, and more than one at a time | The answer comes whole after a few seconds; a second request replaces the first | Phase 26 |
 | B-KM-32 | Titles of GitHub issues and pull requests in mentions, fetched only when the student allows it | Mentions are named from the address (`repo#12`), as nothing is fetched | Phase 26 |
 | B-KM-33 | The web pane: find in page, zoom, downloads listed, and a reading mode for articles | The pane is a plain browser view; the system browser has these | Phase 26 |
+| B-KM-39 | Reading view for a `.doc` that is really OOXML, RTF or HTML (Word saves these under that name) | Page layout shows them, as LibreOffice recognises the content; Reading says it is not a binary Word document | Phase 28 |
+| B-KM-40 | Reading view of workbooks: apply number and date formats, show merged cells and hidden sheets, and reach rows past 1,000 and columns past 100 | Reading shows values as stored (a date is a serial number); Page layout has the formatting | Phase 28 |
+| B-KM-41 | Read the first rows of a workbook whose sheet XML expands past 8 MB (roughly 100,000 rows) | Such a workbook is refused in Reading with the reason; it is the size of a dataset a student may well keep as .xlsx. A streaming reader would show its first rows whatever its size | Phase 28 |
+| B-KM-42 | Page layout of a very large document: show pages as they are converted, and offer a page range | A conversion is all-or-nothing within 45 seconds and the PDF is sent whole (64 MB at most) | Phase 28 |
+| B-KM-43 | Keep LibreOffice's private profile between conversions (one per server process, deleted after any stopped or failed run) so Page layout opens in about 4 s instead of 11 s | Measured on 17 October: a new profile costs about 11 s per conversion, a reused one about 4 s. It trades the fresh, private profile of ADR-0048 for speed, and a stale lock after a killed run needs handling, so it needs the student's decision | Phase 28 |
 
 ## Platform (PL)
 

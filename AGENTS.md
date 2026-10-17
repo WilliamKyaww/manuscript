@@ -90,6 +90,9 @@ All verified on 4 October 2026 (Phase 1):
   plain Node (`require('electron').app` is undefined). Unset it before launching Electron.
 - `NoDefaultCurrentDirectoryInExePath=1` stops `cmd.exe` finding `run-web.bat` by a relative name; call
   batch files by their full path in automation (double-clicking in Explorer is unaffected).
+- **After the project folder is renamed or moved**, `node_modules/@skb/*` still link to the old path and nothing resolves
+  `@skb/core` ("Cannot find package"). `npm install --prefer-offline` re-links the four workspaces without touching the
+  lockfile (Phase 28, 17 October).
 - Another local project may already use Vite's default port 5173 — this project's dev server uses 5317.
   E2E ports: 4399 for the shared Playwright server, and 4398 down to 4386 for the tests that run a
   server of their own (`e2e/server.ts`, which can pass extra environment such as
@@ -133,7 +136,7 @@ All verified on 4 October 2026 (Phase 1):
   `%APPDATA%\StudyKnowledgeBase`): set `SKB_VAULT` and `SKB_DATA_DIR` to temporary folders.
 - The product is **Manuscript** (ADR-0027), but internal identifiers keep the `skb` prefix (`.skb/`,
   `skb-id`, `@skb/*`, `SKB_*`). Do not rename them without a vault migration and a new ADR. The local
-  folder may still be called `study-knowledge-base` until the user renames it.
+  folder is now called `Manuscript` (it was `study-knowledge-base`).
 - Python's `write_text` on Windows writes CRLF line endings unless given `newline='\n'`; Biome then
   rejects the file. Git normalises committed text to LF, but the working copy must be LF too.
 - Shell here-documents in the agent's Bash tool can collapse a double backslash to a single one,

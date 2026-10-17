@@ -1,17 +1,19 @@
 # State — Manuscript
 
-_Last updated: 17 October 2026 — GPT-6 Astra (user-requested Phase 28 handover)._
+_Last updated: 17 October 2026 — Claude Sonnet 5.5 (Phase 28 hardening and verification)._
 
 ## Current phase
 
 **Active user-requested work: Phase 28 — read-only file previews**, branch `phase/28-file-previews`.
 Reading / Page layout toggles were requested for Word and spreadsheets; the user chose LibreOffice.
-Paused at the user's request for Claude to continue. Implementation exists and `npm run verify` passed
-(175 files / 1,075 tests, type-check, lint, build, smoke). All-format browser and desktop preview E2E passed
-(2 tests), including real LibreOffice layouts. Final hardening, screenshot inspection, wider E2E and packaging
-remain; this is not a completed phase or release. LibreOffice 26.8.1.1 is installed separately.
-See the [checklist](docs/checklist/phase-28-file-previews.md) and
-[current Claude handover](docs/journal/2026-10-17-gpt-6-astra.md). No Phase 28 installer has been produced.
+The implementation is committed (`8d91184`); the hardening, tests and docs of 17 October are uncommitted on top of it.
+`npm run verify` passes (175 files / 1,086 tests, type-check, lint, build, smoke). Full E2E: 160 passed, 3 optional
+cases skipped, **1 failed** — the desktop shell's keyboard-zoom check, which needs the window in focus and failed four
+of six runs of unchanged code (nothing in `apps/desktop` changed). Not merged or released. LibreOffice 26.8.1.1 is
+installed separately. See the [checklist](docs/checklist/phase-28-file-previews.md) and the
+[17 October journal](docs/journal/2026-10-17-claude-sonnet-5.5.md).
+**Candidate installer, not installed:** `appsdesktopeleaseManuscript-Setup-1.4.0-FilePreviews.exe` (Phase 27 + 28,
+unsigned, SHA-256 `1d0d8eaa…608db4a`); `…-1.4.0-WebView2.exe` holds Phase 27 only.
 
 **Phase 27 — web pane placement and verification feedback**, implemented and automatically verified on
 `phase/27-web-pane-right`, with live Windows WebView2 article access and automated/package checks confirmed;
@@ -211,8 +213,8 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
   palette (`Ctrl+K`), shortcuts (`?`), session gate, toasts; every page is its own code chunk.
 - **Commands:** `npm run dev`, `npm run build`, `npm start`, `npm run verify`, `npm run test:e2e`,
   `npm run test:perf`, **`run-web.bat`**.
-- **Tests:** 1,056 Vitest tests and 154 passing Playwright tests, plus 3 opt-in screenshot cases skipped
-  in the full Phase 27 run (including Electron and the rebuilt unpacked application). Coverage includes sticky headers on every route and pane,
+- **Tests:** 1,086 Vitest tests (Phase 28 run) and 160 passing Playwright tests, plus 3 opt-in screenshot cases skipped and
+  one focus-dependent desktop zoom check failing in the full Phase 28 run; the earlier 154 passed in the full Phase 27 run (including Electron and the rebuilt unpacked application). Coverage includes sticky headers on every route and pane,
   axe in both themes, the library, the course, the graph, reviewing, practice, chat, generating and an MCP client
   using the stdio bridge — all green. `npm run verify` and `npm run desktop:build` passed. Retrieval for a grounded answer at 10,000 notes and 10,000 PDF pages:
   p95 434 ms, median 71 ms (provisional budget 500 ms; Phase 17 run).
@@ -313,6 +315,10 @@ knowledge extraction) 12 (agent runtime, tool layer and MCP), 13 (chat), 14 (tut
 
 ## Next steps
 
+0. Phase 28: install the candidate when ready (close Manuscript first), try a real Word file, workbook and PDF, and
+   re-run `npx playwright test e2e/desktop.spec.ts` with the window in front; then commit, bump the version and merge
+   `phase/28-file-previews`. Page layout opens in about 11 s; reusing LibreOffice's profile would make it about 4 s
+   (B-KM-43, your call).
 1. Review/commit the verified WebView2 follow-up using the 15 October handover. The user confirmed live access
    and interaction in the actual embedded tab; source, packaged and installer-payload regressions pass.
 2. Release or install the follow-up only after its verification and the repository's gate workflow; the current
@@ -378,8 +384,8 @@ background load — compare against a worktree of the previous gate (`AGENTS.md`
 - To try the desktop app: `npm run desktop:dev`, or `npm run desktop:build` and run `Manuscript.exe` from
   `apps\desktop\release\win32-unpacked` (close the browser version first: a vault is open in one place only).
 
-- Rename the local project folder `study-knowledge-base` to `manuscript` (GitHub is already renamed;
-  `origin` points at `WilliamKyaww/manuscript`).
+- The local project folder is now `Manuscript` (renamed; `origin` points at `WilliamKyaww/manuscript`). After a rename,
+  run `npm install --prefer-offline` once: the workspace links in `node_modules/@skb` still name the old folder.
 - Optional: rename `Documents\Study Knowledge Base` and `%APPDATA%\StudyKnowledgeBase` to `Manuscript`
   while the app is closed (`docs/guide/README.md`).
 - Push `main`, the phase branches and the tag when convenient: `git push origin main --tags` (the agent never pushes).

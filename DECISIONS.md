@@ -1211,3 +1211,21 @@ the separate session, native views, link handling and selection tools remain in 
   Conversion is serialised and bounded; missing/conversion-failing dependencies get actionable feedback.
   Reading previews have explicit size/row limits. The binary DOC worker must be included in server builds.
 - **Date.** 16 October 2026.
+- **Amendment (17 October 2026, hardening review).** Decisions taken while reviewing the first implementation:
+  - *Data is shown as written.* JSON is validated by `JSON.parse` but re-indented by a small formatter that copies
+    every number, string and key, because parse-and-stringify rounded 20-digit ids, turned `1e400` into `null`,
+    lost `-0.0` and kept only the last of a repeated key. A spreadsheet row keeps its own address (blank rows are
+    not squeezed out), so the row numbers beside the cells are the sheet's.
+  - *The converter is a process tree.* `soffice` is a launcher on every platform, so a timeout or a closed request
+    ends the whole tree (`taskkill /T` on Windows, the process group elsewhere) before the temporary profile is
+    removed. One conversion runs and three more may wait in order; an abandoned request gives up its place at once.
+    A request that goes away (the tab is closed, the mode changed) cancels its conversion. A folder Windows still
+    holds is removed by the next conversion's sweep, so the preview does not fail on clean-up.
+  - *Formats are named, not guessed, for OOXML.* `--infilter` names Writer's and Calc's OOXML filters, so a damaged
+    `.docx` or `.xlsx` is refused instead of drawn as plain text; `.doc` stays content-detected because Word
+    itself writes RTF, HTML and OOXML under that name. Empty files and layouts over 64 MB are refused in words.
+  - Failures of the converter are 503 (`unavailable`), so the diagnostics log records them with their cause; a file
+    that is too large, empty or of the wrong kind stays a 400.
+  - Considered and not done: Windows Job Objects (not reachable from Node without a native module), and a
+    per-request LibreOffice instance pool (a cold start is a few seconds; one shared instance would reintroduce the
+    profile-sharing the private profile avoids).

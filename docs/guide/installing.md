@@ -25,6 +25,13 @@ For the Phase 27 WebView2 follow-up, the tested local candidate is
 use the distinctly named candidate, close Manuscript fully, and install over the existing application.
 No uninstallation or deletion of the vault/browser profile is needed. A formal release should use a new version.
 
+For the Phase 28 file previews (which include the Phase 27 follow-up), the local candidate is
+`appsdesktopeleaseManuscript-Setup-1.4.0-FilePreviews.exe`, built on 17 October 2026; the file's SHA-256 is
+`1d0d8eaad9113fddb6b72616afec0dfb73c163d0e4a7f21f9b732eeab608db4a`. It also reports 1.4.0, so check the file name, and
+install it the same way (close Manuscript fully first). **Page layout** for Word and Excel files needs LibreOffice,
+installed separately (`winget install TheDocumentFoundation.LibreOffice`); everything else, including the readable view
+of those files, works without it. A formal release should use a new version.
+
 Run `Manuscript-Setup-<version>.exe`.
 
 - **It installs for you only.** No administrator prompt: the program goes to

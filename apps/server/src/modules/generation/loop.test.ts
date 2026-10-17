@@ -52,7 +52,9 @@ describe('the study loop with the test model', () => {
       title: 'Exam',
       kind: 'exam',
       weight: 1,
-      dueAt: new Date(Date.now() + 9 * 86_400_000).toISOString().slice(0, 10),
+      // From the test bed's own clock: the planner counts days from it, and a real date drifts out of
+      // the three-week window in which mock exams are planned (this failed from 17 October 2026).
+      dueAt: new Date(bed.ctx.clock.now().getTime() + 9 * 86_400_000).toISOString().slice(0, 10),
     });
     const lecture = await api.post<{ id: string }>(`/api/modules/${module.id}/lectures`, {
       key: 'L3',

@@ -20,6 +20,10 @@ import { useWorkspace, type WorkspacePane, type WorkspaceTab } from './workspace
 
 const TAB_DRAG = 'application/x-skb-tab';
 
+/** The row scrolls sideways, so a tab opened from the file tree could otherwise be out of sight. */
+const showSelected = (tab: HTMLElement | null) =>
+  tab?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+
 export function TabBar({
   pane,
   active,
@@ -109,6 +113,7 @@ export function TabBar({
             return (
               <li
                 key={tab.id}
+                ref={selected ? showSelected : undefined}
                 onDragOver={(event) => {
                   if (!event.dataTransfer.types.includes(TAB_DRAG)) return;
                   event.preventDefault();
